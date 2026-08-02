@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "mcp-docs-server": {
-      "command": "npx",
+      "command": "bunx",
       "args": [
         "-y",
         "@assistant-ui/mcp-docs-server"

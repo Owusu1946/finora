@@ -9,16 +9,16 @@
   ],
   "scripts": {
     "postinstall": "node scripts/link-mobile-deps.mjs",
-    "mobile": "npm run start --workspace=@finora/mobile",
-    "mobile:android": "npm run android --workspace=@finora/mobile",
-    "mobile:ios": "npm run ios --workspace=@finora/mobile",
-    "mobile:web": "npm run web --workspace=@finora/mobile",
-    "api": "npm run dev --workspace=@finora/api",
-    "api:deploy": "npm run deploy --workspace=@finora/api",
-    "mcp": "npm run dev --workspace=@finora/mcp",
-    "mcp:deploy": "npm run deploy --workspace=@finora/mcp",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "mobile": "bun run --filter @finora/mobile start",
+    "mobile:android": "bun run --filter @finora/mobile android",
+    "mobile:ios": "bun run --filter @finora/mobile ios",
+    "mobile:web": "bun run --filter @finora/mobile web",
+    "api": "bun run --filter @finora/api dev",
+    "api:deploy": "bun run --filter @finora/api deploy",
+    "mcp": "bun run --filter @finora/mcp dev",
+    "mcp:deploy": "bun run --filter @finora/mcp deploy",
+    "typecheck": "bun run --workspaces --if-present typecheck",
+    "lint": "bun run --workspaces --if-present lint"
   },
   "engines": {
     "node": ">=20"

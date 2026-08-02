@@ -13,5 +13,5 @@ Conversation-first Finora app. Chat UI
 
 ```bash
 # from repo root
-npm run mobile
+bun run mobile
 ```

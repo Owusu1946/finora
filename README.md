@@ -20,24 +20,24 @@ finora/
 ## Prerequisites
 
 - Node.js 20+
-- npm 10+
+- [Bun](https://bun.sh) 1.x
 - Cloudflare account (for `api` and `mcp`)
 - WeWire sandbox API key (see [WeWire docs](https://docs.wewire.com/))
 
 ## Setup
 
 ```bash
-npm install
+bun install
 ```
 
 ## Scripts
 
 | Command | What it does |
 |---|---|
-| `npm run mobile` | Start Expo |
-| `npm run api` | Local Finora API Worker |
-| `npm run mcp` | Local Finora MCP Worker |
-| `npm run typecheck` | Typecheck all packages |
+| `bun run mobile` | Start Expo |
+| `bun run api` | Local Finora API Worker |
+| `bun run mcp` | Local Finora MCP Worker |
+| `bun run typecheck` | Typecheck all packages |
 
 ## Architecture
 
