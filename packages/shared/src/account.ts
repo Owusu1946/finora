@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const AccountTypeSchema = z.enum(["personal", "business"]);
+export const AccountTypeSchema = z.enum(['personal', 'business']);
 export type AccountType = z.infer<typeof AccountTypeSchema>;
 
 export const FinoraAccountSchema = z.object({

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
   Animated,
@@ -6,12 +6,12 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
-} from "react-native";
+} from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 const SCROLL_THRESHOLD = 120;
 
@@ -29,16 +29,11 @@ export function useScrollToBottom() {
   const flatListRef = useRef<FlatList>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const onScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } =
-        e.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - layoutMeasurement.height - contentOffset.y;
-      setIsAtBottom(distanceFromBottom <= SCROLL_THRESHOLD);
-    },
-    [],
-  );
+  const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
+    setIsAtBottom(distanceFromBottom <= SCROLL_THRESHOLD);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
@@ -74,14 +69,14 @@ export function ScrollToBottomButton({
   return (
     <Animated.View
       style={[styles.wrapper, { opacity }]}
-      pointerEvents={visible ? "auto" : "none"}
+      pointerEvents={visible ? 'auto' : 'none'}
     >
       <Pressable
         onPress={() => {
           haptics.light();
           onPress();
         }}
-        accessibilityLabel="Scroll to bottom"
+        accessibilityLabel='Scroll to bottom'
         style={({ pressed }) => [
           styles.button,
           {
@@ -91,7 +86,11 @@ export function ScrollToBottomButton({
           },
         ]}
       >
-        <Icon name="arrow-down" size={18} color={colors.foreground} />
+        <Icon
+          name='arrow-down'
+          size={18}
+          color={colors.foreground}
+        />
       </Pressable>
     </Animated.View>
   );
@@ -99,9 +98,9 @@ export function ScrollToBottomButton({
 
 const styles = StyleSheet.create({
   wrapper: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 8,
-    alignSelf: "center",
+    alignSelf: 'center',
     zIndex: 10,
   },
   button: {
@@ -109,10 +108,10 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     // Subtle shadow
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,

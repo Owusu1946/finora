@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { Image } from 'expo-image';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,13 +8,12 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
-} from "react-native";
-import { Image } from "expo-image";
+} from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Spacing, Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { Spacing, Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 // URL-encoded Gmail SVG with %23 for '#' to ensure cross-platform compatibility
 const GMAIL_SVG = `data:image/svg+xml;utf8,<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -42,13 +42,13 @@ export default function IntegrationsScreen() {
   const handleDisconnect = () => {
     haptics.selection();
     Alert.alert(
-      "Disconnect Gmail",
-      "Are you sure you want to disconnect your Gmail integration? Finora will stop monitoring your inbox for bills and invoices.",
+      'Disconnect Gmail',
+      'Are you sure you want to disconnect your Gmail integration? Finora will stop monitoring your inbox for bills and invoices.',
       [
-        { text: "Cancel", style: "cancel" },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: "Disconnect",
-          style: "destructive",
+          text: 'Disconnect',
+          style: 'destructive',
           onPress: () => {
             setIsConnected(false);
             haptics.light();
@@ -64,53 +64,38 @@ export default function IntegrationsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={[styles.title, { color: colors.foreground }]}>
-          Connected Accounts
-        </Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>Connected Accounts</Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Link your accounts so Finora's AI can automatically find and process invoices, bills, and transactions.
+          Link your accounts so Finora's AI can automatically find and process invoices, bills, and
+          transactions.
         </Text>
 
         {/* Integration Card */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
-        >
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.cardHeader}>
             <View style={styles.logoContainer}>
-              <Image source={{ uri: GMAIL_SVG }} style={styles.gmailLogo} />
+              <Image
+                source={{ uri: GMAIL_SVG }}
+                style={styles.gmailLogo}
+              />
             </View>
 
             <View style={styles.meta}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Gmail Inbox
-              </Text>
-              <Text
-                style={[
-                  styles.cardDescription,
-                  { color: colors.mutedForeground },
-                ]}
-              >
+              <Text style={[styles.cardTitle, { color: colors.foreground }]}>Gmail Inbox</Text>
+              <Text style={[styles.cardDescription, { color: colors.mutedForeground }]}>
                 Scan for invoices, receipts, and payment notifications.
               </Text>
             </View>
           </View>
 
-          <View
-            style={[
-              styles.divider,
-              { backgroundColor: colors.border },
-            ]}
-          />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <View style={styles.cardFooter}>
             <View style={styles.statusSection}>
               <View
                 style={[
                   styles.statusDot,
-                  { backgroundColor: isConnected ? "#10B981" : colors.mutedForeground },
+                  { backgroundColor: isConnected ? '#10B981' : colors.mutedForeground },
                 ]}
               />
               <Text
@@ -119,13 +104,16 @@ export default function IntegrationsScreen() {
                   { color: isConnected ? colors.foreground : colors.mutedForeground },
                 ]}
               >
-                {isConnected ? "Connected as user@gmail.com" : "Not connected"}
+                {isConnected ? 'Connected as user@gmail.com' : 'Not connected'}
               </Text>
             </View>
 
             {isConnecting ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator
+                  size='small'
+                  color={colors.primary}
+                />
               </View>
             ) : isConnected ? (
               <Pressable
@@ -150,9 +138,7 @@ export default function IntegrationsScreen() {
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <Text style={[styles.btnText, { color: colors.primaryForeground }]}>
-                  Connect
-                </Text>
+                <Text style={[styles.btnText, { color: colors.primaryForeground }]}>Connect</Text>
               </Pressable>
             )}
           </View>
@@ -160,9 +146,14 @@ export default function IntegrationsScreen() {
 
         {/* Security and Trust section */}
         <View style={styles.trustBox}>
-          <Icon name="shield" size={18} color={colors.mutedForeground} />
+          <Icon
+            name='shield'
+            size={18}
+            color={colors.mutedForeground}
+          />
           <Text style={[styles.trustText, { color: colors.mutedForeground }]}>
-            Finora uses read-only access to search for financial metadata. We never store your emails or share your personal data.
+            Finora uses read-only access to search for financial metadata. We never store your
+            emails or share your personal data.
           </Text>
         </View>
       </ScrollView>
@@ -180,12 +171,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 20,
     maxWidth: Spacing.threadMaxWidth,
-    alignSelf: "center",
-    width: "100%",
+    alignSelf: 'center',
+    width: '100%',
   },
   title: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.4,
   },
   subtitle: {
@@ -201,17 +192,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   cardHeader: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
-    alignItems: "center",
+    alignItems: 'center',
   },
   logoContainer: {
     width: 48,
     height: 48,
     borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   gmailLogo: {
     width: 42,
@@ -223,7 +214,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   cardDescription: {
     fontSize: 13,
@@ -231,17 +222,17 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    width: "100%",
+    width: '100%',
   },
   cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 12,
   },
   statusSection: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     flex: 1,
   },
@@ -252,37 +243,37 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   loadingContainer: {
     height: 32,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingHorizontal: 16,
   },
   btn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: Radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnSecondary: {
     borderWidth: 0,
   },
   btnText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   btnTextSecondary: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   trustBox: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    alignItems: "flex-start",
+    alignItems: 'flex-start',
   },
   trustText: {
     flex: 1,

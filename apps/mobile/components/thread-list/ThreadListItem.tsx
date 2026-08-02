@@ -1,20 +1,14 @@
-import { Text, Pressable, StyleSheet } from "react-native";
-import {
-  ThreadListItemPrimitive,
-  useAui,
-  useAuiState,
-} from "@assistant-ui/react-native";
+import { ThreadListItemPrimitive, useAui, useAuiState } from '@assistant-ui/react-native';
+import { Text, Pressable, StyleSheet } from 'react-native';
 
-import { useTheme } from "@/hooks/use-theme";
-import { Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 export function ThreadListItem({ onSelect }: { onSelect: () => void }) {
   const { colors } = useTheme();
   const aui = useAui();
-  const isActive = useAuiState(
-    (s) => s.threads.mainThreadId === s.threadListItem.id,
-  );
+  const isActive = useAuiState((s) => s.threads.mainThreadId === s.threadListItem.id);
 
   return (
     <ThreadListItemPrimitive.Root>
@@ -35,11 +29,11 @@ export function ThreadListItem({ onSelect }: { onSelect: () => void }) {
             styles.title,
             {
               color: colors.foreground,
-              fontWeight: isActive ? "600" : "400",
+              fontWeight: isActive ? '600' : '400',
             },
           ]}
         >
-          <ThreadListItemPrimitive.Title fallback="New chat" />
+          <ThreadListItemPrimitive.Title fallback='New chat' />
         </Text>
       </Pressable>
     </ThreadListItemPrimitive.Root>
@@ -49,7 +43,7 @@ export function ThreadListItem({ onSelect }: { onSelect: () => void }) {
 const styles = StyleSheet.create({
   item: {
     height: 38,
-    justifyContent: "center",
+    justifyContent: 'center',
     paddingHorizontal: 12,
     marginHorizontal: 8,
     borderRadius: Radius.md,

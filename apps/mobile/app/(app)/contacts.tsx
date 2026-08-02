@@ -1,16 +1,15 @@
-import { useState, useMemo } from "react";
-import { StyleSheet, Text, View, ScrollView, TextInput, Platform } from "react-native";
+import { useState, useMemo } from 'react';
+import { StyleSheet, Text, View, ScrollView, TextInput, Platform } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Spacing, Radius } from "@/constants/theme";
-
-import { MOCK_CONTACTS, type Contact } from "@/components/contacts/types";
-import { ContactListItem } from "@/components/contacts/ContactListItem";
+import { ContactListItem } from '@/components/contacts/ContactListItem';
+import { MOCK_CONTACTS } from '@/components/contacts/types';
+import { Icon } from '@/components/ui/icon';
+import { Spacing, Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function ContactsScreen() {
   const { colors } = useTheme();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -39,25 +38,31 @@ export default function ContactsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       >
         {/* Search bar */}
         <View
-          style={[
-            styles.searchBar,
-            { backgroundColor: colors.muted, borderColor: colors.border },
-          ]}
+          style={[styles.searchBar, { backgroundColor: colors.muted, borderColor: colors.border }]}
         >
-          <Icon name="contacts" size={16} color={colors.mutedForeground} />
+          <Icon
+            name='contacts'
+            size={16}
+            color={colors.mutedForeground}
+          />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search contacts…"
+            placeholder='Search contacts…'
             placeholderTextColor={colors.mutedForeground}
             value={search}
             onChangeText={setSearch}
             autoCorrect={false}
             {...Platform.select({
-              web: { style: [styles.searchInput, { color: colors.foreground, outlineStyle: "none" } as object] },
+              web: {
+                style: [
+                  styles.searchInput,
+                  { color: colors.foreground, outlineStyle: 'none' } as object,
+                ],
+              },
               default: {},
             })}
           />
@@ -66,10 +71,8 @@ export default function ContactsScreen() {
         {/* Empty state */}
         {sorted.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text
-              style={[styles.emptyText, { color: colors.mutedForeground }]}
-            >
-              {search ? "No contacts match your search" : "No contacts yet"}
+            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+              {search ? 'No contacts match your search' : 'No contacts yet'}
             </Text>
           </View>
         ) : (
@@ -77,12 +80,7 @@ export default function ContactsScreen() {
             {/* Favourites section */}
             {favourites.length > 0 && (
               <View>
-                <Text
-                  style={[
-                    styles.sectionHeader,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
+                <Text style={[styles.sectionHeader, { color: colors.mutedForeground }]}>
                   Favourites
                 </Text>
                 {favourites.map((c, i) => (
@@ -99,12 +97,7 @@ export default function ContactsScreen() {
             {/* Others section */}
             {others.length > 0 && (
               <View>
-                <Text
-                  style={[
-                    styles.sectionHeader,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
+                <Text style={[styles.sectionHeader, { color: colors.mutedForeground }]}>
                   All Contacts
                 </Text>
                 {others.map((c, i) => (
@@ -134,12 +127,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 20,
     maxWidth: Spacing.threadMaxWidth,
-    alignSelf: "center",
-    width: "100%",
+    alignSelf: 'center',
+    width: '100%',
   },
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     borderRadius: Radius.composer,
     borderWidth: StyleSheet.hairlineWidth,
@@ -154,18 +147,18 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontWeight: '600',
+    textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 4,
     marginTop: 4,
   },
   emptyState: {
     paddingVertical: 48,
-    alignItems: "center",
+    alignItems: 'center',
   },
   emptyText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: '500',
   },
 });

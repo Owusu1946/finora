@@ -1,16 +1,15 @@
-import { useState, useMemo } from "react";
-import { StyleSheet, Text, View, ScrollView } from "react-native";
+import { useState, useMemo } from 'react';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
 
-import { useTheme } from "@/hooks/use-theme";
-import { Spacing } from "@/constants/theme";
-
+import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
+import { ActivityListItem } from '@/components/activity/ActivityListItem';
 import {
   MOCK_TRANSACTIONS,
   type ActivityFilter,
   type Transaction,
-} from "@/components/activity/types";
-import { ActivityFilterTabs } from "@/components/activity/ActivityFilterTabs";
-import { ActivityListItem } from "@/components/activity/ActivityListItem";
+} from '@/components/activity/types';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * Group transactions by relative date label.
@@ -28,13 +27,13 @@ function groupByDate(txs: Transaction[]): { label: string; items: Transaction[] 
 
     let label: string;
     if (isToday) {
-      label = "Today";
+      label = 'Today';
     } else if (isYesterday) {
-      label = "Yesterday";
+      label = 'Yesterday';
     } else {
       label = d.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
+        month: 'short',
+        day: 'numeric',
       });
     }
 
@@ -50,10 +49,10 @@ function groupByDate(txs: Transaction[]): { label: string; items: Transaction[] 
 
 export default function ActivityScreen() {
   const { colors } = useTheme();
-  const [filter, setFilter] = useState<ActivityFilter>("all");
+  const [filter, setFilter] = useState<ActivityFilter>('all');
 
   const filtered = useMemo(() => {
-    if (filter === "all") return MOCK_TRANSACTIONS;
+    if (filter === 'all') return MOCK_TRANSACTIONS;
     return MOCK_TRANSACTIONS.filter((tx) => tx.direction === filter);
   }, [filter]);
 
@@ -66,7 +65,10 @@ export default function ActivityScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Filter tabs */}
-        <ActivityFilterTabs filter={filter} onSelectFilter={setFilter} />
+        <ActivityFilterTabs
+          filter={filter}
+          onSelectFilter={setFilter}
+        />
 
         {/* Transaction list grouped by date */}
         {sections.length === 0 ? (
@@ -78,9 +80,7 @@ export default function ActivityScreen() {
         ) : (
           sections.map((section) => (
             <View key={section.label}>
-              <Text
-                style={[styles.sectionHeader, { color: colors.mutedForeground }]}
-              >
+              <Text style={[styles.sectionHeader, { color: colors.mutedForeground }]}>
                 {section.label}
               </Text>
               {section.items.map((tx, i) => (
@@ -108,23 +108,23 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 20,
     maxWidth: Spacing.threadMaxWidth,
-    alignSelf: "center",
-    width: "100%",
+    alignSelf: 'center',
+    width: '100%',
   },
   sectionHeader: {
     fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontWeight: '600',
+    textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 4,
     marginTop: 4,
   },
   emptyState: {
     paddingVertical: 48,
-    alignItems: "center",
+    alignItems: 'center',
   },
   emptyText: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: '500',
   },
 });

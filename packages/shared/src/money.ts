@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /** Currencies Finora surfaces in product (subset may depend on WeWire config). */
-export const CurrencySchema = z.enum(["USD", "EUR", "GBP", "GHS", "USDT", "USDC"]);
+export const CurrencySchema = z.enum(['USD', 'EUR', 'GBP', 'GHS', 'USDT', 'USDC']);
 export type Currency = z.infer<typeof CurrencySchema>;
 
 export const MoneyAmountSchema = z.object({
@@ -11,11 +11,11 @@ export const MoneyAmountSchema = z.object({
 export type MoneyAmount = z.infer<typeof MoneyAmountSchema>;
 
 export const ApprovalStatusSchema = z.enum([
-  "pending",
-  "approved",
-  "rejected",
-  "expired",
-  "executed",
-  "failed",
+  'pending',
+  'approved',
+  'rejected',
+  'expired',
+  'executed',
+  'failed',
 ]);
 export type ApprovalStatus = z.infer<typeof ApprovalStatusSchema>;

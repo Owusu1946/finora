@@ -1,9 +1,11 @@
-import React from "react";
-import { StyleSheet, Text, View, Pressable } from "react-native";
-import { CurrencyIcon } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
-import { WalletItem } from "./types";
+import React from 'react';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
+
+import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+
+import { WalletItem } from './types';
 
 interface WalletListItemProps {
   wallet: WalletItem;
@@ -12,12 +14,7 @@ interface WalletListItemProps {
   onSelect: (wallet: WalletItem) => void;
 }
 
-export function WalletListItem({
-  wallet,
-  hideBalances,
-  isLast,
-  onSelect,
-}: WalletListItemProps) {
+export function WalletListItem({ wallet, hideBalances, isLast, onSelect }: WalletListItemProps) {
   const { colors } = useTheme();
 
   return (
@@ -36,11 +33,12 @@ export function WalletListItem({
       ]}
     >
       <View style={styles.walletListLeft}>
-        <CurrencyIcon currency={wallet.currency} size={38} />
+        <CurrencyIcon
+          currency={wallet.currency}
+          size={38}
+        />
         <View style={styles.walletMetaText}>
-          <Text style={[styles.walletCode, { color: colors.foreground }]}>
-            {wallet.currency}
-          </Text>
+          <Text style={[styles.walletCode, { color: colors.foreground }]}>{wallet.currency}</Text>
           <Text style={[styles.walletBadgeText, { color: colors.mutedForeground }]}>
             {wallet.name} • {wallet.badge}
           </Text>
@@ -50,7 +48,7 @@ export function WalletListItem({
       <View style={styles.walletListRight}>
         <Text style={[styles.walletAmount, { color: colors.foreground }]}>
           {hideBalances
-            ? "••••"
+            ? '••••'
             : `${wallet.symbol}${wallet.balance.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -58,7 +56,7 @@ export function WalletListItem({
         </Text>
         <Text style={[styles.walletUsdEst, { color: colors.mutedForeground }]}>
           {hideBalances
-            ? "••••"
+            ? '••••'
             : `≈ $${wallet.usdEquivalent.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -71,14 +69,14 @@ export function WalletListItem({
 
 const styles = StyleSheet.create({
   walletListItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 14,
   },
   walletListLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
   walletMetaText: {
@@ -86,22 +84,22 @@ const styles = StyleSheet.create({
   },
   walletCode: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   walletBadgeText: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: '400',
   },
   walletListRight: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
     gap: 2,
   },
   walletAmount: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   walletUsdEst: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: '400',
   },
 });

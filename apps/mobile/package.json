@@ -4,13 +4,13 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
+    "check-types": "tsc --noEmit",
     "ios": "expo start --ios",
-    "web": "expo start --web",
     "lint": "expo lint",
-    "check-types": "tsc --noEmit"
+    "reset-project": "node ./scripts/reset-project.js",
+    "start": "expo start",
+    "web": "expo start --web"
   },
   "dependencies": {
     "@assistant-ui/react-native": "^0.1.33",

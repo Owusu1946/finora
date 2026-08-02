@@ -1,10 +1,11 @@
-import React from "react";
-import { StyleSheet, Text, View, Pressable, Modal } from "react-native";
-import { Icon } from "@/components/ui/icon";
-import { CurrencyIcon, SupportedCurrency } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
+import React from 'react';
+import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
+
+import { CurrencyIcon, SupportedCurrency } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 interface AddWalletModalProps {
   visible: boolean;
@@ -20,15 +21,15 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
   const { colors } = useTheme();
 
   const options: CurrencyOption[] = [
-    { code: "CAD", name: "Canadian Dollar" },
-    { code: "NGN", name: "Nigerian Naira" },
-    { code: "KES", name: "Kenyan Shilling" },
+    { code: 'CAD', name: 'Canadian Dollar' },
+    { code: 'NGN', name: 'Nigerian Naira' },
+    { code: 'KES', name: 'Kenyan Shilling' },
   ];
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType='slide'
       transparent
       onRequestClose={onClose}
     >
@@ -43,8 +44,15 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
               Add Currency Wallet
             </Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Icon name="remove" size={20} color={colors.mutedForeground} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+            >
+              <Icon
+                name='remove'
+                size={20}
+                color={colors.mutedForeground}
+              />
             </Pressable>
           </View>
 
@@ -56,16 +64,20 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
                   haptics.selection();
                   onClose();
                 }}
-                style={[
-                  styles.addOptionRow,
-                  { backgroundColor: colors.muted },
-                ]}
+                style={[styles.addOptionRow, { backgroundColor: colors.muted }]}
               >
-                <CurrencyIcon currency={item.code} size={30} />
+                <CurrencyIcon
+                  currency={item.code}
+                  size={30}
+                />
                 <Text style={[styles.addOptionText, { color: colors.foreground }]}>
                   {item.code} • {item.name}
                 </Text>
-                <Icon name="add" size={16} color={colors.mutedForeground} />
+                <Icon
+                  name='add'
+                  size={16}
+                  color={colors.mutedForeground}
+                />
               </Pressable>
             ))}
           </View>
@@ -78,8 +90,8 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "flex-end",
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
   },
   sheetContainer: {
     borderTopLeftRadius: 20,
@@ -89,17 +101,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sheetTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   addOptionRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
     padding: 12,
     borderRadius: Radius.md,
@@ -107,6 +119,6 @@ const styles = StyleSheet.create({
   addOptionText: {
     flex: 1,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
 });

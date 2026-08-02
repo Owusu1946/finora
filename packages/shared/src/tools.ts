@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-import { CurrencySchema, MoneyAmountSchema } from "./money";
+import { CurrencySchema, MoneyAmountSchema } from './money';
 
 /**
  * Financial tool contracts shared by apps/api, apps/mcp, and (later) mobile AI.
@@ -40,15 +40,15 @@ export const RequestApprovalInputSchema = z
   .strict();
 
 export const TOOL_NAMES = [
-  "get_balances",
-  "list_transactions",
-  "search_contacts",
-  "lookup_account",
-  "prepare_payment",
-  "prepare_conversion",
-  "request_approval",
-  "list_virtual_accounts",
-  "list_crypto_addresses",
+  'get_balances',
+  'list_transactions',
+  'search_contacts',
+  'lookup_account',
+  'prepare_payment',
+  'prepare_conversion',
+  'request_approval',
+  'list_virtual_accounts',
+  'list_crypto_addresses',
 ] as const;
 
 export type ToolName = (typeof TOOL_NAMES)[number];
