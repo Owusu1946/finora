@@ -7,7 +7,6 @@
     "android": "expo start --android",
     "check-types": "tsc --noEmit",
     "ios": "expo start --ios",
-    "lint": "expo lint",
     "reset-project": "node ./scripts/reset-project.js",
     "start": "expo start",
     "web": "expo start --web"
@@ -55,8 +54,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "~19.1.0",
-    "eslint": "^9.25.0",
-    "eslint-config-expo": "~10.0.0",
     "postcss": "^8.5.25",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.2"
