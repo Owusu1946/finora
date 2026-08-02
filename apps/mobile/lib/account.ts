@@ -19,8 +19,6 @@ export function getAccountLabel(type: AccountType = getAccountType()): string {
   return type === "business" ? "Business" : "Personal";
 }
 
-export function getAccountFullLabel(
-  type: AccountType = getAccountType(),
-): string {
+export function getAccountFullLabel(type: AccountType = getAccountType()): string {
   return type === "business" ? "Business Account" : "Personal Account";
 }

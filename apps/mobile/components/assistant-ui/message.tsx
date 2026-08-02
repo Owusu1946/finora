@@ -1,25 +1,25 @@
-import { useEffect, useRef } from "react";
-import { View, Text, Animated, Platform, StyleSheet } from "react-native";
 import {
   useAuiState,
   AuiIf,
   MessagePrimitive,
-  ComposerPrimitive,
   ErrorPrimitive,
   groupPartByType,
   type TextMessagePartComponent,
 } from "@assistant-ui/react-native";
+import { useEffect, useRef } from "react";
+import { View, Text, Animated, Platform, StyleSheet } from "react-native";
 
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
-import { MessageActionBar } from "./message-action-bar";
-import { MessageBranchPicker } from "./message-branch-picker";
-import { EditComposer } from "./edit-composer";
+import { useTheme } from "@/hooks/use-theme";
+
 import {
   MessageImageAttachment,
   MessageDocumentAttachment,
   MessageAttachmentPill,
 } from "./attachment";
+import { EditComposer } from "./edit-composer";
+import { MessageActionBar } from "./message-action-bar";
+import { MessageBranchPicker } from "./message-branch-picker";
 import {
   Reasoning,
   ReasoningContent,
@@ -27,27 +27,16 @@ import {
   ReasoningText,
   ReasoningTrigger,
 } from "./reasoning";
-import {
-  ToolFallback,
-  ToolGroupContent,
-  ToolGroupRoot,
-  ToolGroupTrigger,
-} from "./tool-group";
+import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from "./tool-group";
 
 const UserText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
-  return (
-    <Text style={[styles.userText, { color: colors.foreground }]}>{text}</Text>
-  );
+  return <Text style={[styles.userText, { color: colors.foreground }]}>{text}</Text>;
 };
 
 const AssistantText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
-  return (
-    <Text style={[styles.assistantText, { color: colors.foreground }]}>
-      {text}
-    </Text>
-  );
+  return <Text style={[styles.assistantText, { color: colors.foreground }]}>{text}</Text>;
 };
 
 function TypingDot({ delay }: { delay: number }) {
@@ -75,9 +64,7 @@ function TypingDot({ delay }: { delay: number }) {
   }, [opacity, delay]);
 
   return (
-    <Animated.View
-      style={[styles.dot, { opacity, backgroundColor: colors.mutedForeground }]}
-    />
+    <Animated.View style={[styles.dot, { opacity, backgroundColor: colors.mutedForeground }]} />
   );
 }
 
@@ -188,9 +175,7 @@ function AssistantMessage() {
             },
           ]}
         >
-          <ErrorPrimitive.Message
-            style={[styles.errorText, { color: colors.destructive }]}
-          />
+          <ErrorPrimitive.Message style={[styles.errorText, { color: colors.destructive }]} />
         </ErrorPrimitive.Root>
       </View>
       <MessagePrimitive.If running={false}>

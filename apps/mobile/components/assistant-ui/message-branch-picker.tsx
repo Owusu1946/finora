@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet } from "react-native";
 import { BranchPickerPrimitive, useAuiState } from "@assistant-ui/react-native";
+import { View, Text, StyleSheet } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
 import { useTheme } from "@/hooks/use-theme";
@@ -27,10 +27,7 @@ export function MessageBranchPicker({
         <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
       </Text>
       <BranchPickerPrimitive.Next
-        style={[
-          styles.button,
-          { opacity: branchNumber >= branchCount ? 0.35 : 1 },
-        ]}
+        style={[styles.button, { opacity: branchNumber >= branchCount ? 0.35 : 1 }]}
         hitSlop={4}
       >
         <Icon name="chevron-right" size={16} color={colors.mutedForeground} />

@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
+
 import { Icon } from "@/components/ui/icon";
 import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
@@ -39,18 +40,13 @@ export function WalletFilterTabs({
                 haptics.selection();
                 onSelectFilter(t);
               }}
-              style={[
-                styles.filterTab,
-                isActive && { borderBottomColor: colors.foreground },
-              ]}
+              style={[styles.filterTab, isActive && { borderBottomColor: colors.foreground }]}
             >
               <Text
                 style={[
                   styles.filterTabText,
                   {
-                    color: isActive
-                      ? colors.foreground
-                      : colors.mutedForeground,
+                    color: isActive ? colors.foreground : colors.mutedForeground,
                   },
                   isActive && styles.filterTabActiveText,
                 ]}

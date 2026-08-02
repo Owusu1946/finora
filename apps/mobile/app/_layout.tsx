@@ -1,20 +1,12 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-  type Theme,
-} from "@react-navigation/native";
+import { AssistantRuntimeProvider, useLocalRuntime } from "@assistant-ui/react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Platform } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import {
-  AssistantRuntimeProvider,
-  useLocalRuntime,
-} from "@assistant-ui/react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useTheme } from "@/hooks/use-theme";
 import { finoraChatAdapter } from "@/lib/chat-adapter";
@@ -55,9 +47,7 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts(
-    Platform.OS === "ios" ? {} : MaterialIcons.font,
-  );
+  const [fontsLoaded] = useFonts(Platform.OS === "ios" ? {} : MaterialIcons.font);
   const runtime = useLocalRuntime(finoraChatAdapter, {
     adapters: {
       feedback: feedbackAdapter,

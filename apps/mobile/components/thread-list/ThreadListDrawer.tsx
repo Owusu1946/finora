@@ -1,20 +1,23 @@
-import { View, Text, Pressable, StyleSheet } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { DrawerContentComponentProps } from "@react-navigation/drawer";
+
 import {
   ThreadListPrimitive,
   ThreadListItemByIndexProvider,
   useAui,
 } from "@assistant-ui/react-native";
-import type { DrawerContentComponentProps } from "@react-navigation/drawer";
 import { type Href, usePathname, useRouter } from "expo-router";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ThreadListItem } from "./ThreadListItem";
+import type { IconName } from "@/components/ui/icon-mappings";
+
 import { AccountBadge } from "@/components/shell/account-badge";
 import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-mappings";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
+
+import { ThreadListItem } from "./ThreadListItem";
 
 const NAV: { href: Href; label: string; icon: IconName }[] = [
   { href: "/wallets", label: "Wallets", icon: "wallet" },
@@ -57,14 +60,10 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           ]}
         >
           <Icon name="compose" size={18} color={colors.foreground} />
-          <Text style={[styles.newLabel, { color: colors.foreground }]}>
-            New chat
-          </Text>
+          <Text style={[styles.newLabel, { color: colors.foreground }]}>New chat</Text>
         </Pressable>
 
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-          Recent
-        </Text>
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Recent</Text>
 
         <ThreadListPrimitive.Items
           renderItem={({ index }) => (

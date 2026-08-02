@@ -1,8 +1,10 @@
 import React from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
+
 import { CurrencyIcon } from "@/components/ui/currency-icon";
 import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
+
 import { WalletItem } from "./types";
 
 interface WalletListItemProps {
@@ -12,12 +14,7 @@ interface WalletListItemProps {
   onSelect: (wallet: WalletItem) => void;
 }
 
-export function WalletListItem({
-  wallet,
-  hideBalances,
-  isLast,
-  onSelect,
-}: WalletListItemProps) {
+export function WalletListItem({ wallet, hideBalances, isLast, onSelect }: WalletListItemProps) {
   const { colors } = useTheme();
 
   return (
@@ -38,9 +35,7 @@ export function WalletListItem({
       <View style={styles.walletListLeft}>
         <CurrencyIcon currency={wallet.currency} size={38} />
         <View style={styles.walletMetaText}>
-          <Text style={[styles.walletCode, { color: colors.foreground }]}>
-            {wallet.currency}
-          </Text>
+          <Text style={[styles.walletCode, { color: colors.foreground }]}>{wallet.currency}</Text>
           <Text style={[styles.walletBadgeText, { color: colors.mutedForeground }]}>
             {wallet.name} • {wallet.badge}
           </Text>

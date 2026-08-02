@@ -1,13 +1,9 @@
+import { useAui, useAuiState, ComposerPrimitive } from "@assistant-ui/react-native";
 import { View, TextInput, Platform, StyleSheet } from "react-native";
-import {
-  useAui,
-  useAuiState,
-  ComposerPrimitive,
-} from "@assistant-ui/react-native";
 
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 /**
@@ -23,12 +19,7 @@ export function EditComposer() {
   const canSend = useAuiState((s) => s.composer.canSend);
 
   return (
-    <View
-      style={[
-        styles.shell,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <TextInput
         style={[styles.input, { color: colors.foreground }]}
         value={text}
@@ -39,7 +30,9 @@ export function EditComposer() {
         maxLength={4000}
         autoFocus
         {...Platform.select({
-          web: { style: [styles.input, { color: colors.foreground, outlineStyle: "none" } as object] },
+          web: {
+            style: [styles.input, { color: colors.foreground, outlineStyle: "none" } as object],
+          },
           default: {},
         })}
       />
@@ -61,10 +54,7 @@ export function EditComposer() {
         <ComposerPrimitive.Send
           accessibilityLabel="Save edit"
           onPressIn={() => canSend && haptics.success()}
-          style={[
-            styles.saveButton,
-            { backgroundColor: canSend ? colors.primary : colors.muted },
-          ]}
+          style={[styles.saveButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
         >
           <Icon
             name="save"

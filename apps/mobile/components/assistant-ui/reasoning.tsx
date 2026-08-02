@@ -1,16 +1,11 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { ReasoningMessagePartComponent } from "@assistant-ui/react-native";
 
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 type ReasoningContextValue = {
@@ -52,12 +47,7 @@ export function ReasoningRoot({
   const open = userOpen ?? (streaming || defaultOpen);
 
   return (
-    <View
-      style={[
-        styles.root,
-        { borderColor: colors.border, backgroundColor: colors.background },
-      ]}
-    >
+    <View style={[styles.root, { borderColor: colors.border, backgroundColor: colors.background }]}>
       <ReasoningContext.Provider
         value={{
           open,
@@ -113,11 +103,7 @@ export function ReasoningText({ children }: { children: ReactNode }) {
 
 export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
-  return (
-    <Text style={[styles.reasoningText, { color: colors.mutedForeground }]}>
-      {text}
-    </Text>
-  );
+  return <Text style={[styles.reasoningText, { color: colors.mutedForeground }]}>{text}</Text>;
 };
 
 const styles = StyleSheet.create({

@@ -1,12 +1,8 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
-import {
-  getAccountFullLabel,
-  getAccountLabel,
-  getAccountType,
-} from "@/lib/account";
+import { useTheme } from "@/hooks/use-theme";
+import { getAccountFullLabel, getAccountLabel, getAccountType } from "@/lib/account";
 
 type AccountBadgeProps = {
   /** Compact pill for headers; full label for drawer. */
@@ -41,14 +37,11 @@ export function AccountBadge({ variant = "pill" }: AccountBadgeProps) {
         style={[
           styles.dot,
           {
-            backgroundColor:
-              type === "business" ? colors.foreground : colors.mutedForeground,
+            backgroundColor: type === "business" ? colors.foreground : colors.mutedForeground,
           },
         ]}
       />
-      <Text style={[styles.pillLabel, { color: colors.mutedForeground }]}>
-        {label}
-      </Text>
+      <Text style={[styles.pillLabel, { color: colors.mutedForeground }]}>{label}</Text>
     </View>
   );
 }
@@ -63,10 +56,7 @@ export function HeaderTitleWithAccount({ title }: HeaderTitleProps) {
 
   return (
     <View style={styles.headerTitle}>
-      <Text
-        numberOfLines={1}
-        style={[styles.title, { color: colors.foreground }]}
-      >
+      <Text numberOfLines={1} style={[styles.title, { color: colors.foreground }]}>
         {title}
       </Text>
       <AccountBadge />

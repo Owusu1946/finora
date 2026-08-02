@@ -9,8 +9,8 @@ import {
 } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 const SCROLL_THRESHOLD = 120;
@@ -29,16 +29,11 @@ export function useScrollToBottom() {
   const flatListRef = useRef<FlatList>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const onScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } =
-        e.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - layoutMeasurement.height - contentOffset.y;
-      setIsAtBottom(distanceFromBottom <= SCROLL_THRESHOLD);
-    },
-    [],
-  );
+  const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
+    setIsAtBottom(distanceFromBottom <= SCROLL_THRESHOLD);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
@@ -72,10 +67,7 @@ export function ScrollToBottomButton({
   if (!visible) return null;
 
   return (
-    <Animated.View
-      style={[styles.wrapper, { opacity }]}
-      pointerEvents={visible ? "auto" : "none"}
-    >
+    <Animated.View style={[styles.wrapper, { opacity }]} pointerEvents={visible ? "auto" : "none"}>
       <Pressable
         onPress={() => {
           haptics.light();

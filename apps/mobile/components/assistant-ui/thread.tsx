@@ -1,29 +1,18 @@
-import { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Keyboard,
-  Platform,
-} from "react-native";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThreadPrimitive } from "@assistant-ui/react-native";
+import { useHeaderHeight } from "@react-navigation/elements";
+import { useEffect, useState } from "react";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Keyboard, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { MessageBubble } from "./message";
-import { Composer } from "./composer";
-import { ScrollToBottomButton, useScrollToBottom } from "./scroll-to-bottom";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
-const suggestions = [
-  "Check my balance",
-  "Send money",
-  "Receive money",
-  "Create recurring payment",
-];
+import { Composer } from "./composer";
+import { MessageBubble } from "./message";
+import { ScrollToBottomButton, useScrollToBottom } from "./scroll-to-bottom";
+
+const suggestions = ["Check my balance", "Send money", "Receive money", "Create recurring payment"];
 
 function SuggestionChip({ prompt }: { prompt: string }) {
   const { colors } = useTheme();
@@ -40,9 +29,7 @@ function SuggestionChip({ prompt }: { prompt: string }) {
         },
       ]}
     >
-      <Text style={[styles.chipText, { color: colors.foreground }]}>
-        {prompt}
-      </Text>
+      <Text style={[styles.chipText, { color: colors.foreground }]}>{prompt}</Text>
     </ThreadPrimitive.Suggestion>
   );
 }
@@ -51,12 +38,8 @@ function EmptyState() {
   const { colors } = useTheme();
   return (
     <View style={styles.empty}>
-      <Text style={[styles.brand, { color: colors.mutedForeground }]}>
-        Finora
-      </Text>
-      <Text style={[styles.welcome, { color: colors.foreground }]}>
-        How can I help you today?
-      </Text>
+      <Text style={[styles.brand, { color: colors.mutedForeground }]}>Finora</Text>
+      <Text style={[styles.welcome, { color: colors.foreground }]}>How can I help you today?</Text>
       <View style={styles.chips}>
         {suggestions.map((prompt) => (
           <SuggestionChip key={prompt} prompt={prompt} />
@@ -67,8 +50,7 @@ function EmptyState() {
 }
 
 function ChatMessages() {
-  const { flatListRef, isAtBottom, scrollToBottom, onScroll } =
-    useScrollToBottom();
+  const { flatListRef, isAtBottom, scrollToBottom, onScroll } = useScrollToBottom();
 
   return (
     <>
@@ -90,10 +72,7 @@ function ChatMessages() {
             {() => <MessageBubble />}
           </ThreadPrimitive.MessagesFlatList>
 
-          <ScrollToBottomButton
-            visible={!isAtBottom}
-            onPress={scrollToBottom}
-          />
+          <ScrollToBottomButton visible={!isAtBottom} onPress={scrollToBottom} />
         </View>
       </ThreadPrimitive.If>
     </>
@@ -107,17 +86,11 @@ export function Thread() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    const showEvent =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
-    const showSub = Keyboard.addListener(showEvent, () =>
-      setKeyboardVisible(true),
-    );
-    const hideSub = Keyboard.addListener(hideEvent, () =>
-      setKeyboardVisible(false),
-    );
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
 
     return () => {
       showSub.remove();

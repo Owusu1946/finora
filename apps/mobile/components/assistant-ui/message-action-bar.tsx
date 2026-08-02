@@ -1,16 +1,12 @@
+import { ActionBarPrimitive, AuiIf, useAui } from "@assistant-ui/react-native";
+import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
-import * as Clipboard from "expo-clipboard";
-import {
-  ActionBarPrimitive,
-  AuiIf,
-  useAui,
-} from "@assistant-ui/react-native";
 
 import { Icon } from "@/components/ui/icon";
+import { Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
-import { Radius } from "@/constants/theme";
 
 const copyToClipboard = async (text: string) => {
   await Clipboard.setStringAsync(text);
@@ -19,9 +15,7 @@ const copyToClipboard = async (text: string) => {
 function FeedbackButton({ type }: { type: "positive" | "negative" }) {
   const { colors } = useTheme();
   const aui = useAui();
-  const [submitted, setSubmitted] = useState<"positive" | "negative" | null>(
-    null,
-  );
+  const [submitted, setSubmitted] = useState<"positive" | "negative" | null>(null);
 
   const handlePress = () => {
     haptics.selection();
@@ -40,24 +34,15 @@ function FeedbackButton({ type }: { type: "positive" | "negative" }) {
 
   return (
     <Pressable
-      accessibilityLabel={
-        isPositive ? "Helpful response" : "Unhelpful response"
-      }
+      accessibilityLabel={isPositive ? "Helpful response" : "Unhelpful response"}
       onPress={handlePress}
-      style={({ pressed }) => [
-        styles.button,
-        pressed && { backgroundColor: colors.muted },
-      ]}
+      style={({ pressed }) => [styles.button, pressed && { backgroundColor: colors.muted }]}
     >
       <Icon
         name={isPositive ? "thumb-up" : "thumb-down"}
         size={16}
         color={
-          isSubmitted
-            ? isPositive
-              ? colors.primary
-              : colors.destructive
-            : colors.mutedForeground
+          isSubmitted ? (isPositive ? colors.primary : colors.destructive) : colors.mutedForeground
         }
       />
     </Pressable>
@@ -90,20 +75,14 @@ export function MessageActionBar() {
 
       {/* User message actions */}
       <AuiIf condition={(s) => s.message.role === "user"}>
-        <ActionBarPrimitive.Edit
-          onPressIn={haptics.selection}
-          style={buttonStyle}
-        >
+        <ActionBarPrimitive.Edit onPressIn={haptics.selection} style={buttonStyle}>
           <Icon name="edit" size={16} color={colors.mutedForeground} />
         </ActionBarPrimitive.Edit>
       </AuiIf>
 
       {/* Assistant message actions */}
       <AuiIf condition={(s) => s.message.role === "assistant"}>
-        <ActionBarPrimitive.Reload
-          onPressIn={haptics.selection}
-          style={buttonStyle}
-        >
+        <ActionBarPrimitive.Reload onPressIn={haptics.selection} style={buttonStyle}>
           <Icon name="reload" size={16} color={colors.mutedForeground} />
         </ActionBarPrimitive.Reload>
 

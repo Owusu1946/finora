@@ -1,18 +1,12 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  Pressable,
-  Modal,
-  TextInput,
-} from "react-native";
-import { Icon } from "@/components/ui/icon";
+import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from "react-native";
+
 import { SupportedCurrency } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
+import { Icon } from "@/components/ui/icon";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
+
 import { WalletItem, FX_RATES } from "./types";
 
 interface FxConvertModalProps {
@@ -72,12 +66,7 @@ export function FxConvertModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         <View
           style={[
@@ -109,9 +98,7 @@ export function FxConvertModal({
               {/* From / To selector */}
               <View style={styles.fxSelectorRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                    From
-                  </Text>
+                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>From</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={{ flexDirection: "row", gap: 6 }}>
                       {wallets.map((w) => (
@@ -122,9 +109,7 @@ export function FxConvertModal({
                             styles.miniFxChip,
                             {
                               backgroundColor:
-                                fromCurrency === w.currency
-                                  ? colors.foreground
-                                  : colors.muted,
+                                fromCurrency === w.currency ? colors.foreground : colors.muted,
                             },
                           ]}
                         >
@@ -133,9 +118,7 @@ export function FxConvertModal({
                               fontSize: 12,
                               fontWeight: "600",
                               color:
-                                fromCurrency === w.currency
-                                  ? colors.background
-                                  : colors.foreground,
+                                fromCurrency === w.currency ? colors.background : colors.foreground,
                             }}
                           >
                             {w.currency}
@@ -149,9 +132,7 @@ export function FxConvertModal({
                 <Icon name="swap" size={16} color={colors.mutedForeground} />
 
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                    To
-                  </Text>
+                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>To</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={{ flexDirection: "row", gap: 6 }}>
                       {wallets.map((w) => (
@@ -162,9 +143,7 @@ export function FxConvertModal({
                             styles.miniFxChip,
                             {
                               backgroundColor:
-                                toCurrency === w.currency
-                                  ? colors.foreground
-                                  : colors.muted,
+                                toCurrency === w.currency ? colors.foreground : colors.muted,
                             },
                           ]}
                         >
@@ -173,9 +152,7 @@ export function FxConvertModal({
                               fontSize: 12,
                               fontWeight: "600",
                               color:
-                                toCurrency === w.currency
-                                  ? colors.background
-                                  : colors.foreground,
+                                toCurrency === w.currency ? colors.background : colors.foreground,
                             }}
                           >
                             {w.currency}
@@ -208,19 +185,13 @@ export function FxConvertModal({
                 />
               </View>
 
-              <View
-                style={[
-                  styles.fxCalcPreview,
-                  { backgroundColor: colors.muted },
-                ]}
-              >
+              <View style={[styles.fxCalcPreview, { backgroundColor: colors.muted }]}>
                 <Text style={[styles.fxCalcLabel, { color: colors.mutedForeground }]}>
                   Estimated Receive
                 </Text>
                 <Text style={[styles.fxCalcValue, { color: colors.foreground }]}>
                   {(
-                    ((parseFloat(convertAmount) || 0) *
-                      (FX_RATES[fromCurrency] || 1)) /
+                    ((parseFloat(convertAmount) || 0) * (FX_RATES[fromCurrency] || 1)) /
                     (FX_RATES[toCurrency] || 1)
                   ).toFixed(2)}{" "}
                   {toCurrency}

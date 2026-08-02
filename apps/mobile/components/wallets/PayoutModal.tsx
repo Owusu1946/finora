@@ -1,18 +1,12 @@
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  Pressable,
-  Modal,
-  TextInput,
-} from "react-native";
-import { Icon } from "@/components/ui/icon";
+import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from "react-native";
+
 import { CurrencyIcon } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
+import { Icon } from "@/components/ui/icon";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
+
 import { WalletItem } from "./types";
 
 interface PayoutModalProps {
@@ -22,12 +16,7 @@ interface PayoutModalProps {
   onSendSuccess: (sendWalletId: string, amountNum: number) => void;
 }
 
-export function PayoutModal({
-  visible,
-  wallets,
-  onClose,
-  onSendSuccess,
-}: PayoutModalProps) {
+export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: PayoutModalProps) {
   const { colors } = useTheme();
 
   const [sendWalletId, setSendWalletId] = useState(wallets[0]?.id || "w-usd");
@@ -57,12 +46,7 @@ export function PayoutModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         <View
           style={[
@@ -71,9 +55,7 @@ export function PayoutModal({
           ]}
         >
           <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
-              Send Payout
-            </Text>
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Send Payout</Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <Icon name="remove" size={20} color={colors.mutedForeground} />
             </Pressable>
@@ -103,10 +85,7 @@ export function PayoutModal({
                       style={[
                         styles.walletChip,
                         {
-                          backgroundColor:
-                            sendWalletId === w.id
-                              ? colors.foreground
-                              : colors.muted,
+                          backgroundColor: sendWalletId === w.id ? colors.foreground : colors.muted,
                         },
                       ]}
                     >
@@ -115,10 +94,7 @@ export function PayoutModal({
                         style={[
                           styles.walletChipText,
                           {
-                            color:
-                              sendWalletId === w.id
-                                ? colors.background
-                                : colors.foreground,
+                            color: sendWalletId === w.id ? colors.background : colors.foreground,
                           },
                         ]}
                       >
@@ -150,9 +126,7 @@ export function PayoutModal({
               </View>
 
               <View>
-                <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                  Amount
-                </Text>
+                <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>Amount</Text>
                 <TextInput
                   value={sendAmount}
                   onChangeText={setSendAmount}

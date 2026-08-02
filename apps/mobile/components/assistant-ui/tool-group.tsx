@@ -1,13 +1,9 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 type ToolFallbackProps = {
@@ -56,17 +52,10 @@ export function ToolGroupRoot({
   );
 }
 
-export function ToolGroupTrigger({
-  count,
-  active = false,
-}: {
-  count: number;
-  active?: boolean;
-}) {
+export function ToolGroupTrigger({ count, active = false }: { count: number; active?: boolean }) {
   const { colors } = useTheme();
   const { open, onToggle } = useToolGroupContext();
-  const label =
-    count === 1 ? "1 tool used" : `${count} tools used`;
+  const label = count === 1 ? "1 tool used" : `${count} tools used`;
 
   return (
     <Pressable
@@ -75,11 +64,7 @@ export function ToolGroupTrigger({
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
     >
-      <Icon
-        name="tool"
-        size={15}
-        color={active ? colors.foreground : colors.mutedForeground}
-      />
+      <Icon name="tool" size={15} color={active ? colors.foreground : colors.mutedForeground} />
       <Text
         style={[
           styles.triggerLabel,
@@ -101,12 +86,7 @@ export function ToolGroupContent({ children }: { children: ReactNode }) {
   return <View style={styles.content}>{children}</View>;
 }
 
-export function ToolFallback({
-  toolName,
-  argsText,
-  result,
-  isError,
-}: ToolFallbackProps) {
+export function ToolFallback({ toolName, argsText, result, isError }: ToolFallbackProps) {
   const { colors } = useTheme();
   const done = result !== undefined;
 
@@ -122,26 +102,18 @@ export function ToolFallback({
     >
       <View style={styles.toolHeader}>
         <Icon name="tool" size={14} color={colors.mutedForeground} />
-        <Text style={[styles.toolName, { color: colors.foreground }]}>
-          {toolName}
-        </Text>
+        <Text style={[styles.toolName, { color: colors.foreground }]}>{toolName}</Text>
         <Text style={[styles.toolStatus, { color: colors.mutedForeground }]}>
           {isError ? "failed" : done ? "done" : "running"}
         </Text>
       </View>
       {argsText ? (
-        <Text
-          numberOfLines={3}
-          style={[styles.toolMeta, { color: colors.mutedForeground }]}
-        >
+        <Text numberOfLines={3} style={[styles.toolMeta, { color: colors.mutedForeground }]}>
           {argsText}
         </Text>
       ) : null}
       {done ? (
-        <Text
-          numberOfLines={4}
-          style={[styles.toolMeta, { color: colors.mutedForeground }]}
-        >
+        <Text numberOfLines={4} style={[styles.toolMeta, { color: colors.mutedForeground }]}>
           {typeof result === "string" ? result : JSON.stringify(result)}
         </Text>
       ) : null}

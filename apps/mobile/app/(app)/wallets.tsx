@@ -1,29 +1,21 @@
+import * as Clipboard from "expo-clipboard";
 import { useState, useMemo } from "react";
 import { StyleSheet, Text, View, ScrollView } from "react-native";
-import * as Clipboard from "expo-clipboard";
 
-import { Icon } from "@/components/ui/icon";
 import { SupportedCurrency } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Spacing, Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
-import { getAccountType, getAccountLabel } from "@/lib/account";
-
-import {
-  WalletItem,
-  INITIAL_WALLETS_DATA,
-  FX_RATES,
-} from "@/components/wallets/types";
-import { WalletHeader } from "@/components/wallets/WalletHeader";
-import {
-  WalletFilterTabs,
-  FilterCategory,
-} from "@/components/wallets/WalletFilterTabs";
-import { WalletListItem } from "@/components/wallets/WalletListItem";
-import { DepositModal } from "@/components/wallets/DepositModal";
-import { PayoutModal } from "@/components/wallets/PayoutModal";
-import { FxConvertModal } from "@/components/wallets/FxConvertModal";
+import { Icon } from "@/components/ui/icon";
 import { AddWalletModal } from "@/components/wallets/AddWalletModal";
+import { DepositModal } from "@/components/wallets/DepositModal";
+import { FxConvertModal } from "@/components/wallets/FxConvertModal";
+import { PayoutModal } from "@/components/wallets/PayoutModal";
+import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from "@/components/wallets/types";
+import { WalletFilterTabs, FilterCategory } from "@/components/wallets/WalletFilterTabs";
+import { WalletHeader } from "@/components/wallets/WalletHeader";
+import { WalletListItem } from "@/components/wallets/WalletListItem";
+import { Spacing, Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { getAccountType, getAccountLabel } from "@/lib/account";
+import { haptics } from "@/lib/haptics";
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
@@ -119,16 +111,11 @@ export default function WalletsScreen() {
       {toastMessage && (
         <View style={[styles.toast, { backgroundColor: colors.foreground }]}>
           <Icon name="check" size={13} color={colors.background} />
-          <Text style={[styles.toastText, { color: colors.background }]}>
-            {toastMessage}
-          </Text>
+          <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
         </View>
       )}
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* 1. Header Section */}
         <WalletHeader
           accountLabel={accountLabel}
@@ -189,10 +176,7 @@ export default function WalletsScreen() {
         onConvertSuccess={handleConvertSuccess}
       />
 
-      <AddWalletModal
-        visible={activeModal === "new_wallet"}
-        onClose={() => setActiveModal(null)}
-      />
+      <AddWalletModal visible={activeModal === "new_wallet"} onClose={() => setActiveModal(null)} />
     </View>
   );
 }

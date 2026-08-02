@@ -1,7 +1,7 @@
-import { Pressable } from "react-native";
+import { useAui } from "@assistant-ui/react-native";
 import { useRouter } from "expo-router";
 import { Drawer } from "expo-router/drawer";
-import { useAui } from "@assistant-ui/react-native";
+import { Pressable } from "react-native";
 
 import { HeaderTitleWithAccount } from "@/components/shell/account-badge";
 import { ThreadListDrawer } from "@/components/thread-list/ThreadListDrawer";
@@ -64,10 +64,7 @@ export default function AppLayout() {
       <Drawer.Screen name="wallets" options={screenOptions("Wallets")} />
       <Drawer.Screen name="activity" options={screenOptions("Activity")} />
       <Drawer.Screen name="contacts" options={screenOptions("Contacts")} />
-      <Drawer.Screen
-        name="integrations"
-        options={screenOptions("Integrations")}
-      />
+      <Drawer.Screen name="integrations" options={screenOptions("Integrations")} />
       <Drawer.Screen name="settings" options={screenOptions("Settings")} />
     </Drawer>
   );

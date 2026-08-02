@@ -1,8 +1,9 @@
 import React from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
+
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 interface WalletHeaderProps {
@@ -41,11 +42,7 @@ export function WalletHeader({
           }}
           style={styles.eyeBtn}
         >
-          <Icon
-            name={hideBalances ? "eye-off" : "eye"}
-            size={16}
-            color={colors.mutedForeground}
-          />
+          <Icon name={hideBalances ? "eye-off" : "eye"} size={16} color={colors.mutedForeground} />
         </Pressable>
       </View>
 
@@ -72,9 +69,7 @@ export function WalletHeader({
           ]}
         >
           <Icon name="arrow-up" size={15} color={colors.background} />
-          <Text style={[styles.actionBtnText, { color: colors.background }]}>
-            Payout
-          </Text>
+          <Text style={[styles.actionBtnText, { color: colors.background }]}>Payout</Text>
         </Pressable>
 
         <Pressable
@@ -89,9 +84,7 @@ export function WalletHeader({
           ]}
         >
           <Icon name="arrow-down-left" size={15} color={colors.foreground} />
-          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>
-            Deposit
-          </Text>
+          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Deposit</Text>
         </Pressable>
 
         <Pressable
@@ -106,9 +99,7 @@ export function WalletHeader({
           ]}
         >
           <Icon name="swap" size={15} color={colors.foreground} />
-          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>
-            Convert
-          </Text>
+          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Convert</Text>
         </Pressable>
       </View>
     </View>

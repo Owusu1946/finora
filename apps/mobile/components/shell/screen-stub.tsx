@@ -13,9 +13,7 @@ export function ScreenStub({ title, description }: ScreenStubProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-      <Text style={[styles.description, { color: colors.mutedForeground }]}>
-        {description}
-      </Text>
+      <Text style={[styles.description, { color: colors.mutedForeground }]}>{description}</Text>
     </View>
   );
 }

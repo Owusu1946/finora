@@ -9,11 +9,13 @@ import {
   Share,
   Platform,
 } from "react-native";
-import { Icon } from "@/components/ui/icon";
+
 import { CurrencyIcon } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
+import { Icon } from "@/components/ui/icon";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
+
 import { WalletItem } from "./types";
 
 interface DepositModalProps {
@@ -23,12 +25,7 @@ interface DepositModalProps {
   onCopy: (text: string, label: string) => void;
 }
 
-export function DepositModal({
-  visible,
-  selectedWallet,
-  onClose,
-  onCopy,
-}: DepositModalProps) {
+export function DepositModal({ visible, selectedWallet, onClose, onCopy }: DepositModalProps) {
   const { colors } = useTheme();
 
   const handleShareDetails = async (w: WalletItem) => {
@@ -49,12 +46,7 @@ export function DepositModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         <View
           style={[
@@ -79,12 +71,7 @@ export function DepositModal({
           {selectedWallet && (
             <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
               {/* Balance Summary Header */}
-              <View
-                style={[
-                  styles.sheetBalanceBox,
-                  { backgroundColor: colors.muted },
-                ]}
-              >
+              <View style={[styles.sheetBalanceBox, { backgroundColor: colors.muted }]}>
                 <Text style={[styles.sheetBalanceLabel, { color: colors.mutedForeground }]}>
                   Wallet Balance
                 </Text>
@@ -180,10 +167,7 @@ export function DepositModal({
                   >
                     <Text
                       numberOfLines={2}
-                      style={[
-                        styles.sheetRowValueMono,
-                        { color: colors.foreground, flex: 1 },
-                      ]}
+                      style={[styles.sheetRowValueMono, { color: colors.foreground, flex: 1 }]}
                     >
                       {selectedWallet.accountDetails.address}
                     </Text>
@@ -199,9 +183,7 @@ export function DepositModal({
                   </Text>
                   <Pressable
                     style={styles.sheetCopyRow}
-                    onPress={() =>
-                      onCopy(selectedWallet.accountDetails!.phone!, "MoMo Line")
-                    }
+                    onPress={() => onCopy(selectedWallet.accountDetails!.phone!, "MoMo Line")}
                   >
                     <Text style={[styles.sheetRowValueMono, { color: colors.foreground }]}>
                       {selectedWallet.accountDetails.phone}

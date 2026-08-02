@@ -1,9 +1,10 @@
 import React from "react";
 import { StyleSheet, Text, View, Pressable, Modal } from "react-native";
-import { Icon } from "@/components/ui/icon";
+
 import { CurrencyIcon, SupportedCurrency } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
+import { Icon } from "@/components/ui/icon";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 interface AddWalletModalProps {
@@ -26,12 +27,7 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
   ];
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalBackdrop}>
         <View
           style={[
@@ -56,10 +52,7 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
                   haptics.selection();
                   onClose();
                 }}
-                style={[
-                  styles.addOptionRow,
-                  { backgroundColor: colors.muted },
-                ]}
+                style={[styles.addOptionRow, { backgroundColor: colors.muted }]}
               >
                 <CurrencyIcon currency={item.code} size={30} />
                 <Text style={[styles.addOptionText, { color: colors.foreground }]}>

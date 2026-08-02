@@ -1,27 +1,16 @@
-import {
-  View,
-  Platform,
-  ActionSheetIOS,
-  Alert,
-  StyleSheet,
-} from "react-native";
-import {
-  useAui,
-  useAuiState,
-  AuiIf,
-  ComposerPrimitive,
-} from "@assistant-ui/react-native";
+import { useAui, useAuiState, AuiIf, ComposerPrimitive } from "@assistant-ui/react-native";
+import { View, Platform, ActionSheetIOS, Alert, StyleSheet } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
+
 import {
   ComposerImageAttachment,
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
 } from "./attachment";
-
 
 function AttachButton() {
   const { colors } = useTheme();
@@ -118,9 +107,7 @@ function AttachButton() {
               name: asset.name,
               type: "document",
               contentType: asset.mimeType,
-              content: [
-                { type: "text", text: `[Attached document: ${asset.name}]` },
-              ],
+              content: [{ type: "text", text: `[Attached document: ${asset.name}]` }],
             });
           }
         }
@@ -138,9 +125,7 @@ function AttachButton() {
   const handlePress = () => {
     haptics.selection();
     if (Platform.OS === "web" || typeof document !== "undefined") {
-      openWebFilePicker(
-        "image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json",
-      );
+      openWebFilePicker("image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json");
     } else {
       if (Platform.OS === "ios") {
         ActionSheetIOS.showActionSheetWithOptions(
@@ -187,10 +172,7 @@ function SendButton() {
     <ComposerPrimitive.Send
       accessibilityLabel="Send message"
       onPressIn={() => canSend && haptics.success()}
-      style={[
-        styles.actionButton,
-        { backgroundColor: canSend ? colors.primary : colors.muted },
-      ]}
+      style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
       <Icon
         name="send"
@@ -220,13 +202,8 @@ export function Composer() {
   return (
     <View style={styles.container}>
       <View
-        style={[
-          styles.shell,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
+        style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
       >
-
-
         {/* Attachment chips row */}
         <ComposerPrimitive.Attachments
           components={{

@@ -1,6 +1,6 @@
-import type { ComponentProps } from "react";
 import type MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type { SymbolViewProps, SymbolWeight } from "expo-symbols";
+import type { ComponentProps } from "react";
 
 export type IconName =
   | "compose"
@@ -92,10 +92,7 @@ export const SF_SYMBOLS: Record<IconName, SymbolViewProps["name"]> = {
   quote: "quote.bubble",
 };
 
-export const MATERIAL_ICONS: Record<
-  IconName,
-  ComponentProps<typeof MaterialIcons>["name"]
-> = {
+export const MATERIAL_ICONS: Record<IconName, ComponentProps<typeof MaterialIcons>["name"]> = {
   compose: "edit",
   send: "arrow-upward",
   stop: "stop",

@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { AttachmentPrimitive, useAuiState } from "@assistant-ui/react-native";
 import { Image as ExpoImage } from "expo-image";
-import {
-  AttachmentPrimitive,
-  useAuiState,
-} from "@assistant-ui/react-native";
+import { useState, useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 
 import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
 import { Radius } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { haptics } from "@/lib/haptics";
 
 function useAttachmentPreview() {
@@ -23,9 +20,7 @@ function useAttachmentPreview() {
 
     // 1. If content contains an image part
     if (Array.isArray(attachment.content)) {
-      const imgPart = (attachment.content as any[]).find(
-        (p: any) => p.type === "image",
-      );
+      const imgPart = (attachment.content as any[]).find((p: any) => p.type === "image");
       if (imgPart?.image) {
         setImageUri(imgPart.image);
         return;
@@ -67,17 +62,10 @@ export function ComposerImageAttachment() {
   return (
     <AttachmentPrimitive.Root style={styles.imageChipContainer}>
       <View
-        style={[
-          styles.imageChip,
-          { backgroundColor: colors.muted, borderColor: colors.border },
-        ]}
+        style={[styles.imageChip, { backgroundColor: colors.muted, borderColor: colors.border }]}
       >
         {imageUri ? (
-          <ExpoImage
-            source={{ uri: imageUri }}
-            style={styles.imagePreview}
-            contentFit="cover"
-          />
+          <ExpoImage source={{ uri: imageUri }} style={styles.imagePreview} contentFit="cover" />
         ) : (
           <View style={styles.imagePlaceholder}>
             <Icon name="image" size={20} color={colors.mutedForeground} />
@@ -102,10 +90,7 @@ export function ComposerDocumentAttachment() {
   const { colors } = useTheme();
   return (
     <AttachmentPrimitive.Root
-      style={[
-        styles.chip,
-        { backgroundColor: colors.muted, borderColor: colors.border },
-      ]}
+      style={[styles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
     >
       <View style={styles.chipContent}>
         <Icon name="file" size={15} color={colors.mutedForeground} />
@@ -113,9 +98,7 @@ export function ComposerDocumentAttachment() {
           style={[styles.chipName, { color: colors.foreground }]}
           numberOfLines={1}
         />
-        <AttachmentPrimitive.Thumb
-          style={[styles.pillExt, { color: colors.mutedForeground }]}
-        />
+        <AttachmentPrimitive.Thumb style={[styles.pillExt, { color: colors.mutedForeground }]} />
       </View>
       <AttachmentPrimitive.Remove
         onPressIn={haptics.light}
@@ -136,10 +119,7 @@ export function ComposerDocumentAttachment() {
  */
 export function ComposerAttachmentChip() {
   const { attachment } = useAttachmentPreview();
-  if (
-    attachment?.type === "image" ||
-    attachment?.contentType?.startsWith("image/")
-  ) {
+  if (attachment?.type === "image" || attachment?.contentType?.startsWith("image/")) {
     return <ComposerImageAttachment />;
   }
   return <ComposerDocumentAttachment />;
@@ -185,19 +165,14 @@ export function MessageDocumentAttachment() {
   const { colors } = useTheme();
   return (
     <AttachmentPrimitive.Root
-      style={[
-        styles.pill,
-        { backgroundColor: colors.muted, borderColor: colors.border },
-      ]}
+      style={[styles.pill, { backgroundColor: colors.muted, borderColor: colors.border }]}
     >
       <Icon name="file" size={15} color={colors.mutedForeground} />
       <AttachmentPrimitive.Name
         style={[styles.pillName, { color: colors.foreground }]}
         numberOfLines={1}
       />
-      <AttachmentPrimitive.Thumb
-        style={[styles.pillExt, { color: colors.mutedForeground }]}
-      />
+      <AttachmentPrimitive.Thumb style={[styles.pillExt, { color: colors.mutedForeground }]} />
     </AttachmentPrimitive.Root>
   );
 }
@@ -207,10 +182,7 @@ export function MessageDocumentAttachment() {
  */
 export function MessageAttachmentPill() {
   const { attachment } = useAttachmentPreview();
-  if (
-    attachment?.type === "image" ||
-    attachment?.contentType?.startsWith("image/")
-  ) {
+  if (attachment?.type === "image" || attachment?.contentType?.startsWith("image/")) {
     return <MessageImageAttachment />;
   }
   return <MessageDocumentAttachment />;

@@ -10,10 +10,7 @@ const rootNodeModules = path.resolve(monorepoRoot, "node_modules");
 const config = getDefaultConfig(projectRoot);
 
 config.watchFolders = [monorepoRoot];
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, "node_modules"),
-  rootNodeModules,
-];
+config.resolver.nodeModulesPaths = [path.resolve(projectRoot, "node_modules"), rootNodeModules];
 
 // Force a single React instance (also junctioned under apps/mobile/node_modules).
 config.resolver.extraNodeModules = {
