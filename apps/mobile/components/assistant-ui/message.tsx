@@ -27,12 +27,6 @@ import {
   ReasoningText,
   ReasoningTrigger,
 } from "./reasoning";
-import {
-  ToolFallback,
-  ToolGroupContent,
-  ToolGroupRoot,
-  ToolGroupTrigger,
-} from "./tool-group";
 
 const UserText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
@@ -135,15 +129,11 @@ function AssistantMessage() {
       <View style={styles.assistantContent}>
         <MessagePrimitive.GroupedParts
           groupBy={groupPartByType({
-            reasoning: ["group-chainOfThought", "group-reasoning"],
-            "tool-call": ["group-chainOfThought", "group-tool"],
-            "standalone-tool-call": [],
+            reasoning: ["group-reasoning"],
           })}
         >
           {({ part, children }) => {
             switch (part.type) {
-              case "group-chainOfThought":
-                return <View style={styles.chain}>{children}</View>;
               case "group-reasoning": {
                 const running = part.status.type === "running";
                 return (
@@ -155,22 +145,12 @@ function AssistantMessage() {
                   </ReasoningRoot>
                 );
               }
-              case "group-tool":
-                return (
-                  <ToolGroupRoot>
-                    <ToolGroupTrigger
-                      count={part.indices.length}
-                      active={part.status.type === "running"}
-                    />
-                    <ToolGroupContent>{children}</ToolGroupContent>
-                  </ToolGroupRoot>
-                );
               case "text":
                 return <AssistantText {...part} />;
               case "reasoning":
                 return <Reasoning {...part} />;
               case "tool-call":
-                return part.toolUI ?? <ToolFallback {...part} />;
+                return null;
               case "indicator":
                 return <TypingIndicator />;
               default:

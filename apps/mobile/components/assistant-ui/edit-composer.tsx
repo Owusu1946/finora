@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { View, TextInput, Platform, StyleSheet } from "react-native";
 import {
   useAui,
@@ -19,8 +20,19 @@ import { haptics } from "@/lib/haptics";
 export function EditComposer() {
   const { colors } = useTheme();
   const aui = useAui();
-  const text = useAuiState((s) => s.composer.text);
+  const storeText = useAuiState((s) => s.composer.text);
   const canSend = useAuiState((s) => s.composer.canSend);
+
+  const [localText, setLocalText] = useState(storeText);
+
+  useEffect(() => {
+    setLocalText((prev) => (prev !== storeText ? storeText : prev));
+  }, [storeText]);
+
+  const handleChangeText = (t: string) => {
+    setLocalText(t);
+    aui.composer.setText(t);
+  };
 
   return (
     <View
@@ -31,8 +43,8 @@ export function EditComposer() {
     >
       <TextInput
         style={[styles.input, { color: colors.foreground }]}
-        value={text}
-        onChangeText={(t) => aui.composer.setText(t)}
+        value={localText}
+        onChangeText={handleChangeText}
         placeholder="Edit message…"
         placeholderTextColor={colors.mutedForeground}
         multiline
