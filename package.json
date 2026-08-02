@@ -3,15 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "android": "turbo run android -F mobile",
-    "build": "turbo run build",
-    "check": "oxlint && oxfmt --write",
-    "check-types": "turbo run check-types",
-    "dev": "turbo run dev",
-    "ios": "turbo run ios -F mobile",
-    "mobile": "turbo run start -F apps/mobile",
     "postinstall": "node scripts/link-mobile-deps.mjs",
-    "web": "turbo run web -F mobile"
+    "dev": "turbo run dev",
+    "mobile": "turbo run start --filter=@finora/mobile",
+    "android": "turbo run android --filter=@finora/mobile",
+    "ios": "turbo run ios --filter=@finora/mobile",
+    "web": "turbo run web --filter=@finora/mobile",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "check": "oxlint && oxfmt --write"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -22,7 +22,7 @@
     "@types/node": "^22.20.1",
     "oxfmt": "^0.61.0",
     "oxlint": "^1.76.0",
-    "turbo": "^2.10.8",
+    "turbo": "^2.10.7",
     "typescript": "^6.0.3"
   },
   "overrides": {
