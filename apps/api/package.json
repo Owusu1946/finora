@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
+    "check-types": "tsc --noEmit",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@finora/shared": "*",
-    "@finora/wewire": "*",
+    "@finora/shared": "workspace:*",
+    "@finora/wewire": "workspace:*",
     "hono": "^4.8.5"
   },
   "devDependencies": {
