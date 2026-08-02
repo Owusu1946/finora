@@ -1,62 +1,48 @@
-import { useState, useEffect } from "react";
-import {
-  View,
-  Platform,
-  ActionSheetIOS,
-  Alert,
-  StyleSheet,
-  TextInput,
-  type TextInputProps,
-} from "react-native";
-import {
-  useAui,
-  useAuiState,
-  AuiIf,
-  ComposerPrimitive,
-} from "@assistant-ui/react-native";
+import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
+import { View, Platform, ActionSheetIOS, Alert, StyleSheet } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Radius, Spacing } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+
 import {
   ComposerImageAttachment,
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
-} from "./attachment";
-
+} from './attachment';
 
 function AttachButton() {
   const { colors } = useTheme();
   const aui = useAui();
 
   const openWebFilePicker = (acceptTypes: string) => {
-    if (typeof document === "undefined") return;
-    const input = document.createElement("input");
-    input.type = "file";
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'file';
     input.accept = acceptTypes;
     input.multiple = true;
     input.onchange = async (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
       for (const file of files) {
-        if (file.type.startsWith("image/")) {
+        if (file.type.startsWith('image/')) {
           const reader = new FileReader();
           reader.onload = () => {
             const dataUri = reader.result as string;
             aui.composer.addAttachment({
               name: file.name,
-              type: "image",
+              type: 'image',
               contentType: file.type,
-              content: [{ type: "image", image: dataUri }],
+              content: [{ type: 'image', image: dataUri }],
             });
           };
           reader.readAsDataURL(file);
         } else {
           aui.composer.addAttachment({
             name: file.name,
-            type: "document",
+            type: 'document',
             contentType: file.type,
-            content: [{ type: "text", text: `[Attached file: ${file.name}]` }],
+            content: [{ type: 'text', text: `[Attached file: ${file.name}]` }],
           });
         }
       }
@@ -66,9 +52,9 @@ function AttachButton() {
 
   const handleNativePickImage = async () => {
     try {
-      const ImagePicker = await import("expo-image-picker");
+      const ImagePicker = await import('expo-image-picker');
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
+        mediaTypes: ['images'],
         quality: 0.8,
         allowsMultipleSelection: true,
       });
@@ -77,21 +63,21 @@ function AttachButton() {
         for (const asset of result.assets) {
           aui.composer.addAttachment({
             name: asset.fileName || `image_${Date.now()}.jpg`,
-            type: "image",
-            contentType: asset.mimeType || "image/jpeg",
-            content: [{ type: "image", image: asset.uri }],
+            type: 'image',
+            contentType: asset.mimeType || 'image/jpeg',
+            content: [{ type: 'image', image: asset.uri }],
           });
         }
       }
     } catch {
       aui.composer.addAttachment({
-        name: "photo.jpg",
-        type: "image",
-        contentType: "image/jpeg",
+        name: 'photo.jpg',
+        type: 'image',
+        contentType: 'image/jpeg',
         content: [
           {
-            type: "image",
-            image: "https://picsum.photos/400/300",
+            type: 'image',
+            image: 'https://picsum.photos/400/300',
           },
         ],
       });
@@ -100,55 +86,51 @@ function AttachButton() {
 
   const handleNativePickDocument = async () => {
     try {
-      const DocumentPicker = await import("expo-document-picker");
+      const DocumentPicker = await import('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
+        type: '*/*',
         multiple: true,
       });
 
       if (!result.canceled && result.assets) {
         for (const asset of result.assets) {
-          const isImage = asset.mimeType?.startsWith("image/");
+          const isImage = asset.mimeType?.startsWith('image/');
           if (isImage) {
             aui.composer.addAttachment({
               name: asset.name,
-              type: "image",
+              type: 'image',
               contentType: asset.mimeType,
-              content: [{ type: "image", image: asset.uri }],
+              content: [{ type: 'image', image: asset.uri }],
             });
           } else {
             aui.composer.addAttachment({
               name: asset.name,
-              type: "document",
+              type: 'document',
               contentType: asset.mimeType,
-              content: [
-                { type: "text", text: `[Attached document: ${asset.name}]` },
-              ],
+              content: [{ type: 'text', text: `[Attached document: ${asset.name}]` }],
             });
           }
         }
       }
     } catch {
       aui.composer.addAttachment({
-        name: "statement.pdf",
-        type: "document",
-        contentType: "application/pdf",
-        content: [{ type: "text", text: "[Attached document: statement.pdf]" }],
+        name: 'statement.pdf',
+        type: 'document',
+        contentType: 'application/pdf',
+        content: [{ type: 'text', text: '[Attached document: statement.pdf]' }],
       });
     }
   };
 
   const handlePress = () => {
     haptics.selection();
-    if (Platform.OS === "web" || typeof document !== "undefined") {
-      openWebFilePicker(
-        "image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json",
-      );
+    if (Platform.OS === 'web' || typeof document !== 'undefined') {
+      openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
     } else {
-      if (Platform.OS === "ios") {
+      if (Platform.OS === 'ios') {
         ActionSheetIOS.showActionSheetWithOptions(
           {
-            options: ["Cancel", "Photo Library", "Choose Document"],
+            options: ['Cancel', 'Photo Library', 'Choose Document'],
             cancelButtonIndex: 0,
           },
           (buttonIndex) => {
@@ -157,10 +139,10 @@ function AttachButton() {
           },
         );
       } else {
-        Alert.alert("Add Attachment", "Choose attachment type", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Photo", onPress: handleNativePickImage },
-          { text: "Document", onPress: handleNativePickDocument },
+        Alert.alert('Add Attachment', 'Choose attachment type', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Photo', onPress: handleNativePickImage },
+          { text: 'Document', onPress: handleNativePickDocument },
         ]);
       }
     }
@@ -168,16 +150,20 @@ function AttachButton() {
 
   return (
     <ComposerPrimitive.AddAttachment
-      accessibilityLabel="Attach file or photo"
+      accessibilityLabel='Attach file or photo'
       onPressIn={handlePress}
       style={({ pressed }: { pressed: boolean }) => [
         styles.actionButton,
         {
-          backgroundColor: pressed ? colors.muted : "transparent",
+          backgroundColor: pressed ? colors.muted : 'transparent',
         },
       ]}
     >
-      <Icon name="attach" size={20} color={colors.mutedForeground} />
+      <Icon
+        name='attach'
+        size={20}
+        color={colors.mutedForeground}
+      />
     </ComposerPrimitive.AddAttachment>
   );
 }
@@ -188,15 +174,12 @@ function SendButton() {
 
   return (
     <ComposerPrimitive.Send
-      accessibilityLabel="Send message"
+      accessibilityLabel='Send message'
       onPressIn={() => canSend && haptics.success()}
-      style={[
-        styles.actionButton,
-        { backgroundColor: canSend ? colors.primary : colors.muted },
-      ]}
+      style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
       <Icon
-        name="send"
+        name='send'
         size={18}
         color={canSend ? colors.primaryForeground : colors.mutedForeground}
       />
@@ -208,35 +191,16 @@ function CancelButton() {
   const { colors } = useTheme();
   return (
     <ComposerPrimitive.Cancel
-      accessibilityLabel="Stop generating"
+      accessibilityLabel='Stop generating'
       onPressIn={haptics.light}
       style={[styles.actionButton, { backgroundColor: colors.foreground }]}
     >
-      <Icon name="stop" size={15} color={colors.background} />
+      <Icon
+        name='stop'
+        size={15}
+        color={colors.background}
+      />
     </ComposerPrimitive.Cancel>
-  );
-}
-
-function ComposerInput(props: TextInputProps) {
-  const aui = useAui();
-  const storeText = useAuiState((s) => s.composer.text);
-  const [localText, setLocalText] = useState(storeText);
-
-  useEffect(() => {
-    setLocalText((prev) => (prev !== storeText ? storeText : prev));
-  }, [storeText]);
-
-  const handleChangeText = (text: string) => {
-    setLocalText(text);
-    aui.composer.setText(text);
-  };
-
-  return (
-    <TextInput
-      {...props}
-      value={localText}
-      onChangeText={handleChangeText}
-    />
   );
 }
 
@@ -246,13 +210,8 @@ export function Composer() {
   return (
     <View style={styles.container}>
       <View
-        style={[
-          styles.shell,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
+        style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
       >
-
-
         {/* Attachment chips row */}
         <ComposerPrimitive.Attachments
           components={{
@@ -263,9 +222,9 @@ export function Composer() {
           }}
         />
 
-        <ComposerInput
+        <ComposerPrimitive.Input
           style={[styles.input, { color: colors.foreground }]}
-          placeholder="Ask Finora…"
+          placeholder='Ask Finora…'
           placeholderTextColor={colors.mutedForeground}
           multiline
           maxLength={4000}
@@ -288,14 +247,14 @@ export function Composer() {
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
+    width: '100%',
     maxWidth: Spacing.threadMaxWidth + 24,
-    alignSelf: "center",
+    alignSelf: 'center',
     paddingHorizontal: 12,
     paddingTop: 8,
   },
   shell: {
-    flexDirection: "column",
+    flexDirection: 'column',
     gap: 6,
     borderRadius: Radius.composer,
     borderWidth: StyleSheet.hairlineWidth,
@@ -311,14 +270,14 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     paddingBottom: 2,
     ...Platform.select({
-      web: { outlineStyle: "none" } as object,
+      web: { outlineStyle: 'none' } as object,
       default: {},
     }),
   },
   actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   spacer: {
     flex: 1,
@@ -327,7 +286,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: Radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -1,0 +1,3 @@
+{
+  "extends": "@finora/config/tsconfig.base.json"
+}

@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run",
+    "cf-typegen": "wrangler types",
+    "check-types": "tsc --noEmit",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
-    "cf-typegen": "wrangler types"
+    "dev": "wrangler dev"
   },
   "dependencies": {
-    "@finora/shared": "*",
+    "@finora/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.17.0",
     "agents": "^0.0.113",
     "zod": "^3.25.76"

@@ -1,11 +1,12 @@
-# dependencies
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
 # Expo
 .expo/
-dist/
-web-build/
 expo-env.d.ts
+web-build/
 
 # Native
 .kotlin/
@@ -19,37 +20,57 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
 
-# macOS
-.DS_Store
-*.pem
+# Generated files
+apps/web/src/routeTree.gen.ts
 
-# local env files
+# Environment variables
 .env
 .env*.local
 .dev.vars
 
-# typescript
-*.tsbuildinfo
+# IDEs and editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
 
-app-example
+# Logs
+logs
+.evlog/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# generated native folders
-**/ios
-**/android
+# Turbo
+.turbo
+.nx
 
-# Cloudflare / Wrangler
+# Better-T-Stack
+.alchemy
+.vercel
 .wrangler/
 .mf/
 
-# Build
-dist/
-coverage/
+# Testing
+coverage
+.nyc_output
 
-.agents
-.mcp
-.gemini
+# Misc
+*.tgz
+.cache
+tmp
+temp

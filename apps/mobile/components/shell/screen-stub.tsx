@@ -1,6 +1,6 @@
-import { Text, StyleSheet, View } from "react-native";
+import { Text, StyleSheet, View } from 'react-native';
 
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme } from '@/hooks/use-theme';
 
 type ScreenStubProps = {
   title: string;
@@ -13,9 +13,7 @@ export function ScreenStub({ title, description }: ScreenStubProps) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-      <Text style={[styles.description, { color: colors.mutedForeground }]}>
-        {description}
-      </Text>
+      <Text style={[styles.description, { color: colors.mutedForeground }]}>{description}</Text>
     </View>
   );
 }
@@ -28,7 +26,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: '600',
     letterSpacing: -0.4,
     marginBottom: 8,
   },

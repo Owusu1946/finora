@@ -1,13 +1,13 @@
-import { View, Text, StyleSheet } from "react-native";
-import { BranchPickerPrimitive, useAuiState } from "@assistant-ui/react-native";
+import { BranchPickerPrimitive, useAuiState } from '@assistant-ui/react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
+import { Icon } from '@/components/ui/icon';
+import { useTheme } from '@/hooks/use-theme';
 
 export function MessageBranchPicker({
-  align = "flex-start",
+  align = 'flex-start',
 }: {
-  align?: "flex-start" | "flex-end";
+  align?: 'flex-start' | 'flex-end';
 }) {
   const { colors } = useTheme();
   const branchNumber = useAuiState((s) => s.message.branchNumber);
@@ -21,19 +21,24 @@ export function MessageBranchPicker({
         style={[styles.button, { opacity: branchNumber <= 1 ? 0.35 : 1 }]}
         hitSlop={4}
       >
-        <Icon name="chevron-left" size={16} color={colors.mutedForeground} />
+        <Icon
+          name='chevron-left'
+          size={16}
+          color={colors.mutedForeground}
+        />
       </BranchPickerPrimitive.Previous>
       <Text style={[styles.label, { color: colors.mutedForeground }]}>
         <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
       </Text>
       <BranchPickerPrimitive.Next
-        style={[
-          styles.button,
-          { opacity: branchNumber >= branchCount ? 0.35 : 1 },
-        ]}
+        style={[styles.button, { opacity: branchNumber >= branchCount ? 0.35 : 1 }]}
         hitSlop={4}
       >
-        <Icon name="chevron-right" size={16} color={colors.mutedForeground} />
+        <Icon
+          name='chevron-right'
+          size={16}
+          color={colors.mutedForeground}
+        />
       </BranchPickerPrimitive.Next>
     </View>
   );
@@ -41,8 +46,8 @@ export function MessageBranchPicker({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 2,
   },
   button: {
@@ -50,6 +55,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontVariant: ["tabular-nums"],
+    fontVariant: ['tabular-nums'],
   },
 });

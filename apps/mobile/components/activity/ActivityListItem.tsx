@@ -1,10 +1,13 @@
-import { StyleSheet, Text, View, Pressable } from "react-native";
-import { CurrencyIcon } from "@/components/ui/currency-icon";
-import { Icon } from "@/components/ui/icon";
-import type { IconName } from "@/components/ui/icon-mappings";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
-import type { Transaction } from "./types";
+import { StyleSheet, Text, View, Pressable } from 'react-native';
+
+import type { IconName } from '@/components/ui/icon-mappings';
+
+import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+
+import type { Transaction } from './types';
 
 interface ActivityListItemProps {
   tx: Transaction;
@@ -12,23 +15,23 @@ interface ActivityListItemProps {
   onPress?: (tx: Transaction) => void;
 }
 
-const DIRECTION_ICON: Record<Transaction["direction"], IconName> = {
-  sent: "arrow-up",
-  received: "arrow-down-left",
-  swap: "swap",
+const DIRECTION_ICON: Record<Transaction['direction'], IconName> = {
+  sent: 'arrow-up',
+  received: 'arrow-down-left',
+  swap: 'swap',
 };
 
-const STATUS_COLOR: Record<Transaction["status"], string> = {
-  completed: "#10B981",
-  pending: "#F59E0B",
-  failed: "#EF4444",
+const STATUS_COLOR: Record<Transaction['status'], string> = {
+  completed: '#10B981',
+  pending: '#F59E0B',
+  failed: '#EF4444',
 };
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
   const h = d.getHours();
-  const m = d.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "PM" : "AM";
+  const m = d.getMinutes().toString().padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
   return `${h % 12 || 12}:${m} ${ampm}`;
 }
 
@@ -39,19 +42,15 @@ function formatAmount(symbol: string, amount: number): string {
   })}`;
 }
 
-export function ActivityListItem({
-  tx,
-  isLast,
-  onPress,
-}: ActivityListItemProps) {
+export function ActivityListItem({ tx, isLast, onPress }: ActivityListItemProps) {
   const { colors } = useTheme();
 
-  const sign = tx.direction === "received" ? "+" : "-";
+  const sign = tx.direction === 'received' ? '+' : '-';
   const amountColor =
-    tx.status === "failed"
+    tx.status === 'failed'
       ? colors.mutedForeground
-      : tx.direction === "received"
-        ? "#10B981"
+      : tx.direction === 'received'
+        ? '#10B981'
         : colors.foreground;
 
   return (
@@ -72,13 +71,11 @@ export function ActivityListItem({
       {/* Left: icon + details */}
       <View style={styles.left}>
         <View style={styles.iconWrap}>
-          <CurrencyIcon currency={tx.currency} size={36} />
-          <View
-            style={[
-              styles.directionBadge,
-              { backgroundColor: colors.background },
-            ]}
-          >
+          <CurrencyIcon
+            currency={tx.currency}
+            size={36}
+          />
+          <View style={[styles.directionBadge, { backgroundColor: colors.background }]}>
             <Icon
               name={DIRECTION_ICON[tx.direction]}
               size={10}
@@ -102,10 +99,10 @@ export function ActivityListItem({
 
       {/* Right: amount + status */}
       <View style={styles.right}>
-        {tx.direction === "swap" && tx.toCurrency ? (
+        {tx.direction === 'swap' && tx.toCurrency ? (
           <>
             <Text style={[styles.amount, { color: colors.foreground }]}>
-              {formatAmount(tx.toSymbol ?? "", tx.toAmount ?? 0)}
+              {formatAmount(tx.toSymbol ?? '', tx.toAmount ?? 0)}
             </Text>
             <Text style={[styles.detail, { color: colors.mutedForeground }]}>
               {formatAmount(tx.symbol, tx.amount)} → {tx.toCurrency}
@@ -117,26 +114,16 @@ export function ActivityListItem({
               style={[
                 styles.amount,
                 { color: amountColor },
-                tx.status === "failed" && styles.strikethrough,
+                tx.status === 'failed' && styles.strikethrough,
               ]}
             >
               {sign}
               {formatAmount(tx.symbol, tx.amount)}
             </Text>
-            {tx.status !== "completed" && (
+            {tx.status !== 'completed' && (
               <View style={styles.statusRow}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: STATUS_COLOR[tx.status] },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.statusLabel,
-                    { color: STATUS_COLOR[tx.status] },
-                  ]}
-                >
+                <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[tx.status] }]} />
+                <Text style={[styles.statusLabel, { color: STATUS_COLOR[tx.status] }]}>
                   {tx.status}
                 </Text>
               </View>
@@ -150,29 +137,29 @@ export function ActivityListItem({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 14,
   },
   left: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
     flexShrink: 1,
   },
   iconWrap: {
-    position: "relative",
+    position: 'relative',
   },
   directionBadge: {
-    position: "absolute",
+    position: 'absolute',
     bottom: -2,
     right: -2,
     width: 18,
     height: 18,
     borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   meta: {
     gap: 2,
@@ -180,26 +167,26 @@ const styles = StyleSheet.create({
   },
   counterparty: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   detail: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: '400',
   },
   right: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
     gap: 2,
   },
   amount: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   strikethrough: {
-    textDecorationLine: "line-through",
+    textDecorationLine: 'line-through',
   },
   statusRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
   statusDot: {
@@ -209,7 +196,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 11,
-    fontWeight: "500",
-    textTransform: "capitalize",
+    fontWeight: '500',
+    textTransform: 'capitalize',
   },
 });

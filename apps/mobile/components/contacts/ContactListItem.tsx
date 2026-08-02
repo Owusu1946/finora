@@ -1,8 +1,10 @@
-import { StyleSheet, Text, View, Pressable } from "react-native";
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
-import { AVATAR_COLORS, type Contact } from "./types";
+import { StyleSheet, Text, View, Pressable } from 'react-native';
+
+import { Icon } from '@/components/ui/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+
+import { AVATAR_COLORS, type Contact } from './types';
 
 interface ContactListItemProps {
   contact: Contact;
@@ -16,18 +18,13 @@ function relativeDate(iso: string): string {
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const days = Math.floor(diff / 86_400_000);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
   if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function ContactListItem({
-  contact,
-  index,
-  isLast,
-  onPress,
-}: ContactListItemProps) {
+export function ContactListItem({ contact, index, isLast, onPress }: ContactListItemProps) {
   const { colors } = useTheme();
   const avatarBg = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
@@ -61,7 +58,11 @@ export function ContactListItem({
             {contact.name}
           </Text>
           {contact.favourite && (
-            <Icon name="check" size={12} color={colors.primary} />
+            <Icon
+              name='check'
+              size={12}
+              color={colors.primary}
+            />
           )}
         </View>
         <Text style={[styles.detail, { color: colors.mutedForeground }]}>
@@ -76,11 +77,13 @@ export function ContactListItem({
             {relativeDate(contact.lastTxDate)}
           </Text>
         ) : (
-          <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
-            Never
-          </Text>
+          <Text style={[styles.dateText, { color: colors.mutedForeground }]}>Never</Text>
         )}
-        <Icon name="chevron-right" size={14} color={colors.border} />
+        <Icon
+          name='chevron-right'
+          size={14}
+          color={colors.border}
+        />
       </View>
     </Pressable>
   );
@@ -88,8 +91,8 @@ export function ContactListItem({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 14,
     gap: 12,
   },
@@ -97,13 +100,13 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   initials: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   meta: {
@@ -111,25 +114,25 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 5,
   },
   name: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   detail: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: '400',
   },
   right: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
   },
   dateText: {
     fontSize: 12,
-    fontWeight: "400",
+    fontWeight: '400',
   },
 });

@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run",
+    "cf-typegen": "wrangler types",
+    "check-types": "tsc --noEmit",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
-    "cf-typegen": "wrangler types"
+    "dev": "wrangler dev"
   },
   "dependencies": {
-    "@finora/shared": "*",
-    "@finora/wewire": "*",
+    "@finora/shared": "workspace:*",
+    "@finora/wewire": "workspace:*",
     "hono": "^4.8.5"
   },
   "devDependencies": {

@@ -1,13 +1,13 @@
 /** Minimal WeWire types used by Finora. Expand against https://docs.wewire.com/ */
 
-export type WewireEnvironment = "sandbox" | "production";
+export type WewireEnvironment = 'sandbox' | 'production';
 
-export type SubCustomerType = "INDIVIDUAL" | "BUSINESS";
+export type SubCustomerType = 'INDIVIDUAL' | 'BUSINESS';
 
 export interface WewireWallet {
   id: string;
   balance: string;
-  status: "ACTIVE" | "SUSPENDED";
+  status: 'ACTIVE' | 'SUSPENDED';
   currency: string;
   businessId: string;
   subCustomerId?: string | null;
@@ -30,6 +30,6 @@ export interface CreateSubCustomerInput {
   firstName?: string;
   lastName?: string;
   businessName?: string;
-  businessType?: "GENERAL_BUSINESS" | "SOLE_PROPRIETORSHIP";
+  businessType?: 'GENERAL_BUSINESS' | 'SOLE_PROPRIETORSHIP';
   purpose?: string[];
 }

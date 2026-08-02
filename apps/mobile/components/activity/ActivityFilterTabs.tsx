@@ -1,13 +1,15 @@
-import { StyleSheet, Text, View, Pressable } from "react-native";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
-import type { ActivityFilter } from "./types";
+import { StyleSheet, Text, View, Pressable } from 'react-native';
+
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+
+import type { ActivityFilter } from './types';
 
 const TABS: { key: ActivityFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "sent", label: "Sent" },
-  { key: "received", label: "Received" },
-  { key: "swap", label: "Swaps" },
+  { key: 'all', label: 'All' },
+  { key: 'sent', label: 'Sent' },
+  { key: 'received', label: 'Received' },
+  { key: 'swap', label: 'Swaps' },
 ];
 
 interface ActivityFilterTabsProps {
@@ -15,10 +17,7 @@ interface ActivityFilterTabsProps {
   onSelectFilter: (f: ActivityFilter) => void;
 }
 
-export function ActivityFilterTabs({
-  filter,
-  onSelectFilter,
-}: ActivityFilterTabsProps) {
+export function ActivityFilterTabs({ filter, onSelectFilter }: ActivityFilterTabsProps) {
   const { colors } = useTheme();
 
   return (
@@ -32,10 +31,7 @@ export function ActivityFilterTabs({
               haptics.selection();
               onSelectFilter(t.key);
             }}
-            style={[
-              styles.tab,
-              active && { borderBottomColor: colors.foreground },
-            ]}
+            style={[styles.tab, active && { borderBottomColor: colors.foreground }]}
           >
             <Text
               style={[
@@ -55,22 +51,22 @@ export function ActivityFilterTabs({
 
 const styles = StyleSheet.create({
   bar: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(150,150,150,0.15)",
+    borderBottomColor: 'rgba(150,150,150,0.15)',
     paddingBottom: 4,
   },
   tab: {
     paddingVertical: 6,
     borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    borderBottomColor: 'transparent',
   },
   label: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   labelActive: {
-    fontWeight: "600",
+    fontWeight: '600',
   },
 });

@@ -3,11 +3,11 @@ import type {
   WewireEnvironment,
   WewireSubCustomer,
   WewireWallet,
-} from "./types";
+} from './types';
 
 const BASE_URLS: Record<WewireEnvironment, string> = {
-  sandbox: "https://stage-capi.wewireafrica.com",
-  production: "https://capi.wewire.com",
+  sandbox: 'https://stage-capi.wewireafrica.com',
+  production: 'https://capi.wewire.com',
 };
 
 export interface WewireClientOptions {
@@ -23,7 +23,7 @@ export class WewireClient {
 
   constructor(options: WewireClientOptions) {
     this.apiKey = options.apiKey;
-    this.baseUrl = BASE_URLS[options.environment ?? "sandbox"];
+    this.baseUrl = BASE_URLS[options.environment ?? 'sandbox'];
     this.fetchFn = options.fetch ?? fetch;
   }
 
@@ -31,9 +31,9 @@ export class WewireClient {
     const response = await this.fetchFn(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
-        "Content-Type": "application/json",
-        "ww-api-key": this.apiKey,
-        ...(init?.headers ?? {}),
+        'Content-Type': 'application/json',
+        'ww-api-key': this.apiKey,
+        ...init?.headers,
       },
     });
 
@@ -50,25 +50,21 @@ export class WewireClient {
   }
 
   listBusinessWallets() {
-    return this.request<WewireWallet[]>("/v1/wallets");
+    return this.request<WewireWallet[]>('/v1/wallets');
   }
 
   listSubCustomerWallets(subCustomerId: string) {
-    return this.request<WewireWallet[]>(
-      `/v1/subcustomers/${subCustomerId}/wallets`,
-    );
+    return this.request<WewireWallet[]>(`/v1/subcustomers/${subCustomerId}/wallets`);
   }
 
   createSubCustomer(input: CreateSubCustomerInput) {
-    return this.request<WewireSubCustomer>("/v1/subcustomers", {
-      method: "POST",
+    return this.request<WewireSubCustomer>('/v1/subcustomers', {
+      method: 'POST',
       body: JSON.stringify(input),
     });
   }
 
   getSubCustomer(subCustomerId: string) {
-    return this.request<WewireSubCustomer>(
-      `/v1/subcustomers/${subCustomerId}`,
-    );
+    return this.request<WewireSubCustomer>(`/v1/subcustomers/${subCustomerId}`);
   }
 }

@@ -1,31 +1,37 @@
 {
   "name": "finora",
   "private": true,
-  "version": "0.0.0",
-  "description": "Finora — financial operating system for AI agents",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "type": "module",
   "scripts": {
+    "android": "turbo run android --filter=@finora/mobile",
+    "build": "turbo run build",
+    "check": "oxlint && oxfmt --write",
+    "check-types": "turbo run check-types",
+    "dev": "turbo run dev",
+    "ios": "turbo run ios --filter=@finora/mobile",
+    "mobile": "turbo run start --filter=@finora/mobile",
     "postinstall": "node scripts/link-mobile-deps.mjs",
-    "mobile": "bun run --filter @finora/mobile start",
-    "mobile:android": "bun run --filter @finora/mobile android",
-    "mobile:ios": "bun run --filter @finora/mobile ios",
-    "mobile:web": "bun run --filter @finora/mobile web",
-    "api": "bun run --filter @finora/api dev",
-    "api:deploy": "bun run --filter @finora/api deploy",
-    "mcp": "bun run --filter @finora/mcp dev",
-    "mcp:deploy": "bun run --filter @finora/mcp deploy",
-    "typecheck": "bun run --workspaces --if-present typecheck",
-    "lint": "bun run --workspaces --if-present lint"
+    "web": "turbo run web --filter=@finora/mobile"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@finora/config": "workspace:*",
+    "@types/node": "^22.20.1",
+    "oxfmt": "^0.61.0",
+    "oxlint": "^1.76.0",
+    "turbo": "^2.10.7",
+    "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "lightningcss": "1.30.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
   },
   "engines": {
     "node": ">=20"
   },
-  "overrides": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "lightningcss": "1.30.1"
-  }
+  "packageManager": "pnpm@11.18.0"
 }
