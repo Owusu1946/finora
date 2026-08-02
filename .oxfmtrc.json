@@ -1,8 +1,7 @@
 {
   "ignorePatterns": ["dist/**", ".expo/**", ".turbo/**"],
-  "singleQuote": true,
-  "jsxSingleQuote": true,
-  "singleAttributePerLine": true,
+  "singleQuotes": true,
+  "jsxSingleQuotes": true,
   "sortImports": {
     "groups": [
       "type-import",
@@ -14,12 +13,12 @@
       "unknown"
     ]
   },
-  "sortPackageJson": {
-    "sortScripts": true
-  },
   "sortTailwindcss": {
     "stylesheet": "./apps/mobile/globals.css",
     "functions": ["clsx", "cn"],
     "preserveWhitespace": true
-  }
+  },
+  "sortPackageJson": {
+      "sortScripts": true
+    }
 }
