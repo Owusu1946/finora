@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { CurrencySchema, MoneyAmountSchema } from "./money";
 
 /**
@@ -8,27 +9,35 @@ import { CurrencySchema, MoneyAmountSchema } from "./money";
 
 export const GetBalancesInputSchema = z.object({}).strict();
 
-export const SearchContactsInputSchema = z.object({
-  query: z.string().min(1),
-}).strict();
+export const SearchContactsInputSchema = z
+  .object({
+    query: z.string().min(1),
+  })
+  .strict();
 
-export const PreparePaymentInputSchema = z.object({
-  contactId: z.string().optional(),
-  beneficiaryAccountId: z.string().uuid().optional(),
-  amount: MoneyAmountSchema,
-  reference: z.string().max(140).optional(),
-  description: z.string().max(280).optional(),
-}).strict();
+export const PreparePaymentInputSchema = z
+  .object({
+    contactId: z.string().optional(),
+    beneficiaryAccountId: z.string().uuid().optional(),
+    amount: MoneyAmountSchema,
+    reference: z.string().max(140).optional(),
+    description: z.string().max(280).optional(),
+  })
+  .strict();
 
-export const PrepareConversionInputSchema = z.object({
-  from: CurrencySchema,
-  to: CurrencySchema,
-  amount: z.number().positive(),
-}).strict();
+export const PrepareConversionInputSchema = z
+  .object({
+    from: CurrencySchema,
+    to: CurrencySchema,
+    amount: z.number().positive(),
+  })
+  .strict();
 
-export const RequestApprovalInputSchema = z.object({
-  preparationId: z.string().uuid(),
-}).strict();
+export const RequestApprovalInputSchema = z
+  .object({
+    preparationId: z.string().uuid(),
+  })
+  .strict();
 
 export const TOOL_NAMES = [
   "get_balances",

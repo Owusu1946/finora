@@ -62,8 +62,7 @@ export class FinoraMCP extends McpAgent<Env> {
             text: JSON.stringify({
               status: "pending_approval",
               preparation: input,
-              message:
-                "Payment prepared. User must approve in the Finora app before execution.",
+              message: "Payment prepared. User must approve in the Finora app before execution.",
             }),
           },
         ],

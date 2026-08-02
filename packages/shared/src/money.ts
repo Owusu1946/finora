@@ -1,14 +1,7 @@
 import { z } from "zod";
 
 /** Currencies Finora surfaces in product (subset may depend on WeWire config). */
-export const CurrencySchema = z.enum([
-  "USD",
-  "EUR",
-  "GBP",
-  "GHS",
-  "USDT",
-  "USDC",
-]);
+export const CurrencySchema = z.enum(["USD", "EUR", "GBP", "GHS", "USDT", "USDC"]);
 export type Currency = z.infer<typeof CurrencySchema>;
 
 export const MoneyAmountSchema = z.object({
