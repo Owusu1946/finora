@@ -1,7 +1,7 @@
-import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { TOOL_NAMES } from "@finora/shared";
 import { WewireClient } from "@finora/wewire";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
 type AppEnv = {
   Bindings: Env;
@@ -39,8 +39,7 @@ app.get("/v1/balances", async (c) => {
 
   const wewire = new WewireClient({
     apiKey,
-    environment:
-      c.env.ENVIRONMENT === "production" ? "production" : "sandbox",
+    environment: c.env.ENVIRONMENT === "production" ? "production" : "sandbox",
   });
 
   // Until auth + sub-customer mapping exists, return business wallets.

@@ -33,7 +33,7 @@ export class WewireClient {
       headers: {
         "Content-Type": "application/json",
         "ww-api-key": this.apiKey,
-        ...(init?.headers ?? {}),
+        ...init?.headers,
       },
     });
 
@@ -54,9 +54,7 @@ export class WewireClient {
   }
 
   listSubCustomerWallets(subCustomerId: string) {
-    return this.request<WewireWallet[]>(
-      `/v1/subcustomers/${subCustomerId}/wallets`,
-    );
+    return this.request<WewireWallet[]>(`/v1/subcustomers/${subCustomerId}/wallets`);
   }
 
   createSubCustomer(input: CreateSubCustomerInput) {
@@ -67,8 +65,6 @@ export class WewireClient {
   }
 
   getSubCustomer(subCustomerId: string) {
-    return this.request<WewireSubCustomer>(
-      `/v1/subcustomers/${subCustomerId}`,
-    );
+    return this.request<WewireSubCustomer>(`/v1/subcustomers/${subCustomerId}`);
   }
 }
