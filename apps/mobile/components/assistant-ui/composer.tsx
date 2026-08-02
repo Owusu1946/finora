@@ -1,9 +1,12 @@
+import { useState, useEffect } from "react";
 import {
   View,
   Platform,
   ActionSheetIOS,
   Alert,
   StyleSheet,
+  TextInput,
+  type TextInputProps,
 } from "react-native";
 import {
   useAui,
@@ -214,6 +217,29 @@ function CancelButton() {
   );
 }
 
+function ComposerInput(props: TextInputProps) {
+  const aui = useAui();
+  const storeText = useAuiState((s) => s.composer.text);
+  const [localText, setLocalText] = useState(storeText);
+
+  useEffect(() => {
+    setLocalText((prev) => (prev !== storeText ? storeText : prev));
+  }, [storeText]);
+
+  const handleChangeText = (text: string) => {
+    setLocalText(text);
+    aui.composer.setText(text);
+  };
+
+  return (
+    <TextInput
+      {...props}
+      value={localText}
+      onChangeText={handleChangeText}
+    />
+  );
+}
+
 export function Composer() {
   const { colors } = useTheme();
 
@@ -237,7 +263,7 @@ export function Composer() {
           }}
         />
 
-        <ComposerPrimitive.Input
+        <ComposerInput
           style={[styles.input, { color: colors.foreground }]}
           placeholder="Ask Finora…"
           placeholderTextColor={colors.mutedForeground}
