@@ -12,5 +12,13 @@
       ["value-parent", "value-sibling", "value-index"],
       "unknown"
     ]
-  }
+  },
+  "sortTailwindcss": {
+    "stylesheet": "./apps/mobile/globals.css",
+    "functions": ["clsx", "cn"],
+    "preserveWhitespace": true
+  },
+  "sortPackageJson": {
+      "sortScripts": true
+    }
 }
