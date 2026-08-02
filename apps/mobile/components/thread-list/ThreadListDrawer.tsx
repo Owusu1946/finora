@@ -1,30 +1,30 @@
-import type { DrawerContentComponentProps } from "@react-navigation/drawer";
+import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 import {
   ThreadListPrimitive,
   ThreadListItemByIndexProvider,
   useAui,
-} from "@assistant-ui/react-native";
-import { type Href, usePathname, useRouter } from "expo-router";
-import { View, Text, Pressable, StyleSheet } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from '@assistant-ui/react-native';
+import { type Href, usePathname, useRouter } from 'expo-router';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { IconName } from "@/components/ui/icon-mappings";
+import type { IconName } from '@/components/ui/icon-mappings';
 
-import { AccountBadge } from "@/components/shell/account-badge";
-import { Icon } from "@/components/ui/icon";
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { AccountBadge } from '@/components/shell/account-badge';
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
-import { ThreadListItem } from "./ThreadListItem";
+import { ThreadListItem } from './ThreadListItem';
 
 const NAV: { href: Href; label: string; icon: IconName }[] = [
-  { href: "/wallets", label: "Wallets", icon: "wallet" },
-  { href: "/activity", label: "Activity", icon: "activity" },
-  { href: "/contacts", label: "Contacts", icon: "contacts" },
-  { href: "/integrations", label: "Integrations", icon: "integrations" },
-  { href: "/settings", label: "Settings", icon: "settings" },
+  { href: '/wallets', label: 'Wallets', icon: 'wallet' },
+  { href: '/activity', label: 'Activity', icon: 'activity' },
+  { href: '/contacts', label: 'Contacts', icon: 'contacts' },
+  { href: '/integrations', label: 'Integrations', icon: 'integrations' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
 export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
@@ -43,7 +43,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     >
       <View style={styles.brandRow}>
         <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
-        <AccountBadge variant="text" />
+        <AccountBadge variant='text' />
       </View>
 
       <ThreadListPrimitive.Root style={styles.root}>
@@ -51,15 +51,19 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           onPressIn={haptics.selection}
           onPress={() => {
             aui.threads.switchToNewThread();
-            router.push("/");
+            router.push('/');
             navigation.closeDrawer();
           }}
           style={({ pressed }) => [
             styles.newButton,
-            { backgroundColor: pressed ? colors.muted : "transparent" },
+            { backgroundColor: pressed ? colors.muted : 'transparent' },
           ]}
         >
-          <Icon name="compose" size={18} color={colors.foreground} />
+          <Icon
+            name='compose'
+            size={18}
+            color={colors.foreground}
+          />
           <Text style={[styles.newLabel, { color: colors.foreground }]}>New chat</Text>
         </Pressable>
 
@@ -67,10 +71,13 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
 
         <ThreadListPrimitive.Items
           renderItem={({ index }) => (
-            <ThreadListItemByIndexProvider index={index} archived={false}>
+            <ThreadListItemByIndexProvider
+              index={index}
+              archived={false}
+            >
               <ThreadListItem
                 onSelect={() => {
-                  router.push("/");
+                  router.push('/');
                   navigation.closeDrawer();
                 }}
               />
@@ -117,7 +124,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
                   styles.navLabel,
                   {
                     color: colors.foreground,
-                    fontWeight: active ? "600" : "400",
+                    fontWeight: active ? '600' : '400',
                   },
                 ]}
               >
@@ -141,15 +148,15 @@ const styles = StyleSheet.create({
   },
   brand: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.4,
   },
   root: {
     flex: 1,
   },
   newButton: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     height: 40,
     paddingHorizontal: 12,
@@ -159,12 +166,12 @@ const styles = StyleSheet.create({
   },
   newLabel: {
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: '500',
     letterSpacing: -0.2,
   },
   sectionLabel: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 6,
@@ -181,8 +188,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   navItem: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     height: 40,
     paddingHorizontal: 12,

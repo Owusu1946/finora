@@ -1,10 +1,10 @@
-import { useAui, useAuiState, ComposerPrimitive } from "@assistant-ui/react-native";
-import { View, TextInput, Platform, StyleSheet } from "react-native";
+import { useAui, useAuiState, ComposerPrimitive } from '@assistant-ui/react-native';
+import { View, TextInput, Platform, StyleSheet } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 /**
  * Inline edit composer for user messages.
@@ -24,40 +24,44 @@ export function EditComposer() {
         style={[styles.input, { color: colors.foreground }]}
         value={text}
         onChangeText={(t) => aui.composer.setText(t)}
-        placeholder="Edit message…"
+        placeholder='Edit message…'
         placeholderTextColor={colors.mutedForeground}
         multiline
         maxLength={4000}
         autoFocus
         {...Platform.select({
           web: {
-            style: [styles.input, { color: colors.foreground, outlineStyle: "none" } as object],
+            style: [styles.input, { color: colors.foreground, outlineStyle: 'none' } as object],
           },
           default: {},
         })}
       />
       <View style={styles.actionRow}>
         <ComposerPrimitive.Cancel
-          accessibilityLabel="Cancel edit"
+          accessibilityLabel='Cancel edit'
           onPressIn={haptics.light}
           style={({ pressed }: { pressed: boolean }) => [
             styles.cancelButton,
             {
               borderColor: colors.border,
-              backgroundColor: pressed ? colors.muted : "transparent",
+              backgroundColor: pressed ? colors.muted : 'transparent',
             },
           ]}
         >
-          <Icon name="remove" size={14} color={colors.mutedForeground} />
+          <Icon
+            name='remove'
+            size={14}
+            color={colors.mutedForeground}
+          />
         </ComposerPrimitive.Cancel>
 
         <ComposerPrimitive.Send
-          accessibilityLabel="Save edit"
+          accessibilityLabel='Save edit'
           onPressIn={() => canSend && haptics.success()}
           style={[styles.saveButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
         >
           <Icon
-            name="save"
+            name='save'
             size={16}
             color={canSend ? colors.primaryForeground : colors.mutedForeground}
           />
@@ -69,7 +73,7 @@ export function EditComposer() {
 
 const styles = StyleSheet.create({
   shell: {
-    flexDirection: "column",
+    flexDirection: 'column',
     gap: 6,
     borderRadius: Radius.composer,
     borderWidth: StyleSheet.hairlineWidth,
@@ -84,14 +88,14 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     paddingBottom: 2,
     ...Platform.select({
-      web: { outlineStyle: "none" } as object,
+      web: { outlineStyle: 'none' } as object,
       default: {},
     }),
   },
   actionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
   },
   cancelButton: {
@@ -99,14 +103,14 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   saveButton: {
     width: 32,
     height: 32,
     borderRadius: Radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

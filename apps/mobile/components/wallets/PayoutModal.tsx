@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from "react-native";
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from 'react-native';
 
-import { CurrencyIcon } from "@/components/ui/currency-icon";
-import { Icon } from "@/components/ui/icon";
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
-import { WalletItem } from "./types";
+import { WalletItem } from './types';
 
 interface PayoutModalProps {
   visible: boolean;
@@ -19,9 +19,9 @@ interface PayoutModalProps {
 export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: PayoutModalProps) {
   const { colors } = useTheme();
 
-  const [sendWalletId, setSendWalletId] = useState(wallets[0]?.id || "w-usd");
-  const [sendAmount, setSendAmount] = useState("");
-  const [sendRecipient, setSendRecipient] = useState("");
+  const [sendWalletId, setSendWalletId] = useState(wallets[0]?.id || 'w-usd');
+  const [sendAmount, setSendAmount] = useState('');
+  const [sendRecipient, setSendRecipient] = useState('');
   const [sendSuccess, setSendSuccess] = useState(false);
 
   const handleExecuteSend = () => {
@@ -31,7 +31,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
     const sourceWallet = wallets.find((w) => w.id === sendWalletId);
 
     if (!sourceWallet || sourceWallet.balance < amountNum) {
-      alert("Insufficient wallet balance.");
+      alert('Insufficient wallet balance.');
       return;
     }
 
@@ -39,14 +39,19 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
     setSendSuccess(true);
     setTimeout(() => {
       setSendSuccess(false);
-      setSendAmount("");
-      setSendRecipient("");
+      setSendAmount('');
+      setSendRecipient('');
       onClose();
     }, 1600);
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType='slide'
+      transparent
+      onRequestClose={onClose}
+    >
       <View style={styles.modalBackdrop}>
         <View
           style={[
@@ -56,14 +61,25 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
         >
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Send Payout</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Icon name="remove" size={20} color={colors.mutedForeground} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+            >
+              <Icon
+                name='remove'
+                size={20}
+                color={colors.mutedForeground}
+              />
             </Pressable>
           </View>
 
           {sendSuccess ? (
             <View style={styles.successState}>
-              <Icon name="check" size={36} color={colors.foreground} />
+              <Icon
+                name='check'
+                size={36}
+                color={colors.foreground}
+              />
               <Text style={[styles.successTitle, { color: colors.foreground }]}>
                 Payout Submitted
               </Text>
@@ -76,8 +92,11 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
               <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
                 Source Wallet
               </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: "row", gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                <View style={{ flexDirection: 'row', gap: 8 }}>
                   {wallets.map((w) => (
                     <Pressable
                       key={`send-src-${w.id}`}
@@ -89,7 +108,10 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                         },
                       ]}
                     >
-                      <CurrencyIcon currency={w.currency} size={18} />
+                      <CurrencyIcon
+                        currency={w.currency}
+                        size={18}
+                      />
                       <Text
                         style={[
                           styles.walletChipText,
@@ -112,7 +134,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 <TextInput
                   value={sendRecipient}
                   onChangeText={setSendRecipient}
-                  placeholder="e.g. GB82 CLRB ... or +233 24 ..."
+                  placeholder='e.g. GB82 CLRB ... or +233 24 ...'
                   placeholderTextColor={colors.mutedForeground}
                   style={[
                     styles.textInput,
@@ -130,8 +152,8 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 <TextInput
                   value={sendAmount}
                   onChangeText={setSendAmount}
-                  placeholder="0.00"
-                  keyboardType="numeric"
+                  placeholder='0.00'
+                  keyboardType='numeric'
                   placeholderTextColor={colors.mutedForeground}
                   style={[
                     styles.textInput,
@@ -167,8 +189,8 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "flex-end",
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
   },
   sheetContainer: {
     borderTopLeftRadius: 20,
@@ -178,17 +200,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sheetTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   formLabel: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
     marginBottom: 4,
   },
   textInput: {
@@ -199,8 +221,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   walletChip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -208,12 +230,12 @@ const styles = StyleSheet.create({
   },
   walletChipText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
     borderRadius: Radius.pill,
@@ -221,20 +243,20 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   successState: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: 20,
     gap: 8,
   },
   successTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   successSub: {
     fontSize: 13,
-    textAlign: "center",
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.8,

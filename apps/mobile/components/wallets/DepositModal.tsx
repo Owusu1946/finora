@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,15 +8,15 @@ import {
   Modal,
   Share,
   Platform,
-} from "react-native";
+} from 'react-native';
 
-import { CurrencyIcon } from "@/components/ui/currency-icon";
-import { Icon } from "@/components/ui/icon";
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
-import { WalletItem } from "./types";
+import { WalletItem } from './types';
 
 interface DepositModalProps {
   visible: boolean;
@@ -46,7 +46,12 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType='slide'
+      transparent
+      onRequestClose={onClose}
+    >
       <View style={styles.modalBackdrop}>
         <View
           style={[
@@ -57,19 +62,32 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
           <View style={styles.sheetHeader}>
             {selectedWallet && (
               <View style={styles.headerLeft}>
-                <CurrencyIcon currency={selectedWallet.currency} size={32} />
+                <CurrencyIcon
+                  currency={selectedWallet.currency}
+                  size={32}
+                />
                 <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
                   {selectedWallet.name} Account
                 </Text>
               </View>
             )}
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Icon name="remove" size={20} color={colors.mutedForeground} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+            >
+              <Icon
+                name='remove'
+                size={20}
+                color={colors.mutedForeground}
+              />
             </Pressable>
           </View>
 
           {selectedWallet && (
-            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={{ maxHeight: 380 }}
+              showsVerticalScrollIndicator={false}
+            >
               {/* Balance Summary Header */}
               <View style={[styles.sheetBalanceBox, { backgroundColor: colors.muted }]}>
                 <Text style={[styles.sheetBalanceLabel, { color: colors.mutedForeground }]}>
@@ -79,7 +97,7 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                   {selectedWallet.symbol}
                   {selectedWallet.balance.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
-                  })}{" "}
+                  })}{' '}
                   {selectedWallet.currency}
                 </Text>
               </View>
@@ -114,12 +132,16 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                   </Text>
                   <Pressable
                     style={styles.sheetCopyRow}
-                    onPress={() => onCopy(selectedWallet.accountDetails!.iban!, "IBAN")}
+                    onPress={() => onCopy(selectedWallet.accountDetails!.iban!, 'IBAN')}
                   >
                     <Text style={[styles.sheetRowValueMono, { color: colors.foreground }]}>
                       {selectedWallet.accountDetails.iban}
                     </Text>
-                    <Icon name="copy" size={14} color={colors.mutedForeground} />
+                    <Icon
+                      name='copy'
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
                   </Pressable>
                 </View>
               )}
@@ -132,13 +154,17 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                   <Pressable
                     style={styles.sheetCopyRow}
                     onPress={() =>
-                      onCopy(selectedWallet.accountDetails!.accountNumber!, "Account Number")
+                      onCopy(selectedWallet.accountDetails!.accountNumber!, 'Account Number')
                     }
                   >
                     <Text style={[styles.sheetRowValueMono, { color: colors.foreground }]}>
                       {selectedWallet.accountDetails.accountNumber}
                     </Text>
-                    <Icon name="copy" size={14} color={colors.mutedForeground} />
+                    <Icon
+                      name='copy'
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
                   </Pressable>
                 </View>
               )}
@@ -162,7 +188,7 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                   <Pressable
                     style={styles.sheetCopyRow}
                     onPress={() =>
-                      onCopy(selectedWallet.accountDetails!.address!, "Crypto Address")
+                      onCopy(selectedWallet.accountDetails!.address!, 'Crypto Address')
                     }
                   >
                     <Text
@@ -171,7 +197,11 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                     >
                       {selectedWallet.accountDetails.address}
                     </Text>
-                    <Icon name="copy" size={14} color={colors.mutedForeground} />
+                    <Icon
+                      name='copy'
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
                   </Pressable>
                 </View>
               )}
@@ -183,12 +213,16 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                   </Text>
                   <Pressable
                     style={styles.sheetCopyRow}
-                    onPress={() => onCopy(selectedWallet.accountDetails!.phone!, "MoMo Line")}
+                    onPress={() => onCopy(selectedWallet.accountDetails!.phone!, 'MoMo Line')}
                   >
                     <Text style={[styles.sheetRowValueMono, { color: colors.foreground }]}>
                       {selectedWallet.accountDetails.phone}
                     </Text>
-                    <Icon name="copy" size={14} color={colors.mutedForeground} />
+                    <Icon
+                      name='copy'
+                      size={14}
+                      color={colors.mutedForeground}
+                    />
                   </Pressable>
                 </View>
               )}
@@ -202,7 +236,11 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
                   pressed && styles.pressed,
                 ]}
               >
-                <Icon name="share" size={15} color={colors.foreground} />
+                <Icon
+                  name='share'
+                  size={15}
+                  color={colors.foreground}
+                />
                 <Text style={[styles.primaryBtnText, { color: colors.foreground }]}>
                   Share Receiving Details
                 </Text>
@@ -218,8 +256,8 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "flex-end",
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
   },
   sheetContainer: {
     borderTopLeftRadius: 20,
@@ -229,18 +267,18 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
   sheetTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   sheetBalanceBox: {
     padding: 12,
@@ -249,43 +287,43 @@ const styles = StyleSheet.create({
   },
   sheetBalanceLabel: {
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   sheetBalanceValue: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     marginTop: 2,
   },
   sheetRow: {
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(150,150,150,0.12)",
+    borderBottomColor: 'rgba(150,150,150,0.12)',
     gap: 4,
   },
   sheetRowLabel: {
     fontSize: 11,
-    fontWeight: "500",
-    textTransform: "uppercase",
+    fontWeight: '500',
+    textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   sheetRowValue: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   sheetRowValueMono: {
     fontSize: 13,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontWeight: "500",
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontWeight: '500',
   },
   sheetCopyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
     borderRadius: Radius.pill,
@@ -293,7 +331,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,

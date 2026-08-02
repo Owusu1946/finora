@@ -1,12 +1,12 @@
-import { AttachmentPrimitive, useAuiState } from "@assistant-ui/react-native";
-import { Image as ExpoImage } from "expo-image";
-import { useState, useEffect } from "react";
-import { View, StyleSheet } from "react-native";
+import { AttachmentPrimitive, useAuiState } from '@assistant-ui/react-native';
+import { Image as ExpoImage } from 'expo-image';
+import { useState, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 function useAttachmentPreview() {
   const attachment = useAuiState((s) => s.attachment);
@@ -20,7 +20,7 @@ function useAttachmentPreview() {
 
     // 1. If content contains an image part
     if (Array.isArray(attachment.content)) {
-      const imgPart = (attachment.content as any[]).find((p: any) => p.type === "image");
+      const imgPart = (attachment.content as any[]).find((p: any) => p.type === 'image');
       if (imgPart?.image) {
         setImageUri(imgPart.image);
         return;
@@ -30,10 +30,10 @@ function useAttachmentPreview() {
     // 2. If file is an Image File (web / blob)
     if (
       attachment.file &&
-      (attachment.contentType?.startsWith("image/") ||
-        attachment.file.type?.startsWith("image/")) &&
-      typeof URL !== "undefined" &&
-      typeof URL.createObjectURL === "function"
+      (attachment.contentType?.startsWith('image/') ||
+        attachment.file.type?.startsWith('image/')) &&
+      typeof URL !== 'undefined' &&
+      typeof URL.createObjectURL === 'function'
     ) {
       try {
         const url = URL.createObjectURL(attachment.file);
@@ -65,10 +65,18 @@ export function ComposerImageAttachment() {
         style={[styles.imageChip, { backgroundColor: colors.muted, borderColor: colors.border }]}
       >
         {imageUri ? (
-          <ExpoImage source={{ uri: imageUri }} style={styles.imagePreview} contentFit="cover" />
+          <ExpoImage
+            source={{ uri: imageUri }}
+            style={styles.imagePreview}
+            contentFit='cover'
+          />
         ) : (
           <View style={styles.imagePlaceholder}>
-            <Icon name="image" size={20} color={colors.mutedForeground} />
+            <Icon
+              name='image'
+              size={20}
+              color={colors.mutedForeground}
+            />
           </View>
         )}
       </View>
@@ -77,7 +85,11 @@ export function ComposerImageAttachment() {
         style={styles.imageRemoveBadge}
         hitSlop={6}
       >
-        <Icon name="close-circle" size={18} color={colors.foreground} />
+        <Icon
+          name='close-circle'
+          size={18}
+          color={colors.foreground}
+        />
       </AttachmentPrimitive.Remove>
     </AttachmentPrimitive.Root>
   );
@@ -93,7 +105,11 @@ export function ComposerDocumentAttachment() {
       style={[styles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
     >
       <View style={styles.chipContent}>
-        <Icon name="file" size={15} color={colors.mutedForeground} />
+        <Icon
+          name='file'
+          size={15}
+          color={colors.mutedForeground}
+        />
         <AttachmentPrimitive.Name
           style={[styles.chipName, { color: colors.foreground }]}
           numberOfLines={1}
@@ -108,7 +124,11 @@ export function ComposerDocumentAttachment() {
         ]}
         hitSlop={4}
       >
-        <Icon name="close-circle" size={16} color={colors.mutedForeground} />
+        <Icon
+          name='close-circle'
+          size={16}
+          color={colors.mutedForeground}
+        />
       </AttachmentPrimitive.Remove>
     </AttachmentPrimitive.Root>
   );
@@ -119,7 +139,7 @@ export function ComposerDocumentAttachment() {
  */
 export function ComposerAttachmentChip() {
   const { attachment } = useAttachmentPreview();
-  if (attachment?.type === "image" || attachment?.contentType?.startsWith("image/")) {
+  if (attachment?.type === 'image' || attachment?.contentType?.startsWith('image/')) {
     return <ComposerImageAttachment />;
   }
   return <ComposerDocumentAttachment />;
@@ -138,7 +158,7 @@ export function MessageImageAttachment() {
         <ExpoImage
           source={{ uri: imageUri }}
           style={styles.messageImagePreview}
-          contentFit="cover"
+          contentFit='cover'
         />
       ) : (
         <View
@@ -147,7 +167,11 @@ export function MessageImageAttachment() {
             { backgroundColor: colors.muted, borderColor: colors.border },
           ]}
         >
-          <Icon name="image" size={24} color={colors.mutedForeground} />
+          <Icon
+            name='image'
+            size={24}
+            color={colors.mutedForeground}
+          />
           <AttachmentPrimitive.Name
             style={[styles.pillName, { color: colors.foreground }]}
             numberOfLines={1}
@@ -167,7 +191,11 @@ export function MessageDocumentAttachment() {
     <AttachmentPrimitive.Root
       style={[styles.pill, { backgroundColor: colors.muted, borderColor: colors.border }]}
     >
-      <Icon name="file" size={15} color={colors.mutedForeground} />
+      <Icon
+        name='file'
+        size={15}
+        color={colors.mutedForeground}
+      />
       <AttachmentPrimitive.Name
         style={[styles.pillName, { color: colors.foreground }]}
         numberOfLines={1}
@@ -182,7 +210,7 @@ export function MessageDocumentAttachment() {
  */
 export function MessageAttachmentPill() {
   const { attachment } = useAttachmentPreview();
-  if (attachment?.type === "image" || attachment?.contentType?.startsWith("image/")) {
+  if (attachment?.type === 'image' || attachment?.contentType?.startsWith('image/')) {
     return <MessageImageAttachment />;
   }
   return <MessageDocumentAttachment />;
@@ -191,7 +219,7 @@ export function MessageAttachmentPill() {
 const styles = StyleSheet.create({
   /* Composer Image */
   imageChipContainer: {
-    position: "relative",
+    position: 'relative',
     marginRight: 6,
     marginVertical: 4,
   },
@@ -200,24 +228,24 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   imagePreview: {
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
   },
   imagePlaceholder: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   imageRemoveBadge: {
-    position: "absolute",
+    position: 'absolute',
     top: -6,
     right: -6,
     borderRadius: Radius.pill,
-    backgroundColor: "#000",
-    shadowColor: "#000",
+    backgroundColor: '#000',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -226,8 +254,8 @@ const styles = StyleSheet.create({
 
   /* Composer Document */
   chip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: Radius.attachment,
     borderWidth: StyleSheet.hairlineWidth,
     paddingLeft: 10,
@@ -237,8 +265,8 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   chipContent: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
     flexShrink: 1,
   },
@@ -261,8 +289,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.card,
   },
   messageImagePlaceholder: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     padding: 10,
     borderRadius: Radius.card,
@@ -271,8 +299,8 @@ const styles = StyleSheet.create({
 
   /* Message Document */
   pill: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: Radius.attachment,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 10,
@@ -287,7 +315,7 @@ const styles = StyleSheet.create({
   },
   pillExt: {
     fontSize: 11,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
 });

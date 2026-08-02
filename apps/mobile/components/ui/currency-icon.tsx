@@ -1,17 +1,17 @@
-import { Image } from "expo-image";
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { Image } from 'expo-image';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
 export type SupportedCurrency =
-  | "USD"
-  | "EUR"
-  | "GBP"
-  | "USDT"
-  | "USDC"
-  | "GHS"
-  | "NGN"
-  | "CAD"
-  | "KES";
+  | 'USD'
+  | 'EUR'
+  | 'GBP'
+  | 'USDT'
+  | 'USDC'
+  | 'GHS'
+  | 'NGN'
+  | 'CAD'
+  | 'KES';
 
 interface CurrencyIconProps {
   currency: SupportedCurrency | string;
@@ -24,13 +24,13 @@ const SVG_ICONS: Partial<Record<SupportedCurrency, string>> = {
 };
 
 const CURRENCY_CONFIG: Record<string, { bg: string; text: string; symbol: string }> = {
-  USD: { bg: "#10B981", text: "#FFFFFF", symbol: "$" },
-  EUR: { bg: "#4F46E5", text: "#FFFFFF", symbol: "€" },
-  GBP: { bg: "#7C3AED", text: "#FFFFFF", symbol: "£" },
-  GHS: { bg: "#D97706", text: "#FFFFFF", symbol: "₵" },
-  NGN: { bg: "#059669", text: "#FFFFFF", symbol: "₦" },
-  CAD: { bg: "#DC2626", text: "#FFFFFF", symbol: "C$" },
-  KES: { bg: "#2563EB", text: "#FFFFFF", symbol: "KSh" },
+  USD: { bg: '#10B981', text: '#FFFFFF', symbol: '$' },
+  EUR: { bg: '#4F46E5', text: '#FFFFFF', symbol: '€' },
+  GBP: { bg: '#7C3AED', text: '#FFFFFF', symbol: '£' },
+  GHS: { bg: '#D97706', text: '#FFFFFF', symbol: '₵' },
+  NGN: { bg: '#059669', text: '#FFFFFF', symbol: '₦' },
+  CAD: { bg: '#DC2626', text: '#FFFFFF', symbol: 'C$' },
+  KES: { bg: '#2563EB', text: '#FFFFFF', symbol: 'KSh' },
 };
 
 export function CurrencyIcon({ currency, size = 36 }: CurrencyIconProps) {
@@ -41,14 +41,14 @@ export function CurrencyIcon({ currency, size = 36 }: CurrencyIconProps) {
       <Image
         source={{ uri: SVG_ICONS[code] }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
-        contentFit="cover"
+        contentFit='cover'
       />
     );
   }
 
   const config = CURRENCY_CONFIG[code] || {
-    bg: "#6B7280",
-    text: "#FFFFFF",
+    bg: '#6B7280',
+    text: '#FFFFFF',
     symbol: code.substring(0, 2),
   };
 
@@ -73,11 +73,11 @@ export function CurrencyIcon({ currency, size = 36 }: CurrencyIconProps) {
 
 const styles = StyleSheet.create({
   iconContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   symbolText: {
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.5,
   },
 });

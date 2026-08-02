@@ -1,11 +1,11 @@
-import React from "react";
-import { StyleSheet, Text, View, Pressable } from "react-native";
+import React from 'react';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
-export type FilterCategory = "all" | "fiat" | "crypto" | "momo";
+export type FilterCategory = 'all' | 'fiat' | 'crypto' | 'momo';
 
 interface WalletFilterTabsProps {
   filter: FilterCategory;
@@ -20,12 +20,12 @@ export function WalletFilterTabs({
 }: WalletFilterTabsProps) {
   const { colors } = useTheme();
 
-  const categories: FilterCategory[] = ["all", "fiat", "crypto", "momo"];
+  const categories: FilterCategory[] = ['all', 'fiat', 'crypto', 'momo'];
   const categoryTitles: Record<FilterCategory, string> = {
-    all: "All",
-    fiat: "Fiat",
-    crypto: "Crypto",
-    momo: "Mobile Money",
+    all: 'All',
+    fiat: 'Fiat',
+    crypto: 'Crypto',
+    momo: 'Mobile Money',
   };
 
   return (
@@ -66,7 +66,11 @@ export function WalletFilterTabs({
         hitSlop={6}
         style={styles.addInlineBtn}
       >
-        <Icon name="add" size={16} color={colors.mutedForeground} />
+        <Icon
+          name='add'
+          size={16}
+          color={colors.mutedForeground}
+        />
       </Pressable>
     </View>
   );
@@ -74,28 +78,28 @@ export function WalletFilterTabs({
 
 const styles = StyleSheet.create({
   filterSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(150,150,150,0.15)",
+    borderBottomColor: 'rgba(150,150,150,0.15)',
     paddingBottom: 4,
   },
   filterBar: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
   },
   filterTab: {
     paddingVertical: 6,
     borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    borderBottomColor: 'transparent',
   },
   filterTabText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   filterTabActiveText: {
-    fontWeight: "600",
+    fontWeight: '600',
   },
   addInlineBtn: {
     padding: 4,

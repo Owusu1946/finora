@@ -1,10 +1,10 @@
-import React from "react";
-import { StyleSheet, Text, View, Pressable } from "react-native";
+import React from 'react';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 interface WalletHeaderProps {
   accountLabel: string;
@@ -42,13 +42,17 @@ export function WalletHeader({
           }}
           style={styles.eyeBtn}
         >
-          <Icon name={hideBalances ? "eye-off" : "eye"} size={16} color={colors.mutedForeground} />
+          <Icon
+            name={hideBalances ? 'eye-off' : 'eye'}
+            size={16}
+            color={colors.mutedForeground}
+          />
         </Pressable>
       </View>
 
       <Text style={[styles.balanceDisplay, { color: colors.foreground }]}>
         {hideBalances
-          ? "••••••••"
+          ? '••••••••'
           : `$${totalNetWorthUSD.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
@@ -68,7 +72,11 @@ export function WalletHeader({
             pressed && styles.pressed,
           ]}
         >
-          <Icon name="arrow-up" size={15} color={colors.background} />
+          <Icon
+            name='arrow-up'
+            size={15}
+            color={colors.background}
+          />
           <Text style={[styles.actionBtnText, { color: colors.background }]}>Payout</Text>
         </Pressable>
 
@@ -83,7 +91,11 @@ export function WalletHeader({
             pressed && styles.pressed,
           ]}
         >
-          <Icon name="arrow-down-left" size={15} color={colors.foreground} />
+          <Icon
+            name='arrow-down-left'
+            size={15}
+            color={colors.foreground}
+          />
           <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Deposit</Text>
         </Pressable>
 
@@ -98,7 +110,11 @@ export function WalletHeader({
             pressed && styles.pressed,
           ]}
         >
-          <Icon name="swap" size={15} color={colors.foreground} />
+          <Icon
+            name='swap'
+            size={15}
+            color={colors.foreground}
+          />
           <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Convert</Text>
         </Pressable>
       </View>
@@ -112,42 +128,42 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   topMetaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   accountLabelText: {
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   eyeBtn: {
     padding: 4,
   },
   balanceDisplay: {
     fontSize: 34,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -1,
     marginVertical: 4,
   },
   actionRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 10,
     marginTop: 8,
   },
   actionBtn: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "transparent",
+    borderColor: 'transparent',
   },
   actionBtnText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   pressed: {
     opacity: 0.8,

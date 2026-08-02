@@ -1,8 +1,8 @@
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/preflight.css" layer(base);
-@import "tailwindcss/utilities.css";
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
 
-@import "nativewind/theme";
+@import 'nativewind/theme';
 
 @theme {
   --color-canvas: #f7f5f2;
@@ -13,8 +13,8 @@
   --color-accent: #1f4d3a;
   --color-accent-soft: #e8f0eb;
   --color-user-bubble: #1f4d3a;
-  --font-sans: "DMSans_400Regular";
-  --font-sans-medium: "DMSans_500Medium";
-  --font-sans-semibold: "DMSans_600SemiBold";
-  --font-display: "Fraunces_600SemiBold";
+  --font-sans: 'DMSans_400Regular';
+  --font-sans-medium: 'DMSans_500Medium';
+  --font-sans-semibold: 'DMSans_600SemiBold';
+  --font-display: 'Fraunces_600SemiBold';
 }

@@ -1,21 +1,21 @@
-import * as Clipboard from "expo-clipboard";
-import { useState, useMemo } from "react";
-import { StyleSheet, Text, View, ScrollView } from "react-native";
+import * as Clipboard from 'expo-clipboard';
+import { useState, useMemo } from 'react';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
 
-import { SupportedCurrency } from "@/components/ui/currency-icon";
-import { Icon } from "@/components/ui/icon";
-import { AddWalletModal } from "@/components/wallets/AddWalletModal";
-import { DepositModal } from "@/components/wallets/DepositModal";
-import { FxConvertModal } from "@/components/wallets/FxConvertModal";
-import { PayoutModal } from "@/components/wallets/PayoutModal";
-import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from "@/components/wallets/types";
-import { WalletFilterTabs, FilterCategory } from "@/components/wallets/WalletFilterTabs";
-import { WalletHeader } from "@/components/wallets/WalletHeader";
-import { WalletListItem } from "@/components/wallets/WalletListItem";
-import { Spacing, Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { getAccountType, getAccountLabel } from "@/lib/account";
-import { haptics } from "@/lib/haptics";
+import { SupportedCurrency } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { AddWalletModal } from '@/components/wallets/AddWalletModal';
+import { DepositModal } from '@/components/wallets/DepositModal';
+import { FxConvertModal } from '@/components/wallets/FxConvertModal';
+import { PayoutModal } from '@/components/wallets/PayoutModal';
+import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from '@/components/wallets/types';
+import { WalletFilterTabs, FilterCategory } from '@/components/wallets/WalletFilterTabs';
+import { WalletHeader } from '@/components/wallets/WalletHeader';
+import { WalletListItem } from '@/components/wallets/WalletListItem';
+import { Spacing, Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { getAccountType, getAccountLabel } from '@/lib/account';
+import { haptics } from '@/lib/haptics';
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
@@ -23,7 +23,7 @@ export default function WalletsScreen() {
   const accountLabel = getAccountLabel(accountType);
 
   const [wallets, setWallets] = useState<WalletItem[]>(INITIAL_WALLETS_DATA);
-  const [filter, setFilter] = useState<FilterCategory>("all");
+  const [filter, setFilter] = useState<FilterCategory>('all');
   const [hideBalances, setHideBalances] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ export default function WalletsScreen() {
 
   // Active modal handler
   const [activeModal, setActiveModal] = useState<
-    "send" | "deposit" | "convert" | "new_wallet" | null
+    'send' | 'deposit' | 'convert' | 'new_wallet' | null
   >(null);
 
   // Total USD equivalent balance calculation
@@ -42,7 +42,7 @@ export default function WalletsScreen() {
 
   // Filtered wallet list
   const filteredWallets = useMemo(() => {
-    if (filter === "all") return wallets;
+    if (filter === 'all') return wallets;
     return wallets.filter((w) => w.type === filter);
   }, [wallets, filter]);
 
@@ -110,31 +110,38 @@ export default function WalletsScreen() {
       {/* Sleek Floating Toast */}
       {toastMessage && (
         <View style={[styles.toast, { backgroundColor: colors.foreground }]}>
-          <Icon name="check" size={13} color={colors.background} />
+          <Icon
+            name='check'
+            size={13}
+            color={colors.background}
+          />
           <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
         </View>
       )}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* 1. Header Section */}
         <WalletHeader
           accountLabel={accountLabel}
           totalNetWorthUSD={totalNetWorthUSD}
           hideBalances={hideBalances}
           onToggleHideBalances={() => setHideBalances((prev) => !prev)}
-          onOpenSend={() => setActiveModal("send")}
+          onOpenSend={() => setActiveModal('send')}
           onOpenDeposit={() => {
             setSelectedWallet(wallets[0]);
-            setActiveModal("deposit");
+            setActiveModal('deposit');
           }}
-          onOpenConvert={() => setActiveModal("convert")}
+          onOpenConvert={() => setActiveModal('convert')}
         />
 
         {/* 2. Filter Tabs Bar */}
         <WalletFilterTabs
           filter={filter}
           onSelectFilter={setFilter}
-          onOpenAddWallet={() => setActiveModal("new_wallet")}
+          onOpenAddWallet={() => setActiveModal('new_wallet')}
         />
 
         {/* 3. Wallet List */}
@@ -147,7 +154,7 @@ export default function WalletsScreen() {
               isLast={index === filteredWallets.length - 1}
               onSelect={(w) => {
                 setSelectedWallet(w);
-                setActiveModal("deposit");
+                setActiveModal('deposit');
               }}
             />
           ))}
@@ -156,27 +163,30 @@ export default function WalletsScreen() {
 
       {/* Modals */}
       <DepositModal
-        visible={activeModal === "deposit"}
+        visible={activeModal === 'deposit'}
         selectedWallet={selectedWallet}
         onClose={() => setActiveModal(null)}
         onCopy={handleCopy}
       />
 
       <PayoutModal
-        visible={activeModal === "send"}
+        visible={activeModal === 'send'}
         wallets={wallets}
         onClose={() => setActiveModal(null)}
         onSendSuccess={handleSendSuccess}
       />
 
       <FxConvertModal
-        visible={activeModal === "convert"}
+        visible={activeModal === 'convert'}
         wallets={wallets}
         onClose={() => setActiveModal(null)}
         onConvertSuccess={handleConvertSuccess}
       />
 
-      <AddWalletModal visible={activeModal === "new_wallet"} onClose={() => setActiveModal(null)} />
+      <AddWalletModal
+        visible={activeModal === 'new_wallet'}
+        onClose={() => setActiveModal(null)}
+      />
     </View>
   );
 }
@@ -186,12 +196,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toast: {
-    position: "absolute",
+    position: 'absolute',
     top: 12,
-    alignSelf: "center",
+    alignSelf: 'center',
     zIndex: 99,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -199,7 +209,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -207,10 +217,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 24,
     maxWidth: Spacing.threadMaxWidth,
-    alignSelf: "center",
-    width: "100%",
+    alignSelf: 'center',
+    width: '100%',
   },
   walletListContainer: {
-    flexDirection: "column",
+    flexDirection: 'column',
   },
 });

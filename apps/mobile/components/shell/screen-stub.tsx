@@ -1,6 +1,6 @@
-import { Text, StyleSheet, View } from "react-native";
+import { Text, StyleSheet, View } from 'react-native';
 
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme } from '@/hooks/use-theme';
 
 type ScreenStubProps = {
   title: string;
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: "600",
+    fontWeight: '600',
     letterSpacing: -0.4,
     marginBottom: 8,
   },

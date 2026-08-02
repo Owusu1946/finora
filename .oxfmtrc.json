@@ -1,7 +1,8 @@
 {
   "ignorePatterns": ["dist/**", ".expo/**", ".turbo/**"],
-  "singleQuotes": true,
-  "jsxSingleQuotes": true,
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "singleAttributePerLine": true,
   "sortImports": {
     "groups": [
       "type-import",
@@ -19,6 +20,6 @@
     "preserveWhitespace": true
   },
   "sortPackageJson": {
-      "sortScripts": true
-    }
+    "sortScripts": true
+  }
 }

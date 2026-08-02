@@ -5,29 +5,29 @@ import {
   ErrorPrimitive,
   groupPartByType,
   type TextMessagePartComponent,
-} from "@assistant-ui/react-native";
-import { useEffect, useRef } from "react";
-import { View, Text, Animated, Platform, StyleSheet } from "react-native";
+} from '@assistant-ui/react-native';
+import { useEffect, useRef } from 'react';
+import { View, Text, Animated, Platform, StyleSheet } from 'react-native';
 
-import { Radius } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 import {
   MessageImageAttachment,
   MessageDocumentAttachment,
   MessageAttachmentPill,
-} from "./attachment";
-import { EditComposer } from "./edit-composer";
-import { MessageActionBar } from "./message-action-bar";
-import { MessageBranchPicker } from "./message-branch-picker";
+} from './attachment';
+import { EditComposer } from './edit-composer';
+import { MessageActionBar } from './message-action-bar';
+import { MessageBranchPicker } from './message-branch-picker';
 import {
   Reasoning,
   ReasoningContent,
   ReasoningRoot,
   ReasoningText,
   ReasoningTrigger,
-} from "./reasoning";
-import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from "./tool-group";
+} from './reasoning';
+import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from './tool-group';
 
 const UserText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
@@ -50,12 +50,12 @@ function TypingDot({ delay }: { delay: number }) {
           toValue: 1,
           duration: 400,
           delay,
-          useNativeDriver: Platform.OS !== "web",
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(opacity, {
           toValue: 0.3,
           duration: 400,
-          useNativeDriver: Platform.OS !== "web",
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
     );
@@ -69,7 +69,7 @@ function TypingDot({ delay }: { delay: number }) {
 }
 
 function TypingIndicator() {
-  const isRunning = useAuiState((s) => s.message.status?.type === "running");
+  const isRunning = useAuiState((s) => s.message.status?.type === 'running');
   if (!isRunning) return null;
 
   return (
@@ -100,7 +100,7 @@ function UserMessage() {
           }}
         />
         <View style={styles.actionsRow}>
-          <MessageBranchPicker align="flex-end" />
+          <MessageBranchPicker align='flex-end' />
           <MessageActionBar />
         </View>
       </AuiIf>
@@ -122,17 +122,17 @@ function AssistantMessage() {
       <View style={styles.assistantContent}>
         <MessagePrimitive.GroupedParts
           groupBy={groupPartByType({
-            reasoning: ["group-chainOfThought", "group-reasoning"],
-            "tool-call": ["group-chainOfThought", "group-tool"],
-            "standalone-tool-call": [],
+            reasoning: ['group-chainOfThought', 'group-reasoning'],
+            'tool-call': ['group-chainOfThought', 'group-tool'],
+            'standalone-tool-call': [],
           })}
         >
           {({ part, children }) => {
             switch (part.type) {
-              case "group-chainOfThought":
+              case 'group-chainOfThought':
                 return <View style={styles.chain}>{children}</View>;
-              case "group-reasoning": {
-                const running = part.status.type === "running";
+              case 'group-reasoning': {
+                const running = part.status.type === 'running';
                 return (
                   <ReasoningRoot streaming={running}>
                     <ReasoningTrigger active={running} />
@@ -142,23 +142,23 @@ function AssistantMessage() {
                   </ReasoningRoot>
                 );
               }
-              case "group-tool":
+              case 'group-tool':
                 return (
                   <ToolGroupRoot>
                     <ToolGroupTrigger
                       count={part.indices.length}
-                      active={part.status.type === "running"}
+                      active={part.status.type === 'running'}
                     />
                     <ToolGroupContent>{children}</ToolGroupContent>
                   </ToolGroupRoot>
                 );
-              case "text":
+              case 'text':
                 return <AssistantText {...part} />;
-              case "reasoning":
+              case 'reasoning':
                 return <Reasoning {...part} />;
-              case "tool-call":
+              case 'tool-call':
                 return part.toolUI ?? <ToolFallback {...part} />;
-              case "indicator":
+              case 'indicator':
                 return <TypingIndicator />;
               default:
                 return null;
@@ -180,7 +180,7 @@ function AssistantMessage() {
       </View>
       <MessagePrimitive.If running={false}>
         <View style={styles.actionsRow}>
-          <MessageBranchPicker align="flex-start" />
+          <MessageBranchPicker align='flex-start' />
           <MessageActionBar />
         </View>
       </MessagePrimitive.If>
@@ -190,32 +190,32 @@ function AssistantMessage() {
 
 export function MessageBubble() {
   const role = useAuiState((s) => s.message.role);
-  if (role === "user") return <UserMessage />;
+  if (role === 'user') return <UserMessage />;
   return <AssistantMessage />;
 }
 
 const styles = StyleSheet.create({
   userContainer: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
   },
   userBubble: {
-    maxWidth: "85%",
+    maxWidth: '85%',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: Radius.bubble,
   },
   editContainer: {
-    width: "100%",
+    width: '100%',
   },
   assistantContainer: {
-    alignItems: "flex-start",
+    alignItems: 'flex-start',
   },
   assistantContent: {
-    width: "100%",
+    width: '100%',
     paddingHorizontal: 2,
   },
   chain: {
-    width: "100%",
+    width: '100%',
     marginBottom: 4,
   },
   userText: {
@@ -229,8 +229,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   typing: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 5,
     paddingVertical: 8,
   },
@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
   },
   actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
     marginTop: 6,
     marginLeft: -4,
