@@ -1,0 +1,16 @@
+name = "finora-mcp"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+FINORA_API_URL = "http://127.0.0.1:8787"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "FinoraMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FinoraMCP"]

@@ -1,0 +1,31 @@
+{
+  "name": "finora",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Finora — financial operating system for AI agents",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/link-mobile-deps.mjs",
+    "mobile": "npm run start --workspace=@finora/mobile",
+    "mobile:android": "npm run android --workspace=@finora/mobile",
+    "mobile:ios": "npm run ios --workspace=@finora/mobile",
+    "mobile:web": "npm run web --workspace=@finora/mobile",
+    "api": "npm run dev --workspace=@finora/api",
+    "api:deploy": "npm run deploy --workspace=@finora/api",
+    "mcp": "npm run dev --workspace=@finora/mcp",
+    "mcp:deploy": "npm run deploy --workspace=@finora/mcp",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "lightningcss": "1.30.1"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@finora/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@finora/shared": "*",
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "agents": "^0.0.113",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250726.0",
+    "typescript": "~5.9.2",
+    "wrangler": "^4.26.0"
+  }
+}

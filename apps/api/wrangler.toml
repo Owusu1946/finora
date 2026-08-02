@@ -1,0 +1,12 @@
+name = "finora-api"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+
+# Secrets (set via `wrangler secret put`):
+# WEWIRE_API_KEY
+# CLERK_SECRET_KEY
+# WEWIRE_WEBHOOK_SECRET
