@@ -42,7 +42,8 @@ export type IconName =
   | 'image'
   | 'thumb-up'
   | 'thumb-down'
-  | 'quote';
+  | 'quote'
+  | 'biometric';
 
 export type IconProps = {
   name: IconName;
@@ -92,6 +93,7 @@ export const SF_SYMBOLS: Record<IconName, SymbolViewProps['name']> = {
   'thumb-up': 'hand.thumbsup',
   'thumb-down': 'hand.thumbsdown',
   quote: 'quote.bubble',
+  biometric: 'faceid',
 };
 
 export const MATERIAL_ICONS: Record<IconName, ComponentProps<typeof MaterialIcons>['name']> = {
@@ -135,4 +137,5 @@ export const MATERIAL_ICONS: Record<IconName, ComponentProps<typeof MaterialIcon
   'thumb-up': 'thumb-up',
   'thumb-down': 'thumb-down',
   quote: 'format-quote',
+  biometric: 'fingerprint',
 };

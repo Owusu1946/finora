@@ -21,7 +21,7 @@ type PasscodeModalProps = {
   onComplete: (passcode: string) => void;
 };
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'] as const;
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'bio', '0', 'back'] as const;
 
 export function PasscodeModal({
   visible,
@@ -154,9 +154,29 @@ export function PasscodeModal({
         )}
 
         <View style={styles.pad}>
-          {KEYS.map((key, index) => {
-            if (key === '') {
-              return <View key={`empty-${index}`} style={styles.key} />;
+          {KEYS.map((key) => {
+            if (key === 'bio') {
+              // Placeholder only — Face ID / Touch ID not wired yet.
+              if (mode !== 'unlock') {
+                return <View key='bio' style={styles.key} />;
+              }
+              return (
+                <Pressable
+                  key='bio'
+                  accessibilityLabel='Biometric unlock (coming soon)'
+                  accessibilityHint='Biometric authentication is not available yet. Enter your passcode.'
+                  onPress={() => {
+                    haptics.selection();
+                  }}
+                  style={({ pressed }) => [styles.key, pressed && { opacity: 0.55 }]}
+                >
+                  <Icon
+                    name='biometric'
+                    size={28}
+                    color={colors.mutedForeground}
+                  />
+                </Pressable>
+              );
             }
             if (key === 'back') {
               return (
