@@ -1,27 +1,21 @@
-import { useState } from "react";
-import { View, Pressable, StyleSheet } from "react-native";
-import * as Clipboard from "expo-clipboard";
-import {
-  ActionBarPrimitive,
-  AuiIf,
-  useAui,
-} from "@assistant-ui/react-native";
+import { ActionBarPrimitive, AuiIf, useAui } from '@assistant-ui/react-native';
+import * as Clipboard from 'expo-clipboard';
+import { useState } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { haptics } from "@/lib/haptics";
-import { Radius } from "@/constants/theme";
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 const copyToClipboard = async (text: string) => {
   await Clipboard.setStringAsync(text);
 };
 
-function FeedbackButton({ type }: { type: "positive" | "negative" }) {
+function FeedbackButton({ type }: { type: 'positive' | 'negative' }) {
   const { colors } = useTheme();
   const aui = useAui();
-  const [submitted, setSubmitted] = useState<"positive" | "negative" | null>(
-    null,
-  );
+  const [submitted, setSubmitted] = useState<'positive' | 'negative' | null>(null);
 
   const handlePress = () => {
     haptics.selection();
@@ -36,28 +30,19 @@ function FeedbackButton({ type }: { type: "positive" | "negative" }) {
   };
 
   const isSubmitted = submitted === type;
-  const isPositive = type === "positive";
+  const isPositive = type === 'positive';
 
   return (
     <Pressable
-      accessibilityLabel={
-        isPositive ? "Helpful response" : "Unhelpful response"
-      }
+      accessibilityLabel={isPositive ? 'Helpful response' : 'Unhelpful response'}
       onPress={handlePress}
-      style={({ pressed }) => [
-        styles.button,
-        pressed && { backgroundColor: colors.muted },
-      ]}
+      style={({ pressed }) => [styles.button, pressed && { backgroundColor: colors.muted }]}
     >
       <Icon
-        name={isPositive ? "thumb-up" : "thumb-down"}
+        name={isPositive ? 'thumb-up' : 'thumb-down'}
         size={16}
         color={
-          isSubmitted
-            ? isPositive
-              ? colors.primary
-              : colors.destructive
-            : colors.mutedForeground
+          isSubmitted ? (isPositive ? colors.primary : colors.destructive) : colors.mutedForeground
         }
       />
     </Pressable>
@@ -81,7 +66,7 @@ export function MessageActionBar() {
       >
         {({ isCopied }) => (
           <Icon
-            name={isCopied ? "check" : "copy"}
+            name={isCopied ? 'check' : 'copy'}
             size={16}
             color={isCopied ? colors.foreground : colors.mutedForeground}
           />
@@ -89,26 +74,34 @@ export function MessageActionBar() {
       </ActionBarPrimitive.Copy>
 
       {/* User message actions */}
-      <AuiIf condition={(s) => s.message.role === "user"}>
+      <AuiIf condition={(s) => s.message.role === 'user'}>
         <ActionBarPrimitive.Edit
           onPressIn={haptics.selection}
           style={buttonStyle}
         >
-          <Icon name="edit" size={16} color={colors.mutedForeground} />
+          <Icon
+            name='edit'
+            size={16}
+            color={colors.mutedForeground}
+          />
         </ActionBarPrimitive.Edit>
       </AuiIf>
 
       {/* Assistant message actions */}
-      <AuiIf condition={(s) => s.message.role === "assistant"}>
+      <AuiIf condition={(s) => s.message.role === 'assistant'}>
         <ActionBarPrimitive.Reload
           onPressIn={haptics.selection}
           style={buttonStyle}
         >
-          <Icon name="reload" size={16} color={colors.mutedForeground} />
+          <Icon
+            name='reload'
+            size={16}
+            color={colors.mutedForeground}
+          />
         </ActionBarPrimitive.Reload>
 
-        <FeedbackButton type="positive" />
-        <FeedbackButton type="negative" />
+        <FeedbackButton type='positive' />
+        <FeedbackButton type='negative' />
       </AuiIf>
     </View>
   );
@@ -116,8 +109,8 @@ export function MessageActionBar() {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 2,
   },
   button: {

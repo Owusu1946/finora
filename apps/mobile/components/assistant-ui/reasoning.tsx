@@ -1,17 +1,12 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { ReasoningMessagePartComponent } from "@assistant-ui/react-native";
+import type { ReasoningMessagePartComponent } from '@assistant-ui/react-native';
 
-import { Icon } from "@/components/ui/icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
 
 type ReasoningContextValue = {
   open: boolean;
@@ -24,7 +19,7 @@ const ReasoningContext = createContext<ReasoningContextValue | null>(null);
 function useReasoningContext() {
   const ctx = useContext(ReasoningContext);
   if (!ctx) {
-    throw new Error("Reasoning components must be used inside ReasoningRoot");
+    throw new Error('Reasoning components must be used inside ReasoningRoot');
   }
   return ctx;
 }
@@ -52,12 +47,7 @@ export function ReasoningRoot({
   const open = userOpen ?? (streaming || defaultOpen);
 
   return (
-    <View
-      style={[
-        styles.root,
-        { borderColor: colors.border, backgroundColor: colors.background },
-      ]}
-    >
+    <View style={[styles.root, { borderColor: colors.border, backgroundColor: colors.background }]}>
       <ReasoningContext.Provider
         value={{
           open,
@@ -82,20 +72,28 @@ export function ReasoningTrigger({ active }: { active?: boolean }) {
     <Pressable
       onPress={onToggle}
       style={({ pressed }) => [styles.trigger, pressed && { opacity: 0.7 }]}
-      accessibilityRole="button"
+      accessibilityRole='button'
       accessibilityState={{ expanded: open }}
     >
-      <Icon name="brain" size={16} color={colors.mutedForeground} />
+      <Icon
+        name='brain'
+        size={16}
+        color={colors.mutedForeground}
+      />
       <Text
         style={[
           styles.triggerLabel,
           { color: active ? colors.foreground : colors.mutedForeground },
         ]}
       >
-        {active ? "Thinking…" : "Reasoning"}
+        {active ? 'Thinking…' : 'Reasoning'}
       </Text>
-      <View style={{ transform: [{ rotate: open ? "0deg" : "-90deg" }] }}>
-        <Icon name="chevron-down" size={16} color={colors.mutedForeground} />
+      <View style={{ transform: [{ rotate: open ? '0deg' : '-90deg' }] }}>
+        <Icon
+          name='chevron-down'
+          size={16}
+          color={colors.mutedForeground}
+        />
       </View>
     </Pressable>
   );
@@ -113,16 +111,12 @@ export function ReasoningText({ children }: { children: ReactNode }) {
 
 export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
-  return (
-    <Text style={[styles.reasoningText, { color: colors.mutedForeground }]}>
-      {text}
-    </Text>
-  );
+  return <Text style={[styles.reasoningText, { color: colors.mutedForeground }]}>{text}</Text>;
 };
 
 const styles = StyleSheet.create({
   root: {
-    width: "100%",
+    width: '100%',
     marginBottom: 10,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
@@ -130,15 +124,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   trigger: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     paddingVertical: 4,
   },
   triggerLabel: {
     flexShrink: 1,
     fontSize: 13,
-    fontWeight: "500",
+    fontWeight: '500',
     letterSpacing: -0.1,
   },
   content: {

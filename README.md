@@ -1,54 +1,41 @@
-# Finora
+# finora
 
-The financial operating system for AI agents.
+This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack.
 
-WeWire moves money. Finora powers the intelligence, approvals, and conversation layer.
+## Features
 
-## Monorepo
+- **TypeScript** - For type safety and improved developer experience
+- **Turborepo** - Optimized monorepo build system
+- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
 
-```text
-finora/
-├── apps/
-│   ├── mobile/     Expo app (chat-first UI + approvals)
-│   ├── api/        Hono backend on Cloudflare Workers
-│   └── mcp/        MCP server for ChatGPT / Claude / Cursor
-├── packages/
-│   ├── shared/     Shared schemas and tool contracts
-│   └── wewire/     WeWire HTTP client (server-only)
-```
+## Getting Started
 
-## Prerequisites
-
-- Node.js 20+
-- npm 10+
-- Cloudflare account (for `api` and `mcp`)
-- WeWire sandbox API key (see [WeWire docs](https://docs.wewire.com/))
-
-## Setup
+First, install the dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
-## Scripts
+Then, run the development server:
 
-| Command | What it does |
-|---|---|
-| `npm run mobile` | Start Expo |
-| `npm run api` | Local Finora API Worker |
-| `npm run mcp` | Local Finora MCP Worker |
-| `npm run typecheck` | Typecheck all packages |
-
-## Architecture
-
-```text
-Mobile / external AI agents
-            │
-            ▼
-     apps/api  ◄── apps/mcp (thin tool adapter)
-            │
-            ▼
-   packages/wewire → WeWire APIs
+```bash
+pnpm run dev
 ```
 
-Money only moves after authentication, policy checks, and human approval.
+## Git Hooks and Formatting
+
+- Run checks: `pnpm run check`
+
+## Project Structure
+
+```
+finora/
+├── apps/
+```
+
+## Available Scripts
+
+- `pnpm run dev`: Start all applications in development mode
+- `pnpm run build`: Build all applications
+- `pnpm run check-types`: Check TypeScript types across all apps
+- `pnpm run check`: Run Oxlint and Oxfmt

@@ -1,24 +1,20 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from 'react-native';
 
-import { useTheme } from "@/hooks/use-theme";
-import { Radius } from "@/constants/theme";
-import {
-  getAccountFullLabel,
-  getAccountLabel,
-  getAccountType,
-} from "@/lib/account";
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { getAccountFullLabel, getAccountLabel, getAccountType } from '@/lib/account';
 
 type AccountBadgeProps = {
   /** Compact pill for headers; full label for drawer. */
-  variant?: "pill" | "text";
+  variant?: 'pill' | 'text';
 };
 
-export function AccountBadge({ variant = "pill" }: AccountBadgeProps) {
+export function AccountBadge({ variant = 'pill' }: AccountBadgeProps) {
   const { colors } = useTheme();
   const type = getAccountType();
   const label = getAccountLabel(type);
 
-  if (variant === "text") {
+  if (variant === 'text') {
     return (
       <Text style={[styles.text, { color: colors.mutedForeground }]}>
         {getAccountFullLabel(type)}
@@ -41,14 +37,11 @@ export function AccountBadge({ variant = "pill" }: AccountBadgeProps) {
         style={[
           styles.dot,
           {
-            backgroundColor:
-              type === "business" ? colors.foreground : colors.mutedForeground,
+            backgroundColor: type === 'business' ? colors.foreground : colors.mutedForeground,
           },
         ]}
       />
-      <Text style={[styles.pillLabel, { color: colors.mutedForeground }]}>
-        {label}
-      </Text>
+      <Text style={[styles.pillLabel, { color: colors.mutedForeground }]}>{label}</Text>
     </View>
   );
 }
@@ -76,18 +69,18 @@ export function HeaderTitleWithAccount({ title }: HeaderTitleProps) {
 
 const styles = StyleSheet.create({
   headerTitle: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 3,
   },
   title: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   pill: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 5,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -101,12 +94,12 @@ const styles = StyleSheet.create({
   },
   pillLabel: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: '600',
     letterSpacing: 0.1,
   },
   text: {
     marginTop: 2,
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
   },
 });

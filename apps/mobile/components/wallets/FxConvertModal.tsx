@@ -1,19 +1,13 @@
-import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  Pressable,
-  Modal,
-  TextInput,
-} from "react-native";
-import { Icon } from "@/components/ui/icon";
-import { SupportedCurrency } from "@/components/ui/currency-icon";
-import { useTheme } from "@/hooks/use-theme";
-import { Radius } from "@/constants/theme";
-import { haptics } from "@/lib/haptics";
-import { WalletItem, FX_RATES } from "./types";
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from 'react-native';
+
+import { SupportedCurrency } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+
+import { WalletItem, FX_RATES } from './types';
 
 interface FxConvertModalProps {
   visible: boolean;
@@ -35,9 +29,9 @@ export function FxConvertModal({
 }: FxConvertModalProps) {
   const { colors } = useTheme();
 
-  const [fromCurrency, setFromCurrency] = useState<SupportedCurrency>("USD");
-  const [toCurrency, setToCurrency] = useState<SupportedCurrency>("GHS");
-  const [convertAmount, setConvertAmount] = useState("100");
+  const [fromCurrency, setFromCurrency] = useState<SupportedCurrency>('USD');
+  const [toCurrency, setToCurrency] = useState<SupportedCurrency>('GHS');
+  const [convertAmount, setConvertAmount] = useState('100');
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(false);
 
@@ -65,7 +59,7 @@ export function FxConvertModal({
           onClose();
         }, 1600);
       } else {
-        alert("Insufficient balance for conversion.");
+        alert('Insufficient balance for conversion.');
       }
       setIsConverting(false);
     }, 800);
@@ -74,7 +68,7 @@ export function FxConvertModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType='slide'
       transparent
       onRequestClose={onClose}
     >
@@ -89,14 +83,25 @@ export function FxConvertModal({
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
               Instant FX Conversion
             </Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Icon name="remove" size={20} color={colors.mutedForeground} />
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+            >
+              <Icon
+                name='remove'
+                size={20}
+                color={colors.mutedForeground}
+              />
             </Pressable>
           </View>
 
           {convertSuccess ? (
             <View style={styles.successState}>
-              <Icon name="check" size={36} color={colors.foreground} />
+              <Icon
+                name='check'
+                size={36}
+                color={colors.foreground}
+              />
               <Text style={[styles.successTitle, { color: colors.foreground }]}>
                 Converted Successfully
               </Text>
@@ -109,11 +114,12 @@ export function FxConvertModal({
               {/* From / To selector */}
               <View style={styles.fxSelectorRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                    From
-                  </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={{ flexDirection: "row", gap: 6 }}>
+                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>From</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
                       {wallets.map((w) => (
                         <Pressable
                           key={`from-fx-${w.id}`}
@@ -122,20 +128,16 @@ export function FxConvertModal({
                             styles.miniFxChip,
                             {
                               backgroundColor:
-                                fromCurrency === w.currency
-                                  ? colors.foreground
-                                  : colors.muted,
+                                fromCurrency === w.currency ? colors.foreground : colors.muted,
                             },
                           ]}
                         >
                           <Text
                             style={{
                               fontSize: 12,
-                              fontWeight: "600",
+                              fontWeight: '600',
                               color:
-                                fromCurrency === w.currency
-                                  ? colors.background
-                                  : colors.foreground,
+                                fromCurrency === w.currency ? colors.background : colors.foreground,
                             }}
                           >
                             {w.currency}
@@ -146,14 +148,19 @@ export function FxConvertModal({
                   </ScrollView>
                 </View>
 
-                <Icon name="swap" size={16} color={colors.mutedForeground} />
+                <Icon
+                  name='swap'
+                  size={16}
+                  color={colors.mutedForeground}
+                />
 
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                    To
-                  </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={{ flexDirection: "row", gap: 6 }}>
+                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>To</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
                       {wallets.map((w) => (
                         <Pressable
                           key={`to-fx-${w.id}`}
@@ -162,20 +169,16 @@ export function FxConvertModal({
                             styles.miniFxChip,
                             {
                               backgroundColor:
-                                toCurrency === w.currency
-                                  ? colors.foreground
-                                  : colors.muted,
+                                toCurrency === w.currency ? colors.foreground : colors.muted,
                             },
                           ]}
                         >
                           <Text
                             style={{
                               fontSize: 12,
-                              fontWeight: "600",
+                              fontWeight: '600',
                               color:
-                                toCurrency === w.currency
-                                  ? colors.background
-                                  : colors.foreground,
+                                toCurrency === w.currency ? colors.background : colors.foreground,
                             }}
                           >
                             {w.currency}
@@ -194,8 +197,8 @@ export function FxConvertModal({
                 <TextInput
                   value={convertAmount}
                   onChangeText={setConvertAmount}
-                  placeholder="100"
-                  keyboardType="numeric"
+                  placeholder='100'
+                  keyboardType='numeric'
                   placeholderTextColor={colors.mutedForeground}
                   style={[
                     styles.textInput,
@@ -208,21 +211,15 @@ export function FxConvertModal({
                 />
               </View>
 
-              <View
-                style={[
-                  styles.fxCalcPreview,
-                  { backgroundColor: colors.muted },
-                ]}
-              >
+              <View style={[styles.fxCalcPreview, { backgroundColor: colors.muted }]}>
                 <Text style={[styles.fxCalcLabel, { color: colors.mutedForeground }]}>
                   Estimated Receive
                 </Text>
                 <Text style={[styles.fxCalcValue, { color: colors.foreground }]}>
                   {(
-                    ((parseFloat(convertAmount) || 0) *
-                      (FX_RATES[fromCurrency] || 1)) /
+                    ((parseFloat(convertAmount) || 0) * (FX_RATES[fromCurrency] || 1)) /
                     (FX_RATES[toCurrency] || 1)
-                  ).toFixed(2)}{" "}
+                  ).toFixed(2)}{' '}
                   {toCurrency}
                 </Text>
               </View>
@@ -237,7 +234,7 @@ export function FxConvertModal({
                 ]}
               >
                 <Text style={[styles.primaryBtnText, { color: colors.background }]}>
-                  {isConverting ? "Converting..." : "Execute Conversion"}
+                  {isConverting ? 'Converting...' : 'Execute Conversion'}
                 </Text>
               </Pressable>
             </View>
@@ -251,8 +248,8 @@ export function FxConvertModal({
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "flex-end",
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
   },
   sheetContainer: {
     borderTopLeftRadius: 20,
@@ -262,17 +259,17 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sheetTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   formLabel: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
     marginBottom: 4,
   },
   textInput: {
@@ -283,8 +280,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   fxSelectorRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   miniFxChip: {
@@ -293,24 +290,24 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   fxCalcPreview: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 12,
     borderRadius: Radius.md,
   },
   fxCalcLabel: {
     fontSize: 12,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   fxCalcValue: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   primaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingVertical: 12,
     borderRadius: Radius.pill,
@@ -318,20 +315,20 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   successState: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: 20,
     gap: 8,
   },
   successTitle: {
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   successSub: {
     fontSize: 13,
-    textAlign: "center",
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.8,
