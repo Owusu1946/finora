@@ -15,7 +15,7 @@ const KEYS = [
   'finora.accountType',
   'finora.passcode.hash',
   'finora.contacts.v2',
-  'finora.approvals.v1',
+  'finora.approvals.v2',
   'finora.transactions.v1',
   'finora.invoices.v1',
   'finora.recurring.v1',

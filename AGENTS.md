@@ -19,3 +19,7 @@ Mobile UI uses NativeWind v5 + `@assistant-ui/react-native` (not the web `@assis
 ## Architecture rule
 
 Mobile and MCP never call WeWire directly. All money movement goes through `apps/api`.
+
+## Tool docs
+
+See [`docs/tools/`](docs/tools/README.md) for the capability registry vs HTTP APIs vs curated MCP tools (and why e.g. `mark_notification_read` is not an agent tool).

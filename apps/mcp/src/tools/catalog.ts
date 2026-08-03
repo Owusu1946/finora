@@ -1,16 +1,19 @@
-import type { ToolName } from '@finora/shared';
+import type { McpToolName } from '@finora/shared';
 
-/** MCP tool → Finora API mapping (never WeWire). */
-export const TOOL_CATALOG: Record<
-  ToolName,
-  {
-    description: string;
-    method: 'GET' | 'POST' | 'PATCH';
-    path: string | ((args: Record<string, unknown>) => string);
-    /** When true, body is sent as JSON (POST/PATCH). GET uses query. */
-    body?: boolean;
-  }
-> = {
+type CatalogEntry = {
+  description: string;
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  path: string | ((args: Record<string, unknown>) => string);
+  /** When true, body is sent as JSON (POST/PATCH). GET uses query. */
+  body?: boolean;
+};
+
+/**
+ * Curated high-level MCP tool → Finora API mapping.
+ * Lower-level platform routes are composed by the API behind these tools.
+ * Never maps to execute / settle endpoints.
+ */
+export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
   ping: {
     description: 'Health check for the Finora MCP server',
     method: 'GET',
@@ -32,43 +35,10 @@ export const TOOL_CATALOG: Record<
       return `/v1/wallets${qs ? `?${qs}` : ''}`;
     },
   },
-  list_receive_methods: {
-    description: 'List ways to receive money (VA, MoMo, crypto)',
+  search_recipient: {
+    description: 'Search / resolve recipients by name or identifier',
     method: 'GET',
-    path: '/v1/receive-methods',
-  },
-  list_virtual_accounts: {
-    description: 'List virtual bank accounts for receiving fiat',
-    method: 'GET',
-    path: '/v1/virtual-accounts',
-  },
-  list_crypto_addresses: {
-    description: 'List crypto deposit addresses',
-    method: 'GET',
-    path: '/v1/crypto-addresses',
-  },
-  search_contacts: {
-    description: 'Search saved contacts / beneficiaries by name',
-    method: 'GET',
-    path: (a) => `/v1/contacts?query=${encodeURIComponent(String(a.query ?? ''))}`,
-  },
-  list_contacts: {
-    description: 'List contacts; optionally favourites only',
-    method: 'GET',
-    path: (a) =>
-      `/v1/contacts${a.favouriteOnly ? '?favouriteOnly=true' : ''}`,
-  },
-  save_contact: {
-    description: 'Save a beneficiary contact after a payment',
-    method: 'POST',
-    path: '/v1/contacts',
-    body: true,
-  },
-  lookup_account: {
-    description: 'Resolve a MoMo number, bank account, or crypto address',
-    method: 'POST',
-    path: '/v1/accounts/lookup',
-    body: true,
+    path: (a) => `/v1/recipients/search?query=${encodeURIComponent(String(a.query ?? ''))}`,
   },
   prepare_payment: {
     description:
@@ -77,19 +47,19 @@ export const TOOL_CATALOG: Record<
     path: '/v1/payments/prepare',
     body: true,
   },
-  prepare_momo_disbursement: {
-    description:
-      'Prepare a mobile-money disbursement for human approval. Does NOT move money.',
+  request_approval: {
+    description: 'Notify the human that a preparation or plan is waiting in Approvals',
     method: 'POST',
-    path: '/v1/disbursements/mobile-money/prepare',
+    path: '/v1/approvals/request',
     body: true,
   },
-  prepare_internal_transfer: {
-    description:
-      'Prepare an internal transfer between sub-customers for human approval.',
-    method: 'POST',
-    path: '/v1/transfers/prepare',
-    body: true,
+  get_payment_status: {
+    description: 'Get status of a payment, preparation, or settled transaction',
+    method: 'GET',
+    path: (a) => {
+      const id = a.paymentId ?? a.preparationId ?? a.transactionId ?? '';
+      return `/v1/payments/status?id=${encodeURIComponent(String(id))}`;
+    },
   },
   prepare_conversion: {
     description: 'Prepare an FX conversion for human approval (includes quote).',
@@ -97,20 +67,21 @@ export const TOOL_CATALOG: Record<
     path: '/v1/conversions/prepare',
     body: true,
   },
-  list_approvals: {
-    description: 'List approval requests (pending agent-prepared payments)',
-    method: 'GET',
-    path: (a) => `/v1/approvals?status=${encodeURIComponent(String(a.status ?? 'pending'))}`,
-  },
-  get_approval: {
-    description: 'Get a single approval / preparation by id',
-    method: 'GET',
-    path: (a) => `/v1/approvals/${encodeURIComponent(String(a.approvalId))}`,
-  },
-  request_approval: {
-    description: 'Notify the human that a preparation is waiting in Approvals',
+  prepare_invoice_payment: {
+    description: 'Prepare payment for a supplier invoice (requires human approval)',
     method: 'POST',
-    path: '/v1/approvals/request',
+    path: (a) => `/v1/invoices/${encodeURIComponent(String(a.invoiceId))}/prepare-payment`,
+  },
+  prepare_supplier_payment: {
+    description: 'Prepare a supplier payment for human approval. Does NOT move money.',
+    method: 'POST',
+    path: '/v1/suppliers/prepare-payment',
+    body: true,
+  },
+  prepare_payroll: {
+    description: 'Prepare a payroll run for human approval. Does NOT move money.',
+    method: 'POST',
+    path: '/v1/payroll/prepare',
     body: true,
   },
   list_transactions: {
@@ -125,85 +96,8 @@ export const TOOL_CATALOG: Record<
       return `/v1/transactions${qs ? `?${qs}` : ''}`;
     },
   },
-  get_transaction: {
-    description: 'Get transaction detail (timeline, WeWire id, rail)',
-    method: 'GET',
-    path: (a) => `/v1/transactions/${encodeURIComponent(String(a.transactionId))}`,
-  },
-  list_fx_rates: {
-    description: 'List available FX rates',
-    method: 'GET',
-    path: '/v1/rates',
-  },
-  get_fx_rate: {
-    description: 'Get FX rate for a currency pair',
-    method: 'GET',
-    path: (a) => `/v1/rates/${a.from}/${a.to}`,
-  },
-  preview_conversion: {
-    description: 'Preview an FX conversion quote without creating an approval',
-    method: 'POST',
-    path: '/v1/conversions/preview',
-    body: true,
-  },
-  create_subcustomer: {
-    description: 'Create a WeWire sub-customer (individual or business) via Finora',
-    method: 'POST',
-    path: '/v1/subcustomers',
-    body: true,
-  },
-  list_subcustomers: {
-    description: 'List sub-customers',
-    method: 'GET',
-    path: (a) => {
-      const q = new URLSearchParams();
-      if (a.status) q.set('status', String(a.status));
-      if (a.type) q.set('type', String(a.type));
-      const qs = q.toString();
-      return `/v1/subcustomers${qs ? `?${qs}` : ''}`;
-    },
-  },
-  get_subcustomer: {
-    description: 'Get a sub-customer by id',
-    method: 'GET',
-    path: (a) => `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}`,
-  },
-  archive_subcustomer: {
-    description: 'Archive a sub-customer',
-    method: 'PATCH',
-    path: (a) => `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}/archive`,
-  },
-  submit_subcustomer_kyc: {
-    description: 'Submit KYC identity fields for a sub-customer',
-    method: 'POST',
-    path: (a) => `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}/kyc`,
-    body: true,
-  },
-  get_subcustomer_kyc_link: {
-    description: 'Get hosted KYC link for a sub-customer',
-    method: 'GET',
-    path: (a) => `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}/kyc-link`,
-  },
-  get_kyc_requirements: {
-    description: 'List KYC document requirements (business onboarding)',
-    method: 'GET',
-    path: (a) =>
-      `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}/kyc/requirements`,
-  },
-  add_beneficial_owner: {
-    description: 'Add a beneficial owner for business KYC',
-    method: 'POST',
-    path: (a) =>
-      `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}/kyc/beneficial-owners`,
-    body: true,
-  },
-  submit_kyc_for_review: {
-    description: 'Submit business KYC package for review',
-    method: 'POST',
-    path: (a) => `/v1/subcustomers/${encodeURIComponent(String(a.subCustomerId))}/kyc/submit`,
-  },
   list_invoices: {
-    description: 'List supplier invoices (e.g. from Gmail)',
+    description: 'List supplier invoices',
     method: 'GET',
     path: (a) => {
       const q = new URLSearchParams();
@@ -212,36 +106,63 @@ export const TOOL_CATALOG: Record<
       return `/v1/invoices${qs ? `?${qs}` : ''}`;
     },
   },
-  get_invoice: {
-    description: 'Get a single invoice',
+  list_notifications: {
+    description: 'List account notifications',
     method: 'GET',
-    path: (a) => `/v1/invoices/${encodeURIComponent(String(a.invoiceId))}`,
+    path: (a) => `/v1/notifications${a.unreadOnly ? '?unreadOnly=true' : ''}`,
   },
-  prepare_invoice_payment: {
-    description: 'Prepare payment for a supplier invoice (requires human approval)',
+  create_financial_plan: {
+    description:
+      'Create a multi-item financial plan (payroll + invoices + rent, etc.) for a single human approval',
     method: 'POST',
-    path: (a) => `/v1/invoices/${encodeURIComponent(String(a.invoiceId))}/prepare-payment`,
-  },
-  prepare_recurring_payment: {
-    description: 'Prepare a scheduled/recurring payment for human confirmation',
-    method: 'POST',
-    path: '/v1/recurring/prepare',
+    path: '/v1/plans',
     body: true,
   },
-  list_recurring_payments: {
-    description: 'List recurring / scheduled payments',
-    method: 'GET',
-    path: (a) => {
-      const q = new URLSearchParams();
-      if (a.status) q.set('status', String(a.status));
-      const qs = q.toString();
-      return `/v1/recurring${qs ? `?${qs}` : ''}`;
-    },
-  },
-  update_recurring_payment: {
-    description: 'Pause, resume, or cancel a recurring payment',
-    method: 'PATCH',
-    path: (a) => `/v1/recurring/${encodeURIComponent(String(a.recurringId))}`,
+  begin_transaction: {
+    description: 'Open an agent transaction spanning related prepare_* calls',
+    method: 'POST',
+    path: '/v1/agent-transactions',
     body: true,
+  },
+  commit_transaction: {
+    description: 'Commit agent transaction and request human approval for all items',
+    method: 'POST',
+    path: (a) =>
+      `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/commit`,
+    body: true,
+  },
+  rollback_transaction: {
+    description: 'Roll back agent transaction and cancel related preparations',
+    method: 'POST',
+    path: (a) =>
+      `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/rollback`,
+    body: true,
+  },
+  evaluate_policy: {
+    description: 'Evaluate policy for an intended action before prepare',
+    method: 'POST',
+    path: '/v1/policies/check',
+    body: true,
+  },
+  list_supported_payment_rails: {
+    description: 'List supported payment rails (bank, MoMo, crypto, internal)',
+    method: 'GET',
+    path: '/v1/capabilities/rails',
+  },
+  list_supported_countries: {
+    description: 'List supported countries for send/receive',
+    method: 'GET',
+    path: '/v1/capabilities/countries',
+  },
+  list_supported_assets: {
+    description: 'List supported fiat and crypto assets',
+    method: 'GET',
+    path: '/v1/capabilities/assets',
+  },
+  get_recent_context: {
+    description: 'Recent recipients, wallets, and transactions for pronoun / follow-up resolution',
+    method: 'GET',
+    path: (a) =>
+      `/v1/context/recent${a.limit ? `?limit=${encodeURIComponent(String(a.limit))}` : ''}`,
   },
 };

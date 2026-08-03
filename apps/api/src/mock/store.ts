@@ -9,11 +9,18 @@ export type MockApproval = {
   kind:
     | 'payment'
     | 'momo_disbursement'
+    | 'bank_transfer'
     | 'internal_transfer'
+    | 'wallet_transfer'
     | 'conversion'
     | 'invoice_payment'
-    | 'recurring';
-  status: 'pending' | 'approved' | 'rejected' | 'executed' | 'failed';
+    | 'supplier_payment'
+    | 'payroll'
+    | 'usdt_transfer'
+    | 'usdc_transfer'
+    | 'recurring'
+    | 'payment_request';
+  status: 'pending' | 'approved' | 'rejected' | 'executed' | 'cancelled' | 'failed';
   agent?: string;
   payload: Record<string, unknown>;
   createdAt: string;
@@ -232,6 +239,12 @@ export const mockStore = {
       dueDate: '2026-08-05T00:00:00Z',
       status: 'due' as const,
       source: 'gmail' as const,
+      sourceEmail: {
+        from: 'billing@techflow.example',
+        subject: 'Invoice INV-1042 from TechFlow Ltd',
+        receivedAt: '2026-07-28T11:22:00Z',
+        messageId: 'msg-techflow-1042',
+      },
     },
     {
       id: 'inv-2',
@@ -242,6 +255,12 @@ export const mockStore = {
       dueDate: '2026-08-08T00:00:00Z',
       status: 'due' as const,
       source: 'gmail' as const,
+      sourceEmail: {
+        from: 'accounts@clearview.example',
+        subject: 'ClearView Partners — CV-8891',
+        receivedAt: '2026-07-30T09:01:00Z',
+        messageId: 'msg-cv-8891',
+      },
     },
     {
       id: 'inv-3',
@@ -252,6 +271,12 @@ export const mockStore = {
       dueDate: '2026-08-12T00:00:00Z',
       status: 'due' as const,
       source: 'gmail' as const,
+      sourceEmail: {
+        from: 'invoices@cloudflare.com',
+        subject: 'Your Cloudflare invoice CF-22091',
+        receivedAt: '2026-08-01T16:40:00Z',
+        messageId: 'msg-cf-22091',
+      },
     },
   ],
   recurring: [
@@ -297,6 +322,85 @@ export const mockStore = {
     { from: 'USD', to: 'USDT', rate: 1, asOf: now() },
     { from: 'USDT', to: 'USD', rate: 1, asOf: now() },
   ],
+  notifications: [
+    {
+      id: 'n-1',
+      title: 'Approval needed',
+      body: 'MCP Agent prepared a $250 payment to Ama Serwah',
+      unread: true,
+      createdAt: '2026-08-03T10:00:00Z',
+    },
+    {
+      id: 'n-2',
+      title: 'Invoice due',
+      body: 'TechFlow Ltd INV-1042 is due in 2 days',
+      unread: true,
+      createdAt: '2026-08-02T08:00:00Z',
+    },
+  ],
+  suppliers: [
+    { id: 'sup-1', name: 'TechFlow Ltd', currency: 'GBP', defaultMethod: 'bank' },
+    { id: 'sup-2', name: 'ClearView Partners', currency: 'GBP', defaultMethod: 'bank' },
+  ],
+  employees: [
+    { id: 'emp-1', name: 'Ama Boateng', role: 'Designer', salary: 2500, currency: 'USD' },
+    { id: 'emp-2', name: 'Kwame Mensah', role: 'Engineer', salary: 3200, currency: 'USD' },
+  ],
+  policies: [
+    {
+      id: 'pol-amount',
+      name: 'High-value approval',
+      rule: 'Amounts over 500 USD require human approval',
+      enabled: true,
+    },
+    {
+      id: 'pol-new-recipient',
+      name: 'New recipient',
+      rule: 'First payment to a new recipient requires approval',
+      enabled: true,
+    },
+  ],
+  integrations: [
+    { id: 'gmail', name: 'Gmail', status: 'connected' },
+    { id: 'calendar', name: 'Google Calendar', status: 'disconnected' },
+  ],
+  beneficiaries: [
+    {
+      id: 'ben-1',
+      name: 'Ama Serwah',
+      method: 'bank',
+      identifier: '•••• 0194',
+      currency: 'USD',
+    },
+  ],
+  plans: [] as Array<{
+    id: string;
+    intent: string;
+    status: 'draft' | 'pending_approval' | 'approved' | 'executed' | 'cancelled';
+    items: Array<Record<string, unknown>>;
+    total: number;
+    currency: string;
+    createdAt: string;
+  }>,
+  agentTransactions: [] as Array<{
+    id: string;
+    label?: string;
+    status: 'open' | 'committed' | 'rolled_back';
+    preparationIds: string[];
+    createdAt: string;
+    closedAt?: string;
+  }>,
+  webhooks: [] as Array<{
+    id: string;
+    url: string;
+    eventTypes: string[];
+    createdAt: string;
+  }>,
+  eventSubscriptions: [] as Array<{
+    id: string;
+    eventTypes: string[];
+    createdAt: string;
+  }>,
 };
 
 export function newId(prefix: string) {

@@ -1,5 +1,6 @@
 import type { ChatModelAdapter, ThreadMessage } from '@assistant-ui/react-native';
 
+import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
 import type { BalanceWallet } from '@/components/chat/BalancesCard';
 import type { ConversionQuote } from '@/components/chat/ConversionCard';
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
@@ -37,9 +38,15 @@ const INVOICE_RE =
   /\b(invoice|invoices|supplier(?:s)?|unpaid bill|bills? from|find (?:my )?bills)\b/i;
 const RECURRING_RE =
   /\b(every\s+(week|month|quarter)|recurring|schedule|weekly|monthly|quarterly|auto(?:matic)?(?:ally)?\s+pay|standing\s+order|set\s*up\s+(my\s+)?(rent|payment|payout|salary)|rent\s+payment|setup\s+(a\s+)?(recurring|scheduled)|i want to (setup|set up|schedule))\b/i;
+const FINANCIAL_PLAN_RE =
+  /\bpay\s+everyone\b|\bpay\s+everything\s+due\b|\beverything\s+due\s+today\b|\bpay\s+all\s+(due|bills|invoices|suppliers)\b|\bfinancial\s+plan\b|\brun\s+(payroll\s+and|all)\b/i;
+
+function isFinancialPlanIntent(prompt: string) {
+  return FINANCIAL_PLAN_RE.test(prompt);
+}
 
 function isInvoiceIntent(prompt: string) {
-  return INVOICE_RE.test(prompt);
+  return INVOICE_RE.test(prompt) && !isFinancialPlanIntent(prompt);
 }
 
 function isRecurringIntent(prompt: string) {
@@ -418,6 +425,66 @@ function buildMockConversion(prompt: string): ConversionQuote {
 export const finoraChatAdapter: ChatModelAdapter = {
   async *run({ messages, abortSignal }) {
     const prompt = lastUserText(messages);
+
+    if (isFinancialPlanIntent(prompt)) {
+      const plan = { ...MOCK_BUSINESS_PLAN };
+      const args = {
+        intent: plan.intent,
+        currency: plan.currency,
+        total: plan.total,
+        items: plan.items,
+        planId: plan.planId,
+      };
+      const argsText = JSON.stringify(args);
+      const reasoning =
+        'Multi-item business plan requested.\nGathering payroll, rent, invoices, and supplier amounts due today…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_financial_plan',
+            toolName: 'create_financial_plan',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(600);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nBuilt a ${plan.items.length}-item plan totaling ${plan.currency} ${plan.total}.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_financial_plan',
+            toolName: 'create_financial_plan',
+            args,
+            argsText,
+            result: {
+              status: 'pending' as const,
+              planId: plan.planId,
+              preparationId: `prep_${plan.planId}`,
+            },
+          },
+          {
+            type: 'text',
+            text: `Here’s a plan for “${plan.intent}”: ${plan.items.length} line items. Review each row, then Approve all with your passcode — or open Approvals in the drawer for the same plan from Claude Desktop.`,
+          },
+        ],
+      };
+      return;
+    }
 
     if (isInvoiceIntent(prompt)) {
       const invoices = buildMockDueInvoices();

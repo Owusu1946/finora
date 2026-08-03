@@ -46,7 +46,7 @@ export default function ApprovalsScreen() {
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>Approvals</Text>
       <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Agent-prepared payments waiting for you. Confirm with the same card and passcode as
+        Agent-prepared payments and plans waiting for you. Confirm with the same passcode as
         chat.
         {pendingCount > 0 ? ` ${pendingCount} pending.` : ''}
       </Text>

@@ -1,55 +1,80 @@
 # Finora tools (MCP + API)
 
-Mock-complete tool surface so mobile, MCP, and WeWire wiring can land without redesign.
+Three-surface tool registry: rich **platform** operations, curated **MCP** orchestration tools, and **mobile**-local helpers.
+
+## Surfaces
+
+| Surface | Who calls it | What they see |
+|---|---|---|
+| `mobile` | In-app Gemini / local runtime | PIN, biometrics, theme, threads, execute after approval |
+| `platform` | Finora API | Full operation set (prepare + execute + policy CRUD + webhooks + …) |
+| `mcp` | External AI agents | **~20 high-level tools** only — read + prepare — never settle rails |
+
+Canonical ids are **snake_case** (`prepare_payment`). camelCase (`preparePayment`) is the product alias via `TOOL_CAMEL_ALIASES`.
+
+Source of truth: [`src/registry.ts`](src/registry.ts).
+
+**Developer docs (tools vs APIs, full catalog, MCP subset):** [`docs/tools/`](../../docs/tools/README.md).
 
 ## Architecture
 
 ```
-AI agent  →  apps/mcp (tools)  →  apps/api (/v1/*)  →  packages/wewire  →  WeWire
-Human app →  apps/api (/v1/*)  ↗
+External AI  →  apps/mcp (curated MCP_TOOL_NAMES)  →  apps/api (/v1/*)  →  WeWire
+Human app    →  apps/api (rich PLATFORM_TOOL_NAMES) ↗
+                 ↑
+            Approvals + PIN → execute_approved_* (platform/mobile only)
 ```
 
 - MCP and mobile **never** call WeWire directly.
-- Money tools **prepare** only → `pending_approval` → human confirms in Approvals (`POST /v1/approvals/:id/resolve`).
+- Prefer `create_financial_plan` / `begin_transaction` for multi-step work, then `request_approval`.
+- Settlement is always `execute_approved_*` after human approval — never a direct MCP execute.
 
-## Tool count
+## Approve-before-execute
 
-See `TOOL_NAMES` in `packages/shared/src/tools.ts` (~40 tools).
+```
+create_financial_plan | prepare_* | begin_transaction
+        → evaluate_policy
+        → request_approval / commit_transaction
+        → Approvals inbox + PIN (mobile)
+        → execute_approved_* (platform)
+        → Audit → WeWire
+```
 
-| Group | Tools |
+## Curated MCP tools
+
+Agents should use this small set (internally mapped to rich `/v1` routes):
+
+- `search_recipient`, `get_balances`, `list_wallets`, `list_transactions`, `list_invoices`, `list_notifications`
+- `prepare_payment`, `prepare_conversion`, `prepare_invoice_payment`, `prepare_supplier_payment`, `prepare_payroll`
+- `create_financial_plan`, `begin_transaction`, `commit_transaction`, `rollback_transaction`
+- `request_approval`, `get_payment_status`, `evaluate_policy`
+- `list_supported_payment_rails`, `list_supported_countries`, `list_supported_assets`
+- `get_recent_context`, `ping`
+
+## Key exports
+
+| Export | Role |
 |---|---|
-| Health | `ping` |
-| Wallets / receive | `get_balances`, `list_wallets`, `list_receive_methods`, `list_virtual_accounts`, `list_crypto_addresses` |
-| Contacts | `search_contacts`, `list_contacts`, `save_contact`, `lookup_account` |
-| Payments (prepare) | `prepare_payment`, `prepare_momo_disbursement`, `prepare_internal_transfer`, `prepare_conversion` |
-| Approvals | `list_approvals`, `get_approval`, `request_approval` |
-| Transactions | `list_transactions`, `get_transaction` |
-| FX | `list_fx_rates`, `get_fx_rate`, `preview_conversion` |
-| Sub-customers | `create_subcustomer`, `list_subcustomers`, `get_subcustomer`, `archive_subcustomer` |
-| KYC | `submit_subcustomer_kyc`, `get_subcustomer_kyc_link`, `get_kyc_requirements`, `add_beneficial_owner`, `submit_kyc_for_review` |
-| Invoices | `list_invoices`, `get_invoice`, `prepare_invoice_payment` |
-| Recurring | `prepare_recurring_payment`, `list_recurring_payments`, `update_recurring_payment` |
+| `TOOL_REGISTRY` | Full catalog with surface + risk |
+| `MCP_TOOL_NAMES` | Curated MCP registration list |
+| `PLATFORM_TOOL_NAMES` / `TOOL_NAMES` | Rich API tools |
+| `MOBILE_TOOL_NAMES` | Local / in-app tools |
+| `TOOL_INPUT_SCHEMAS` | Zod inputs for MCP tools |
+| `isMcpSafeTool` | Runtime guard |
 
 ## Key files
 
 | Path | Role |
 |---|---|
-| `packages/shared/src/enums.ts` | Shared Zod enums (status, rails, KYC, etc.) |
-| `packages/shared/src/tools.ts` | `TOOL_NAMES` + input schemas |
-| `packages/wewire/src/client.ts` | Typed WeWire HTTP methods (all API groups) |
-| `apps/api/src/mock/store.ts` | In-memory mock data |
+| `packages/shared/src/registry.ts` | Three-surface registry |
+| `packages/shared/src/tools.ts` | Zod input schemas |
 | `apps/api/src/routes/v1.ts` | Mock `/v1/*` routes |
-| `apps/mcp/src/tools/catalog.ts` | Tool → API path map |
-| `apps/mcp/src/server.ts` | Registers every tool |
+| `apps/mcp/src/tools/catalog.ts` | MCP → API path map |
+| `apps/mcp/src/server.ts` | Registers `MCP_TOOL_NAMES` only |
 
 ## Local try
 
 ```bash
-# terminal 1
 pnpm --filter @finora/api dev
-
-# terminal 2 — point FINORA_API_URL at local API
 pnpm --filter @finora/mcp dev
 ```
-
-Then call MCP tools (e.g. `prepare_payment`, `list_approvals`). Approvals appear as `pending`; resolve only via API human path.

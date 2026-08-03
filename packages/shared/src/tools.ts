@@ -10,7 +10,6 @@ import {
   PurposeCodeSchema,
   RecurringFrequencySchema,
   RecurringStatusSchema,
-  SubCustomerOnboardingStatusSchema,
   SubCustomerPurposeSchema,
   SubCustomerStatusSchema,
   SubCustomerTypeSchema,
@@ -18,79 +17,17 @@ import {
   WalletTransactionStatusSchema,
   WalletTransactionTypeSchema,
 } from './enums';
+import { MCP_TOOL_NAMES, type McpRegistryToolName, type RegistryToolName } from './registry';
 
 /**
- * Finora MCP / API tool contracts.
+ * Zod input contracts for platform / MCP tools.
  * Money-moving tools prepare work → Approval Engine → human confirms in app.
- * Execution never happens inside an MCP tool call.
+ * MCP never receives execute_* schemas for settlement.
  */
 
-// ─── Catalog ───────────────────────────────────────────────────────────────
+export type ToolName = RegistryToolName;
 
-export const TOOL_NAMES = [
-  // Health
-  'ping',
-
-  // Balances / wallets / receive
-  'get_balances',
-  'list_wallets',
-  'list_receive_methods',
-  'list_virtual_accounts',
-  'list_crypto_addresses',
-
-  // Contacts
-  'search_contacts',
-  'list_contacts',
-  'save_contact',
-  'lookup_account',
-
-  // Payments (prepare → approval)
-  'prepare_payment',
-  'prepare_momo_disbursement',
-  'prepare_internal_transfer',
-  'prepare_conversion',
-
-  // Approvals (agent creates / lists; human approves in app)
-  'list_approvals',
-  'get_approval',
-  'request_approval',
-
-  // Transactions
-  'list_transactions',
-  'get_transaction',
-
-  // FX
-  'list_fx_rates',
-  'get_fx_rate',
-  'preview_conversion',
-
-  // Sub-customers
-  'create_subcustomer',
-  'list_subcustomers',
-  'get_subcustomer',
-  'archive_subcustomer',
-
-  // KYC
-  'submit_subcustomer_kyc',
-  'get_subcustomer_kyc_link',
-  'get_kyc_requirements',
-  'add_beneficial_owner',
-  'submit_kyc_for_review',
-
-  // Invoices / Gmail
-  'list_invoices',
-  'get_invoice',
-  'prepare_invoice_payment',
-
-  // Recurring / scheduled
-  'prepare_recurring_payment',
-  'list_recurring_payments',
-  'update_recurring_payment',
-] as const;
-
-export type ToolName = (typeof TOOL_NAMES)[number];
-
-// ─── Common ────────────────────────────────────────────────────────────────
+export const EmptyInputSchema = z.object({}).strict();
 
 export const PingInputSchema = z
   .object({
@@ -98,12 +35,20 @@ export const PingInputSchema = z
   })
   .strict();
 
-export const GetBalancesInputSchema = z.object({}).strict();
+export const IdInputSchema = z.object({ id: z.string().min(1) }).strict();
+
+export const GetBalancesInputSchema = EmptyInputSchema;
 
 export const ListWalletsInputSchema = z
   .object({
     subCustomerId: z.string().optional(),
     currency: CurrencySchema.optional(),
+  })
+  .strict();
+
+export const GetWalletInputSchema = z
+  .object({
+    walletId: z.string().min(1),
   })
   .strict();
 
@@ -120,6 +65,12 @@ export const ListVirtualAccountsInputSchema = z
   })
   .strict();
 
+export const GetVirtualAccountInputSchema = z
+  .object({
+    virtualAccountId: z.string().min(1),
+  })
+  .strict();
+
 export const ListCryptoAddressesInputSchema = z
   .object({
     currency: CurrencySchema.optional(),
@@ -127,7 +78,20 @@ export const ListCryptoAddressesInputSchema = z
   })
   .strict();
 
-// ─── Contacts ──────────────────────────────────────────────────────────────
+export const GetCryptoWalletInputSchema = z
+  .object({
+    walletId: z.string().optional(),
+    currency: CurrencySchema.optional(),
+  })
+  .strict();
+
+export const ValidateWalletAddressInputSchema = z
+  .object({
+    address: z.string().min(1),
+    network: BlockchainNetworkSchema.optional(),
+    currency: CurrencySchema.optional(),
+  })
+  .strict();
 
 export const SearchContactsInputSchema = z
   .object({
@@ -151,6 +115,8 @@ export const SaveContactInputSchema = z
   })
   .strict();
 
+export const CreateContactInputSchema = SaveContactInputSchema;
+
 export const LookupAccountInputSchema = z
   .object({
     kind: DestinationKindSchema,
@@ -160,7 +126,45 @@ export const LookupAccountInputSchema = z
   })
   .strict();
 
-// ─── Payments ──────────────────────────────────────────────────────────────
+export const LookupBankAccountInputSchema = z
+  .object({
+    accountNumber: z.string().min(1),
+    bankCode: z.string().optional(),
+    country: z.string().length(2).optional(),
+  })
+  .strict();
+
+export const LookupMobileMoneyInputSchema = z
+  .object({
+    phoneNumber: z.string().min(7),
+    network: MobileMoneyNetworkSchema.optional(),
+  })
+  .strict();
+
+export const LookupCryptoRecipientInputSchema = z
+  .object({
+    address: z.string().min(1),
+    network: BlockchainNetworkSchema.optional(),
+  })
+  .strict();
+
+export const ResolveRecipientInputSchema = z
+  .object({
+    query: z.string().min(1),
+  })
+  .strict();
+
+export const ResolveDuplicateRecipientsInputSchema = ResolveRecipientInputSchema;
+export const SearchRecipientInputSchema = ResolveRecipientInputSchema;
+
+export const PreviewPaymentInputSchema = z
+  .object({
+    amount: MoneyAmountSchema,
+    destinationKind: DestinationKindSchema.optional(),
+    destinationValue: z.string().optional(),
+    contactId: z.string().optional(),
+  })
+  .strict();
 
 export const PreparePaymentInputSchema = z
   .object({
@@ -188,6 +192,16 @@ export const PrepareMomoDisbursementInputSchema = z
   })
   .strict();
 
+export const PrepareBankTransferInputSchema = z
+  .object({
+    amount: MoneyAmountSchema,
+    accountNumber: z.string().min(1),
+    bankCode: z.string().optional(),
+    recipientName: z.string().optional(),
+    reference: z.string().max(140).optional(),
+  })
+  .strict();
+
 export const PrepareInternalTransferInputSchema = z
   .object({
     fromSubCustomerId: z.string(),
@@ -196,6 +210,26 @@ export const PrepareInternalTransferInputSchema = z
     reference: z.string().max(140).optional(),
   })
   .strict();
+
+export const PrepareWalletTransferInputSchema = z
+  .object({
+    fromWalletId: z.string().min(1),
+    toWalletId: z.string().min(1),
+    amount: MoneyAmountSchema,
+    reference: z.string().max(140).optional(),
+  })
+  .strict();
+
+export const PrepareUsdtTransferInputSchema = z
+  .object({
+    amount: z.number().positive(),
+    address: z.string().min(1),
+    network: BlockchainNetworkSchema.optional(),
+    reference: z.string().max(140).optional(),
+  })
+  .strict();
+
+export const PrepareUsdcTransferInputSchema = PrepareUsdtTransferInputSchema;
 
 export const PrepareConversionInputSchema = z
   .object({
@@ -206,7 +240,31 @@ export const PrepareConversionInputSchema = z
   })
   .strict();
 
-// ─── Approvals ─────────────────────────────────────────────────────────────
+export const CancelPreparationInputSchema = z
+  .object({
+    preparationId: z.string().min(1),
+  })
+  .strict();
+
+export const EstimateFeesInputSchema = PreviewPaymentInputSchema;
+export const EstimateDeliveryTimeInputSchema = PreviewPaymentInputSchema;
+export const EstimateNetworkFeeInputSchema = PrepareUsdtTransferInputSchema;
+
+export const VerifyBankAccountInputSchema = LookupBankAccountInputSchema;
+export const VerifyMobileMoneyInputSchema = LookupMobileMoneyInputSchema;
+export const ListSupportedBanksInputSchema = z
+  .object({
+    country: z.string().length(2).optional(),
+  })
+  .strict();
+export const ListMomoNetworksInputSchema = EmptyInputSchema;
+export const ListSupportedCurrenciesInputSchema = EmptyInputSchema;
+export const GetWalletLimitsInputSchema = z
+  .object({
+    walletId: z.string().optional(),
+    currency: CurrencySchema.optional(),
+  })
+  .strict();
 
 export const ListApprovalsInputSchema = z
   .object({
@@ -227,7 +285,13 @@ export const RequestApprovalInputSchema = z
   })
   .strict();
 
-// ─── Transactions ──────────────────────────────────────────────────────────
+export const CreateApprovalRequestInputSchema = z
+  .object({
+    preparationId: z.string().min(1),
+    agent: z.string().optional(),
+    note: z.string().max(280).optional(),
+  })
+  .strict();
 
 export const ListTransactionsInputSchema = z
   .object({
@@ -235,6 +299,7 @@ export const ListTransactionsInputSchema = z
     type: WalletTransactionTypeSchema.optional(),
     channel: WalletTransactionChannelSchema.optional(),
     status: WalletTransactionStatusSchema.optional(),
+    query: z.string().optional(),
     limit: z.number().int().positive().max(100).optional(),
   })
   .strict();
@@ -245,9 +310,16 @@ export const GetTransactionInputSchema = z
   })
   .strict();
 
-// ─── FX ────────────────────────────────────────────────────────────────────
+export const SearchTransactionsInputSchema = z
+  .object({
+    query: z.string().min(1),
+    limit: z.number().int().positive().max(100).optional(),
+  })
+  .strict();
 
-export const ListFxRatesInputSchema = z.object({}).strict();
+export const FilterTransactionsInputSchema = ListTransactionsInputSchema;
+
+export const ListFxRatesInputSchema = EmptyInputSchema;
 
 export const GetFxRateInputSchema = z
   .object({
@@ -257,8 +329,6 @@ export const GetFxRateInputSchema = z
   .strict();
 
 export const PreviewConversionInputSchema = PrepareConversionInputSchema;
-
-// ─── Sub-customers ─────────────────────────────────────────────────────────
 
 export const CreateSubCustomerInputSchema = z
   .object({
@@ -271,6 +341,8 @@ export const CreateSubCustomerInputSchema = z
     purpose: z.array(SubCustomerPurposeSchema).optional(),
   })
   .strict();
+
+export const CreateFinancialAccountInputSchema = CreateSubCustomerInputSchema;
 
 export const ListSubCustomersInputSchema = z
   .object({
@@ -285,9 +357,10 @@ export const GetSubCustomerInputSchema = z
   })
   .strict();
 
+export const GetFinancialAccountInputSchema = GetSubCustomerInputSchema;
 export const ArchiveSubCustomerInputSchema = GetSubCustomerInputSchema;
 
-// ─── KYC ───────────────────────────────────────────────────────────────────
+export const StartKycInputSchema = GetSubCustomerInputSchema;
 
 export const SubmitSubCustomerKycInputSchema = z
   .object({
@@ -301,7 +374,10 @@ export const SubmitSubCustomerKycInputSchema = z
   })
   .strict();
 
+export const SubmitKycInputSchema = SubmitSubCustomerKycInputSchema;
+export const GetKycStatusInputSchema = GetSubCustomerInputSchema;
 export const GetSubCustomerKycLinkInputSchema = GetSubCustomerInputSchema;
+export const GetKycLinkInputSchema = GetSubCustomerInputSchema;
 
 export const GetKycRequirementsInputSchema = z
   .object({
@@ -309,6 +385,8 @@ export const GetKycRequirementsInputSchema = z
     type: SubCustomerTypeSchema.optional(),
   })
   .strict();
+
+export const ListKycRequirementsInputSchema = GetKycRequirementsInputSchema;
 
 export const AddBeneficialOwnerInputSchema = z
   .object({
@@ -321,12 +399,11 @@ export const AddBeneficialOwnerInputSchema = z
 
 export const SubmitKycForReviewInputSchema = GetSubCustomerInputSchema;
 
-// ─── Invoices ──────────────────────────────────────────────────────────────
-
 export const ListInvoicesInputSchema = z
   .object({
     status: InvoiceStatusSchema.or(z.literal('all')).optional(),
     source: z.enum(['gmail', 'manual', 'agent', 'all']).optional(),
+    query: z.string().optional(),
   })
   .strict();
 
@@ -342,7 +419,13 @@ export const PrepareInvoicePaymentInputSchema = z
   })
   .strict();
 
-// ─── Recurring ─────────────────────────────────────────────────────────────
+export const ScanInvoicesInputSchema = EmptyInputSchema;
+export const IgnoreInvoiceInputSchema = GetInvoiceInputSchema;
+export const SearchInvoicesInputSchema = z
+  .object({
+    query: z.string().min(1),
+  })
+  .strict();
 
 export const PrepareRecurringPaymentInputSchema = z
   .object({
@@ -368,47 +451,281 @@ export const ListRecurringPaymentsInputSchema = z
 export const UpdateRecurringPaymentInputSchema = z
   .object({
     recurringId: z.string().min(1),
-    status: RecurringStatusSchema,
+    status: RecurringStatusSchema.optional(),
+    dayOfMonth: z.number().int().min(1).max(28).optional(),
+    timeOfDay: z.string().optional(),
   })
   .strict();
 
-/** Map tool name → Zod input schema (for MCP registration / docs). */
+export const PauseRecurringPaymentInputSchema = z
+  .object({ recurringId: z.string().min(1) })
+  .strict();
+export const ResumeRecurringPaymentInputSchema = PauseRecurringPaymentInputSchema;
+
+export const ListSuppliersInputSchema = EmptyInputSchema;
+export const ListEmployeesInputSchema = EmptyInputSchema;
+
+export const PrepareSupplierPaymentInputSchema = z
+  .object({
+    supplierId: z.string().optional(),
+    supplierName: z.string().optional(),
+    amount: MoneyAmountSchema,
+    reference: z.string().max(140).optional(),
+  })
+  .strict();
+
+export const PreparePayrollInputSchema = z
+  .object({
+    period: z.string().optional(),
+    employeeIds: z.array(z.string()).optional(),
+  })
+  .strict();
+
+export const ListNotificationsInputSchema = z
+  .object({
+    unreadOnly: z.boolean().optional(),
+  })
+  .strict();
+
+export const ListIntegrationsInputSchema = EmptyInputSchema;
+
+export const CheckPolicyInputSchema = z
+  .object({
+    action: z.string().min(1),
+    amount: MoneyAmountSchema.optional(),
+    destinationValue: z.string().optional(),
+  })
+  .strict();
+
+export const ListPoliciesInputSchema = EmptyInputSchema;
+
+export const CreatePaymentRequestInputSchema = z
+  .object({
+    amount: MoneyAmountSchema.optional(),
+    currency: CurrencySchema.optional(),
+    memo: z.string().optional(),
+  })
+  .strict();
+
+export const ListBeneficiariesInputSchema = EmptyInputSchema;
+export const VerifyBeneficiaryInputSchema = z
+  .object({
+    beneficiaryId: z.string().min(1),
+  })
+  .strict();
+
+export const RecommendPaymentMethodInputSchema = PreviewPaymentInputSchema;
+export const RecommendCheapestRailInputSchema = PreviewPaymentInputSchema;
+export const DetectDuplicatePaymentsInputSchema = z
+  .object({
+    amount: MoneyAmountSchema.optional(),
+    destinationValue: z.string().optional(),
+    withinHours: z.number().positive().optional(),
+  })
+  .strict();
+
+export const SearchWalletsInputSchema = z
+  .object({
+    query: z.string().min(1),
+  })
+  .strict();
+
+// ── New layers: plans, MCP tx, policy CRUD, capabilities, async, context ───
+
+export const CreateFinancialPlanInputSchema = z
+  .object({
+    intent: z.string().min(1),
+    items: z
+      .array(
+        z.object({
+          kind: z.enum([
+            'payment',
+            'payroll',
+            'invoice',
+            'supplier',
+            'conversion',
+            'recurring',
+          ]),
+          label: z.string().optional(),
+          amount: MoneyAmountSchema.optional(),
+          currency: CurrencySchema.optional(),
+          refId: z.string().optional(),
+        }),
+      )
+      .optional(),
+  })
+  .strict();
+
+export const GetFinancialPlanInputSchema = z
+  .object({
+    planId: z.string().min(1),
+  })
+  .strict();
+
+export const BeginTransactionInputSchema = z
+  .object({
+    label: z.string().optional(),
+  })
+  .strict();
+
+export const CommitTransactionInputSchema = z
+  .object({
+    transactionId: z.string().min(1),
+    note: z.string().optional(),
+  })
+  .strict();
+
+export const RollbackTransactionInputSchema = z
+  .object({
+    transactionId: z.string().min(1),
+    reason: z.string().optional(),
+  })
+  .strict();
+
+export const GetPaymentStatusInputSchema = z
+  .object({
+    paymentId: z.string().optional(),
+    preparationId: z.string().optional(),
+    transactionId: z.string().optional(),
+  })
+  .strict();
+
+export const EvaluatePolicyInputSchema = CheckPolicyInputSchema;
+
+export const CreatePolicyInputSchema = z
+  .object({
+    name: z.string().min(1),
+    rule: z.string().min(1),
+    enabled: z.boolean().optional(),
+  })
+  .strict();
+
+export const UpdatePolicyInputSchema = z
+  .object({
+    policyId: z.string().min(1),
+    name: z.string().optional(),
+    rule: z.string().optional(),
+    enabled: z.boolean().optional(),
+  })
+  .strict();
+
+export const DeletePolicyInputSchema = z
+  .object({
+    policyId: z.string().min(1),
+  })
+  .strict();
+
+export const AssignPolicyInputSchema = z
+  .object({
+    policyId: z.string().min(1),
+    targetType: z.enum(['account', 'wallet', 'user']),
+    targetId: z.string().min(1),
+  })
+  .strict();
+
+export const SimulatePolicyInputSchema = CheckPolicyInputSchema;
+
+export const ListSupportedPaymentRailsInputSchema = EmptyInputSchema;
+export const ListSupportedCountriesInputSchema = EmptyInputSchema;
+export const ListSupportedAssetsInputSchema = EmptyInputSchema;
+export const ListSupportedBlockchainsInputSchema = EmptyInputSchema;
+export const ListSupportedNetworksInputSchema = EmptyInputSchema;
+
+export const GetInvoiceSourceEmailInputSchema = z
+  .object({
+    invoiceId: z.string().min(1),
+  })
+  .strict();
+
+export const GetRecentContextInputSchema = z
+  .object({
+    limit: z.number().int().positive().max(50).optional(),
+  })
+  .strict();
+
+export const GetRecentRecipientsInputSchema = GetRecentContextInputSchema;
+export const GetRecentTransactionsContextInputSchema = GetRecentContextInputSchema;
+export const ResolveLastRecipientInputSchema = EmptyInputSchema;
+export const ResolveLastWalletInputSchema = EmptyInputSchema;
+
+export const FindBestWalletInputSchema = z
+  .object({
+    amount: MoneyAmountSchema.optional(),
+    currency: CurrencySchema.optional(),
+    destinationCountry: z.string().optional(),
+  })
+  .strict();
+
+export const FindBestCurrencyInputSchema = FindBestWalletInputSchema;
+export const RecommendFundingSourceInputSchema = FindBestWalletInputSchema;
+export const RecommendPaymentRouteInputSchema = PreviewPaymentInputSchema;
+export const RecommendPaymentScheduleInputSchema = z
+  .object({
+    dueDate: z.string().optional(),
+    amount: MoneyAmountSchema.optional(),
+    currency: CurrencySchema.optional(),
+  })
+  .strict();
+
+export const WaitForPaymentInputSchema = GetPaymentStatusInputSchema.extend({
+  timeoutMs: z.number().int().positive().max(120_000).optional(),
+}).strict();
+
+export const SubscribePaymentUpdatesInputSchema = GetPaymentStatusInputSchema;
+export const ListPendingTransfersInputSchema = EmptyInputSchema;
+
+export const ListEventTypesInputSchema = EmptyInputSchema;
+export const SubscribeEventsInputSchema = z
+  .object({
+    eventTypes: z.array(z.string()).min(1),
+  })
+  .strict();
+export const UnsubscribeEventsInputSchema = z
+  .object({
+    subscriptionId: z.string().min(1),
+  })
+  .strict();
+export const ListWebhooksInputSchema = EmptyInputSchema;
+export const CreateWebhookInputSchema = z
+  .object({
+    url: z.string().url(),
+    eventTypes: z.array(z.string()).min(1),
+  })
+  .strict();
+export const DeleteWebhookInputSchema = z
+  .object({
+    webhookId: z.string().min(1),
+  })
+  .strict();
+
+/**
+ * Schemas for curated high-level MCP tools only.
+ * Platform keeps a richer operation set; those schemas live as named exports above.
+ */
 export const TOOL_INPUT_SCHEMAS = {
   ping: PingInputSchema,
   get_balances: GetBalancesInputSchema,
   list_wallets: ListWalletsInputSchema,
-  list_receive_methods: ListReceiveMethodsInputSchema,
-  list_virtual_accounts: ListVirtualAccountsInputSchema,
-  list_crypto_addresses: ListCryptoAddressesInputSchema,
-  search_contacts: SearchContactsInputSchema,
-  list_contacts: ListContactsInputSchema,
-  save_contact: SaveContactInputSchema,
-  lookup_account: LookupAccountInputSchema,
+  search_recipient: SearchRecipientInputSchema,
   prepare_payment: PreparePaymentInputSchema,
-  prepare_momo_disbursement: PrepareMomoDisbursementInputSchema,
-  prepare_internal_transfer: PrepareInternalTransferInputSchema,
-  prepare_conversion: PrepareConversionInputSchema,
-  list_approvals: ListApprovalsInputSchema,
-  get_approval: GetApprovalInputSchema,
   request_approval: RequestApprovalInputSchema,
-  list_transactions: ListTransactionsInputSchema,
-  get_transaction: GetTransactionInputSchema,
-  list_fx_rates: ListFxRatesInputSchema,
-  get_fx_rate: GetFxRateInputSchema,
-  preview_conversion: PreviewConversionInputSchema,
-  create_subcustomer: CreateSubCustomerInputSchema,
-  list_subcustomers: ListSubCustomersInputSchema,
-  get_subcustomer: GetSubCustomerInputSchema,
-  archive_subcustomer: ArchiveSubCustomerInputSchema,
-  submit_subcustomer_kyc: SubmitSubCustomerKycInputSchema,
-  get_subcustomer_kyc_link: GetSubCustomerKycLinkInputSchema,
-  get_kyc_requirements: GetKycRequirementsInputSchema,
-  add_beneficial_owner: AddBeneficialOwnerInputSchema,
-  submit_kyc_for_review: SubmitKycForReviewInputSchema,
-  list_invoices: ListInvoicesInputSchema,
-  get_invoice: GetInvoiceInputSchema,
+  get_payment_status: GetPaymentStatusInputSchema,
+  prepare_conversion: PrepareConversionInputSchema,
   prepare_invoice_payment: PrepareInvoicePaymentInputSchema,
-  prepare_recurring_payment: PrepareRecurringPaymentInputSchema,
-  list_recurring_payments: ListRecurringPaymentsInputSchema,
-  update_recurring_payment: UpdateRecurringPaymentInputSchema,
-} as const satisfies Record<ToolName, z.ZodTypeAny>;
+  prepare_supplier_payment: PrepareSupplierPaymentInputSchema,
+  prepare_payroll: PreparePayrollInputSchema,
+  list_transactions: ListTransactionsInputSchema,
+  list_invoices: ListInvoicesInputSchema,
+  list_notifications: ListNotificationsInputSchema,
+  create_financial_plan: CreateFinancialPlanInputSchema,
+  begin_transaction: BeginTransactionInputSchema,
+  commit_transaction: CommitTransactionInputSchema,
+  rollback_transaction: RollbackTransactionInputSchema,
+  evaluate_policy: EvaluatePolicyInputSchema,
+  list_supported_payment_rails: ListSupportedPaymentRailsInputSchema,
+  list_supported_countries: ListSupportedCountriesInputSchema,
+  list_supported_assets: ListSupportedAssetsInputSchema,
+  get_recent_context: GetRecentContextInputSchema,
+} as const satisfies Record<McpRegistryToolName, z.ZodTypeAny>;
+
+export type McpToolName = McpRegistryToolName;
