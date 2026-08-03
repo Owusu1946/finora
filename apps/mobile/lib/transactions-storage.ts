@@ -1,0 +1,106 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
+import {
+  MOCK_TRANSACTIONS,
+  buildTransactionTimeline,
+  currencySymbol,
+  type Transaction,
+  type TransactionStatus,
+} from '@/components/activity/types';
+import type { SupportedCurrency } from '@/components/ui/currency-icon';
+
+const KEY = 'finora.transactions.v1';
+
+const memory = new Map<string, string>();
+
+async function getItem(key: string): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(key);
+  } catch {
+    return memory.get(key) ?? null;
+  }
+}
+
+async function setItem(key: string, value: string): Promise<void> {
+  memory.set(key, value);
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch {
+    // Still valid for this process via memory.
+  }
+}
+
+export async function listTransactions(): Promise<Transaction[]> {
+  const raw = await getItem(KEY);
+  if (!raw) {
+    await setItem(KEY, JSON.stringify(MOCK_TRANSACTIONS));
+    return [...MOCK_TRANSACTIONS];
+  }
+  try {
+    const parsed = JSON.parse(raw) as Transaction[];
+    return Array.isArray(parsed) ? parsed : [...MOCK_TRANSACTIONS];
+  } catch {
+    return [...MOCK_TRANSACTIONS];
+  }
+}
+
+export async function getTransaction(id: string): Promise<Transaction | null> {
+  const txs = await listTransactions();
+  return txs.find((t) => t.id === id || t.wewireId === id) ?? null;
+}
+
+export async function upsertTransaction(tx: Transaction): Promise<Transaction> {
+  const txs = await listTransactions();
+  const idx = txs.findIndex((t) => t.id === tx.id);
+  const next =
+    idx >= 0 ? txs.map((t, i) => (i === idx ? tx : t)) : [tx, ...txs];
+  await setItem(KEY, JSON.stringify(next));
+  return tx;
+}
+
+export async function recordSentPayment(input: {
+  payment: PaymentConfirmation;
+  transactionId: string;
+  source?: Transaction['source'];
+  status?: TransactionStatus;
+}): Promise<Transaction> {
+  const { payment, transactionId } = input;
+  const status = input.status ?? 'completed';
+  const now = new Date().toISOString();
+  const currency = (payment.currency as SupportedCurrency) || 'USD';
+
+  const existing = await getTransaction(transactionId);
+  if (existing) return existing;
+
+  const tx: Transaction = {
+    id: `tx-${Date.now()}`,
+    direction: 'sent',
+    status,
+    currency,
+    amount: payment.amount,
+    symbol: currencySymbol(currency),
+    counterparty: payment.recipientName,
+    method: payment.destination.label,
+    timestamp: now,
+    wewireId: transactionId,
+    finoraId: `fin_${Date.now()}`,
+    rail: payment.destination.label,
+    reference: payment.reference,
+    source: input.source ?? 'chat',
+    destinationValue: payment.destination.value,
+    timeline: buildTransactionTimeline(status, now),
+  };
+
+  await upsertTransaction(tx);
+  return tx;
+}
+
+export async function clearTransactions(): Promise<void> {
+  memory.delete(KEY);
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+}

@@ -12,7 +12,12 @@ import { Composer } from './composer';
 import { MessageBubble } from './message';
 import { ScrollToBottomButton, useScrollToBottom } from './scroll-to-bottom';
 
-const suggestions = ['Check my balance', 'Send money', 'Receive money', 'Create recurring payment'];
+const suggestions = [
+  'Check my balance',
+  'Send 50 GHS to 0559182794',
+  'Receive money',
+  'Convert 100 USD to GHS',
+];
 
 function SuggestionChip({ prompt }: { prompt: string }) {
   const { colors } = useTheme();

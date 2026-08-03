@@ -1,7 +1,8 @@
 import { TOOL_NAMES } from '@finora/shared';
-import { WewireClient } from '@finora/wewire';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+
+import { v1 } from './routes/v1';
 
 type AppEnv = {
   Bindings: Env;
@@ -15,43 +16,20 @@ app.get('/', (c) =>
   c.json({
     name: 'finora-api',
     status: 'ok',
+    mode: 'mock',
     tools: TOOL_NAMES,
+    docs: 'Money-moving routes return pending_approval; humans resolve via /v1/approvals/:id/resolve',
   }),
 );
 
-app.get('/health', (c) => c.json({ ok: true }));
+app.get('/health', (c) => c.json({ ok: true, mode: 'mock' }));
 
-/**
- * Placeholder financial tool surface.
- * Mobile and MCP will call these; WeWire stays behind this API.
- */
-app.get('/v1/balances', async (c) => {
-  const apiKey = c.env.WEWIRE_API_KEY;
-  if (!apiKey) {
-    return c.json(
-      {
-        error: 'WEWIRE_API_KEY not configured',
-        balances: [],
-      },
-      503,
-    );
-  }
-
-  const wewire = new WewireClient({
-    apiKey,
-    environment: c.env.ENVIRONMENT === 'production' ? 'production' : 'sandbox',
-  });
-
-  // Until auth + sub-customer mapping exists, return business wallets.
-  const wallets = await wewire.listBusinessWallets();
-  return c.json({ balances: wallets });
-});
+app.route('/v1', v1);
 
 app.post('/v1/webhooks/wewire', async (c) => {
-  // Signature verification + idempotent processing come next.
   const payload = await c.req.json();
   console.log('wewire webhook', payload);
-  return c.json({ received: true });
+  return c.json({ received: true, mode: 'mock' });
 });
 
 export default app;

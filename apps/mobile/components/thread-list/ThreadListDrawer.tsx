@@ -5,7 +5,9 @@ import {
   ThreadListItemByIndexProvider,
   useAui,
 } from '@assistant-ui/react-native';
+import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,12 +17,16 @@ import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { countPendingApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
 
 import { ThreadListItem } from './ThreadListItem';
 
 const NAV: { href: Href; label: string; icon: IconName }[] = [
   { href: '/wallets', label: 'Wallets', icon: 'wallet' },
+  { href: '/approvals', label: 'Approvals', icon: 'shield' },
+  { href: '/invoices', label: 'Invoices', icon: 'file' },
+  { href: '/recurring', label: 'Recurring', icon: 'reload' },
   { href: '/activity', label: 'Activity', icon: 'activity' },
   { href: '/contacts', label: 'Contacts', icon: 'contacts' },
   { href: '/integrations', label: 'Integrations', icon: 'integrations' },
@@ -33,6 +39,13 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
+  const drawerStatus = useDrawerStatus();
+  const [pendingApprovals, setPendingApprovals] = useState(0);
+
+  useEffect(() => {
+    if (drawerStatus !== 'open') return;
+    void countPendingApprovals().then(setPendingApprovals);
+  }, [drawerStatus, pathname]);
 
   return (
     <View
@@ -101,6 +114,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         {NAV.map((item) => {
           const href = String(item.href);
           const active = pathname.startsWith(href);
+          const showBadge = href === '/approvals' && pendingApprovals > 0;
           return (
             <Pressable
               key={href}
@@ -125,11 +139,19 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
                   {
                     color: colors.foreground,
                     fontWeight: active ? '600' : '400',
+                    flex: 1,
                   },
                 ]}
               >
                 {item.label}
               </Text>
+              {showBadge ? (
+                <View style={[styles.badge, { backgroundColor: colors.foreground }]}>
+                  <Text style={[styles.badgeText, { color: colors.background }]}>
+                    {pendingApprovals}
+                  </Text>
+                </View>
+              ) : null}
             </Pressable>
           );
         })}
@@ -198,5 +220,17 @@ const styles = StyleSheet.create({
   navLabel: {
     fontSize: 15,
     letterSpacing: -0.2,
+  },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
