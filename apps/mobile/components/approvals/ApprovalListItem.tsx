@@ -34,9 +34,29 @@ function relativeTime(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function titleFor(approval: ApprovalRequest): string {
+  if (approval.kind === 'plan' && approval.plan) {
+    const { plan } = approval;
+    return `Plan · ${formatPaymentAmount(plan.total, plan.currency)} · ${plan.items.length} items`;
+  }
+  const payment = approval.payment;
+  if (!payment) return 'Approval';
+  return `${formatPaymentAmount(payment.amount, payment.currency)} → ${payment.recipientName}`;
+}
+
+function detailFor(approval: ApprovalRequest): string {
+  if (approval.kind === 'plan' && approval.plan) {
+    return `${approval.agent} · ${approval.plan.intent} · ${relativeTime(approval.createdAt)}`;
+  }
+  const payment = approval.payment;
+  const dest = payment?.destination.label ?? 'Payment';
+  return `${approval.agent} · ${dest} · ${relativeTime(approval.createdAt)}`;
+}
+
 export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItemProps) {
   const { colors } = useTheme();
-  const { payment, status } = approval;
+  const { status } = approval;
+  const isPlan = approval.kind === 'plan';
 
   return (
     <Pressable
@@ -55,7 +75,7 @@ export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItem
     >
       <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
         <Icon
-          name='shield'
+          name={isPlan ? 'activity' : 'shield'}
           size={16}
           color={colors.foreground}
         />
@@ -66,13 +86,13 @@ export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItem
           style={[styles.title, { color: colors.foreground }]}
           numberOfLines={1}
         >
-          {formatPaymentAmount(payment.amount, payment.currency)} → {payment.recipientName}
+          {titleFor(approval)}
         </Text>
         <Text
           style={[styles.detail, { color: colors.mutedForeground }]}
           numberOfLines={1}
         >
-          {approval.agent} · {payment.destination.label} · {relativeTime(approval.createdAt)}
+          {detailFor(approval)}
         </Text>
       </View>
 

@@ -1,5 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { TOOL_INPUT_SCHEMAS, TOOL_NAMES, type ToolName } from '@finora/shared';
+import {
+  MCP_TOOL_NAMES,
+  TOOL_INPUT_SCHEMAS,
+  type McpToolName,
+} from '@finora/shared';
 import { McpAgent } from 'agents/mcp';
 import type { ZodRawShape } from 'zod';
 
@@ -13,7 +17,7 @@ function textResult(data: unknown) {
 
 async function callFinoraApi(
   env: Env,
-  method: 'GET' | 'POST' | 'PATCH',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   body?: Record<string, unknown>,
 ) {
@@ -41,6 +45,7 @@ async function callFinoraApi(
  * Remote MCP surface for external AI agents.
  * All tools call Finora API — never WeWire directly.
  * Money tools only prepare + request approval; humans confirm in the app.
+ * Execute / PIN / biometrics tools are intentionally not registered.
  */
 export class FinoraMCP extends McpAgent<Env> {
   server = new McpServer({
@@ -49,12 +54,12 @@ export class FinoraMCP extends McpAgent<Env> {
   });
 
   async init() {
-    for (const name of TOOL_NAMES) {
+    for (const name of MCP_TOOL_NAMES) {
       this.registerTool(name);
     }
   }
 
-  private registerTool(name: ToolName) {
+  private registerTool(name: McpToolName) {
     const meta = TOOL_CATALOG[name];
     const schema = TOOL_INPUT_SCHEMAS[name];
     const shape = (schema as unknown as { shape: ZodRawShape }).shape ?? {};
@@ -65,7 +70,8 @@ export class FinoraMCP extends McpAgent<Env> {
         return textResult({
           pong: true,
           message: message ? `pong: ${message}` : 'pong',
-          tools: TOOL_NAMES.length,
+          tools: MCP_TOOL_NAMES.length,
+          note: 'MCP exposes a curated high-level read+prepare set. Money settles after human approval in the Finora app.',
         });
       }
 
@@ -82,6 +88,9 @@ export class FinoraMCP extends McpAgent<Env> {
         delete bodyArgs.recurringId;
         delete bodyArgs.approvalId;
         delete bodyArgs.transactionId;
+        delete bodyArgs.walletId;
+        delete bodyArgs.virtualAccountId;
+        delete bodyArgs.accountId;
       }
 
       try {

@@ -24,6 +24,7 @@ import { ListInvoicesToolUI } from '@/components/chat/ListInvoicesToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
+import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 
 export const unstable_settings = {
   anchor: '(app)',
@@ -114,6 +115,7 @@ export default function RootLayout() {
             <PrepareRecurringToolUI />
             <SchedulePaymentWizardToolUI />
             <ResolveSendToolUI />
+            <CreateFinancialPlanToolUI />
             <RootNavigator />
           </AssistantRuntimeProvider>
         </OnboardingGateProvider>

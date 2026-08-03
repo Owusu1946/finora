@@ -32,9 +32,18 @@ v1.get('/balances', (c) => {
 v1.get('/wallets', (c) => {
   const subCustomerId = c.req.query('subCustomerId');
   const currency = c.req.query('currency');
+  const query = (c.req.query('query') ?? '').toLowerCase();
   let wallets = [...mockStore.wallets];
   if (subCustomerId) wallets = wallets.filter((w) => w.subCustomerId === subCustomerId);
   if (currency) wallets = wallets.filter((w) => w.currency === currency);
+  if (query) {
+    wallets = wallets.filter(
+      (w) =>
+        w.currency.toLowerCase().includes(query) ||
+        w.id.toLowerCase().includes(query) ||
+        (w.subCustomerId?.toLowerCase().includes(query) ?? false),
+    );
+  }
   return c.json({ mode: 'mock', wallets });
 });
 
@@ -262,10 +271,30 @@ v1.get('/transactions', (c) => {
   const type = c.req.query('type');
   const status = c.req.query('status');
   const limit = Number(c.req.query('limit') ?? 50);
+  const query = (c.req.query('query') ?? '').toLowerCase();
   let items = [...mockStore.transactions];
   if (type) items = items.filter((t) => t.type === type);
   if (status) items = items.filter((t) => t.status === status);
+  if (query) {
+    items = items.filter(
+      (t) =>
+        t.counterparty.toLowerCase().includes(query) ||
+        t.reference.toLowerCase().includes(query) ||
+        t.wewireId.toLowerCase().includes(query),
+    );
+  }
   return c.json({ mode: 'mock', transactions: items.slice(0, limit) });
+});
+
+v1.get('/transactions/search', (c) => {
+  const q = (c.req.query('query') ?? '').toLowerCase();
+  const items = mockStore.transactions.filter(
+    (t) =>
+      t.counterparty.toLowerCase().includes(q) ||
+      t.reference.toLowerCase().includes(q) ||
+      t.wewireId.toLowerCase().includes(q),
+  );
+  return c.json({ mode: 'mock', transactions: items });
 });
 
 v1.get('/transactions/:id', (c) => {
@@ -416,8 +445,16 @@ v1.post('/subcustomers/:id/kyc/submit', (c) => {
 
 v1.get('/invoices', (c) => {
   const status = c.req.query('status');
+  const query = (c.req.query('query') ?? '').toLowerCase();
   let items = [...mockStore.invoices];
   if (status && status !== 'all') items = items.filter((i) => i.status === status);
+  if (query) {
+    items = items.filter(
+      (i) =>
+        i.vendor.toLowerCase().includes(query) ||
+        i.invoiceNumber.toLowerCase().includes(query),
+    );
+  }
   return c.json({ mode: 'mock', invoices: items });
 });
 
@@ -462,4 +499,790 @@ v1.patch('/recurring/:id', async (c) => {
   if (!item) return c.json({ error: 'not_found' }, 404);
   item.status = body.status;
   return c.json({ mode: 'mock', recurring: item });
+});
+
+// ─── Extra wallet / currency stubs ─────────────────────────────────────────
+
+v1.get('/wallets/:id/limits', (c) => {
+  const wallet = mockStore.wallets.find((w) => w.id === c.req.param('id'));
+  if (!wallet) return c.json({ error: 'not_found' }, 404);
+  return c.json({
+    mode: 'mock',
+    walletId: wallet.id,
+    currency: wallet.currency,
+    dailySendLimit: 10_000,
+    dailyReceiveLimit: 50_000,
+    perTxLimit: 5_000,
+  });
+});
+
+v1.get('/wallets/:id', (c) => {
+  const wallet = mockStore.wallets.find((w) => w.id === c.req.param('id'));
+  if (!wallet) return c.json({ error: 'not_found' }, 404);
+  return c.json({ mode: 'mock', wallet });
+});
+
+v1.get('/currencies', (c) =>
+  c.json({
+    mode: 'mock',
+    currencies: ['USD', 'GHS', 'EUR', 'GBP', 'USDT', 'USDC'],
+  }),
+);
+
+v1.post('/wallets/transfer/prepare', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json(createPreparation('wallet_transfer', body), 201);
+});
+
+v1.get('/virtual-accounts/:id', (c) => {
+  const accounts = [
+    {
+      id: 'va-usd',
+      currency: 'USD',
+      iban: 'GB82 CLRB 0406 6800 0123 45',
+      bic: 'CLRBGB22',
+      status: 'ACTIVE',
+    },
+  ];
+  const account = accounts.find((a) => a.id === c.req.param('id'));
+  if (!account) return c.json({ error: 'not_found' }, 404);
+  return c.json({ mode: 'mock', account });
+});
+
+v1.get('/crypto-wallets/:id', (c) => {
+  const id = c.req.param('id');
+  return c.json({
+    mode: 'mock',
+    wallet: {
+      id: id.startsWith('ca-') ? id : 'ca-usdt',
+      currency: id === 'USDC' ? 'USDC' : 'USDT',
+      network: 'TRON',
+      address: 'TXyzFinoraMockDepositAddress9hQ2',
+      status: 'ACTIVE',
+    },
+  });
+});
+
+v1.post('/crypto/validate-address', async (c) => {
+  const body = await c.req.json<{ address: string; currency?: string; network?: string }>();
+  return c.json({
+    mode: 'mock',
+    address: body.address,
+    valid: body.address.length >= 20,
+    currency: body.currency ?? 'USDT',
+    network: body.network ?? 'TRON',
+  });
+});
+
+v1.post('/payment-requests', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  const prep = createPreparation('payment_request', body);
+  return c.json(
+    {
+      ...prep,
+      link: `https://pay.finora.app/r/${prep.preparationId}`,
+    },
+    201,
+  );
+});
+
+// ─── Beneficiaries / recipients ────────────────────────────────────────────
+
+v1.get('/beneficiaries', (c) => c.json({ mode: 'mock', beneficiaries: mockStore.beneficiaries }));
+
+v1.post('/beneficiaries/verify', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json({ mode: 'mock', verified: true, ...body });
+});
+
+v1.post('/accounts/lookup/bank', async (c) => {
+  const body = await c.req.json<{ accountNumber?: string; value?: string }>();
+  return c.json({
+    mode: 'mock',
+    kind: 'bank',
+    value: body.accountNumber ?? body.value,
+    resolvedName: 'Bank account holder',
+    status: 'resolvable',
+  });
+});
+
+v1.post('/accounts/lookup/mobile-money', async (c) => {
+  const body = await c.req.json<{ phone?: string; value?: string }>();
+  return c.json({
+    mode: 'mock',
+    kind: 'mobile_money',
+    value: body.phone ?? body.value,
+    resolvedName: 'Mobile money recipient',
+    status: 'resolvable',
+  });
+});
+
+v1.post('/accounts/lookup/crypto', async (c) => {
+  const body = await c.req.json<{ address?: string; value?: string }>();
+  return c.json({
+    mode: 'mock',
+    kind: 'crypto',
+    value: body.address ?? body.value,
+    resolvedName: null,
+    status: 'resolvable',
+  });
+});
+
+v1.get('/recipients/resolve', (c) => {
+  const q = (c.req.query('query') ?? '').toLowerCase();
+  const matches = mockStore.contacts.filter((x) => x.name.toLowerCase().includes(q));
+  return c.json({
+    mode: 'mock',
+    query: q,
+    matches,
+    ambiguous: matches.length > 1,
+  });
+});
+
+v1.post('/recipients/resolve-duplicates', async (c) => {
+  const body = await c.req.json<{ query?: string; selectedId?: string }>();
+  const contact = mockStore.contacts.find((x) => x.id === body.selectedId);
+  return c.json({ mode: 'mock', selected: contact ?? null, query: body.query });
+});
+
+v1.get('/recipients/search', (c) => {
+  const q = (c.req.query('query') ?? '').toLowerCase();
+  const contacts = mockStore.contacts.filter(
+    (x) => x.name.toLowerCase().includes(q) || x.identifier.toLowerCase().includes(q),
+  );
+  return c.json({ mode: 'mock', recipients: contacts });
+});
+
+// ─── Payment helpers / more prepares ───────────────────────────────────────
+
+v1.post('/payments/preview', async (c) => {
+  const body = await c.req.json<{ amount?: number; currency?: string; method?: string }>();
+  const amount = Number(body.amount ?? 0);
+  const fee = Number((amount * 0.005).toFixed(2));
+  return c.json({
+    mode: 'mock',
+    amount,
+    currency: body.currency ?? 'USD',
+    method: body.method ?? 'bank',
+    fee,
+    total: amount + fee,
+  });
+});
+
+v1.post('/transfers/bank/prepare', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json(createPreparation('bank_transfer', body), 201);
+});
+
+v1.post('/crypto/usdt/prepare', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json(createPreparation('usdt_transfer', body), 201);
+});
+
+v1.post('/crypto/usdc/prepare', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json(createPreparation('usdc_transfer', body), 201);
+});
+
+v1.post('/preparations/cancel', async (c) => {
+  const body = await c.req.json<{ preparationId: string }>();
+  const item = mockStore.approvals.find(
+    (a) => a.preparationId === body.preparationId || a.id === body.preparationId,
+  );
+  if (!item) return c.json({ error: 'preparation_not_found' }, 404);
+  if (item.status !== 'pending') {
+    return c.json({ error: 'not_cancellable', status: item.status }, 409);
+  }
+  item.status = 'cancelled';
+  item.resolvedAt = new Date().toISOString();
+  return c.json({ mode: 'mock', cancelled: true, approval: item });
+});
+
+v1.post('/payments/estimate-fees', async (c) => {
+  const body = await c.req.json<{ amount?: number }>();
+  const amount = Number(body.amount ?? 0);
+  return c.json({ mode: 'mock', fee: Number((amount * 0.005).toFixed(2)), currency: 'USD' });
+});
+
+v1.post('/payments/estimate-delivery', async (c) => {
+  const body = await c.req.json<{ method?: string }>();
+  return c.json({
+    mode: 'mock',
+    method: body.method ?? 'bank',
+    etaMinutes: body.method === 'mobile_money' ? 5 : 60,
+  });
+});
+
+v1.post('/crypto/estimate-network-fee', async (c) => {
+  const body = await c.req.json<{ currency?: string; network?: string }>();
+  return c.json({
+    mode: 'mock',
+    currency: body.currency ?? 'USDT',
+    network: body.network ?? 'TRON',
+    networkFee: 1.25,
+    feeCurrency: 'USDT',
+  });
+});
+
+v1.post('/accounts/verify/bank', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json({ mode: 'mock', verified: true, ...body });
+});
+
+v1.post('/accounts/verify/mobile-money', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json({ mode: 'mock', verified: true, ...body });
+});
+
+v1.get('/banks', (c) =>
+  c.json({
+    mode: 'mock',
+    country: c.req.query('country') ?? 'GH',
+    banks: [
+      { id: 'gcb', name: 'GCB Bank' },
+      { id: 'absa', name: 'Absa Ghana' },
+      { id: 'ecobank', name: 'Ecobank' },
+    ],
+  }),
+);
+
+v1.get('/momo-networks', (c) =>
+  c.json({
+    mode: 'mock',
+    country: c.req.query('country') ?? 'GH',
+    networks: [
+      { id: 'mtn', name: 'MTN MoMo' },
+      { id: 'vodafone', name: 'Telecel Cash' },
+      { id: 'airteltigo', name: 'AirtelTigo Money' },
+    ],
+  }),
+);
+
+v1.post('/approvals', async (c) => {
+  const body = await c.req.json<{ preparationId?: string; note?: string }>();
+  if (body.preparationId) {
+    const item = mockStore.approvals.find((a) => a.preparationId === body.preparationId);
+    if (!item) return c.json({ error: 'preparation_not_found' }, 404);
+    return c.json({ mode: 'mock', approvalId: item.id, status: item.status, note: body.note });
+  }
+  return c.json(createPreparation('payment', { note: body.note }), 201);
+});
+
+// ─── Transaction search / filter ───────────────────────────────────────────
+
+v1.post('/transactions/filter', async (c) => {
+  const body = await c.req.json<{ type?: string; status?: string; limit?: number }>();
+  let items = [...mockStore.transactions];
+  if (body.type) items = items.filter((t) => t.type === body.type);
+  if (body.status) items = items.filter((t) => t.status === body.status);
+  return c.json({ mode: 'mock', transactions: items.slice(0, body.limit ?? 50) });
+});
+
+// ─── KYC start / status ────────────────────────────────────────────────────
+
+v1.post('/subcustomers/:id/kyc/start', (c) => {
+  const sc = mockStore.subcustomers.find((s) => s.id === c.req.param('id'));
+  if (!sc) return c.json({ error: 'not_found' }, 404);
+  sc.onboardingStatus = 'IN_PROGRESS';
+  return c.json({ mode: 'mock', status: 'IN_PROGRESS', subCustomerId: sc.id });
+});
+
+v1.get('/subcustomers/:id/kyc/status', (c) => {
+  const sc = mockStore.subcustomers.find((s) => s.id === c.req.param('id'));
+  if (!sc) return c.json({ error: 'not_found' }, 404);
+  return c.json({
+    mode: 'mock',
+    subCustomerId: sc.id,
+    onboardingStatus: sc.onboardingStatus,
+    status: sc.onboardingStatus,
+  });
+});
+
+// ─── Invoices scan ─────────────────────────────────────────────────────────
+
+v1.post('/invoices/scan', async (c) => {
+  return c.json({
+    mode: 'mock',
+    scanned: mockStore.invoices.length,
+    invoices: mockStore.invoices.filter((i) => i.status === 'due'),
+  });
+});
+
+// ─── Business: suppliers / payroll ─────────────────────────────────────────
+
+v1.get('/suppliers', (c) => c.json({ mode: 'mock', suppliers: mockStore.suppliers }));
+
+v1.post('/suppliers/prepare-payment', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json(createPreparation('supplier_payment', body), 201);
+});
+
+v1.get('/employees', (c) => c.json({ mode: 'mock', employees: mockStore.employees }));
+
+v1.post('/payroll/prepare', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  const employees =
+    Array.isArray(body.employeeIds) && body.employeeIds.length
+      ? mockStore.employees.filter((e) => (body.employeeIds as string[]).includes(e.id))
+      : mockStore.employees;
+  const total = employees.reduce((s, e) => s + e.salary, 0);
+  return c.json(
+    createPreparation('payroll', {
+      ...body,
+      employees,
+      total,
+      currency: 'USD',
+    }),
+    201,
+  );
+});
+
+// ─── Notifications / integrations ──────────────────────────────────────────
+
+v1.get('/notifications', (c) => {
+  const unreadOnly = c.req.query('unreadOnly') === 'true';
+  let items = [...mockStore.notifications];
+  if (unreadOnly) items = items.filter((n) => n.unread);
+  return c.json({ mode: 'mock', notifications: items });
+});
+
+v1.get('/integrations', (c) => c.json({ mode: 'mock', integrations: mockStore.integrations }));
+
+// ─── Policy ────────────────────────────────────────────────────────────────
+
+v1.get('/policies', (c) => c.json({ mode: 'mock', policies: mockStore.policies }));
+
+v1.post('/policies/check', async (c) => {
+  const body = await c.req.json<{
+    action: string;
+    amount?: number;
+    destinationValue?: string;
+  }>();
+  const amount = Number(body.amount ?? 0);
+  const requiresApproval = amount > 500 || Boolean(body.destinationValue);
+  return c.json({
+    mode: 'mock',
+    action: body.action,
+    allowed: true,
+    requiresApproval,
+    matchedPolicies: mockStore.policies.filter((p) => p.enabled).map((p) => p.id),
+    message: requiresApproval
+      ? 'Allowed after human approval in Finora Approvals inbox.'
+      : 'Allowed under current policy.',
+  });
+});
+
+// ─── Intelligence stubs ────────────────────────────────────────────────────
+
+v1.post('/intelligence/recommend-rail', async (c) => {
+  const body = await c.req.json<{ amount?: number; currency?: string; country?: string }>();
+  const rail =
+    body.currency === 'GHS' || body.country === 'GH' ? 'mobile_money' : 'bank';
+  return c.json({ mode: 'mock', recommended: rail, reason: 'Fastest available rail for destination' });
+});
+
+v1.post('/intelligence/cheapest-rail', async (c) => {
+  return c.json({ mode: 'mock', recommended: 'mobile_money', estimatedFee: 0.5 });
+});
+
+v1.post('/intelligence/detect-duplicates', async (c) => {
+  const body = await c.req.json<{ amount?: number; destinationValue?: string }>();
+  const hits = mockStore.transactions.filter(
+    (t) =>
+      Number(t.amount) === Number(body.amount ?? -1) ||
+      (body.destinationValue &&
+        t.counterparty.toLowerCase().includes(String(body.destinationValue).toLowerCase())),
+  );
+  return c.json({
+    mode: 'mock',
+    duplicates: hits.slice(0, 3),
+    likelyDuplicate: hits.length > 0,
+  });
+});
+
+v1.post('/intelligence/best-wallet', async (c) => {
+  const body = await c.req.json<{ currency?: string; amount?: number }>();
+  const wallet =
+    mockStore.wallets.find((w) => w.currency === (body.currency ?? 'USD')) ?? mockStore.wallets[0];
+  return c.json({ mode: 'mock', wallet, reason: 'Highest available balance in requested currency' });
+});
+
+v1.post('/intelligence/best-currency', async (c) => {
+  const body = await c.req.json<{ destinationCountry?: string }>();
+  const currency = body.destinationCountry === 'GH' ? 'GHS' : 'USD';
+  return c.json({ mode: 'mock', currency, reason: 'Matches destination corridor' });
+});
+
+v1.post('/intelligence/funding-source', async (c) => {
+  const wallet = mockStore.wallets[0];
+  return c.json({ mode: 'mock', wallet, rail: 'internal' });
+});
+
+v1.post('/intelligence/payment-route', async (c) => {
+  const body = await c.req.json<Record<string, unknown>>();
+  return c.json({
+    mode: 'mock',
+    route: ['source_wallet', 'fx_if_needed', 'destination_rail'],
+    estimatedFee: 2.5,
+    ...body,
+  });
+});
+
+v1.post('/intelligence/payment-schedule', async (c) => {
+  const body = await c.req.json<{ dueDate?: string }>();
+  return c.json({
+    mode: 'mock',
+    recommendedPayAt: body.dueDate ?? new Date(Date.now() + 86_400_000).toISOString(),
+    reason: 'Pay one day before due to avoid late fees',
+  });
+});
+
+// ─── Payment status / pending ──────────────────────────────────────────────
+
+v1.get('/payments/status', (c) => {
+  const id = c.req.query('id') ?? '';
+  const approval = mockStore.approvals.find(
+    (a) => a.id === id || a.preparationId === id || a.transactionId === id,
+  );
+  const tx = mockStore.transactions.find((t) => t.id === id || t.wewireId === id);
+  if (approval) {
+    return c.json({
+      mode: 'mock',
+      kind: 'preparation',
+      id: approval.preparationId,
+      approvalId: approval.id,
+      status: approval.status,
+      payload: approval.payload,
+    });
+  }
+  if (tx) {
+    return c.json({
+      mode: 'mock',
+      kind: 'transaction',
+      id: tx.id,
+      wewireId: tx.wewireId,
+      status: tx.status,
+    });
+  }
+  return c.json({ error: 'not_found' }, 404);
+});
+
+v1.get('/transfers/pending', (c) => {
+  const pending = mockStore.transactions.filter(
+    (t) => t.status === 'PENDING' || t.status === 'PROCESSING' || t.status === 'REQUIRES_APPROVAL',
+  );
+  const pendingApprovals = mockStore.approvals.filter((a) => a.status === 'pending');
+  return c.json({ mode: 'mock', transfers: pending, preparations: pendingApprovals });
+});
+
+// ─── Financial plans ───────────────────────────────────────────────────────
+
+v1.post('/plans', async (c) => {
+  const body = await c.req.json<{
+    intent: string;
+    items?: Array<Record<string, unknown>>;
+  }>();
+  const items =
+    body.items && body.items.length
+      ? body.items
+      : [
+          { kind: 'payroll', label: 'Payroll due today', amount: 5700, currency: 'USD' },
+          { kind: 'payment', label: 'Rent', amount: 250, currency: 'USD' },
+          {
+            kind: 'invoice',
+            label: 'TechFlow INV-1042',
+            amount: 780,
+            currency: 'GBP',
+            refId: 'inv-1',
+          },
+          {
+            kind: 'supplier',
+            label: 'ClearView Partners',
+            amount: 1500,
+            currency: 'GBP',
+            refId: 'sup-2',
+          },
+        ];
+  const total = items.reduce((s, i) => s + Number(i.amount ?? 0), 0);
+  const plan = {
+    id: newId('plan'),
+    intent: body.intent,
+    status: 'pending_approval' as const,
+    items,
+    total,
+    currency: 'USD',
+    createdAt: new Date().toISOString(),
+  };
+  mockStore.plans.unshift(plan);
+  const prep = createPreparation('payment', {
+    planId: plan.id,
+    intent: plan.intent,
+    items: plan.items,
+    total: plan.total,
+  });
+  return c.json({ mode: 'mock', plan, ...prep }, 201);
+});
+
+v1.get('/plans', (c) => c.json({ mode: 'mock', plans: mockStore.plans }));
+
+v1.get('/plans/:id', (c) => {
+  const plan = mockStore.plans.find((p) => p.id === c.req.param('id'));
+  if (!plan) return c.json({ error: 'not_found' }, 404);
+  return c.json({ mode: 'mock', plan });
+});
+
+v1.post('/plans/:id/cancel', (c) => {
+  const plan = mockStore.plans.find((p) => p.id === c.req.param('id'));
+  if (!plan) return c.json({ error: 'not_found' }, 404);
+  plan.status = 'cancelled';
+  return c.json({ mode: 'mock', plan });
+});
+
+// ─── Agent transactions (MCP unit of work) ─────────────────────────────────
+
+v1.post('/agent-transactions', async (c) => {
+  const body = await c.req.json<{ label?: string }>();
+  const tx = {
+    id: newId('atx'),
+    label: body.label,
+    status: 'open' as const,
+    preparationIds: [] as string[],
+    createdAt: new Date().toISOString(),
+  };
+  mockStore.agentTransactions.unshift(tx);
+  return c.json({ mode: 'mock', transaction: tx }, 201);
+});
+
+v1.post('/agent-transactions/:id/commit', async (c) => {
+  const body = await c.req.json<{ note?: string }>().catch(() => ({ note: undefined }));
+  const tx = mockStore.agentTransactions.find((t) => t.id === c.req.param('id'));
+  if (!tx) return c.json({ error: 'not_found' }, 404);
+  if (tx.status !== 'open') return c.json({ error: 'not_open', status: tx.status }, 409);
+  tx.status = 'committed';
+  tx.closedAt = new Date().toISOString();
+  const pending = mockStore.approvals.filter((a) => a.status === 'pending');
+  return c.json({
+    mode: 'mock',
+    transaction: tx,
+    approvalsQueued: pending.length,
+    note: body.note,
+    message: 'Committed. Human notified in Finora Approvals inbox.',
+  });
+});
+
+v1.post('/agent-transactions/:id/rollback', async (c) => {
+  const body = await c.req.json<{ reason?: string }>().catch(() => ({ reason: undefined }));
+  const tx = mockStore.agentTransactions.find((t) => t.id === c.req.param('id'));
+  if (!tx) return c.json({ error: 'not_found' }, 404);
+  if (tx.status !== 'open') return c.json({ error: 'not_open', status: tx.status }, 409);
+  tx.status = 'rolled_back';
+  tx.closedAt = new Date().toISOString();
+  for (const prepId of tx.preparationIds) {
+    const item = mockStore.approvals.find((a) => a.preparationId === prepId);
+    if (item && item.status === 'pending') {
+      item.status = 'cancelled';
+      item.resolvedAt = new Date().toISOString();
+    }
+  }
+  return c.json({ mode: 'mock', transaction: tx, reason: body.reason });
+});
+
+// ─── Invoice source email ──────────────────────────────────────────────────
+
+v1.get('/invoices/:id/source-email', (c) => {
+  const inv = mockStore.invoices.find((i) => i.id === c.req.param('id'));
+  if (!inv) return c.json({ error: 'not_found' }, 404);
+  return c.json({
+    mode: 'mock',
+    invoiceId: inv.id,
+    sourceEmail: inv.sourceEmail ?? null,
+  });
+});
+
+// ─── Policy CRUD ───────────────────────────────────────────────────────────
+
+v1.post('/policies', async (c) => {
+  const body = await c.req.json<{ name: string; rule: string; enabled?: boolean }>();
+  const policy = {
+    id: newId('pol'),
+    name: body.name,
+    rule: body.rule,
+    enabled: body.enabled ?? true,
+  };
+  mockStore.policies.push(policy);
+  return c.json({ mode: 'mock', policy }, 201);
+});
+
+v1.patch('/policies/:id', async (c) => {
+  const body = await c.req.json<{ name?: string; rule?: string; enabled?: boolean }>();
+  const policy = mockStore.policies.find((p) => p.id === c.req.param('id'));
+  if (!policy) return c.json({ error: 'not_found' }, 404);
+  if (body.name !== undefined) policy.name = body.name;
+  if (body.rule !== undefined) policy.rule = body.rule;
+  if (body.enabled !== undefined) policy.enabled = body.enabled;
+  return c.json({ mode: 'mock', policy });
+});
+
+v1.delete('/policies/:id', (c) => {
+  const idx = mockStore.policies.findIndex((p) => p.id === c.req.param('id'));
+  if (idx < 0) return c.json({ error: 'not_found' }, 404);
+  const [policy] = mockStore.policies.splice(idx, 1);
+  return c.json({ mode: 'mock', deleted: true, policy });
+});
+
+v1.post('/policies/assign', async (c) => {
+  const body = await c.req.json<{
+    policyId: string;
+    targetType: string;
+    targetId: string;
+  }>();
+  const policy = mockStore.policies.find((p) => p.id === body.policyId);
+  if (!policy) return c.json({ error: 'policy_not_found' }, 404);
+  return c.json({ mode: 'mock', assigned: true, policy, target: body });
+});
+
+v1.post('/policies/simulate', async (c) => {
+  const body = await c.req.json<{ action: string; amount?: number }>();
+  const amount = Number(body.amount ?? 0);
+  return c.json({
+    mode: 'mock',
+    simulation: true,
+    action: body.action,
+    wouldRequireApproval: amount > 500,
+    wouldAutoApprove: amount > 0 && amount <= 100,
+    wouldBlock: false,
+  });
+});
+
+// ─── Capabilities ──────────────────────────────────────────────────────────
+
+v1.get('/capabilities/rails', (c) =>
+  c.json({
+    mode: 'mock',
+    rails: ['bank', 'mobile_money', 'crypto', 'internal', 'fx'],
+  }),
+);
+
+v1.get('/capabilities/countries', (c) =>
+  c.json({
+    mode: 'mock',
+    countries: [
+      { code: 'GH', name: 'Ghana' },
+      { code: 'NG', name: 'Nigeria' },
+      { code: 'KE', name: 'Kenya' },
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'US', name: 'United States' },
+      { code: 'EU', name: 'Eurozone' },
+    ],
+  }),
+);
+
+v1.get('/capabilities/assets', (c) =>
+  c.json({
+    mode: 'mock',
+    assets: [
+      { code: 'USD', kind: 'fiat' },
+      { code: 'GHS', kind: 'fiat' },
+      { code: 'GBP', kind: 'fiat' },
+      { code: 'EUR', kind: 'fiat' },
+      { code: 'USDT', kind: 'crypto' },
+      { code: 'USDC', kind: 'crypto' },
+    ],
+  }),
+);
+
+v1.get('/capabilities/blockchains', (c) =>
+  c.json({
+    mode: 'mock',
+    blockchains: ['TRON', 'ETHEREUM', 'POLYGON', 'SOLANA'],
+  }),
+);
+
+v1.get('/capabilities/networks', (c) =>
+  c.json({
+    mode: 'mock',
+    networks: {
+      mobile_money: ['MTN', 'Vodafone', 'AirtelTigo'],
+      crypto: ['TRC20', 'ERC20', 'SOL'],
+    },
+  }),
+);
+
+// ─── Conversation context ──────────────────────────────────────────────────
+
+v1.get('/context/recent', (c) => {
+  const limit = Number(c.req.query('limit') ?? 5);
+  return c.json({
+    mode: 'mock',
+    recipients: mockStore.contacts.slice(0, limit),
+    wallets: mockStore.wallets.slice(0, limit),
+    transactions: mockStore.transactions.slice(0, limit),
+    lastRecipient: mockStore.contacts[0] ?? null,
+    lastWallet: mockStore.wallets[0] ?? null,
+  });
+});
+
+v1.get('/context/last-recipient', (c) =>
+  c.json({ mode: 'mock', recipient: mockStore.contacts[0] ?? null }),
+);
+
+v1.get('/context/last-wallet', (c) =>
+  c.json({ mode: 'mock', wallet: mockStore.wallets[0] ?? null }),
+);
+
+// ─── Events / webhooks ─────────────────────────────────────────────────────
+
+v1.get('/events/types', (c) =>
+  c.json({
+    mode: 'mock',
+    eventTypes: [
+      'payment.prepared',
+      'payment.approved',
+      'payment.executed',
+      'payment.failed',
+      'approval.requested',
+      'invoice.detected',
+      'kyc.updated',
+    ],
+  }),
+);
+
+v1.post('/events/subscribe', async (c) => {
+  const body = await c.req.json<{ eventTypes: string[] }>();
+  const sub = {
+    id: newId('sub'),
+    eventTypes: body.eventTypes,
+    createdAt: new Date().toISOString(),
+  };
+  mockStore.eventSubscriptions.push(sub);
+  return c.json({ mode: 'mock', subscription: sub }, 201);
+});
+
+v1.post('/events/unsubscribe', async (c) => {
+  const body = await c.req.json<{ subscriptionId: string }>();
+  const idx = mockStore.eventSubscriptions.findIndex((s) => s.id === body.subscriptionId);
+  if (idx < 0) return c.json({ error: 'not_found' }, 404);
+  mockStore.eventSubscriptions.splice(idx, 1);
+  return c.json({ mode: 'mock', unsubscribed: true });
+});
+
+v1.get('/webhooks', (c) => c.json({ mode: 'mock', webhooks: mockStore.webhooks }));
+
+v1.post('/webhooks', async (c) => {
+  const body = await c.req.json<{ url: string; eventTypes: string[] }>();
+  const hook = {
+    id: newId('wh'),
+    url: body.url,
+    eventTypes: body.eventTypes,
+    createdAt: new Date().toISOString(),
+  };
+  mockStore.webhooks.push(hook);
+  return c.json({ mode: 'mock', webhook: hook }, 201);
+});
+
+v1.delete('/webhooks/:id', (c) => {
+  const idx = mockStore.webhooks.findIndex((w) => w.id === c.req.param('id'));
+  if (idx < 0) return c.json({ error: 'not_found' }, 404);
+  mockStore.webhooks.splice(idx, 1);
+  return c.json({ mode: 'mock', deleted: true });
 });

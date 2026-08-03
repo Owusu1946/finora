@@ -140,6 +140,10 @@ They all use the same APIs and business logic.
 - Mobile and MCP **never call WeWire directly**. All money movement goes through `apps/api`.
 - The AI never stores credentials or directly moves money.
 - All financial operations flow through Policy Engine → Approval Engine → Audit Logs → WeWire APIs.
+- **Three tool surfaces** (`mobile` | `platform` | `mcp`) live in [`packages/shared/src/registry.ts`](../packages/shared/src/registry.ts).
+  - **Platform** is the rich operation set (prepare/execute, policy CRUD, webhooks, capability discovery, plans).
+  - **MCP** exposes a **curated high-level** subset (~20 tools: `prepare_*`, `create_financial_plan`, `begin_transaction` / `commit_transaction` / `rollback_transaction`, `request_approval`, lists, capability discovery). Execute / PIN / biometrics stay on platform + mobile after the human Approvals inbox.
+  - Prefer `prepare_*` → approval → `execute_approved_*` everywhere (payroll, invoices, suppliers, conversions) — never a direct AI execute.
 
 ---
 

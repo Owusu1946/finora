@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 
+import { FinancialPlanConfirmationCard } from '@/components/approvals/FinancialPlanConfirmationCard';
 import type { ApprovalRequest } from '@/components/approvals/types';
 import {
   PaymentConfirmationCard,
@@ -83,12 +84,33 @@ export default function ApprovalDetailScreen() {
       haptics.success();
 
       await resolveApproval(approval.id, 'approved', txId);
-      const tx = await recordSentPayment({
-        payment: approval.payment,
-        transactionId: txId,
-        source: 'mcp',
-      });
-      setTxRecordId(tx.id);
+
+      if (approval.kind === 'plan' && approval.plan) {
+        const tx = await recordSentPayment({
+          payment: {
+            amount: approval.plan.total,
+            currency: approval.plan.currency,
+            recipientName: approval.plan.intent,
+            destination: {
+              kind: 'bank_account',
+              label: 'Financial plan',
+              value: `${approval.plan.items.length} line items`,
+            },
+            reference: approval.plan.planId,
+          },
+          transactionId: txId,
+          source: 'mcp',
+        });
+        setTxRecordId(tx.id);
+      } else if (approval.payment) {
+        const tx = await recordSentPayment({
+          payment: approval.payment,
+          transactionId: txId,
+          source: 'mcp',
+        });
+        setTxRecordId(tx.id);
+      }
+
       setApproval((prev) =>
         prev
           ? {
@@ -122,6 +144,9 @@ export default function ApprovalDetailScreen() {
     );
   }
 
+  const isPlan = approval.kind === 'plan' && approval.plan;
+  const canOpenTx = status === 'sent' && (txRecordId || transactionId);
+
   const openTransaction = () => {
     haptics.selection();
     if (txRecordId) {
@@ -133,6 +158,30 @@ export default function ApprovalDetailScreen() {
     }
   };
 
+  const onConfirm = async () => {
+    if (status !== 'pending' || busy) return;
+    setBusy(true);
+    const ok = await requestApproval();
+    setBusy(false);
+    if (!ok) return;
+    setSendingStep(0);
+    setLocalStatus('sending');
+  };
+
+  const onCancel = async () => {
+    if (status !== 'pending' || busy) return;
+    setBusy(true);
+    await resolveApproval(approval.id, 'rejected');
+    setLocalStatus('cancelled');
+    setApproval((prev) =>
+      prev
+        ? { ...prev, status: 'rejected', resolvedAt: new Date().toISOString() }
+        : prev,
+    );
+    setBusy(false);
+    haptics.selection();
+  };
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -141,7 +190,7 @@ export default function ApprovalDetailScreen() {
       >
         <View style={[styles.banner, { backgroundColor: colors.muted }]}>
           <Text style={[styles.bannerEyebrow, { color: colors.mutedForeground }]}>
-            Agent request
+            {isPlan ? 'Agent plan' : 'Agent request'}
           </Text>
           <Text style={[styles.bannerTitle, { color: colors.foreground }]}>
             {approval.agent}
@@ -151,38 +200,31 @@ export default function ApprovalDetailScreen() {
           </Text>
         </View>
 
-        <PaymentConfirmationCard
-          payment={approval.payment}
-          status={status}
-          loading={busy}
-          sendingStep={sendingStep}
-          transactionId={transactionId}
-          onViewDetails={
-            status === 'sent' && (txRecordId || transactionId) ? openTransaction : undefined
-          }
-          onConfirm={async () => {
-            if (status !== 'pending' || busy) return;
-            setBusy(true);
-            const ok = await requestApproval();
-            setBusy(false);
-            if (!ok) return;
-            setSendingStep(0);
-            setLocalStatus('sending');
-          }}
-          onCancel={async () => {
-            if (status !== 'pending' || busy) return;
-            setBusy(true);
-            await resolveApproval(approval.id, 'rejected');
-            setLocalStatus('cancelled');
-            setApproval((prev) =>
-              prev
-                ? { ...prev, status: 'rejected', resolvedAt: new Date().toISOString() }
-                : prev,
-            );
-            setBusy(false);
-            haptics.selection();
-          }}
-        />
+        {isPlan && approval.plan ? (
+          <FinancialPlanConfirmationCard
+            plan={approval.plan}
+            status={status}
+            loading={busy}
+            sendingStep={sendingStep}
+            transactionId={transactionId}
+            onViewDetails={canOpenTx ? openTransaction : undefined}
+            onConfirm={onConfirm}
+            onCancel={onCancel}
+          />
+        ) : approval.payment ? (
+          <PaymentConfirmationCard
+            payment={approval.payment}
+            status={status}
+            loading={busy}
+            sendingStep={sendingStep}
+            transactionId={transactionId}
+            onViewDetails={canOpenTx ? openTransaction : undefined}
+            onConfirm={onConfirm}
+            onCancel={onCancel}
+          />
+        ) : (
+          <Text style={{ color: colors.mutedForeground }}>Invalid approval payload.</Text>
+        )}
 
         {status === 'sent' ? (
           <Pressable
