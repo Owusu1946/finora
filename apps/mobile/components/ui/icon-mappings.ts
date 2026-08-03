@@ -29,6 +29,7 @@ export type IconName =
   | 'arrow-down-left'
   | 'swap'
   | 'bank'
+  | 'phone'
   | 'eye'
   | 'eye-off'
   | 'qr'
@@ -77,6 +78,7 @@ export const SF_SYMBOLS: Record<IconName, SymbolViewProps['name']> = {
   'arrow-down-left': 'arrow.down.left',
   swap: 'arrow.triangle.2.circlepath',
   bank: 'building.columns',
+  phone: 'phone',
   eye: 'eye',
   'eye-off': 'eye.slash',
   qr: 'qrcode',
@@ -119,6 +121,7 @@ export const MATERIAL_ICONS: Record<IconName, ComponentProps<typeof MaterialIcon
   'arrow-down-left': 'south-west',
   swap: 'swap-horiz',
   bank: 'account-balance',
+  phone: 'phone',
   eye: 'visibility',
   'eye-off': 'visibility-off',
   qr: 'qr-code',

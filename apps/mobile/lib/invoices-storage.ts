@@ -1,0 +1,87 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { MOCK_INVOICES, type Invoice, type InvoiceStatus } from '@/components/invoices/types';
+
+const KEY = 'finora.invoices.v1';
+
+const memory = new Map<string, string>();
+
+async function getItem(key: string): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(key);
+  } catch {
+    return memory.get(key) ?? null;
+  }
+}
+
+async function setItem(key: string, value: string): Promise<void> {
+  memory.set(key, value);
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch {
+    // memory fallback
+  }
+}
+
+export async function listInvoices(): Promise<Invoice[]> {
+  const raw = await getItem(KEY);
+  if (!raw) {
+    await setItem(KEY, JSON.stringify(MOCK_INVOICES));
+    return [...MOCK_INVOICES];
+  }
+  try {
+    const parsed = JSON.parse(raw) as Invoice[];
+    return Array.isArray(parsed) ? parsed : [...MOCK_INVOICES];
+  } catch {
+    return [...MOCK_INVOICES];
+  }
+}
+
+export async function getInvoice(id: string): Promise<Invoice | null> {
+  const items = await listInvoices();
+  return items.find((i) => i.id === id) ?? null;
+}
+
+export async function listDueInvoices(): Promise<Invoice[]> {
+  const items = await listInvoices();
+  return items.filter((i) => i.status === 'due');
+}
+
+export async function updateInvoice(
+  id: string,
+  patch: Partial<Pick<Invoice, 'status' | 'paidAt' | 'transactionId'>>,
+): Promise<Invoice | null> {
+  const items = await listInvoices();
+  const idx = items.findIndex((i) => i.id === id);
+  if (idx < 0) return null;
+  const next: Invoice = { ...items[idx]!, ...patch };
+  await setItem(
+    KEY,
+    JSON.stringify(items.map((i, n) => (n === idx ? next : i))),
+  );
+  return next;
+}
+
+export async function markInvoicePaid(
+  id: string,
+  transactionId: string,
+): Promise<Invoice | null> {
+  return updateInvoice(id, {
+    status: 'paid' satisfies InvoiceStatus,
+    paidAt: new Date().toISOString(),
+    transactionId,
+  });
+}
+
+export async function dismissInvoice(id: string): Promise<Invoice | null> {
+  return updateInvoice(id, { status: 'dismissed' });
+}
+
+export async function clearInvoices(): Promise<void> {
+  memory.delete(KEY);
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+}

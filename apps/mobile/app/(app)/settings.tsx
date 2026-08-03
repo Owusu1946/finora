@@ -42,7 +42,7 @@ export default function SettingsScreen() {
           ]}
         >
           <Text style={[styles.resetLabel, { color: colors.foreground }]}>
-            Reset auth & onboarding
+            Reset auth, onboarding & passcode
           </Text>
           <Text style={[styles.resetHint, { color: colors.mutedForeground }]}>
             Clears session keys and returns to onboarding

@@ -16,6 +16,14 @@ import { getAuthSession } from '@/lib/auth-storage';
 import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
+import { ListReceiveMethodsToolUI } from '@/components/chat/ListReceiveMethodsToolUI';
+import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
+import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
+import { ListInvoicesToolUI } from '@/components/chat/ListInvoicesToolUI';
+import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
+import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
+import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 
 export const unstable_settings = {
   anchor: '(app)',
@@ -98,6 +106,14 @@ export default function RootLayout() {
       <AuthGateProvider authenticated={boot.authenticated}>
         <OnboardingGateProvider completed={boot.onboardingCompleted}>
           <AssistantRuntimeProvider runtime={runtime}>
+            <PreparePaymentToolUI />
+            <ListReceiveMethodsToolUI />
+            <GetBalancesToolUI />
+            <PrepareConversionToolUI />
+            <ListInvoicesToolUI />
+            <PrepareRecurringToolUI />
+            <SchedulePaymentWizardToolUI />
+            <ResolveSendToolUI />
             <RootNavigator />
           </AssistantRuntimeProvider>
         </OnboardingGateProvider>

@@ -1,5 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
-import { useRouter } from 'expo-router';
+import { DrawerActions } from '@react-navigation/native';
+import { useNavigation, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { Pressable } from 'react-native';
 
@@ -28,6 +29,34 @@ function NewChatButton() {
       <Icon
         name='compose'
         size={22}
+        color={colors.foreground}
+      />
+    </Pressable>
+  );
+}
+
+function BackHeaderButton() {
+  const navigation = useNavigation();
+  const router = useRouter();
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      accessibilityLabel='Go back'
+      hitSlop={8}
+      onPress={() => {
+        haptics.selection();
+        if (router.canGoBack()) {
+          router.back();
+          return;
+        }
+        navigation.dispatch(DrawerActions.jumpTo('approvals'));
+      }}
+      style={{ marginLeft: 4, padding: 4 }}
+    >
+      <Icon
+        name='chevron-left'
+        size={24}
         color={colors.foreground}
       />
     </Pressable>
@@ -77,6 +106,18 @@ export default function AppLayout() {
         options={screenOptions('Activity')}
       />
       <Drawer.Screen
+        name='approvals'
+        options={screenOptions('Approvals')}
+      />
+      <Drawer.Screen
+        name='invoices'
+        options={screenOptions('Invoices')}
+      />
+      <Drawer.Screen
+        name='recurring'
+        options={screenOptions('Recurring')}
+      />
+      <Drawer.Screen
         name='contacts'
         options={screenOptions('Contacts')}
       />
@@ -87,6 +128,24 @@ export default function AppLayout() {
       <Drawer.Screen
         name='settings'
         options={screenOptions('Settings')}
+      />
+      <Drawer.Screen
+        name='transaction/[id]'
+        options={{
+          ...screenOptions('Transaction'),
+          drawerItemStyle: { display: 'none' },
+          headerLeft: () => <BackHeaderButton />,
+          headerRight: () => null,
+        }}
+      />
+      <Drawer.Screen
+        name='approval/[id]'
+        options={{
+          ...screenOptions('Approve payment'),
+          drawerItemStyle: { display: 'none' },
+          headerLeft: () => <BackHeaderButton />,
+          headerRight: () => null,
+        }}
       />
     </Drawer>
   );

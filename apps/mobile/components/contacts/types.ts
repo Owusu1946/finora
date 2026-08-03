@@ -112,4 +112,14 @@ export const MOCK_CONTACTS: Contact[] = [
     favourite: false,
     lastTxDate: null,
   },
+  {
+    id: 'c-9',
+    name: 'Ama Boateng',
+    initials: 'AB',
+    currency: 'GHS',
+    method: 'MTN MoMo',
+    identifier: '024 •• ••• 8891',
+    favourite: false,
+    lastTxDate: '2026-07-20T11:00:00Z',
+  },
 ];
