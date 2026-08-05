@@ -1,4 +1,4 @@
-import type { ChatModelAdapter, ThreadMessage } from '@assistant-ui/react-native';
+import type { ThreadMessage } from '@assistant-ui/react-native';
 
 import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
 import type { BalanceWallet } from '@/components/chat/BalancesCard';
@@ -10,8 +10,19 @@ import { MOCK_INVOICES } from '@/components/invoices/types';
 import type { RecurringFrequency } from '@/components/recurring/types';
 import {
   contactToPaymentDestination,
+  contactToSendSeed,
   findContactsByName,
 } from '@/lib/contact-lookup';
+import { listContacts } from '@/lib/contacts-storage';
+import {
+  inferFundingSource,
+  listFundingMethods,
+} from '@/lib/funding-methods';
+import {
+  mockRecipientNameForQr,
+  parsePaymentQr,
+  type ParsedPaymentQr,
+} from '@/lib/payment-qr';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -28,8 +39,12 @@ function lastUserText(messages: readonly ThreadMessage[]) {
 
 const SEND_RE =
   /\b(send|pay|transfer|payout)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
+const FUND_RE =
+  /\b(deposit|fund|top\s*up|add money|add funds|load (?:my )?(?:wallet|account)|charge my momo)\b/i;
 const RECEIVE_RE =
-  /\b(receive|deposit|fund|top\s*up|add money|get paid|payment details|virtual account|wallet address)\b/i;
+  /\b(receive|get paid|payment details|virtual account|wallet address|how (?:do|can) i (?:receive|get paid))\b/i;
+const PAYMENT_REQUEST_RE =
+  /\b(payment\s+link|payment\s+request|create\s+(?:a\s+)?(?:payment\s+)?(?:link|request)|request\s+(?:\d+|money|payment|ghs|usd|eur|gbp|usdt)|ask\s+(?:for\s+)?(?:\d+|money|payment)|pay\s+me|send\s+me\s+(?:money|\d+)|invoice\s+me)\b/i;
 const BALANCE_RE =
   /\b(balance|balances|wallets|how much|what.?s in my|check my (money|account))\b/i;
 const CONVERT_RE =
@@ -115,24 +130,78 @@ function parseScheduleSeed(prompt: string) {
   };
 }
 
+function isPaymentRequestIntent(prompt: string) {
+  // Paying an existing request / scanning a QR is not "create payment request".
+  if (extractPaymentQrFromPrompt(prompt)) return false;
+  return PAYMENT_REQUEST_RE.test(prompt);
+}
+
+function extractPaymentQrFromPrompt(prompt: string): ParsedPaymentQr | null {
+  const direct = parsePaymentQr(prompt);
+  if (direct) return direct;
+
+  const finora = prompt.match(/finora:(?:momo|va):[^\s]+/i);
+  if (finora) return parsePaymentQr(finora[0]!);
+
+  const link = prompt.match(/(?:https?:\/\/)?(?:www\.)?pay\.finora\.app\/r\/[A-Za-z0-9_-]+/i);
+  if (link) return parsePaymentQr(link[0]!);
+
+  if (/\bpay\b/i.test(prompt)) {
+    const crypto = prompt.match(/\b(0x[a-fA-F0-9]{20,}|T[1-9A-HJ-NP-Za-km-z]{25,})\b/);
+    if (crypto) return parsePaymentQr(crypto[1]!);
+  }
+
+  return null;
+}
+
+function isScanPayIntent(prompt: string) {
+  const qr = extractPaymentQrFromPrompt(prompt);
+  if (!qr) return false;
+  // Require explicit pay / amount / payment-request phrasing so raw addresses in other contexts don't fire.
+  return (
+    /\bpay\b/i.test(prompt) ||
+    /\bpayment\s+request\b/i.test(prompt) ||
+    qr.amount != null ||
+    Boolean(qr.preparationId)
+  );
+}
+
+function parseSendFromWallet(prompt: string): string | undefined {
+  const m = prompt.match(
+    /\bsend(?:\s+money)?\s+from\s+my\s+(usd|ghs|eur|gbp|usdt|usdc)\s+wallet\b/i,
+  );
+  return m?.[1]?.toUpperCase();
+}
+
 function isSendIntent(prompt: string) {
   return (
     SEND_RE.test(prompt) &&
     !RECEIVE_RE.test(prompt) &&
+    !FUND_RE.test(prompt) &&
+    !isPaymentRequestIntent(prompt) &&
     !CONVERT_RE.test(prompt) &&
     !isInvoiceIntent(prompt) &&
     !isRecurringIntent(prompt)
   );
 }
 
+function isFundIntent(prompt: string) {
+  return FUND_RE.test(prompt) && !isPaymentRequestIntent(prompt) && !isSendIntent(prompt);
+}
+
 function isReceiveIntent(prompt: string) {
-  return RECEIVE_RE.test(prompt);
+  return (
+    RECEIVE_RE.test(prompt) &&
+    !isPaymentRequestIntent(prompt) &&
+    !isFundIntent(prompt)
+  );
 }
 
 function isBalanceIntent(prompt: string) {
   return (
     BALANCE_RE.test(prompt) &&
     !isSendIntent(prompt) &&
+    !isFundIntent(prompt) &&
     !isReceiveIntent(prompt) &&
     !isInvoiceIntent(prompt) &&
     !isRecurringIntent(prompt)
@@ -144,23 +213,156 @@ function isConvertIntent(prompt: string) {
 }
 
 function parseAmount(prompt: string): { amount: number; currency: string } | null {
+  const euro = prompt.match(/€\s*(\d+(?:\.\d{1,2})?)/);
+  if (euro) {
+    const amount = Number(euro[1]);
+    if (Number.isFinite(amount) && amount > 0) return { amount, currency: 'EUR' };
+  }
+  const pounds = prompt.match(/£\s*(\d+(?:\.\d{1,2})?)/);
+  if (pounds) {
+    const amount = Number(pounds[1]);
+    if (Number.isFinite(amount) && amount > 0) return { amount, currency: 'GBP' };
+  }
   const withCurrency =
     prompt.match(
-      /(?:(?:ghs|usd|eur|gbp|usdt|usdc)\s*)?(\d+(?:\.\d{1,2})?)\s*(ghs|usd|eur|gbp|usdt|usdc)?/i,
+      /(?:(?:ghs|usd|eur|gbp|ngn|kes|cad|aed|usdt|usdc)\s*)?(\d+(?:\.\d{1,2})?)\s*(ghs|usd|eur|gbp|ngn|kes|cad|aed|usdt|usdc)?/i,
     ) ?? null;
   if (!withCurrency) return null;
   const amount = Number(withCurrency[1]);
   if (!Number.isFinite(amount) || amount <= 0) return null;
   const currency = (
     withCurrency[2] ??
-    withCurrency[0].match(/ghs|usd|eur|gbp|usdt|usdc/i)?.[0] ??
+    withCurrency[0].match(/ghs|usd|eur|gbp|ngn|kes|cad|aed|usdt|usdc/i)?.[0] ??
     'GHS'
   ).toUpperCase();
   return { amount, currency };
 }
 
 function parseCurrencyHint(prompt: string): string | undefined {
-  return prompt.match(/\b(ghs|usd|eur|gbp|usdt|usdc)\b/i)?.[1]?.toUpperCase();
+  return prompt.match(/\b(ghs|usd|eur|gbp|ngn|kes|cad|aed|usdt|usdc)\b/i)?.[1]?.toUpperCase();
+}
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  ghana: 'GH',
+  nigeria: 'NG',
+  kenya: 'KE',
+  uganda: 'UG',
+  tanzania: 'TZ',
+  'south africa': 'ZA',
+  germany: 'DE',
+  france: 'FR',
+  netherlands: 'NL',
+  holland: 'NL',
+  'united kingdom': 'GB',
+  uk: 'GB',
+  britain: 'GB',
+  england: 'GB',
+  'united states': 'US',
+  usa: 'US',
+  america: 'US',
+  canada: 'CA',
+  uae: 'AE',
+  dubai: 'AE',
+  india: 'IN',
+  japan: 'JP',
+  china: 'CN',
+};
+
+function parseDestinationCountry(prompt: string): string | undefined {
+  const lower = prompt.toLowerCase();
+  for (const [alias, code] of Object.entries(COUNTRY_ALIASES)) {
+    if (new RegExp(`\\b${alias}\\b`, 'i').test(lower)) return code;
+  }
+  const iso = prompt.match(/\bto\s+([A-Z]{2})\b/);
+  if (iso && COUNTRY_ALIASES[iso[1]!.toLowerCase()] === undefined) {
+    const code = iso[1]!.toUpperCase();
+    if (
+      ['GH', 'NG', 'KE', 'UG', 'TZ', 'ZA', 'DE', 'FR', 'NL', 'GB', 'US', 'CA', 'AE', 'IN', 'JP', 'CN'].includes(
+        code,
+      )
+    ) {
+      return code;
+    }
+  }
+  return undefined;
+}
+
+function parseSettlementMethod(
+  prompt: string,
+  destination: PaymentConfirmation['destination'] | null,
+):
+  | 'MOMO'
+  | 'LOCAL_BANK'
+  | 'ACH'
+  | 'WIRE'
+  | 'FPS'
+  | 'CHAPS'
+  | 'SEPA'
+  | 'SWIFT'
+  | 'CRYPTO'
+  | undefined {
+  if (/\b(sepa)\b/i.test(prompt)) return 'SEPA';
+  if (/\b(fps|faster payments?)\b/i.test(prompt)) return 'FPS';
+  if (/\b(chaps)\b/i.test(prompt)) return 'CHAPS';
+  if (/\b(ach)\b/i.test(prompt)) return 'ACH';
+  if (/\b(wire|fedwire)\b/i.test(prompt)) return 'WIRE';
+  if (/\b(swift)\b/i.test(prompt)) return 'SWIFT';
+  if (/\b(momo|mobile money|mtn|telecel)\b/i.test(prompt)) return 'MOMO';
+  if (destination?.kind === 'crypto_wallet') return 'CRYPTO';
+  if (destination?.kind === 'mobile_money') return 'MOMO';
+  if (destination?.kind === 'bank_account') {
+    const v = destination.value.toUpperCase();
+    if (/^[A-Z]{2}\d{2}/.test(v)) {
+      if (v.startsWith('GB')) return 'FPS';
+      if (v.startsWith('DE') || v.startsWith('FR') || v.startsWith('NL')) return 'SEPA';
+      return 'SWIFT';
+    }
+    return 'LOCAL_BANK';
+  }
+  return undefined;
+}
+
+function countryFromIban(iban: string): string | undefined {
+  const cc = iban.slice(0, 2).toUpperCase();
+  const map: Record<string, string> = {
+    GB: 'GB',
+    DE: 'DE',
+    FR: 'FR',
+    NL: 'NL',
+    AE: 'AE',
+  };
+  return map[cc];
+}
+
+function enrichPrepareArgs(
+  prompt: string,
+  base: Record<string, unknown>,
+  destination: PaymentConfirmation['destination'] | null,
+): Record<string, unknown> {
+  const country =
+    parseDestinationCountry(prompt) ??
+    (destination?.kind === 'bank_account' && /^[A-Z]{2}\d{2}/i.test(destination.value)
+      ? countryFromIban(destination.value)
+      : destination?.kind === 'mobile_money'
+        ? 'GH'
+        : undefined);
+  const settlementMethod = parseSettlementMethod(prompt, destination);
+  const funding =
+    parseSendFromWallet(prompt) ??
+    (typeof base.currency === 'string' ? base.currency : undefined);
+
+  return {
+    ...base,
+    ...(country ? { destinationCountry: country } : {}),
+    ...(settlementMethod ? { settlementMethod } : {}),
+    ...(funding ? { fundingCurrency: funding } : {}),
+    ...(destination?.kind === 'bank_account' && /^[A-Z]{2}\d{2}/i.test(destination.value)
+      ? { iban: destination.value.toUpperCase() }
+      : {}),
+    ...(settlementMethod === 'CRYPTO'
+      ? { blockchain: destination?.label?.includes('ETH') ? 'ETHEREUM' : 'TRON' }
+      : {}),
+  };
 }
 
 function parsePrefer(
@@ -261,48 +463,7 @@ function buildMockPayment(prompt: string): PaymentConfirmation {
 }
 
 function buildMockReceiveMethods(): ReceiveMethod[] {
-  return [
-    {
-      id: 'va-usd',
-      kind: 'virtual_account',
-      currency: 'USD',
-      title: 'USD virtual account',
-      subtitle: 'Receive via local ACH rails into your Finora wallet.',
-      qrPayload: 'finora:va:usd:GB82CLRB04066800012345',
-      fields: [
-        { label: 'Account name', value: 'Finora / Kenneth Owusu' },
-        { label: 'IBAN', value: 'GB82 CLRB 0406 6800 0123 45' },
-        { label: 'BIC / SWIFT', value: 'CLRBGB22' },
-        { label: 'Bank', value: 'ClearBank', copyable: false },
-      ],
-    },
-    {
-      id: 'momo-ghs',
-      kind: 'mobile_money',
-      currency: 'GHS',
-      title: 'MTN MoMo collection',
-      subtitle: 'Ask the sender to pay this MoMo number.',
-      qrPayload: 'finora:momo:ghs:0550123456',
-      fields: [
-        { label: 'Network', value: 'MTN Mobile Money', copyable: false },
-        { label: 'MoMo number', value: '0550123456' },
-        { label: 'Account name', value: 'Kenneth Owusu' },
-      ],
-    },
-    {
-      id: 'crypto-usdt',
-      kind: 'crypto',
-      currency: 'USDT',
-      title: 'USDT deposit address',
-      subtitle: 'TRC-20 only — sending on another network may lose funds.',
-      qrPayload: 'TXyzFinoraMockDepositAddress9hQ2',
-      fields: [
-        { label: 'Network', value: 'TRC-20 (Tron)', copyable: false },
-        { label: 'Asset', value: 'USDT', copyable: false },
-        { label: 'Address', value: 'TXyzFinoraMockDepositAddress9hQ2' },
-      ],
-    },
-  ];
+  return listFundingMethods().map(({ source: _source, ...method }) => method);
 }
 
 function buildMockBalances(): { wallets: BalanceWallet[]; totalUsd: number } {
@@ -422,9 +583,87 @@ function buildMockConversion(prompt: string): ConversionQuote {
 }
 
 /** Local mock model — streams reasoning + tool calls so CoT UI is visible. */
-export const finoraChatAdapter: ChatModelAdapter = {
-  async *run({ messages, abortSignal }) {
+export const finoraChatAdapter = {
+  async *run({
+    messages,
+    abortSignal,
+  }: {
+    messages: readonly ThreadMessage[];
+    abortSignal: AbortSignal;
+  }) {
     const prompt = lastUserText(messages);
+
+    if (isScanPayIntent(prompt)) {
+      const qr = extractPaymentQrFromPrompt(prompt)!;
+      const parsedAmount = parseAmount(prompt);
+      const amount = parsedAmount?.amount ?? qr.amount;
+      const currency = parsedAmount?.currency ?? qr.currency;
+      if (amount == null || amount <= 0) {
+        yield {
+          content: [
+            {
+              type: 'text',
+              text: 'I found a payment QR but need an amount — open Scan again or say e.g. “Pay 50 GHS to …” with the payload.',
+            },
+          ],
+        };
+        return;
+      }
+
+      const args = enrichPrepareArgs(
+        prompt,
+        {
+          amount,
+          currency,
+          recipientName: mockRecipientNameForQr(qr),
+          destinationKind: qr.destination.kind,
+          destinationLabel: qr.destination.label,
+          destinationValue: qr.destination.value,
+          reference: qr.reference ?? (qr.preparationId ? `Request ${qr.preparationId}` : 'QR payment'),
+        },
+        qr.destination,
+      );
+      const argsText = JSON.stringify(args);
+      const reasoning = `Scanned payment QR.\nPreparing ${currency} ${amount} to ${qr.destination.label}…`;
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_prepare_payment_qr',
+            toolName: 'prepare_payment',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: `${reasoning}\nReady to confirm.` },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_prepare_payment_qr',
+            toolName: 'prepare_payment',
+            args,
+            argsText,
+          },
+          {
+            type: 'text',
+            text: `Confirm ${currency} ${amount} to ${args.recipientName} (${qr.destination.label}).`,
+          },
+        ],
+      };
+      return;
+    }
 
     if (isFinancialPlanIntent(prompt)) {
       const plan = { ...MOCK_BUSINESS_PLAN };
@@ -590,6 +829,117 @@ export const finoraChatAdapter: ChatModelAdapter = {
       return;
     }
 
+    if (isPaymentRequestIntent(prompt)) {
+      const parsed = parseAmount(prompt);
+      const memoMatch = prompt.match(
+        /\b(?:for|note|memo|because)\s+([a-z0-9][\w\s'-]{1,40})/i,
+      );
+      const args = {
+        amount: parsed?.amount,
+        currency: parsed?.currency ?? parseCurrencyHint(prompt),
+        memo: memoMatch?.[1]?.trim(),
+      };
+      const argsText = JSON.stringify(args);
+      const reasoning =
+        'Payment request / link detected.\nOpening ask-to-pay wizard for amount, note, and shareable link…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_payment_request',
+            toolName: 'create_payment_request',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nWizard ready — create the link, then share or show QR.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_payment_request',
+            toolName: 'create_payment_request',
+            args,
+            argsText,
+          },
+          {
+            type: 'text',
+            text: 'Set the amount (and an optional note), then share the payment link or QR so someone can pay you.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isFundIntent(prompt)) {
+      const currency = parseCurrencyHint(prompt);
+      const source = inferFundingSource(prompt);
+      const parsedAmount = parseAmount(prompt);
+      const args = {
+        source,
+        currency,
+        amount: parsedAmount?.amount,
+      };
+      const argsText = JSON.stringify(args);
+      const reasoning = source
+        ? `Funding via ${source.replace('_', ' ')}.\nOpening add-money flow…`
+        : 'Add-money request.\nOpening funding options…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_fund_account',
+            toolName: 'fund_account',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: `${reasoning}\nReady.` },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_fund_account',
+            toolName: 'fund_account',
+            args,
+            argsText,
+          },
+          {
+            type: 'text',
+            text: source
+              ? `Let’s add money via ${source === 'momo_pull' ? 'a MoMo charge' : source === 'mobile_money' ? 'mobile money' : source === 'crypto' ? 'crypto' : 'bank transfer'} — follow the steps.`
+              : 'How do you want to add money? Bank, mobile money, or crypto.',
+          },
+        ],
+      };
+      return;
+    }
+
     if (isReceiveIntent(prompt)) {
       const methods = buildMockReceiveMethods();
       const currency = parseCurrencyHint(prompt);
@@ -632,7 +982,7 @@ export const finoraChatAdapter: ChatModelAdapter = {
           },
           {
             type: 'text',
-            text: 'Here are your receive options — switch between bank VA, MoMo, and crypto, then copy or share.',
+            text: 'Here are your receive options — switch rails, tap the QR to enlarge, then Share details, Share QR, or Copy all.',
           },
         ],
       };
@@ -640,6 +990,64 @@ export const finoraChatAdapter: ChatModelAdapter = {
     }
 
     if (isSendIntent(prompt)) {
+      const walletCurrency = parseSendFromWallet(prompt);
+      if (walletCurrency) {
+        const contacts = await listContacts();
+        const candidates = contacts.map((c) => ({
+          id: c.id,
+          name: c.name,
+          initials: c.initials,
+          currency: c.currency,
+          method: c.method,
+          identifier: c.identifier,
+        }));
+        const args = {
+          currency: walletCurrency,
+          candidates,
+          reference: `From ${walletCurrency} wallet`,
+        };
+        const argsText = JSON.stringify(args);
+        const reasoning = `Send from ${walletCurrency} wallet.\nLoading contacts so you can pick who to pay…`;
+
+        yield { content: [{ type: 'reasoning', text: reasoning }] };
+        await wait(400);
+        if (abortSignal.aborted) return;
+
+        yield {
+          content: [
+            { type: 'reasoning', text: reasoning },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_resolve_send',
+              toolName: 'resolve_send',
+              args,
+              argsText,
+            },
+          ],
+        };
+
+        await wait(400);
+        if (abortSignal.aborted) return;
+
+        yield {
+          content: [
+            { type: 'reasoning', text: `${reasoning}\nReady.` },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_resolve_send',
+              toolName: 'resolve_send',
+              args,
+              argsText,
+            },
+            {
+              type: 'text',
+              text: `Sending from your ${walletCurrency} wallet — pick a contact, then the amount.`,
+            },
+          ],
+        };
+        return;
+      }
+
       const queryName = parseRecipientQuery(prompt);
       const parsedAmount = parseAmount(prompt);
       const explicitDestination = parseDestination(prompt);
@@ -652,17 +1060,25 @@ export const finoraChatAdapter: ChatModelAdapter = {
           if (matches.length === 1 && parsedAmount) {
             const contact = matches[0]!;
             const dest = contactToPaymentDestination(contact);
-            const args = {
-              amount: parsedAmount.amount,
-              currency: parsedAmount.currency || contact.currency,
-              recipientName: contact.name,
-              destinationKind: dest.kind,
-              destinationLabel: dest.label,
-              destinationValue: dest.value,
-              reference: `To ${contact.name}`,
-            };
+            const fromContact = contactToSendSeed(contact);
+            const args = enrichPrepareArgs(
+              prompt,
+              {
+                amount: parsedAmount.amount,
+                currency: parsedAmount.currency || contact.currency,
+                recipientName: contact.name,
+                destinationKind: dest.kind,
+                destinationLabel: dest.label,
+                destinationValue: dest.value,
+                reference: `To ${contact.name}`,
+                destinationCountry: fromContact.destinationCountry,
+                settlementMethod: fromContact.settlementMethod,
+                fundingCurrency: fromContact.fundingCurrency,
+              },
+              dest,
+            );
             const argsText = JSON.stringify(args);
-            const reasoning = `Found ${contact.name} in contacts.\nPreparing confirmation…`;
+            const reasoning = `Found ${contact.name} in contacts.\nPreparing international send…`;
 
             yield { content: [{ type: 'reasoning', text: reasoning }] };
             await wait(400);
@@ -680,7 +1096,7 @@ export const finoraChatAdapter: ChatModelAdapter = {
                 },
                 {
                   type: 'text',
-                  text: `Found ${contact.name} (${contact.method}). Confirm sending ${args.currency} ${args.amount.toLocaleString()}.`,
+                  text: `Found ${contact.name} (${contact.method}). Review the send details to continue.`,
                 },
               ],
             };
@@ -701,6 +1117,9 @@ export const finoraChatAdapter: ChatModelAdapter = {
             amount: parsedAmount?.amount,
             currency: parsedAmount?.currency,
             candidates,
+            destinationCountry: parseDestinationCountry(prompt),
+            settlementMethod: parseSettlementMethod(prompt, null),
+            fundingCurrency: parseSendFromWallet(prompt) ?? parsedAmount?.currency,
           };
           const argsText = JSON.stringify(args);
           const reasoning =
@@ -752,16 +1171,20 @@ export const finoraChatAdapter: ChatModelAdapter = {
       }
 
       const payment = buildMockPayment(prompt);
-      const reasoning = `Payment request detected.\nLooking up recipient and preparing confirmation…`;
-      const args = {
-        amount: payment.amount,
-        currency: payment.currency,
-        recipientName: payment.recipientName,
-        destinationKind: payment.destination.kind,
-        destinationLabel: payment.destination.label,
-        destinationValue: payment.destination.value,
-        reference: payment.reference,
-      };
+      const reasoning = `Payment request detected.\nPreparing international send wizard…`;
+      const args = enrichPrepareArgs(
+        prompt,
+        {
+          amount: payment.amount,
+          currency: payment.currency,
+          recipientName: payment.recipientName,
+          destinationKind: payment.destination.kind,
+          destinationLabel: payment.destination.label,
+          destinationValue: payment.destination.value,
+          reference: payment.reference,
+        },
+        payment.destination,
+      );
       const argsText = JSON.stringify(args);
 
       yield { content: [{ type: 'reasoning', text: reasoning }] };

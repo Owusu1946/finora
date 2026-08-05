@@ -6,16 +6,16 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
+import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
+import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 import {
-  PaymentConfirmationCard,
-  type PaymentConfirmation,
-  type PaymentConfirmationStatus,
-} from '@/components/chat/PaymentConfirmationCard';
-import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
+  SendMoneyWizard,
+  type SendMoneySeed,
+} from '@/components/chat/SendMoneyWizard';
+import { WizardStepHeader } from '@/components/chat/WizardChrome';
 import type { Contact } from '@/components/contacts/types';
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -25,8 +25,12 @@ import {
   appendAgentFollowUp,
   paymentSentFollowUp,
 } from '@/lib/agent-follow-up';
-import { contactToPaymentDestination } from '@/lib/contact-lookup';
-import { findContactByIdentifier, saveContact } from '@/lib/contacts-storage';
+import { contactToSendSeed, findContactsByName } from '@/lib/contact-lookup';
+import {
+  findContactByIdentifier,
+  listContacts,
+  saveContact,
+} from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
@@ -45,6 +49,10 @@ type ResolveSendArgs = {
   currency?: string;
   candidates?: ResolveSendCandidate[];
   reference?: string;
+  destinationCountry?: string;
+  settlementMethod?: SendMoneySeed['settlementMethod'];
+  purposeCode?: SendMoneySeed['purposeCode'];
+  fundingCurrency?: string;
 };
 
 type ResolveSendResult = {
@@ -52,8 +60,6 @@ type ResolveSendResult = {
   transactionId?: string;
   contactId?: string;
 };
-
-type Phase = 'pick' | 'amount' | 'confirm';
 
 function mockTransactionId() {
   const n = Math.floor(Math.random() * 1e8)
@@ -76,6 +82,17 @@ function toContact(c: ResolveSendCandidate): Contact {
   };
 }
 
+function toCandidate(c: Contact): ResolveSendCandidate {
+  return {
+    id: c.id,
+    name: c.name,
+    initials: c.initials,
+    currency: c.currency,
+    method: c.method,
+    identifier: c.identifier,
+  };
+}
+
 function ResolveSendFlow({
   seed,
   onFinished,
@@ -90,49 +107,74 @@ function ResolveSendFlow({
   const router = useRouter();
   const { requestApproval, modal } = usePasscodeApproval();
 
-  const candidates = seed.candidates ?? [];
+  const [candidates, setCandidates] = useState<ResolveSendCandidate[]>(
+    seed.candidates ?? [],
+  );
+  const [loadingContacts, setLoadingContacts] = useState(
+    !(seed.candidates && seed.candidates.length > 0),
+  );
   const [contact, setContact] = useState<ResolveSendCandidate | null>(
-    candidates.length === 1 ? candidates[0]! : null,
+    seed.candidates?.length === 1 ? seed.candidates[0]! : null,
   );
-  const [amount, setAmount] = useState<number | null>(seed.amount ?? null);
-  const [currency, setCurrency] = useState(
-    seed.currency ?? candidates[0]?.currency ?? 'GHS',
-  );
-  const [customAmount, setCustomAmount] = useState('');
-  const [phase, setPhase] = useState<Phase>(() => {
-    if (candidates.length > 1) return 'pick';
-    if (seed.amount == null) return 'amount';
-    return 'confirm';
-  });
   const [localStatus, setLocalStatus] = useState<PaymentConfirmationStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [sendingStep, setSendingStep] = useState(0);
   const [transactionId, setTransactionId] = useState<string | undefined>();
   const [txRecordId, setTxRecordId] = useState<string | null>(null);
   const [contactSaved, setContactSaved] = useState(false);
+  const [contactSaving, setContactSaving] = useState(false);
+  const [confirmedPayment, setConfirmedPayment] = useState<PaymentConfirmation | null>(
+    null,
+  );
   const finishedRef = useRef(false);
   const followedUpRef = useRef(false);
 
-  const payment: PaymentConfirmation | null = useMemo(() => {
-    if (!contact || amount == null) return null;
-    const dest = contactToPaymentDestination(toContact(contact));
-    return {
-      amount,
-      currency: currency || contact.currency,
-      recipientName: contact.name,
-      destination: dest,
-      reference: seed.reference ?? `To ${contact.name}`,
+  useEffect(() => {
+    if (seed.candidates && seed.candidates.length > 0) {
+      setLoadingContacts(false);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const matches = seed.queryName
+        ? await findContactsByName(seed.queryName)
+        : await listContacts();
+      if (cancelled) return;
+      const next = matches.map(toCandidate);
+      setCandidates(next);
+      if (next.length === 1) setContact(next[0]!);
+      setLoadingContacts(false);
+    })();
+    return () => {
+      cancelled = true;
     };
-  }, [contact, amount, currency, seed.reference]);
+  }, [seed.candidates, seed.queryName]);
+
+  const wizardSeed: SendMoneySeed | null = useMemo(() => {
+    if (!contact) return null;
+    const fromContact = contactToSendSeed(toContact(contact));
+    return {
+      ...fromContact,
+      amount: seed.amount,
+      currency: seed.currency ?? contact.currency,
+      fundingCurrency: seed.fundingCurrency ?? seed.currency ?? contact.currency,
+      reference: seed.reference ?? `To ${contact.name}`,
+      destinationCountry: seed.destinationCountry ?? fromContact.destinationCountry,
+      settlementMethod: seed.settlementMethod ?? fromContact.settlementMethod,
+      purposeCode: seed.purposeCode,
+    };
+  }, [contact, seed]);
 
   const status = localStatus ?? 'pending';
+  const payment = confirmedPayment;
 
   useEffect(() => {
-    if (!payment) return;
-    void findContactByIdentifier(payment.destination.value).then((existing) => {
+    const value = payment?.destination.value ?? contact?.identifier;
+    if (!value) return;
+    void findContactByIdentifier(value).then((existing) => {
       if (existing) setContactSaved(true);
     });
-  }, [payment]);
+  }, [contact?.identifier, payment?.destination.value]);
 
   useEffect(() => {
     if (status !== 'sending' || !payment || !contact) return;
@@ -167,7 +209,20 @@ function ResolveSendFlow({
     };
   }, [aui, contact, onFinished, payment, status]);
 
-  if (phase === 'pick') {
+  if (loadingContacts) {
+    return (
+      <View
+        style={[
+          styles.preparing,
+          { borderColor: colors.border, backgroundColor: colors.composer },
+        ]}
+      >
+        <ActivityIndicator color={colors.mutedForeground} />
+      </View>
+    );
+  }
+
+  if (!contact) {
     return (
       <View
         style={[
@@ -177,9 +232,19 @@ function ResolveSendFlow({
       >
         <WizardStepHeader
           step={1}
-          total={seed.amount == null ? 3 : 2}
-          title={`Who did you mean by “${seed.queryName ?? 'them'}”?`}
-          subtitle={`${candidates.length} contacts match — pick one to continue.`}
+          total={2}
+          title={
+            seed.queryName
+              ? `Who did you mean by “${seed.queryName}”?`
+              : 'Who should receive it?'
+          }
+          subtitle={
+            seed.queryName
+              ? `${candidates.length} contacts match — pick one to continue.`
+              : seed.currency
+                ? `Sending from your ${seed.currency} wallet — pick a contact.`
+                : `${candidates.length} contacts — pick one to continue.`
+          }
         />
         <View style={styles.list}>
           {candidates.map((c, index) => (
@@ -188,8 +253,6 @@ function ResolveSendFlow({
               onPress={() => {
                 haptics.selection();
                 setContact(c);
-                setCurrency(seed.currency ?? c.currency);
-                setPhase(seed.amount == null ? 'amount' : 'confirm');
               }}
               style={({ pressed }) => [
                 styles.contactRow,
@@ -232,121 +295,57 @@ function ResolveSendFlow({
     );
   }
 
-  if (phase === 'amount' && contact) {
-    return (
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
-      >
-        <WizardStepHeader
-          step={candidates.length > 1 ? 2 : 1}
-          total={candidates.length > 1 ? 3 : 2}
-          title={`How much to ${contact.name}?`}
-          subtitle={`${contact.method} · ${contact.identifier}`}
-        />
-        <View style={styles.chips}>
-          {[50, 100, 250, 500, 1000].map((a) => (
-            <WizardChip
-              key={a}
-              label={`${currency} ${a}`}
-              selected={amount === a}
-              onPress={() => {
-                setAmount(a);
-                setPhase('confirm');
-              }}
-            />
-          ))}
-        </View>
-        <TextInput
-          value={customAmount}
-          onChangeText={setCustomAmount}
-          keyboardType='decimal-pad'
-          placeholder='Custom amount'
-          placeholderTextColor={colors.mutedForeground}
-          style={[
-            styles.input,
-            {
-              color: colors.foreground,
-              borderColor: colors.border,
-              backgroundColor: colors.background,
-            },
-          ]}
-        />
-        <Pressable
-          onPress={() => {
-            const n = Number(customAmount);
-            if (!Number.isFinite(n) || n <= 0) return;
-            haptics.selection();
-            setAmount(n);
-            setPhase('confirm');
-          }}
-          style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
-        >
-          <Text style={{ color: colors.background, fontWeight: '600' }}>Continue</Text>
-        </Pressable>
-        {candidates.length > 1 ? (
-          <Pressable
-            onPress={() => {
-              haptics.selection();
-              setPhase('pick');
-            }}
-          >
-            <Text
-              style={{ color: colors.mutedForeground, fontWeight: '600', textAlign: 'center' }}
-            >
-              Change contact
-            </Text>
-          </Pressable>
-        ) : null}
-      </View>
-    );
-  }
-
-  if (!payment) return null;
+  if (!wizardSeed) return null;
 
   return (
     <>
-      {(candidates.length > 1 || seed.amount == null) && status === 'pending' ? (
+      {candidates.length > 1 && status === 'pending' ? (
         <Pressable
           onPress={() => {
             haptics.selection();
-            setPhase(seed.amount == null ? 'amount' : 'pick');
+            setContact(null);
+            setConfirmedPayment(null);
+            setLocalStatus(null);
           }}
           style={styles.editLink}
         >
-          <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>← Edit</Text>
+          <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>
+            ← Change contact
+          </Text>
         </Pressable>
       ) : null}
-      <PaymentConfirmationCard
-        payment={payment}
+      <SendMoneyWizard
+        seed={wizardSeed}
         status={status}
         loading={busy}
         sendingStep={sendingStep}
         transactionId={transactionId}
         contactSaved={contactSaved}
+        contactSaving={contactSaving}
         onViewDetails={
           status === 'sent' && (txRecordId || transactionId)
             ? () => router.push(`/transaction/${txRecordId ?? transactionId}` as Href)
             : undefined
         }
-        onSaveContact={
-          status === 'sent'
-            ? async () => {
-                await saveContact({
-                  name: payment.recipientName,
-                  currency: payment.currency,
-                  method: payment.destination.label,
-                  identifier: payment.destination.value,
-                });
-                setContactSaved(true);
-                haptics.success();
-              }
-            : undefined
-        }
-        onConfirm={async () => {
+        onSaveContact={async () => {
+          if (!payment || contactSaved || contactSaving) return;
+          setContactSaving(true);
+          try {
+            await saveContact({
+              name: payment.recipientName,
+              currency: payment.currency as never,
+              method: payment.settlementMethodLabel ?? payment.destination.label,
+              identifier: payment.destination.value,
+            });
+            setContactSaved(true);
+            haptics.success();
+          } finally {
+            setContactSaving(false);
+          }
+        }}
+        onConfirm={async (next) => {
           if (status !== 'pending' || busy) return;
+          setConfirmedPayment(next);
           setBusy(true);
           const ok = await requestApproval();
           setBusy(false);
@@ -355,10 +354,7 @@ function ResolveSendFlow({
           finishedRef.current = false;
           setLocalStatus('sending');
         }}
-        onCancel={() => {
-          if (status !== 'pending') return;
-          onCancelled();
-        }}
+        onCancel={onCancelled}
       />
       {modal}
     </>
@@ -442,25 +438,6 @@ const styles = StyleSheet.create({
   contactName: {
     fontSize: 15,
     fontWeight: '600',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  input: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.composer,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  primaryBtn: {
-    minHeight: 46,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   editLink: {
     marginLeft: 8,

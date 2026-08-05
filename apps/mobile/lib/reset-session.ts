@@ -1,10 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { clearSettings } from '@/lib/settings-storage';
 import { setAccountType } from '@/lib/account';
 import { clearApprovals } from '@/lib/approvals-storage';
 import { clearContacts } from '@/lib/contacts-storage';
 import { clearIntegrations } from '@/lib/integrations-storage';
 import { clearInvoices } from '@/lib/invoices-storage';
+import { clearMemoryStore } from '@/lib/memory-storage';
 import { clearPasscode } from '@/lib/passcode-storage';
 import { clearRecurring } from '@/lib/recurring-storage';
 import { clearTransactions } from '@/lib/transactions-storage';
@@ -20,9 +22,11 @@ const KEYS = [
   'finora.invoices.v1',
   'finora.recurring.v1',
   'finora.integrations.v1',
+  'finora.settings.v1',
+  'finora.memories.v1',
 ] as const;
 
-/** Clears auth + onboarding + passcode + business demo persistence. */
+/** Clears auth + onboarding + passcode + local demo persistence. */
 export async function resetFinoraSession(): Promise<void> {
   try {
     await AsyncStorage.multiRemove([...KEYS]);
@@ -37,5 +41,7 @@ export async function resetFinoraSession(): Promise<void> {
   await clearInvoices();
   await clearRecurring();
   await clearIntegrations();
+  await clearSettings();
+  await clearMemoryStore();
   setAccountType('personal');
 }

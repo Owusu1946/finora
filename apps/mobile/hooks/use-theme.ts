@@ -1,7 +1,7 @@
-import { Colors, type Palette } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useSettings } from '@/lib/settings-context';
 
-export function useTheme(): { isDark: boolean; colors: Palette } {
-  const isDark = useColorScheme() === 'dark';
-  return { isDark, colors: isDark ? Colors.dark : Colors.light };
+/** Theme colors from Settings → Appearance (system / light / dark). */
+export function useTheme() {
+  const { isDark, colors } = useSettings();
+  return { isDark, colors };
 }

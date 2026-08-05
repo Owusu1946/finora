@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -8,11 +9,14 @@ export function WizardChip({
   selected,
   onPress,
   subtle,
+  leading,
 }: {
   label: string;
   selected?: boolean;
   onPress: () => void;
   subtle?: boolean;
+  /** Optional leading node (e.g. circular CurrencyIcon). */
+  leading?: ReactNode;
 }) {
   const { colors } = useTheme();
   return (
@@ -30,6 +34,7 @@ export function WizardChip({
         },
       ]}
     >
+      {leading ? <View style={styles.leading}>{leading}</View> : null}
       <Text
         style={[
           styles.label,
@@ -83,10 +88,16 @@ export function WizardStepHeader({
 
 const styles = StyleSheet.create({
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  leading: {
+    marginLeft: -2,
   },
   label: {
     fontSize: 13,

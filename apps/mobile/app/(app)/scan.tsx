@@ -1,0 +1,451 @@
+import { useAui } from '@assistant-ui/react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+
+import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
+import { Icon } from '@/components/ui/icon';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { haptics } from '@/lib/haptics';
+import {
+  buildScanPayPrompt,
+  parsePaymentQr,
+  type ParsedPaymentQr,
+} from '@/lib/payment-qr';
+import { sendChatPrompt } from '@/lib/send-chat-prompt';
+
+const AMOUNTS = [25, 50, 100, 250, 500];
+const CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'USDT'];
+
+type Phase = 'scan' | 'amount';
+
+export default function ScanScreen() {
+  const { colors } = useTheme();
+  const router = useRouter();
+  const aui = useAui();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [phase, setPhase] = useState<Phase>('scan');
+  const [parsed, setParsed] = useState<ParsedPaymentQr | null>(null);
+  const [locked, setLocked] = useState(false);
+  const [paste, setPaste] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [amount, setAmount] = useState<number | null>(null);
+  const [currency, setCurrency] = useState('GHS');
+  const [customAmount, setCustomAmount] = useState('');
+
+  const finishPay = useCallback(
+    (qr: ParsedPaymentQr, payAmount: number, payCurrency: string) => {
+      const prompt = buildScanPayPrompt({ ...qr, currency: payCurrency }, payAmount);
+      router.replace('/');
+      setTimeout(() => {
+        sendChatPrompt(aui, prompt);
+      }, 80);
+    },
+    [aui, router],
+  );
+
+  const applyPayload = useCallback(
+    (raw: string) => {
+      const next = parsePaymentQr(raw);
+      if (!next) {
+        haptics.error();
+        setError('Not a Finora payment QR. Try a receive or payment-request code.');
+        setLocked(false);
+        return;
+      }
+      haptics.success();
+      setError(null);
+      setParsed(next);
+      setCurrency(next.currency);
+      if (next.amount != null && !next.needsAmount) {
+        finishPay(next, next.amount, next.currency);
+        return;
+      }
+      setPhase('amount');
+    },
+    [finishPay],
+  );
+
+  const onBarcodeScanned = useCallback(
+    ({ data }: { data: string }) => {
+      if (locked || phase !== 'scan') return;
+      setLocked(true);
+      applyPayload(data);
+    },
+    [applyPayload, locked, phase],
+  );
+
+  const onPasteSubmit = () => {
+    if (!paste.trim()) return;
+    applyPayload(paste.trim());
+  };
+
+  const onContinueAmount = () => {
+    if (!parsed || amount == null || amount <= 0) return;
+    haptics.selection();
+    finishPay(parsed, amount, currency);
+  };
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <WizardStepHeader
+          step={1}
+          total={1}
+          title='Scan to pay'
+          subtitle='Camera scanning needs a phone. Paste a QR payload below to demo on web.'
+        />
+        {phase === 'amount' && parsed ? (
+          <AmountStep
+            parsed={parsed}
+            amount={amount}
+            setAmount={setAmount}
+            currency={currency}
+            setCurrency={setCurrency}
+            customAmount={customAmount}
+            setCustomAmount={setCustomAmount}
+            onContinue={onContinueAmount}
+            onBack={() => {
+              setPhase('scan');
+              setParsed(null);
+              setLocked(false);
+            }}
+          />
+        ) : (
+          <PasteBlock
+            paste={paste}
+            setPaste={setPaste}
+            onSubmit={onPasteSubmit}
+            error={error}
+          />
+        )}
+      </View>
+    );
+  }
+
+  if (!permission) {
+    return <View style={[styles.screen, { backgroundColor: colors.background }]} />;
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <WizardStepHeader
+          step={1}
+          total={1}
+          title='Camera access'
+          subtitle='Finora needs the camera to scan payment QR codes.'
+        />
+        <Pressable
+          onPress={() => {
+            haptics.selection();
+            void requestPermission();
+          }}
+          style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
+        >
+          <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+            Allow camera
+          </Text>
+        </Pressable>
+        <PasteBlock
+          paste={paste}
+          setPaste={setPaste}
+          onSubmit={onPasteSubmit}
+          error={error}
+        />
+      </View>
+    );
+  }
+
+  if (phase === 'amount' && parsed) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <AmountStep
+          parsed={parsed}
+          amount={amount}
+          setAmount={setAmount}
+          currency={currency}
+          setCurrency={setCurrency}
+          customAmount={customAmount}
+          setCustomAmount={setCustomAmount}
+          onContinue={onContinueAmount}
+          onBack={() => {
+            haptics.selection();
+            setPhase('scan');
+            setParsed(null);
+            setLocked(false);
+            setError(null);
+          }}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <WizardStepHeader
+        step={1}
+        total={2}
+        title='Scan to pay'
+        subtitle='Point at a Finora receive QR or payment-request code.'
+      />
+      <View style={[styles.cameraWrap, { borderColor: colors.border }]}>
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing='back'
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={locked ? undefined : onBarcodeScanned}
+        />
+        <View style={styles.reticle} pointerEvents='none'>
+          <View style={[styles.reticleCorner, styles.tl, { borderColor: colors.foreground }]} />
+          <View style={[styles.reticleCorner, styles.tr, { borderColor: colors.foreground }]} />
+          <View style={[styles.reticleCorner, styles.bl, { borderColor: colors.foreground }]} />
+          <View style={[styles.reticleCorner, styles.br, { borderColor: colors.foreground }]} />
+        </View>
+      </View>
+      {error ? (
+        <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
+      ) : null}
+      <PasteBlock
+        paste={paste}
+        setPaste={setPaste}
+        onSubmit={onPasteSubmit}
+        error={null}
+      />
+    </View>
+  );
+}
+
+function AmountStep({
+  parsed,
+  amount,
+  setAmount,
+  currency,
+  setCurrency,
+  customAmount,
+  setCustomAmount,
+  onContinue,
+  onBack,
+}: {
+  parsed: ParsedPaymentQr;
+  amount: number | null;
+  setAmount: (n: number | null) => void;
+  currency: string;
+  setCurrency: (c: string) => void;
+  customAmount: string;
+  setCustomAmount: (t: string) => void;
+  onContinue: () => void;
+  onBack: () => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <>
+      <WizardStepHeader
+        step={2}
+        total={2}
+        title='How much to send?'
+        subtitle={`${parsed.destination.label} · ${parsed.destination.value}`}
+      />
+      <View style={styles.chips}>
+        {CURRENCIES.map((c) => (
+          <WizardChip
+            key={c}
+            label={c}
+            selected={currency === c}
+            onPress={() => setCurrency(c)}
+          />
+        ))}
+      </View>
+      <View style={styles.chips}>
+        {AMOUNTS.map((n) => (
+          <WizardChip
+            key={n}
+            label={String(n)}
+            selected={amount === n && !customAmount}
+            onPress={() => {
+              setAmount(n);
+              setCustomAmount('');
+            }}
+          />
+        ))}
+      </View>
+      <TextInput
+        value={customAmount}
+        onChangeText={(t) => {
+          setCustomAmount(t);
+          const n = Number(t.replace(/,/g, ''));
+          setAmount(Number.isFinite(n) && n > 0 ? n : null);
+        }}
+        keyboardType='decimal-pad'
+        placeholder='Custom amount'
+        placeholderTextColor={colors.mutedForeground}
+        style={[
+          styles.input,
+          {
+            color: colors.foreground,
+            borderColor: colors.border,
+            backgroundColor: colors.composer,
+          },
+        ]}
+      />
+      <Pressable
+        onPress={onContinue}
+        disabled={amount == null || amount <= 0}
+        style={[
+          styles.primaryBtn,
+          {
+            backgroundColor: colors.foreground,
+            opacity: amount == null || amount <= 0 ? 0.4 : 1,
+          },
+        ]}
+      >
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+          Continue to confirm
+        </Text>
+      </Pressable>
+      <Pressable onPress={onBack} style={styles.linkBtn}>
+        <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>Scan again</Text>
+      </Pressable>
+    </>
+  );
+}
+
+function PasteBlock({
+  paste,
+  setPaste,
+  onSubmit,
+  error,
+}: {
+  paste: string;
+  setPaste: (v: string) => void;
+  onSubmit: () => void;
+  error: string | null;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.pasteBlock}>
+      <Text style={[styles.pasteLabel, { color: colors.mutedForeground }]}>
+        Or paste a payload
+      </Text>
+      <TextInput
+        value={paste}
+        onChangeText={setPaste}
+        autoCapitalize='none'
+        autoCorrect={false}
+        placeholder='finora:momo:ghs:0550123456'
+        placeholderTextColor={colors.mutedForeground}
+        style={[
+          styles.input,
+          {
+            color: colors.foreground,
+            borderColor: colors.border,
+            backgroundColor: colors.composer,
+          },
+        ]}
+      />
+      {error ? (
+        <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
+      ) : null}
+      <Pressable
+        onPress={() => {
+          haptics.selection();
+          onSubmit();
+        }}
+        style={[styles.secondaryBtn, { borderColor: colors.border }]}
+      >
+        <Icon name='qr' size={16} color={colors.foreground} />
+        <Text style={{ color: colors.foreground, fontWeight: '600', marginLeft: 8 }}>
+          Use payload
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  cameraWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    maxHeight: 360,
+    borderRadius: Radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+    alignSelf: 'center',
+  },
+  reticle: {
+    ...StyleSheet.absoluteFillObject,
+    margin: 48,
+  },
+  reticleCorner: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderWidth: 3,
+  },
+  tl: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
+  tr: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
+  bl: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
+  br: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  primaryBtn: {
+    marginTop: 8,
+    borderRadius: Radius.pill,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.pill,
+    paddingVertical: 12,
+  },
+  linkBtn: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  pasteBlock: {
+    gap: 8,
+    marginTop: 4,
+  },
+  pasteLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  error: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+});

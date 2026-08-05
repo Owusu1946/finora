@@ -1,4 +1,5 @@
 export * from './account';
+export * from './corridors';
 export * from './enums';
 export * from './money';
 export * from './registry';

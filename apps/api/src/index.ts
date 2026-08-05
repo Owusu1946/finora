@@ -10,7 +10,14 @@ type AppEnv = {
 
 const app = new Hono<AppEnv>();
 
-app.use('*', cors());
+app.use(
+  '*',
+  cors({
+    origin: '*',
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  }),
+);
 
 app.get('/', (c) =>
   c.json({

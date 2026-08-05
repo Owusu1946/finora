@@ -24,7 +24,7 @@ function NewChatButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={{ marginRight: 16 }}
+      style={{ marginRight: 8 }}
     >
       <Icon
         name='compose'
@@ -32,6 +32,38 @@ function NewChatButton() {
         color={colors.foreground}
       />
     </Pressable>
+  );
+}
+
+function ScanHeaderButton() {
+  const router = useRouter();
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      accessibilityLabel='Scan QR to pay'
+      hitSlop={8}
+      onPress={() => {
+        haptics.selection();
+        router.push('/scan');
+      }}
+      style={{ marginRight: 12 }}
+    >
+      <Icon
+        name='qr'
+        size={22}
+        color={colors.foreground}
+      />
+    </Pressable>
+  );
+}
+
+function ChatHeaderRight() {
+  return (
+    <>
+      <ScanHeaderButton />
+      <NewChatButton />
+    </>
   );
 }
 
@@ -77,7 +109,7 @@ export default function AppLayout() {
     <Drawer
       drawerContent={(props) => <ThreadListDrawer {...props} />}
       screenOptions={{
-        headerRight: () => <NewChatButton />,
+        headerRight: () => <ChatHeaderRight />,
         headerShadowVisible: false,
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
@@ -127,7 +159,11 @@ export default function AppLayout() {
       />
       <Drawer.Screen
         name='settings'
-        options={screenOptions('Settings')}
+        options={{
+          title: 'Settings',
+          // Nested settings Stack owns its own headers (hub + drill-downs).
+          headerShown: false,
+        }}
       />
       <Drawer.Screen
         name='transaction/[id]'
@@ -142,6 +178,15 @@ export default function AppLayout() {
         name='approval/[id]'
         options={{
           ...screenOptions('Approve payment'),
+          drawerItemStyle: { display: 'none' },
+          headerLeft: () => <BackHeaderButton />,
+          headerRight: () => null,
+        }}
+      />
+      <Drawer.Screen
+        name='scan'
+        options={{
+          ...screenOptions('Scan'),
           drawerItemStyle: { display: 'none' },
           headerLeft: () => <BackHeaderButton />,
           headerRight: () => null,

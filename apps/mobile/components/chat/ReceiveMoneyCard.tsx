@@ -1,6 +1,13 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { Icon } from '@/components/ui/icon';
@@ -32,10 +39,21 @@ function kindIcon(kind: ReceiveMethodKind): 'bank' | 'phone' | 'wallet' {
   return 'wallet';
 }
 
+function formatDetails(method: ReceiveMethod): string {
+  return [
+    `Finora · Receive ${method.currency}`,
+    method.title,
+    ...method.fields.map((f) => `${f.label}: ${f.value}`),
+    '',
+    `QR payload: ${method.qrPayload}`,
+  ].join('\n');
+}
+
 export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardProps) {
   const { colors, isDark } = useTheme();
   const [activeId, setActiveId] = useState(initialMethodId ?? methods[0]?.id ?? '');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const active = useMemo(
     () => methods.find((m) => m.id === activeId) ?? methods[0],
@@ -54,17 +72,37 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
   const shareDetails = async () => {
     haptics.selection();
-    const body = [
-      `Finora · Receive ${active.currency}`,
-      active.title,
-      ...active.fields.map((f) => `${f.label}: ${f.value}`),
-    ].join('\n');
     try {
-      await Share.share({ message: body });
+      await Share.share({
+        message: formatDetails(active),
+        title: `Receive ${active.currency} · Finora`,
+      });
     } catch {
       // ignored
     }
   };
+
+  const shareQr = async () => {
+    haptics.selection();
+    const message = [
+      `Scan this Finora receive code for ${active.currency}.`,
+      active.title,
+      '',
+      active.qrPayload,
+      '',
+      ...active.fields.map((f) => `${f.label}: ${f.value}`),
+    ].join('\n');
+    try {
+      await Share.share({
+        message,
+        title: `Finora QR · ${active.currency}`,
+      });
+    } catch {
+      // ignored
+    }
+  };
+
+  const copyAll = () => void copyValue(formatDetails(active), 'all');
 
   return (
     <View
@@ -137,16 +175,23 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         ) : null}
       </View>
 
-      <View style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}>
+      <Pressable
+        accessibilityLabel='Expand QR code'
+        onPress={() => {
+          haptics.selection();
+          setQrOpen(true);
+        }}
+        style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
+      >
         <MockQrCode
           value={active.qrPayload}
           size={168}
           color='#18181b'
           backgroundColor='#ffffff'
         />
-      </View>
+      </Pressable>
       <Text style={[styles.qrHint, { color: colors.mutedForeground }]}>
-        Scan to pay · {active.currency}
+        Tap QR to enlarge · Scan to pay · {active.currency}
       </Text>
 
       <View style={styles.fields}>
@@ -195,23 +240,138 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         })}
       </View>
 
-      <Pressable
-        onPress={shareDetails}
-        style={({ pressed }) => [
-          styles.shareBtn,
-          {
-            borderColor: colors.border,
-            opacity: pressed ? 0.75 : 1,
-          },
-        ]}
+      <View style={styles.actions}>
+        <Pressable
+          onPress={shareDetails}
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            {
+              backgroundColor: colors.foreground,
+              opacity: pressed ? 0.85 : 1,
+            },
+          ]}
+        >
+          <Icon
+            name='share'
+            size={16}
+            color={colors.background}
+          />
+          <Text style={[styles.primaryLabel, { color: colors.background }]}>Share details</Text>
+        </Pressable>
+
+        <View style={styles.secondaryRow}>
+          <Pressable
+            onPress={shareQr}
+            style={({ pressed }) => [
+              styles.secondaryBtn,
+              {
+                borderColor: colors.border,
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}
+          >
+            <Icon
+              name='qr'
+              size={15}
+              color={colors.foreground}
+            />
+            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share QR</Text>
+          </Pressable>
+          <Pressable
+            onPress={copyAll}
+            style={({ pressed }) => [
+              styles.secondaryBtn,
+              {
+                borderColor: colors.border,
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}
+          >
+            <Icon
+              name={copiedKey === 'all' ? 'check' : 'copy'}
+              size={15}
+              color={colors.foreground}
+            />
+            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>
+              {copiedKey === 'all' ? 'Copied' : 'Copy all'}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <Modal
+        visible={qrOpen}
+        transparent
+        animationType='fade'
+        onRequestClose={() => setQrOpen(false)}
       >
-        <Icon
-          name='share'
-          size={16}
-          color={colors.foreground}
-        />
-        <Text style={[styles.shareLabel, { color: colors.foreground }]}>Share details</Text>
-      </Pressable>
+        <Pressable
+          style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+          onPress={() => setQrOpen(false)}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+              {active.title}
+            </Text>
+            <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
+              Hold steady — sender scans this code
+            </Text>
+            <View style={styles.modalQr}>
+              <MockQrCode
+                value={active.qrPayload}
+                size={240}
+                color='#18181b'
+                backgroundColor='#ffffff'
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable
+                onPress={shareQr}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  {
+                    backgroundColor: colors.foreground,
+                    opacity: pressed ? 0.85 : 1,
+                    flex: 1,
+                  },
+                ]}
+              >
+                <Icon
+                  name='share'
+                  size={16}
+                  color={colors.background}
+                />
+                <Text style={[styles.primaryLabel, { color: colors.background }]}>
+                  Share QR
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  haptics.selection();
+                  setQrOpen(false);
+                }}
+                style={({ pressed }) => [
+                  styles.secondaryBtn,
+                  {
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.75 : 1,
+                    flex: 0,
+                    paddingHorizontal: 16,
+                  },
+                ]}
+              >
+                <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Done</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -328,18 +488,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shareBtn: {
+  actions: {
+    gap: 8,
+  },
+  primaryBtn: {
     minHeight: 46,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  shareLabel: {
+  primaryLabel: {
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
+  },
+  secondaryRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  secondaryBtn: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  secondaryLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  modalBackdrop: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: Radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 20,
+    gap: 12,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  modalSub: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -4,
+  },
+  modalQr: {
+    padding: 16,
+    borderRadius: Radius.lg,
+    backgroundColor: '#ffffff',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+    marginTop: 4,
   },
 });

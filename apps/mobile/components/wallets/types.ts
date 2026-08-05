@@ -24,6 +24,7 @@ export interface WalletItem {
   };
 }
 
+/** Aligned with `lib/funding-methods.ts` deposit details. */
 export const INITIAL_WALLETS_DATA: WalletItem[] = [
   {
     id: 'w-usd',
@@ -35,11 +36,10 @@ export const INITIAL_WALLETS_DATA: WalletItem[] = [
     type: 'fiat',
     badge: 'ACH • Wire • SWIFT',
     accountDetails: {
-      bankName: 'Choice Financial Group (WeWire)',
-      accountName: 'Finora Business Trust',
-      accountNumber: '1892 4892 0184',
-      routingNumber: '021000021',
-      swiftBic: 'CHUSUS33XXX',
+      bankName: 'ClearBank',
+      accountName: 'Finora / Kenneth Owusu',
+      iban: 'GB82 CLRB 0406 6800 0123 45',
+      swiftBic: 'CLRBGB22',
     },
   },
   {
@@ -50,10 +50,10 @@ export const INITIAL_WALLETS_DATA: WalletItem[] = [
     balance: 3200.0,
     usdEquivalent: 3200.0,
     type: 'crypto',
-    badge: 'TRC-20 / ERC-20',
+    badge: 'TRC-20',
     accountDetails: {
-      network: 'TRON (TRC-20)',
-      address: 'TY9aN3kL8mPq1zX7vR4wE2yS6tU5jB0hA1',
+      network: 'TRC-20 (Tron)',
+      address: 'TXyzFinoraMockDepositAddress9hQ2',
     },
   },
   {
@@ -66,10 +66,10 @@ export const INITIAL_WALLETS_DATA: WalletItem[] = [
     type: 'fiat',
     badge: 'SEPA Instant IBAN',
     accountDetails: {
-      bankName: 'ClearBank Europe',
-      accountName: 'Finora Business Trust',
-      iban: 'GB82 CLRB 0400 7563 8291 00',
-      swiftBic: 'CLRBGB21',
+      bankName: 'Commerzbank',
+      accountName: 'Finora / Kenneth Owusu',
+      iban: 'DE89 3704 0044 0532 0130 00',
+      swiftBic: 'COBADEFFXXX',
     },
   },
   {
@@ -96,11 +96,11 @@ export const INITIAL_WALLETS_DATA: WalletItem[] = [
     type: 'fiat',
     badge: 'FPS • Sort Code',
     accountDetails: {
-      bankName: 'Barclays WeWire Gateway',
-      accountName: 'Finora Business Trust',
-      accountNumber: '83920194',
-      routingNumber: '04-00-75',
-      swiftBic: 'BARCGB22',
+      bankName: 'NatWest',
+      accountName: 'Finora / Kenneth Owusu',
+      accountNumber: '31926819',
+      routingNumber: '60-16-13',
+      swiftBic: 'NWBKGB2L',
     },
   },
   {
@@ -113,8 +113,9 @@ export const INITIAL_WALLETS_DATA: WalletItem[] = [
     type: 'momo',
     badge: 'MTN / Telecel MoMo',
     accountDetails: {
-      phone: '+233 24 555 0192',
-      accountName: 'Finora Enterprise MoMo',
+      phone: '0550123456',
+      accountName: 'Kenneth Owusu',
+      network: 'MTN Mobile Money',
     },
   },
 ];

@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { SEND_CORRIDORS, previewFxQuote, type Currency } from '@finora/shared';
 
 import { createPreparation, mockStore, newId } from '../mock/store';
 
@@ -163,7 +164,18 @@ v1.post('/accounts/lookup', async (c) => {
 
 v1.post('/payments/prepare', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('payment', body), 201);
+  // Accepts international fields (destinationCountry, settlementMethod, purposeCode,
+  // rail details, fundingCurrency, fx) and stores them on the preparation payload.
+  return c.json(
+    createPreparation('payment', {
+      ...body,
+      corridor:
+        typeof body.destinationCountry === 'string'
+          ? SEND_CORRIDORS.find((x) => x.code === body.destinationCountry)
+          : undefined,
+    }),
+    201,
+  );
 });
 
 v1.post('/disbursements/mobile-money/prepare', async (c) => {
@@ -577,10 +589,16 @@ v1.post('/crypto/validate-address', async (c) => {
 v1.post('/payment-requests', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
   const prep = createPreparation('payment_request', body);
+  const link = `https://pay.finora.app/r/${prep.preparationId}`;
   return c.json(
     {
       ...prep,
-      link: `https://pay.finora.app/r/${prep.preparationId}`,
+      link,
+      qrPayload: link,
+      amount: body.amount ?? null,
+      currency: body.currency ?? null,
+      memo: body.memo ?? null,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     },
     201,
   );
@@ -1160,22 +1178,54 @@ v1.get('/capabilities/rails', (c) =>
   c.json({
     mode: 'mock',
     rails: ['bank', 'mobile_money', 'crypto', 'internal', 'fx'],
+    settlementMethods: [
+      'MOMO',
+      'LOCAL_BANK',
+      'ACH',
+      'WIRE',
+      'FPS',
+      'CHAPS',
+      'SEPA',
+      'SWIFT',
+      'CRYPTO',
+    ],
   }),
 );
 
 v1.get('/capabilities/countries', (c) =>
   c.json({
     mode: 'mock',
-    countries: [
-      { code: 'GH', name: 'Ghana' },
-      { code: 'NG', name: 'Nigeria' },
-      { code: 'KE', name: 'Kenya' },
-      { code: 'GB', name: 'United Kingdom' },
-      { code: 'US', name: 'United States' },
-      { code: 'EU', name: 'Eurozone' },
-    ],
+    countries: SEND_CORRIDORS.map((country) => ({
+      code: country.code,
+      name: country.name,
+      alpha3: country.alpha3,
+      currency: country.currency,
+      rails: country.rails,
+    })),
   }),
 );
+
+v1.get('/capabilities/countries/:code/rails', (c) => {
+  const code = c.req.param('code').toUpperCase();
+  const country = SEND_CORRIDORS.find((x) => x.code === code);
+  if (!country) return c.json({ error: 'Country not supported' }, 404);
+  return c.json({
+    mode: 'mock',
+    code: country.code,
+    rails: country.rails,
+    fields: country.fields,
+  });
+});
+
+v1.post('/rates/conversion/preview', async (c) => {
+  const body = await c.req.json<{ from: string; to: string; amount: number }>();
+  const quote = previewFxQuote({
+    from: body.from as Currency,
+    to: body.to as Currency,
+    amount: body.amount,
+  });
+  return c.json({ mode: 'mock', ...quote });
+});
 
 v1.get('/capabilities/assets', (c) =>
   c.json({
@@ -1185,6 +1235,10 @@ v1.get('/capabilities/assets', (c) =>
       { code: 'GHS', kind: 'fiat' },
       { code: 'GBP', kind: 'fiat' },
       { code: 'EUR', kind: 'fiat' },
+      { code: 'NGN', kind: 'fiat' },
+      { code: 'KES', kind: 'fiat' },
+      { code: 'CAD', kind: 'fiat' },
+      { code: 'AED', kind: 'fiat' },
       { code: 'USDT', kind: 'crypto' },
       { code: 'USDC', kind: 'crypto' },
     ],

@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Pressable,
+  Modal,
+  TextInput,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  InputAccessoryView,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { SupportedCurrency } from '@/components/ui/currency-icon';
+import { CurrencyIcon, type SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
 import { WalletItem, FX_RATES } from './types';
+
+type PickerSide = 'pay' | 'receive' | null;
+
+const AMOUNT_ACCESSORY_ID = 'fx-swap-amount-done';
+
+function dismissKeyboard() {
+  Keyboard.dismiss();
+}
 
 interface FxConvertModalProps {
   visible: boolean;
@@ -21,6 +42,51 @@ interface FxConvertModalProps {
   ) => void;
 }
 
+function formatBalance(n: number) {
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function CurrencyPill({
+  currency,
+  onPress,
+  colors,
+}: {
+  currency: SupportedCurrency;
+  onPress: () => void;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  return (
+    <Pressable
+      onPress={() => {
+        haptics.selection();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.currencyPill,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+    >
+      <CurrencyIcon
+        currency={currency}
+        size={22}
+      />
+      <Text style={[styles.currencyPillCode, { color: colors.foreground }]}>{currency}</Text>
+      <Icon
+        name='chevron-down'
+        size={16}
+        color={colors.mutedForeground}
+      />
+    </Pressable>
+  );
+}
+
 export function FxConvertModal({
   visible,
   wallets,
@@ -28,298 +94,583 @@ export function FxConvertModal({
   onConvertSuccess,
 }: FxConvertModalProps) {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [fromCurrency, setFromCurrency] = useState<SupportedCurrency>('USD');
   const [toCurrency, setToCurrency] = useState<SupportedCurrency>('GHS');
-  const [convertAmount, setConvertAmount] = useState('100');
+  const [convertAmount, setConvertAmount] = useState('');
   const [isConverting, setIsConverting] = useState(false);
   const [convertSuccess, setConvertSuccess] = useState(false);
+  const [picker, setPicker] = useState<PickerSide>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+    const pay = wallets[0]?.currency ?? 'USD';
+    const receive =
+      wallets.find((w) => w.currency !== pay)?.currency ?? wallets[1]?.currency ?? 'GHS';
+    setFromCurrency(pay);
+    setToCurrency(receive);
+    setConvertAmount('');
+    setIsConverting(false);
+    setConvertSuccess(false);
+    setPicker(null);
+  }, [visible, wallets]);
+
+  const fromWallet = useMemo(
+    () => wallets.find((w) => w.currency === fromCurrency),
+    [wallets, fromCurrency],
+  );
+  const toWallet = useMemo(
+    () => wallets.find((w) => w.currency === toCurrency),
+    [wallets, toCurrency],
+  );
+
+  const amountNum = parseFloat(convertAmount) || 0;
+  const receiveAmount = useMemo(() => {
+    const fromRate = FX_RATES[fromCurrency] || 1;
+    const toRate = FX_RATES[toCurrency] || 1;
+    return (amountNum * fromRate) / toRate;
+  }, [amountNum, fromCurrency, toCurrency]);
+
+  const insufficient = amountNum > 0 && (fromWallet?.balance ?? 0) < amountNum;
+  const canSwap =
+    amountNum > 0 &&
+    !insufficient &&
+    fromCurrency !== toCurrency &&
+    Boolean(fromWallet && toWallet) &&
+    !isConverting;
+
+  const rateLabel = useMemo(() => {
+    const fromRate = FX_RATES[fromCurrency] || 1;
+    const toRate = FX_RATES[toCurrency] || 1;
+    const one = fromRate / toRate;
+    return `1 ${fromCurrency} ≈ ${one.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${toCurrency}`;
+  }, [fromCurrency, toCurrency]);
+
+  const handleFlip = () => {
+    dismissKeyboard();
+    haptics.selection();
+    setFromCurrency(toCurrency);
+    setToCurrency(fromCurrency);
+    if (amountNum > 0) {
+      setConvertAmount(
+        receiveAmount.toLocaleString(undefined, {
+          maximumFractionDigits: 6,
+          useGrouping: false,
+        }),
+      );
+    }
+  };
+
+  const openPicker = (side: PickerSide) => {
+    dismissKeyboard();
+    setPicker(side);
+  };
+
+  const handleSelectCurrency = (currency: SupportedCurrency) => {
+    haptics.selection();
+    if (picker === 'pay') {
+      if (currency === toCurrency) setToCurrency(fromCurrency);
+      setFromCurrency(currency);
+    } else if (picker === 'receive') {
+      if (currency === fromCurrency) setFromCurrency(toCurrency);
+      setToCurrency(currency);
+    }
+    setPicker(null);
+  };
+
+  const handleMax = () => {
+    if (!fromWallet) return;
+    dismissKeyboard();
+    haptics.selection();
+    setConvertAmount(
+      fromWallet.balance.toLocaleString(undefined, {
+        maximumFractionDigits: 6,
+        useGrouping: false,
+      }),
+    );
+  };
+
+  const handleClose = () => {
+    dismissKeyboard();
+    onClose();
+  };
 
   const handleExecuteConversion = () => {
-    if (!convertAmount || parseFloat(convertAmount) <= 0) return;
+    if (!canSwap || !fromWallet || !toWallet) return;
+    dismissKeyboard();
     haptics.impact();
     setIsConverting(true);
 
     setTimeout(() => {
-      const amountNum = parseFloat(convertAmount);
-      const fromWallet = wallets.find((w) => w.currency === fromCurrency);
-      const toWallet = wallets.find((w) => w.currency === toCurrency);
-
-      if (fromWallet && toWallet && fromWallet.balance >= amountNum) {
-        const fromRateInUSD = FX_RATES[fromCurrency] || 1;
-        const toRateInUSD = FX_RATES[toCurrency] || 1;
-
-        const valueInUSD = amountNum * fromRateInUSD;
-        const convertedValue = valueInUSD / toRateInUSD;
-
-        onConvertSuccess(fromCurrency, toCurrency, amountNum, convertedValue);
-        setConvertSuccess(true);
-        setTimeout(() => {
-          setConvertSuccess(false);
-          onClose();
-        }, 1600);
-      } else {
-        alert('Insufficient balance for conversion.');
-      }
+      onConvertSuccess(fromCurrency, toCurrency, amountNum, receiveAmount);
+      setConvertSuccess(true);
       setIsConverting(false);
-    }, 800);
+      setTimeout(() => {
+        setConvertSuccess(false);
+        onClose();
+      }, 1400);
+    }, 700);
   };
+
+  const pickerWallets = wallets.filter((w) =>
+    picker === 'pay' ? w.currency !== toCurrency : w.currency !== fromCurrency,
+  );
 
   return (
     <Modal
       visible={visible}
       animationType='slide'
       transparent
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View
-          style={[
-            styles.sheetContainer,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={handleClose}
         >
-          <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
-              Instant FX Conversion
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-            >
-              <Icon
-                name='remove'
-                size={20}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-          </View>
+          <View
+            style={[
+              styles.sheetContainer,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                paddingBottom: Math.max(insets.bottom, 16),
+              },
+            ]}
+          >
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          {convertSuccess ? (
-            <View style={styles.successState}>
-              <Icon
-                name='check'
-                size={36}
-                color={colors.foreground}
-              />
-              <Text style={[styles.successTitle, { color: colors.foreground }]}>
-                Converted Successfully
-              </Text>
-              <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                {convertAmount} {fromCurrency} converted to {toCurrency}.
-              </Text>
-            </View>
-          ) : (
-            <View style={{ gap: 14 }}>
-              {/* From / To selector */}
-              <View style={styles.fxSelectorRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>From</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                  >
-                    <View style={{ flexDirection: 'row', gap: 6 }}>
-                      {wallets.map((w) => (
-                        <Pressable
-                          key={`from-fx-${w.id}`}
-                          onPress={() => setFromCurrency(w.currency)}
-                          style={[
-                            styles.miniFxChip,
-                            {
-                              backgroundColor:
-                                fromCurrency === w.currency ? colors.foreground : colors.muted,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              fontWeight: '600',
-                              color:
-                                fromCurrency === w.currency ? colors.background : colors.foreground,
-                            }}
-                          >
-                            {w.currency}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </ScrollView>
-                </View>
-
+            <View style={styles.sheetHeader}>
+              <Pressable
+                onPress={handleClose}
+                hitSlop={10}
+                style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
+              >
                 <Icon
-                  name='swap'
-                  size={16}
-                  color={colors.mutedForeground}
+                  name='chevron-left'
+                  size={20}
+                  color={colors.foreground}
                 />
+              </Pressable>
+              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Swap money</Text>
+              <View style={styles.headerIconBtn} />
+            </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>To</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                  >
-                    <View style={{ flexDirection: 'row', gap: 6 }}>
-                      {wallets.map((w) => (
-                        <Pressable
-                          key={`to-fx-${w.id}`}
-                          onPress={() => setToCurrency(w.currency)}
-                          style={[
-                            styles.miniFxChip,
-                            {
-                              backgroundColor:
-                                toCurrency === w.currency ? colors.foreground : colors.muted,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              fontWeight: '600',
-                              color:
-                                toCurrency === w.currency ? colors.background : colors.foreground,
-                            }}
-                          >
-                            {w.currency}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </ScrollView>
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                  Amount ({fromCurrency})
-                </Text>
-                <TextInput
-                  value={convertAmount}
-                  onChangeText={setConvertAmount}
-                  placeholder='100'
-                  keyboardType='numeric'
-                  placeholderTextColor={colors.mutedForeground}
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.muted,
-                      borderColor: colors.border,
-                      color: colors.foreground,
-                    },
-                  ]}
+            {convertSuccess ? (
+              <View style={styles.successState}>
+                <Icon
+                  name='check'
+                  size={36}
+                  color={colors.foreground}
                 />
-              </View>
-
-              <View style={[styles.fxCalcPreview, { backgroundColor: colors.muted }]}>
-                <Text style={[styles.fxCalcLabel, { color: colors.mutedForeground }]}>
-                  Estimated Receive
+                <Text style={[styles.successTitle, { color: colors.foreground }]}>
+                  Swap complete
                 </Text>
-                <Text style={[styles.fxCalcValue, { color: colors.foreground }]}>
-                  {(
-                    ((parseFloat(convertAmount) || 0) * (FX_RATES[fromCurrency] || 1)) /
-                    (FX_RATES[toCurrency] || 1)
-                  ).toFixed(2)}{' '}
+                <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
+                  {formatBalance(amountNum)} {fromCurrency} → {formatBalance(receiveAmount)}{' '}
                   {toCurrency}
                 </Text>
               </View>
-
-              <Pressable
-                onPress={handleExecuteConversion}
-                disabled={isConverting}
-                style={({ pressed }) => [
-                  styles.primaryBtn,
-                  { backgroundColor: colors.foreground },
-                  pressed && styles.pressed,
-                ]}
+            ) : (
+              <ScrollView
+                style={styles.flex}
+                contentContainerStyle={styles.body}
+                keyboardShouldPersistTaps='handled'
+                keyboardDismissMode='on-drag'
+                showsVerticalScrollIndicator={false}
+                bounces={false}
               >
-                <Text style={[styles.primaryBtnText, { color: colors.background }]}>
-                  {isConverting ? 'Converting...' : 'Execute Conversion'}
-                </Text>
+                <View style={styles.swapStack}>
+                  <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
+                    <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>Pay</Text>
+                    <View style={styles.legRow}>
+                      <TextInput
+                        value={convertAmount}
+                        onChangeText={(t) => setConvertAmount(t.replace(/[^0-9.]/g, ''))}
+                        placeholder='0'
+                        keyboardType='decimal-pad'
+                        placeholderTextColor={colors.mutedForeground}
+                        style={[styles.amountInput, { color: colors.foreground }]}
+                        inputAccessoryViewID={
+                          Platform.OS === 'ios' ? AMOUNT_ACCESSORY_ID : undefined
+                        }
+                      />
+                      <CurrencyPill
+                        currency={fromCurrency}
+                        onPress={() => openPicker('pay')}
+                        colors={colors}
+                      />
+                    </View>
+                    <View style={styles.availableRow}>
+                      <Text style={[styles.availableText, { color: colors.mutedForeground }]}>
+                        Available {fromCurrency} {formatBalance(fromWallet?.balance ?? 0)}
+                      </Text>
+                      <Pressable
+                        onPress={handleMax}
+                        style={[styles.maxBadge, { backgroundColor: colors.foreground }]}
+                      >
+                        <Text style={[styles.maxBadgeText, { color: colors.background }]}>
+                          Max
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  <View style={styles.flipWrap}>
+                    <Pressable
+                      onPress={handleFlip}
+                      style={({ pressed }) => [
+                        styles.flipBtn,
+                        {
+                          backgroundColor: colors.foreground,
+                          borderColor: colors.background,
+                          opacity: pressed ? 0.85 : 1,
+                        },
+                      ]}
+                    >
+                      <Icon
+                        name='swap-vert'
+                        size={22}
+                        color={colors.background}
+                      />
+                    </Pressable>
+                  </View>
+
+                  <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
+                    <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>
+                      Receive
+                    </Text>
+                    <View style={styles.legRow}>
+                      <Text
+                        style={[styles.amountInput, { color: colors.foreground }]}
+                        numberOfLines={1}
+                      >
+                        {amountNum > 0 ? formatBalance(receiveAmount) : '0'}
+                      </Text>
+                      <CurrencyPill
+                        currency={toCurrency}
+                        onPress={() => openPicker('receive')}
+                        colors={colors}
+                      />
+                    </View>
+                  </View>
+                </View>
+
+                {insufficient ? (
+                  <View style={[styles.warnRow, { backgroundColor: colors.destructiveSurface }]}>
+                    <Icon
+                      name='info'
+                      size={16}
+                      color={colors.destructive}
+                    />
+                    <Text style={[styles.warnText, { color: colors.destructive }]}>
+                      Insufficient {fromCurrency} balance. Required: {formatBalance(amountNum)}.
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.rateHint, { color: colors.mutedForeground }]}>
+                    {rateLabel}
+                  </Text>
+                )}
+
+                <Pressable
+                  onPress={handleExecuteConversion}
+                  disabled={!canSwap}
+                  style={({ pressed }) => [
+                    styles.primaryBtn,
+                    {
+                      backgroundColor: colors.foreground,
+                      opacity: !canSwap ? 0.35 : pressed ? 0.85 : 1,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+                    {isConverting ? 'Swapping…' : `Swap ${fromCurrency} → ${toCurrency}`}
+                  </Text>
+                </Pressable>
+              </ScrollView>
+            )}
+          </View>
+        </Pressable>
+      </KeyboardAvoidingView>
+
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView nativeID={AMOUNT_ACCESSORY_ID}>
+          <View
+            style={[
+              styles.accessoryBar,
+              { backgroundColor: colors.muted, borderColor: colors.border },
+            ]}
+          >
+            <Pressable
+              onPress={dismissKeyboard}
+              hitSlop={8}
+              style={styles.accessoryDone}
+            >
+              <Text style={[styles.accessoryDoneText, { color: colors.foreground }]}>Done</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      ) : null}
+
+      <Modal
+        visible={picker !== null}
+        animationType='slide'
+        transparent
+        onRequestClose={() => setPicker(null)}
+      >
+        <Pressable
+          style={styles.pickerBackdrop}
+          onPress={() => setPicker(null)}
+        >
+          <Pressable
+            style={[
+              styles.pickerSheet,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                paddingBottom: Math.max(insets.bottom, 16),
+              },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            <View style={styles.pickerHeader}>
+              <Text style={[styles.pickerTitle, { color: colors.foreground }]}>
+                Select currency
+              </Text>
+              <Pressable
+                onPress={() => setPicker(null)}
+                hitSlop={8}
+                style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
+              >
+                <Icon
+                  name='remove'
+                  size={18}
+                  color={colors.foreground}
+                />
               </Pressable>
             </View>
-          )}
-        </View>
-      </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.pickerList}
+            >
+              {pickerWallets.map((w) => {
+                const selected =
+                  picker === 'pay' ? w.currency === fromCurrency : w.currency === toCurrency;
+                return (
+                  <Pressable
+                    key={w.id}
+                    onPress={() => handleSelectCurrency(w.currency)}
+                    style={({ pressed }) => [
+                      styles.pickerRow,
+                      {
+                        backgroundColor: selected ? colors.muted : colors.background,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.85 : 1,
+                      },
+                    ]}
+                  >
+                    <CurrencyIcon
+                      currency={w.currency}
+                      size={36}
+                    />
+                    <View style={styles.pickerMeta}>
+                      <Text style={[styles.pickerCode, { color: colors.foreground }]}>
+                        {w.currency}
+                      </Text>
+                      <Text style={[styles.pickerName, { color: colors.mutedForeground }]}>
+                        {w.name}
+                      </Text>
+                    </View>
+                    <Text style={[styles.pickerBalance, { color: colors.foreground }]}>
+                      {formatBalance(w.balance)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 20,
-    gap: 16,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    gap: 8,
+    minHeight: '72%',
+    maxHeight: '92%',
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 8,
   },
   sheetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sheetTitle: {
     fontSize: 17,
     fontWeight: '600',
   },
-  formLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 4,
+  body: {
+    gap: 16,
+    flexGrow: 1,
+    paddingBottom: 8,
   },
-  textInput: {
-    paddingHorizontal: 12,
+  accessoryBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    fontSize: 15,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  fxSelectorRow: {
+  accessoryDone: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  accessoryDoneText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  swapStack: {
+    gap: 12,
+  },
+  legCard: {
+    borderRadius: 20,
+    padding: 16,
+    gap: 10,
+  },
+  legLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  legRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 34,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    paddingVertical: 0,
+    minHeight: 42,
+  },
+  currencyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingLeft: 6,
+    paddingRight: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  currencyPillCode: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  availableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexWrap: 'wrap',
   },
-  miniFxChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: Radius.sm,
-  },
-  fxCalcPreview: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: Radius.md,
-  },
-  fxCalcLabel: {
+  availableText: {
     fontSize: 12,
     fontWeight: '500',
   },
-  fxCalcValue: {
-    fontSize: 16,
+  maxBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
+  },
+  maxBadgeText: {
+    fontSize: 11,
     fontWeight: '700',
   },
-  primaryBtn: {
-    flexDirection: 'row',
+  flipWrap: {
+    zIndex: 2,
+    alignItems: 'center',
+    marginVertical: -22,
+  },
+  flipBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    borderWidth: 3,
+  },
+  warnRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+  },
+  warnText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  rateHint: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  primaryBtn: {
+    marginTop: 'auto',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
     borderRadius: Radius.pill,
-    marginTop: 12,
   },
   primaryBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   successState: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 48,
     gap: 8,
   },
   successTitle: {
@@ -330,7 +681,57 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
   },
-  pressed: {
-    opacity: 0.8,
+  pickerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  pickerSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    maxHeight: '70%',
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  pickerTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  pickerList: {
+    gap: 8,
+    paddingBottom: 8,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  pickerMeta: {
+    flex: 1,
+    gap: 2,
+  },
+  pickerCode: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  pickerName: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  pickerBalance: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

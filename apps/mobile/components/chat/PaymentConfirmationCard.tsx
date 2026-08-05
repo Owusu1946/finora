@@ -16,6 +16,14 @@ import { haptics } from '@/lib/haptics';
 
 export type PaymentDestinationKind = 'mobile_money' | 'bank_account' | 'crypto_wallet';
 
+export type PaymentFxQuote = {
+  from: string;
+  to: string;
+  rate: number;
+  fee: number;
+  convertedAmount: number;
+};
+
 export type PaymentConfirmation = {
   amount: number;
   currency: string;
@@ -28,6 +36,18 @@ export type PaymentConfirmation = {
     value: string;
   };
   reference?: string;
+  destinationCountry?: string;
+  countryName?: string;
+  settlementMethod?: string;
+  settlementMethodLabel?: string;
+  purposeCode?: string;
+  purposeLabel?: string;
+  fundingCurrency?: string;
+  fx?: PaymentFxQuote;
+  accountName?: string;
+  iban?: string;
+  swiftBic?: string;
+  deliveryHint?: string;
 };
 
 export type PaymentConfirmationStatus =
@@ -192,6 +212,24 @@ export function PaymentConfirmationCard({
               value={payment.recipientName}
               colors={colors}
             />
+            {payment.countryName || payment.destinationCountry ? (
+              <DetailRow
+                label='Country'
+                value={
+                  payment.countryName
+                    ? `${payment.countryName}${payment.destinationCountry ? ` (${payment.destinationCountry})` : ''}`
+                    : (payment.destinationCountry ?? '')
+                }
+                colors={colors}
+              />
+            ) : null}
+            {payment.settlementMethodLabel ? (
+              <DetailRow
+                label='Rail'
+                value={payment.settlementMethodLabel}
+                colors={colors}
+              />
+            ) : null}
             <DetailRow
               label={payment.destination.label}
               value={payment.destination.value}
@@ -199,6 +237,51 @@ export function PaymentConfirmationCard({
               mono
               colors={colors}
             />
+            {payment.iban ? (
+              <DetailRow
+                label='IBAN'
+                value={payment.iban}
+                mono
+                colors={colors}
+              />
+            ) : null}
+            {payment.swiftBic ? (
+              <DetailRow
+                label='SWIFT'
+                value={payment.swiftBic}
+                mono
+                colors={colors}
+              />
+            ) : null}
+            {payment.purposeLabel ? (
+              <DetailRow
+                label='Purpose'
+                value={payment.purposeLabel}
+                colors={colors}
+              />
+            ) : null}
+            {payment.fundingCurrency &&
+            payment.fundingCurrency !== payment.currency ? (
+              <DetailRow
+                label='Fund from'
+                value={payment.fundingCurrency}
+                colors={colors}
+              />
+            ) : null}
+            {payment.fx ? (
+              <DetailRow
+                label='FX'
+                value={`1 ${payment.fx.from} = ${payment.fx.rate} ${payment.fx.to} · fee ${formatPaymentAmount(payment.fx.fee, payment.fx.from)}`}
+                colors={colors}
+              />
+            ) : null}
+            {payment.deliveryHint ? (
+              <DetailRow
+                label='Delivery'
+                value={payment.deliveryHint}
+                colors={colors}
+              />
+            ) : null}
             {payment.reference ? (
               <DetailRow
                 label='Reference'

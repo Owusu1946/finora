@@ -1,7 +1,7 @@
 import type { ReasoningMessagePartComponent } from '@assistant-ui/react-native';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -26,6 +26,7 @@ function useReasoningContext() {
 
 type ReasoningRootProps = {
   streaming?: boolean;
+  /** Opens while streaming by default (chain-of-thought pattern). */
   defaultOpen?: boolean;
   children: ReactNode;
 };
@@ -47,7 +48,7 @@ export function ReasoningRoot({
   const open = userOpen ?? (streaming || defaultOpen);
 
   return (
-    <View style={[styles.root, { borderColor: colors.border, backgroundColor: colors.background }]}>
+    <View style={[styles.root, { borderColor: colors.border, backgroundColor: colors.composer }]}>
       <ReasoningContext.Provider
         value={{
           open,
@@ -64,9 +65,18 @@ export function ReasoningRoot({
   );
 }
 
-export function ReasoningTrigger({ active }: { active?: boolean }) {
+export function ReasoningTrigger({
+  active,
+  duration,
+}: {
+  active?: boolean;
+  /** Optional elapsed seconds shown as (Ns). */
+  duration?: number;
+}) {
   const { colors } = useTheme();
   const { open, onToggle } = useReasoningContext();
+  const suffix =
+    typeof duration === 'number' && duration > 0 ? ` (${Math.round(duration)}s)` : '';
 
   return (
     <Pressable
@@ -78,7 +88,7 @@ export function ReasoningTrigger({ active }: { active?: boolean }) {
       <Icon
         name='brain'
         size={16}
-        color={colors.mutedForeground}
+        color={active ? colors.foreground : colors.mutedForeground}
       />
       <Text
         style={[
@@ -86,7 +96,7 @@ export function ReasoningTrigger({ active }: { active?: boolean }) {
           { color: active ? colors.foreground : colors.mutedForeground },
         ]}
       >
-        {active ? 'Thinking…' : 'Reasoning'}
+        {active ? `Thinking…${suffix}` : `Reasoning${suffix}`}
       </Text>
       <View style={{ transform: [{ rotate: open ? '0deg' : '-90deg' }] }}>
         <Icon
@@ -99,18 +109,40 @@ export function ReasoningTrigger({ active }: { active?: boolean }) {
   );
 }
 
-export function ReasoningContent({ children }: { children: ReactNode }) {
+export function ReasoningContent({
+  children,
+  'aria-busy': ariaBusy,
+}: {
+  children: ReactNode;
+  'aria-busy'?: boolean;
+}) {
   const { open } = useReasoningContext();
   if (!open) return null;
-  return <View style={styles.content}>{children}</View>;
+  return (
+    <View
+      style={styles.content}
+      accessibilityState={{ busy: ariaBusy === true }}
+    >
+      {children}
+    </View>
+  );
 }
 
 export function ReasoningText({ children }: { children: ReactNode }) {
-  return <View style={styles.textWrap}>{children}</View>;
+  return (
+    <ScrollView
+      style={styles.textWrap}
+      nestedScrollEnabled
+      showsVerticalScrollIndicator={false}
+    >
+      {children}
+    </ScrollView>
+  );
 }
 
 export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
+  if (!text?.trim()) return null;
   return <Text style={[styles.reasoningText, { color: colors.mutedForeground }]}>{text}</Text>;
 };
 
@@ -130,6 +162,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   triggerLabel: {
+    flex: 1,
     flexShrink: 1,
     fontSize: 13,
     fontWeight: '500',
@@ -138,9 +171,11 @@ const styles = StyleSheet.create({
   content: {
     marginTop: 6,
     paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(127,127,127,0.25)',
   },
   textWrap: {
-    maxHeight: 180,
+    maxHeight: 200,
   },
   reasoningText: {
     fontSize: 13,

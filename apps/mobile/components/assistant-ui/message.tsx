@@ -1,42 +1,38 @@
 import {
-  useAuiState,
-  AuiIf,
-  MessagePrimitive,
-  ErrorPrimitive,
-  groupPartByType,
-  type TextMessagePartComponent,
+    AuiIf,
+    ErrorPrimitive,
+    groupPartByType,
+    MessagePrimitive,
+    useAuiState,
+    type TextMessagePartComponent,
 } from '@assistant-ui/react-native';
 import { useEffect, useRef } from 'react';
-import { View, Text, Animated, Platform, StyleSheet } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import {
-  MessageImageAttachment,
-  MessageDocumentAttachment,
-  MessageAttachmentPill,
+    MessageAttachmentPill,
+    MessageDocumentAttachment,
+    MessageImageAttachment,
 } from './attachment';
 import { EditComposer } from './edit-composer';
+import { AssistantMarkdownText } from './markdown-text';
 import { MessageActionBar } from './message-action-bar';
 import { MessageBranchPicker } from './message-branch-picker';
 import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningRoot,
-  ReasoningText,
-  ReasoningTrigger,
+    Reasoning,
+    ReasoningContent,
+    ReasoningRoot,
+    ReasoningText,
+    ReasoningTrigger,
 } from './reasoning';
 import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from './tool-group';
 
 const UserText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
   return <Text style={[styles.userText, { color: colors.foreground }]}>{text}</Text>;
-};
-
-const AssistantText: TextMessagePartComponent = ({ text }) => {
-  const { colors } = useTheme();
-  return <Text style={[styles.assistantText, { color: colors.foreground }]}>{text}</Text>;
 };
 
 function TypingDot({ delay }: { delay: number }) {
@@ -134,9 +130,12 @@ function AssistantMessage() {
               case 'group-reasoning': {
                 const running = part.status.type === 'running';
                 return (
-                  <ReasoningRoot streaming={running}>
+                  <ReasoningRoot
+                    streaming={running}
+                    defaultOpen={running}
+                  >
                     <ReasoningTrigger active={running} />
-                    <ReasoningContent>
+                    <ReasoningContent aria-busy={running}>
                       <ReasoningText>{children}</ReasoningText>
                     </ReasoningContent>
                   </ReasoningRoot>
@@ -153,7 +152,7 @@ function AssistantMessage() {
                   </ToolGroupRoot>
                 );
               case 'text':
-                return <AssistantText {...part} />;
+                return <AssistantMarkdownText {...part} />;
               case 'reasoning':
                 return <Reasoning {...part} />;
               case 'tool-call':
@@ -221,11 +220,6 @@ const styles = StyleSheet.create({
   userText: {
     fontSize: 16,
     lineHeight: 22,
-    letterSpacing: -0.2,
-  },
-  assistantText: {
-    fontSize: 16,
-    lineHeight: 25,
     letterSpacing: -0.2,
   },
   typing: {

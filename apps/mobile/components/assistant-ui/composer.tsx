@@ -1,5 +1,6 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
-import { View, Platform, ActionSheetIOS, Alert, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { View, Platform, ActionSheetIOS, Alert, StyleSheet, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius, Spacing } from '@/constants/theme';
@@ -168,6 +169,28 @@ function AttachButton() {
   );
 }
 
+function ScanButton() {
+  const { colors } = useTheme();
+  const router = useRouter();
+
+  return (
+    <Pressable
+      accessibilityLabel='Scan QR to pay'
+      hitSlop={8}
+      onPress={() => {
+        haptics.selection();
+        router.push('/scan');
+      }}
+      style={({ pressed }) => [
+        styles.actionButton,
+        { backgroundColor: pressed ? colors.muted : 'transparent' },
+      ]}
+    >
+      <Icon name='qr' size={20} color={colors.mutedForeground} />
+    </Pressable>
+  );
+}
+
 function SendButton() {
   const { colors } = useTheme();
   const canSend = useAuiState((s) => s.composer.canSend);
@@ -232,6 +255,7 @@ export function Composer() {
 
         <View style={styles.actionRow}>
           <AttachButton />
+          <ScanButton />
           <View style={styles.spacer} />
           <AuiIf condition={(s) => !s.thread.isRunning}>
             <SendButton />

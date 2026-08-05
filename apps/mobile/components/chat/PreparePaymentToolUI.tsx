@@ -3,12 +3,11 @@ import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 import {
-  PaymentConfirmationCard,
-  type PaymentConfirmation,
-  type PaymentConfirmationStatus,
-  type PaymentDestinationKind,
-} from '@/components/chat/PaymentConfirmationCard';
+  SendMoneyWizard,
+  type SendMoneySeed,
+} from '@/components/chat/SendMoneyWizard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -17,16 +16,21 @@ import {
 } from '@/lib/agent-follow-up';
 import { findContactByIdentifier, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
+import type { PurposeCode, SettlementMethod } from '@/lib/send-corridors';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
-type PreparePaymentArgs = {
+type PreparePaymentArgs = SendMoneySeed & {
   amount?: number;
   currency?: string;
   recipientName?: string;
-  destinationKind?: PaymentDestinationKind;
+  destinationKind?: 'mobile_money' | 'bank_account' | 'crypto_wallet';
   destinationLabel?: string;
   destinationValue?: string;
   reference?: string;
+  destinationCountry?: string;
+  settlementMethod?: SettlementMethod;
+  purposeCode?: PurposeCode;
+  fundingCurrency?: string;
 };
 
 type PreparePaymentResult = {
@@ -34,20 +38,6 @@ type PreparePaymentResult = {
   preparationId?: string;
   transactionId?: string;
 };
-
-function asPayment(args: PreparePaymentArgs): PaymentConfirmation {
-  return {
-    amount: typeof args.amount === 'number' ? args.amount : 0,
-    currency: args.currency ?? 'GHS',
-    recipientName: args.recipientName ?? 'Recipient',
-    destination: {
-      kind: args.destinationKind ?? 'mobile_money',
-      label: args.destinationLabel ?? 'Destination',
-      value: args.destinationValue ?? '—',
-    },
-    reference: args.reference,
-  };
-}
 
 function PreparingCard() {
   const { colors } = useTheme();
@@ -84,15 +74,15 @@ function resolveStatus(
   return 'pending';
 }
 
-function PreparePaymentConfirm({
-  payment,
+function PreparePaymentFlow({
+  seed,
   resultStatus,
   preparationId,
   resultTransactionId,
   onFinished,
   onCancelled,
 }: {
-  payment: PaymentConfirmation;
+  seed: SendMoneySeed;
   resultStatus: PreparePaymentResult['status'] | undefined;
   preparationId: string;
   resultTransactionId?: string;
@@ -113,21 +103,27 @@ function PreparePaymentConfirm({
   const [txRecordId, setTxRecordId] = useState<string | null>(null);
   const [contactSaved, setContactSaved] = useState(false);
   const [contactSaving, setContactSaving] = useState(false);
+  const [confirmedPayment, setConfirmedPayment] = useState<
+    import('@/components/chat/PaymentConfirmationCard').PaymentConfirmation | null
+  >(null);
   const finishedRef = useRef(false);
   const followedUpRef = useRef(false);
   const onFinishedRef = useRef(onFinished);
   onFinishedRef.current = onFinished;
 
   const status = resolveStatus(resultStatus, localStatus);
+  const payment = confirmedPayment;
 
   useEffect(() => {
-    void findContactByIdentifier(payment.destination.value).then((existing) => {
+    const value = payment?.destination.value;
+    if (!value) return;
+    void findContactByIdentifier(value).then((existing) => {
       if (existing) setContactSaved(true);
     });
-  }, [payment.destination.value]);
+  }, [payment?.destination.value]);
 
   useEffect(() => {
-    if (status !== 'sending') return;
+    if (status !== 'sending' || !payment) return;
 
     let cancelled = false;
     const run = async () => {
@@ -164,8 +160,8 @@ function PreparePaymentConfirm({
 
   return (
     <>
-      <PaymentConfirmationCard
-        payment={payment}
+      <SendMoneyWizard
+        seed={seed}
         status={status}
         loading={busy}
         sendingStep={sendingStep}
@@ -180,13 +176,13 @@ function PreparePaymentConfirm({
             : undefined
         }
         onSaveContact={async () => {
-          if (contactSaved || contactSaving) return;
+          if (!payment || contactSaved || contactSaving) return;
           setContactSaving(true);
           try {
             await saveContact({
               name: payment.recipientName,
-              currency: payment.currency,
-              method: payment.destination.label,
+              currency: payment.currency as never,
+              method: payment.settlementMethodLabel ?? payment.destination.label,
               identifier: payment.destination.value,
             });
             setContactSaved(true);
@@ -199,8 +195,9 @@ function PreparePaymentConfirm({
             setContactSaving(false);
           }
         }}
-        onConfirm={async () => {
+        onConfirm={async (next) => {
           if (status !== 'pending' || busy) return;
+          setConfirmedPayment(next);
           setBusy(true);
           const ok = await requestApproval();
           setBusy(false);
@@ -225,17 +222,22 @@ export const PreparePaymentToolUI = makeAssistantToolUI<
   toolName: 'prepare_payment',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
-    const hasArgs = args != null && (args.amount != null || Boolean(args.destinationValue));
+    const hasArgs =
+      args != null &&
+      (args.amount != null ||
+        Boolean(args.destinationValue) ||
+        Boolean(args.destinationCountry) ||
+        Boolean(args.settlementMethod));
     if (status.type === 'running' && !hasArgs) {
       return <PreparingCard />;
     }
 
-    const payment = asPayment(args ?? {});
+    const seed: SendMoneySeed = { ...(args ?? {}) };
     const preparationId = result?.preparationId ?? `prep_${Date.now()}`;
 
     return (
-      <PreparePaymentConfirm
-        payment={payment}
+      <PreparePaymentFlow
+        seed={seed}
         resultStatus={result?.status}
         preparationId={preparationId}
         resultTransactionId={result?.transactionId}

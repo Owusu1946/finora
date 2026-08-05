@@ -7,7 +7,7 @@ import {
 } from '@assistant-ui/react-native';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,16 +22,47 @@ import { haptics } from '@/lib/haptics';
 
 import { ThreadListItem } from './ThreadListItem';
 
-const NAV: { href: Href; label: string; icon: IconName }[] = [
-  { href: '/wallets', label: 'Wallets', icon: 'wallet' },
-  { href: '/approvals', label: 'Approvals', icon: 'shield' },
-  { href: '/invoices', label: 'Invoices', icon: 'file' },
-  { href: '/recurring', label: 'Recurring', icon: 'reload' },
-  { href: '/activity', label: 'Activity', icon: 'activity' },
-  { href: '/contacts', label: 'Contacts', icon: 'contacts' },
-  { href: '/integrations', label: 'Integrations', icon: 'integrations' },
-  { href: '/settings', label: 'Settings', icon: 'settings' },
+type NavTab = 'money' | 'pay' | 'more';
+
+type NavItem = { href: Href; label: string; icon: IconName };
+
+const NAV_TABS: { id: NavTab; label: string; items: NavItem[] }[] = [
+  {
+    id: 'money',
+    label: 'Money',
+    items: [
+      { href: '/wallets', label: 'Wallets', icon: 'wallet' },
+      { href: '/activity', label: 'Activity', icon: 'activity' },
+    ],
+  },
+  {
+    id: 'pay',
+    label: 'Pay',
+    items: [
+      { href: '/approvals', label: 'Approvals', icon: 'shield' },
+      { href: '/invoices', label: 'Invoices', icon: 'file' },
+      { href: '/recurring', label: 'Recurring', icon: 'reload' },
+    ],
+  },
+  {
+    id: 'more',
+    label: 'More',
+    items: [
+      { href: '/contacts', label: 'Contacts', icon: 'contacts' },
+      { href: '/integrations', label: 'Integrations', icon: 'integrations' },
+      { href: '/settings', label: 'Settings', icon: 'settings' },
+    ],
+  },
 ];
+
+function tabForPathname(pathname: string): NavTab {
+  for (const tab of NAV_TABS) {
+    if (tab.items.some((item) => pathname.startsWith(String(item.href)))) {
+      return tab.id;
+    }
+  }
+  return 'money';
+}
 
 export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const { colors } = useTheme();
@@ -41,11 +72,20 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const router = useRouter();
   const drawerStatus = useDrawerStatus();
   const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [activeTab, setActiveTab] = useState<NavTab>(() => tabForPathname(pathname));
 
   useEffect(() => {
     if (drawerStatus !== 'open') return;
     void countPendingApprovals().then(setPendingApprovals);
+    setActiveTab(tabForPathname(pathname));
   }, [drawerStatus, pathname]);
+
+  const activeGroup = useMemo(
+    () => NAV_TABS.find((t) => t.id === activeTab) ?? NAV_TABS[0],
+    [activeTab],
+  );
+
+  const payHasPending = pendingApprovals > 0;
 
   return (
     <View
@@ -111,7 +151,43 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           },
         ]}
       >
-        {NAV.map((item) => {
+        <View style={[styles.tabBar, { backgroundColor: colors.muted }]}>
+          {NAV_TABS.map((tab) => {
+            const selected = tab.id === activeTab;
+            const showDot = tab.id === 'pay' && payHasPending;
+            return (
+              <Pressable
+                key={tab.id}
+                onPressIn={haptics.selection}
+                onPress={() => setActiveTab(tab.id)}
+                style={[
+                  styles.tab,
+                  selected && {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    {
+                      color: selected ? colors.foreground : colors.mutedForeground,
+                      fontWeight: selected ? '600' : '500',
+                    },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+                {showDot ? (
+                  <View style={[styles.tabDot, { backgroundColor: colors.foreground }]} />
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {activeGroup.items.map((item) => {
           const href = String(item.href);
           const active = pathname.startsWith(href);
           const showBadge = href === '/approvals' && pendingApprovals > 0;
@@ -206,8 +282,36 @@ const styles = StyleSheet.create({
   },
   navSection: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 8,
+    paddingTop: 10,
     paddingHorizontal: 8,
+    gap: 2,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderRadius: Radius.md,
+    padding: 3,
+    marginBottom: 6,
+    gap: 2,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    height: 32,
+    borderRadius: Radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+  },
+  tabLabel: {
+    fontSize: 13,
+    letterSpacing: -0.2,
+  },
+  tabDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   navItem: {
     flexDirection: 'row',

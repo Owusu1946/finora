@@ -6,6 +6,7 @@ import {
   type RecurringDraft,
 } from '@/components/chat/RecurringPaymentCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
+import { CurrencyIcon } from '@/components/ui/currency-icon';
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -231,6 +232,12 @@ export function SchedulePaymentWizard({
                 label={c}
                 selected={currency === c}
                 onPress={() => setCurrency(c)}
+                leading={
+                  <CurrencyIcon
+                    currency={c}
+                    size={18}
+                  />
+                }
               />
             ))}
           </View>

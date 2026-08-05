@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { sendChatPrompt } from '@/lib/send-chat-prompt';
 
 export type BalanceWallet = {
   id: string;
@@ -30,6 +31,12 @@ function maskAmount(symbol: string, amount: number, hidden: boolean) {
   })}`;
 }
 
+function receivePrompt(currency: string) {
+  if (currency === 'USDT' || currency === 'USDC') return `Show my ${currency} address`;
+  if (currency === 'GHS') return 'Receive money via MoMo';
+  return `Receive money in ${currency}`;
+}
+
 export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
   const { colors } = useTheme();
   const aui = useAui();
@@ -41,20 +48,12 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
 
   const promptSend = (currency: string) => {
     haptics.selection();
-    aui.composer.setText(`Send money from my ${currency} wallet`);
-    aui.composer.send();
+    sendChatPrompt(aui, `Send money from my ${currency} wallet`);
   };
 
   const promptReceive = (currency: string) => {
     haptics.selection();
-    aui.composer.setText(
-      currency === 'USDT' || currency === 'USDC'
-        ? `Show my ${currency} address`
-        : currency === 'GHS'
-          ? 'Receive money via MoMo'
-          : `Receive money in ${currency}`,
-    );
-    aui.composer.send();
+    sendChatPrompt(aui, receivePrompt(currency));
   };
 
   return (

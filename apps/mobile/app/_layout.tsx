@@ -1,4 +1,7 @@
-import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react-native';
+import {
+  AssistantRuntimeProvider,
+  useLocalRuntime,
+} from '@assistant-ui/react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -16,8 +19,13 @@ import { getAuthSession } from '@/lib/auth-storage';
 import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
 import { ListReceiveMethodsToolUI } from '@/components/chat/ListReceiveMethodsToolUI';
+import {
+  CreatePaymentRequestToolUI,
+  GeneratePaymentLinkToolUI,
+} from '@/components/chat/CreatePaymentRequestToolUI';
 import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
 import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
 import { ListInvoicesToolUI } from '@/components/chat/ListInvoicesToolUI';
@@ -25,21 +33,18 @@ import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
+import { SettingsProvider } from '@/lib/settings-context';
+import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
 
 export const unstable_settings = {
   anchor: '(app)',
-};
-
-const feedbackAdapter = {
-  submit: async ({ type }: { type: 'positive' | 'negative' }) => {
-    console.log(`[Finora Feedback]: ${type}`);
-  },
 };
 
 function RootNavigator() {
   const { authenticated } = useAuthGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const { isDark, colors } = useTheme();
+  useDrainPendingPaymentLink();
   const base = isDark ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
     ...base,
@@ -59,6 +64,7 @@ function RootNavigator() {
         <Stack.Screen name='onboarding' />
         <Stack.Screen name='auth' />
         <Stack.Screen name='(app)' />
+        <Stack.Screen name='pay/r/[id]' />
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
       {onboardingCompleted && !authenticated ? (
@@ -75,11 +81,7 @@ export default function RootLayout() {
     authenticated: boolean;
     onboardingCompleted: boolean;
   } | null>(null);
-  const runtime = useLocalRuntime(finoraChatAdapter, {
-    adapters: {
-      feedback: feedbackAdapter,
-    },
-  });
+  const runtime = useLocalRuntime(finoraChatAdapter as never);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,22 +106,27 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthGateProvider authenticated={boot.authenticated}>
-        <OnboardingGateProvider completed={boot.onboardingCompleted}>
-          <AssistantRuntimeProvider runtime={runtime}>
-            <PreparePaymentToolUI />
-            <ListReceiveMethodsToolUI />
-            <GetBalancesToolUI />
-            <PrepareConversionToolUI />
-            <ListInvoicesToolUI />
-            <PrepareRecurringToolUI />
-            <SchedulePaymentWizardToolUI />
-            <ResolveSendToolUI />
-            <CreateFinancialPlanToolUI />
-            <RootNavigator />
-          </AssistantRuntimeProvider>
-        </OnboardingGateProvider>
-      </AuthGateProvider>
+      <SettingsProvider>
+        <AuthGateProvider authenticated={boot.authenticated}>
+          <OnboardingGateProvider completed={boot.onboardingCompleted}>
+            <AssistantRuntimeProvider runtime={runtime}>
+              <PreparePaymentToolUI />
+              <FundAccountToolUI />
+              <ListReceiveMethodsToolUI />
+              <CreatePaymentRequestToolUI />
+              <GeneratePaymentLinkToolUI />
+              <GetBalancesToolUI />
+              <PrepareConversionToolUI />
+              <ListInvoicesToolUI />
+              <PrepareRecurringToolUI />
+              <SchedulePaymentWizardToolUI />
+              <ResolveSendToolUI />
+              <CreateFinancialPlanToolUI />
+              <RootNavigator />
+            </AssistantRuntimeProvider>
+          </OnboardingGateProvider>
+        </AuthGateProvider>
+      </SettingsProvider>
     </GestureHandlerRootView>
   );
 }

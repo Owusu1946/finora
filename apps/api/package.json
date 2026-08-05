@@ -8,12 +8,14 @@
     "cf-typegen": "wrangler types",
     "check-types": "tsc --noEmit",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "dev:lan": "node ./scripts/lan-proxy.mjs"
   },
   "dependencies": {
     "@finora/shared": "workspace:*",
     "@finora/wewire": "workspace:*",
-    "hono": "^4.8.5"
+    "hono": "^4.8.5",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250726.0",

@@ -166,7 +166,7 @@ export const TOOL_REGISTRY = [
   // ── Receive ──────────────────────────────────────────────────────────────
   t('list_receive_methods', 'listReceiveMethods', 'receive', ['platform'], 'read', 'VA / MoMo / crypto receive options'),
   t('generate_payment_link', 'generatePaymentLink', 'receive', ['platform', 'mobile'], 'execute', 'Create payment link'),
-  t('create_payment_request', 'createPaymentRequest', 'receive', ['platform'], 'prepare', 'Create payment request'),
+  t('create_payment_request', 'createPaymentRequest', 'receive', ['platform', 'mobile'], 'prepare', 'Create payment request'),
   t('share_receive_details', 'shareReceiveDetails', 'receive', ['mobile'], 'local', 'Share receiving information'),
 
   // ── Transactions ─────────────────────────────────────────────────────────

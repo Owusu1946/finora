@@ -96,6 +96,43 @@ export async function recordSentPayment(input: {
   return tx;
 }
 
+/** Record an inbound funding credit (VA / MoMo / crypto / MoMo pull). */
+export async function recordReceivedFunding(input: {
+  amount: number;
+  currency: string;
+  method: string;
+  counterparty?: string;
+  transactionId: string;
+  reference?: string;
+  source?: Transaction['source'];
+}): Promise<Transaction> {
+  const existing = await getTransaction(input.transactionId);
+  if (existing) return existing;
+
+  const now = new Date().toISOString();
+  const currency = (input.currency as SupportedCurrency) || 'USD';
+  const tx: Transaction = {
+    id: `tx-${Date.now()}`,
+    direction: 'received',
+    status: 'completed',
+    currency,
+    amount: input.amount,
+    symbol: currencySymbol(currency),
+    counterparty: input.counterparty ?? 'Inbound funding',
+    method: input.method,
+    timestamp: now,
+    wewireId: input.transactionId,
+    finoraId: `fin_${Date.now()}`,
+    rail: input.method,
+    reference: input.reference,
+    source: input.source ?? 'chat',
+    timeline: buildTransactionTimeline('completed', now),
+  };
+
+  await upsertTransaction(tx);
+  return tx;
+}
+
 export async function clearTransactions(): Promise<void> {
   memory.delete(KEY);
   try {

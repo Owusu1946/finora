@@ -9,7 +9,16 @@ export const CurrencySchema = z.enum([
   'GHS',
   'NGN',
   'KES',
+  'UGX',
+  'TZS',
+  'ZAR',
+  'XAF',
+  'XOF',
   'CAD',
+  'AED',
+  'CNH',
+  'INR',
+  'JPY',
   'USDT',
   'USDC',
 ]);
@@ -75,6 +84,29 @@ export const PurposeCodeSchema = z.enum([
   'OTHER',
 ]);
 export type PurposeCode = z.infer<typeof PurposeCodeSchema>;
+
+/** WeWire-shaped settlement rails for international / local payouts. */
+export const SettlementMethodSchema = z.enum([
+  'MOMO',
+  'LOCAL_BANK',
+  'ACH',
+  'WIRE',
+  'FPS',
+  'CHAPS',
+  'SEPA',
+  'SWIFT',
+  'CRYPTO',
+]);
+export type SettlementMethod = z.infer<typeof SettlementMethodSchema>;
+
+export const FxQuoteSchema = z.object({
+  from: CurrencySchema,
+  to: CurrencySchema,
+  rate: z.number().positive(),
+  fee: z.number().nonnegative(),
+  convertedAmount: z.number().positive(),
+});
+export type FxQuote = z.infer<typeof FxQuoteSchema>;
 
 export const WalletTransactionTypeSchema = z.enum([
   'PAYOUT',
