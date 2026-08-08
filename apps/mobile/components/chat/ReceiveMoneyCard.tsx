@@ -1,13 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { Icon } from '@/components/ui/icon';
@@ -316,9 +310,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
               { backgroundColor: colors.background, borderColor: colors.border },
             ]}
           >
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-              {active.title}
-            </Text>
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>{active.title}</Text>
             <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
               Hold steady — sender scans this code
             </Text>
@@ -347,9 +339,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   size={16}
                   color={colors.background}
                 />
-                <Text style={[styles.primaryLabel, { color: colors.background }]}>
-                  Share QR
-                </Text>
+                <Text style={[styles.primaryLabel, { color: colors.background }]}>Share QR</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -402,12 +392,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   title: {
-    fontSize: 18,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 19,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
@@ -426,7 +418,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   tabLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
@@ -434,12 +427,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   methodTitle: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   methodSub: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
     lineHeight: 18,
@@ -451,7 +446,8 @@ const styles = StyleSheet.create({
   },
   qrHint: {
     textAlign: 'center',
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     marginTop: -4,
   },
@@ -472,12 +468,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   fieldLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   fieldValue: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -500,7 +498,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -519,7 +518,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   secondaryLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -539,13 +539,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
     textAlign: 'center',
   },
   modalSub: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
     marginTop: -4,

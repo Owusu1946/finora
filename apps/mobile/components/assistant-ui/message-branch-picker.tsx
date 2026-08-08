@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import { BranchPickerPrimitive, useAuiState } from '@assistant-ui/react-native';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
@@ -54,7 +55,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   label: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontVariant: ['tabular-nums'],
   },
 });

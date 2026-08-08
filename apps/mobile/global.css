@@ -5,6 +5,7 @@
 @import 'nativewind/theme';
 
 @theme {
+  --default-font-family: 'DMSans_400Regular';
   --color-canvas: #f7f5f2;
   --color-surface: #ffffff;
   --color-ink: #141414;

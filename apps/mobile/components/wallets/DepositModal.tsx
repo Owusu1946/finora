@@ -1,7 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   ScrollView,
   Pressable,
@@ -277,7 +277,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sheetTitle: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
   },
   sheetBalanceBox: {
@@ -286,11 +287,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sheetBalanceLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
   },
   sheetBalanceValue: {
-    fontSize: 20,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 21,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -301,17 +304,19 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sheetRowLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   sheetRowValue: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
   sheetRowValueMono: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontWeight: '500',
   },
@@ -330,7 +335,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   primaryBtnText: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
   pressed: {

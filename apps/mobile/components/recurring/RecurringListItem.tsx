@@ -1,7 +1,10 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
+
+import type { RecurringPayment } from '@/components/recurring/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
-import type { RecurringPayment } from '@/components/recurring/types';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -18,7 +21,7 @@ const FREQ: Record<RecurringPayment['frequency'], string> = {
   quarterly: 'Quarterly',
 };
 
-export function RecurringListItem({
+export const RecurringListItem = memo(function RecurringListItem({
   item,
   isLast,
   onPause,
@@ -89,14 +92,12 @@ export function RecurringListItem({
             <Text style={[styles.action, { color: '#10B981' }]}>Resume</Text>
           </Pressable>
         ) : (
-          <Text style={[styles.status, { color: STATUS_COLOR[item.status] }]}>
-            {item.status}
-          </Text>
+          <Text style={[styles.status, { color: STATUS_COLOR[item.status] }]}>{item.status}</Text>
         )}
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
@@ -118,26 +119,31 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   detail: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
   },
   right: {
     alignItems: 'flex-end',
     gap: 4,
   },
   amount: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   action: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
   },
   status: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
   },

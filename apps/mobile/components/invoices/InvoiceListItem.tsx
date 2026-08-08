@@ -1,7 +1,10 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
+
+import type { Invoice } from '@/components/invoices/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
-import type { Invoice } from '@/components/invoices/types';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -17,7 +20,7 @@ function formatDue(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function InvoiceListItem({
+export const InvoiceListItem = memo(function InvoiceListItem({
   invoice,
   isLast,
   onPress,
@@ -74,7 +77,7 @@ export function InvoiceListItem({
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
@@ -96,22 +99,26 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   detail: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
   },
   right: {
     alignItems: 'flex-end',
     gap: 2,
   },
   amount: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   status: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
   },

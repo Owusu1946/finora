@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+
+import type { ApprovalFilter, ApprovalRequest } from '@/components/approvals/types';
 
 import { ApprovalListItem } from '@/components/approvals/ApprovalListItem';
-import type { ApprovalFilter, ApprovalRequest } from '@/components/approvals/types';
 import { useTheme } from '@/hooks/use-theme';
 import { listApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
@@ -41,13 +43,28 @@ export default function ApprovalsScreen() {
   }, [filter, items]);
 
   const pendingCount = items.filter((a) => a.status === 'pending').length;
+  const handleApprovalPress = useCallback(
+    (approval: ApprovalRequest) => {
+      router.push(`/approval/${approval.id}` as Href);
+    },
+    [router],
+  );
+  const renderApproval = useCallback(
+    ({ item, index }: { item: ApprovalRequest; index: number }) => (
+      <ApprovalListItem
+        approval={item}
+        isLast={index === filtered.length - 1}
+        onPress={handleApprovalPress}
+      />
+    ),
+    [filtered.length, handleApprovalPress],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>Approvals</Text>
       <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Agent-prepared payments and plans waiting for you. Confirm with the same passcode as
-        chat.
+        Agent-prepared payments and plans waiting for you. Confirm with the same passcode as chat.
         {pendingCount > 0 ? ` ${pendingCount} pending.` : ''}
       </Text>
 
@@ -85,6 +102,10 @@ export default function ApprovalsScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -94,15 +115,7 @@ export default function ApprovalsScreen() {
               : 'Nothing in this filter yet.'}
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <ApprovalListItem
-            approval={item}
-            isLast={index === filtered.length - 1}
-            onPress={(approval) => {
-              router.push(`/approval/${approval.id}` as Href);
-            }}
-          />
-        )}
+        renderItem={renderApproval}
       />
     </View>
   );
@@ -115,13 +128,15 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
-    fontSize: 24,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     marginBottom: 14,
@@ -138,7 +153,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   chipLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
   list: {
@@ -147,7 +163,8 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
   },

@@ -1,27 +1,17 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { MockQrCode } from '@/components/chat/MockQrCode';
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import {
-  createPaymentAppLink,
-  createPaymentHttpsLink,
-} from '@/lib/open-payment-link';
+import { createPaymentAppLink, createPaymentHttpsLink } from '@/lib/open-payment-link';
 import { registerPaymentRequest } from '@/lib/payment-request-registry';
 
 export type PaymentRequestSeed = {
@@ -54,11 +44,7 @@ function initialStep(seed: PaymentRequestSeed): Step {
   return 'review';
 }
 
-function buildMockRequest(
-  amount: number,
-  currency: string,
-  memo?: string,
-): PaymentRequestResult {
+function buildMockRequest(amount: number, currency: string, memo?: string): PaymentRequestResult {
   const preparationId = `prep_payreq_${Date.now().toString(36)}`;
   const link = createPaymentHttpsLink(preparationId);
   // QR + Share open the app into chat (Expo Go / standalone deep link).
@@ -130,12 +116,7 @@ export function PaymentRequestWizard({
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <WizardStepHeader
         step={stepIndex}
         total={STEPS.length}
@@ -263,7 +244,9 @@ export function PaymentRequestWizard({
             {formatPaymentAmount(amount, currency)}
           </Text>
           {memo.trim() ? (
-            <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>“{memo.trim()}”</Text>
+            <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>
+              “{memo.trim()}”
+            </Text>
           ) : (
             <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>No note</Text>
           )}
@@ -358,12 +341,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <View style={styles.header}>
         <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
           <Icon
@@ -542,16 +520,19 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   title: {
-    fontSize: 20,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 21,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   memo: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     fontStyle: 'italic',
     marginTop: -4,
@@ -569,11 +550,13 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
     paddingHorizontal: 14,
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '500',
   },
   skip: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
     paddingVertical: 4,
@@ -586,16 +569,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reviewAmount: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   reviewMemo: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
   },
   reviewHint: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   nav: {
@@ -618,11 +604,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   navLabelPrimary: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   qrWrap: {
@@ -632,7 +620,8 @@ const styles = StyleSheet.create({
   },
   qrHint: {
     textAlign: 'center',
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     marginTop: -4,
   },
@@ -650,11 +639,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   fieldLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
   },
   fieldValue: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -677,7 +668,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   secondaryBtnFull: {
@@ -690,7 +682,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   secondaryLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
   modalBackdrop: {
@@ -709,7 +702,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 18,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 19,
     fontWeight: '600',
   },
   modalQr: {

@@ -1,13 +1,12 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import {
-  RecurringPaymentCard,
-  type RecurringDraft,
-} from '@/components/chat/RecurringPaymentCard';
+import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
+
+import { RecurringPaymentCard, type RecurringDraft } from '@/components/chat/RecurringPaymentCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
-import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -125,7 +124,7 @@ export function SchedulePaymentWizard({
         label,
         value: destValue.trim() || '—',
       },
-      reference: purpose ? `${purpose} · auto-pay` : seed.reference ?? 'Scheduled payment',
+      reference: purpose ? `${purpose} · auto-pay` : (seed.reference ?? 'Scheduled payment'),
       nextRunAt: computeNextRun(frequency, dayOfMonth, timeOfDay),
     };
   }, [
@@ -176,12 +175,7 @@ export function SchedulePaymentWizard({
   }
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <WizardStepHeader
         step={stepIndex}
         total={STEPS.length}
@@ -367,7 +361,7 @@ export function SchedulePaymentWizard({
               />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.railTitle, { color: colors.foreground }]}>{opt.label}</Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>{opt.hint}</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{opt.hint}</Text>
               </View>
             </Pressable>
           ))}
@@ -602,15 +596,18 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
   },
   hint: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   sectionLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
@@ -624,7 +621,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   railTitle: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   preview: {
@@ -637,7 +635,8 @@ const styles = StyleSheet.create({
   },
   previewText: {
     flex: 1,
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },

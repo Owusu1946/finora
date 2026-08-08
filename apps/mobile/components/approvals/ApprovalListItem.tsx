@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
@@ -53,7 +55,11 @@ function detailFor(approval: ApprovalRequest): string {
   return `${approval.agent} · ${dest} · ${relativeTime(approval.createdAt)}`;
 }
 
-export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItemProps) {
+export const ApprovalListItem = memo(function ApprovalListItem({
+  approval,
+  isLast,
+  onPress,
+}: ApprovalListItemProps) {
   const { colors } = useTheme();
   const { status } = approval;
   const isPlan = approval.kind === 'plan';
@@ -109,7 +115,7 @@ export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItem
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
@@ -131,12 +137,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   detail: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
   right: {
@@ -154,7 +162,8 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
   },

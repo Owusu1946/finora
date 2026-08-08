@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';
@@ -67,19 +68,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   brand: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   title: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 23,

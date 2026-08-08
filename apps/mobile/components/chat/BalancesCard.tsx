@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -196,17 +197,20 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   total: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   totalHint: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   eyeBtn: {
@@ -235,12 +239,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   currency: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   name: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   rowAmounts: {
@@ -248,12 +254,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   balance: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   usd: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   actions: {
@@ -274,7 +282,8 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   actionLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },

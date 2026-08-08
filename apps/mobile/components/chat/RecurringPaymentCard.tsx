@@ -1,8 +1,11 @@
+import { AppText as Text } from '@/components/ui/text';
+import { useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
-import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -10,7 +13,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { saveRecurring } from '@/lib/recurring-storage';
-import { useAui } from '@assistant-ui/react-native';
 
 export type RecurringDraft = {
   recipientName: string;
@@ -62,12 +64,7 @@ export function RecurringPaymentCard({
 
   return (
     <>
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <View style={styles.header}>
           <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             <Icon
@@ -234,11 +231,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   amount: {
-    fontSize: 24,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.5,
   },
@@ -252,11 +251,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rowLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   rowValue: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
   },
   actions: {
@@ -275,7 +276,8 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {},
   btnLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

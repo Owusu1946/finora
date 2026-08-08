@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 import {
@@ -8,7 +9,7 @@ import {
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';
@@ -95,8 +96,26 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
       ]}
     >
       <View style={styles.brandRow}>
-        <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
-        <AccountBadge variant='text' />
+        <View style={styles.brandCopy}>
+          <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
+          <AccountBadge variant='text' />
+        </View>
+        <Pressable
+          accessibilityLabel='Close navigation menu'
+          hitSlop={10}
+          onPressIn={haptics.selection}
+          onPress={() => navigation.closeDrawer()}
+          style={({ pressed }) => [
+            styles.closeButton,
+            { backgroundColor: pressed ? colors.muted : 'transparent' },
+          ]}
+        >
+          <Icon
+            name='remove'
+            size={20}
+            color={colors.foreground}
+          />
+        </Pressable>
       </View>
 
       <ThreadListPrimitive.Root style={styles.root}>
@@ -241,11 +260,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: 20,
     marginBottom: 12,
   },
+  closeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.pill,
+  },
+  brandCopy: {
+    gap: 1,
+  },
   brand: {
-    fontSize: 20,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 21,
     fontWeight: '700',
     letterSpacing: -0.4,
   },
@@ -263,12 +297,14 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   newLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   sectionLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -305,7 +341,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   tabLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     letterSpacing: -0.2,
   },
   tabDot: {
@@ -322,7 +359,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   navLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     letterSpacing: -0.2,
   },
   badge: {
@@ -334,7 +372,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   badgeText: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '700',
   },
 });

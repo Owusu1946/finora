@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
+import { StyleSheet, View, Pressable, Modal } from 'react-native';
 
 import { CurrencyIcon, SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -106,7 +107,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sheetTitle: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
   },
   addOptionRow: {
@@ -118,7 +120,8 @@ const styles = StyleSheet.create({
   },
   addOptionText: {
     flex: 1,
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
 });

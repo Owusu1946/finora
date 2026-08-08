@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardStepHeader } from '@/components/chat/WizardChrome';
@@ -39,10 +40,7 @@ export function FxQuoteStep({
         subtitle='Indicative rate · finalised at settlement'
       />
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.background, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.background, borderColor: colors.border }]}
       >
         <Row
           label='You send'
@@ -86,9 +84,7 @@ export function FxQuoteStep({
             },
           ]}
         >
-          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>
-            Review payment
-          </Text>
+          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>Review payment</Text>
         </Pressable>
       </View>
     </View>
@@ -115,6 +111,7 @@ function Row({
           {
             color: colors.foreground,
             fontWeight: emphasize ? '700' : '600',
+            fontFamily: 'DMSans_400Regular',
             fontSize: emphasize ? 17 : 14,
           },
         ]}
@@ -139,8 +136,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  rowLabel: { fontSize: 13, fontWeight: '500' },
-  rowValue: { fontSize: 14, letterSpacing: -0.2 },
+  rowLabel: { fontSize: 14, fontWeight: '500' },
+  rowValue: { fontSize: 15, letterSpacing: -0.2 },
   nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
   navBtn: {
     flex: 1,
@@ -157,6 +154,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLabel: { fontSize: 15, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 15, fontWeight: '600' },
+  navLabel: { fontSize: 16, fontWeight: '600' },
+  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
 });

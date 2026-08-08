@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { Image } from 'expo-image';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import CountryFlag from 'react-native-country-flag';
 
 export type SupportedCurrency =

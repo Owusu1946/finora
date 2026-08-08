@@ -1,11 +1,13 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { RecurringFrequency } from '@/components/recurring/types';
+
 import {
   SchedulePaymentWizard,
   type ScheduleWizardSeed,
 } from '@/components/chat/SchedulePaymentWizard';
-import type { RecurringFrequency } from '@/components/recurring/types';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ScheduleWizardArgs = ScheduleWizardSeed & {
@@ -58,7 +60,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

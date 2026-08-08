@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -5,7 +6,6 @@ import {
   Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -14,6 +14,7 @@ import type {
   FinancialPlanItemKind,
   FinancialPlanPayload,
 } from '@/components/approvals/types';
+
 import {
   formatPaymentAmount,
   type PaymentConfirmationStatus,
@@ -232,9 +233,7 @@ export function FinancialPlanConfirmationCard({
                 { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
               ]}
             >
-              <Text style={[styles.linkLabel, { color: colors.foreground }]}>
-                View in activity
-              </Text>
+              <Text style={[styles.linkLabel, { color: colors.foreground }]}>View in activity</Text>
             </Pressable>
           ) : null}
         </View>
@@ -284,12 +283,7 @@ export function FinancialPlanConfirmationCard({
       ) : null}
 
       {cancelled || failed ? (
-        <View
-          style={[
-            styles.statusPill,
-            { backgroundColor: colors.destructiveSurface },
-          ]}
-        >
+        <View style={[styles.statusPill, { backgroundColor: colors.destructiveSurface }]}>
           <Icon
             name='remove'
             size={14}
@@ -374,23 +368,27 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   eyebrow: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   intent: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   amount: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '700',
     letterSpacing: -0.8,
     marginTop: 4,
   },
   meta: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   divider: {
@@ -411,7 +409,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   kindText: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
@@ -420,12 +419,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   itemLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   itemAmount: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -446,7 +447,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     letterSpacing: -0.1,
   },
   actions: {
@@ -465,7 +467,8 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {},
   btnLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -478,14 +481,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusText: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
   sentBlock: {
     gap: 10,
   },
   txId: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
@@ -497,7 +502,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   linkLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

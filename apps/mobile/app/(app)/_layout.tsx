@@ -1,8 +1,10 @@
 import { useAui } from '@assistant-ui/react-native';
+import { DrawerToggleButton, useDrawerStatus } from '@react-navigation/drawer';
 import { DrawerActions } from '@react-navigation/native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { Pressable } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
@@ -24,7 +26,14 @@ function NewChatButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={{ marginRight: 8 }}
+      style={({ pressed }) => [
+        styles.headerAction,
+        {
+          backgroundColor: colors.muted,
+          borderColor: colors.border,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
     >
       <Icon
         name='compose'
@@ -47,7 +56,14 @@ function ScanHeaderButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      style={{ marginRight: 12 }}
+      style={({ pressed }) => [
+        styles.headerAction,
+        {
+          backgroundColor: colors.muted,
+          borderColor: colors.border,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
     >
       <Icon
         name='qr'
@@ -55,6 +71,25 @@ function ScanHeaderButton() {
         color={colors.foreground}
       />
     </Pressable>
+  );
+}
+
+function DrawerTrigger() {
+  const { colors } = useTheme();
+  const drawerStatus = useDrawerStatus();
+
+  if (drawerStatus === 'open') return null;
+
+  return (
+    <View
+      style={[
+        styles.headerAction,
+        styles.drawerAction,
+        { backgroundColor: colors.muted, borderColor: colors.border },
+      ]}
+    >
+      <DrawerToggleButton tintColor={colors.foreground} />
+    </View>
   );
 }
 
@@ -104,30 +139,50 @@ function screenOptions(title: string) {
 
 export default function AppLayout() {
   const { colors } = useTheme();
+  const pathname = usePathname();
+  const previousPathname = useRef(pathname);
+
+  useEffect(() => {
+    if (previousPathname.current !== pathname) Keyboard.dismiss();
+    previousPathname.current = pathname;
+  }, [pathname]);
 
   return (
     <Drawer
       drawerContent={(props) => <ThreadListDrawer {...props} />}
       screenOptions={{
+        headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
+        headerLeftContainerStyle: { paddingLeft: 16 },
+        headerRightContainerStyle: { gap: 10, paddingRight: 16 },
         headerShadowVisible: false,
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
         headerTitleAlign: 'center',
-        drawerType: 'front',
+        drawerType: 'back',
+        overlayColor: 'rgba(0, 0, 0, 0.26)',
         swipeEnabled: true,
         drawerStyle: {
-          width: 300,
+          width: '78%',
           backgroundColor: colors.background,
+          borderRightColor: colors.border,
+          borderRightWidth: StyleSheet.hairlineWidth,
         },
         sceneStyle: {
           backgroundColor: colors.background,
+          boxShadow: '-5px 0px 16px rgba(0, 0, 0, 0.14)',
         },
       }}
     >
       <Drawer.Screen
         name='index'
-        options={screenOptions('Chat')}
+        options={{
+          title: '',
+          headerTitle: () => null,
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent' },
+          headerLeft: () => <DrawerTrigger />,
+        }}
       />
       <Drawer.Screen
         name='wallets'
@@ -195,3 +250,17 @@ export default function AppLayout() {
     </Drawer>
   );
 }
+
+const styles = StyleSheet.create({
+  headerAction: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  drawerAction: {
+    overflow: 'hidden',
+  },
+});

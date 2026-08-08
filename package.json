@@ -21,12 +21,12 @@
     "@finora/config": "workspace:*",
     "@types/node": "^22.20.1",
     "oxfmt": "^0.61.0",
-    "oxlint": "^1.76.0",
-    "turbo": "^2.10.7",
+    "oxlint": "^1.77.0",
+    "turbo": "^2.10.8",
     "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@11.18.0"
+  "packageManager": "pnpm@11.20.0"
 }

@@ -1,5 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -35,12 +37,7 @@ export function WizardChip({
       ]}
     >
       {leading ? <View style={styles.leading}>{leading}</View> : null}
-      <Text
-        style={[
-          styles.label,
-          { color: selected ? colors.background : colors.foreground },
-        ]}
-      >
+      <Text style={[styles.label, { color: selected ? colors.background : colors.foreground }]}>
         {label}
       </Text>
     </Pressable>
@@ -100,7 +97,8 @@ const styles = StyleSheet.create({
     marginLeft: -2,
   },
   label: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
   header: {
@@ -108,7 +106,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   progress: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
@@ -123,13 +122,15 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   title: {
-    fontSize: 18,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 19,
     fontWeight: '600',
     letterSpacing: -0.3,
     marginTop: 4,
   },
   subtitle: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },

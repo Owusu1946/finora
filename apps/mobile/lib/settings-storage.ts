@@ -53,6 +53,7 @@ export type FinoraSettings = {
   email: string;
   theme: ThemePreference;
   language: AppLanguage;
+  largerText: boolean;
   biometricsEnabled: boolean;
   hapticsEnabled: boolean;
   notifications: NotificationPrefs;
@@ -64,6 +65,7 @@ export const DEFAULT_SETTINGS: FinoraSettings = {
   email: 'kenneth@finora.app',
   theme: 'system',
   language: 'en',
+  largerText: false,
   biometricsEnabled: false,
   hapticsEnabled: true,
   notifications: {
@@ -118,7 +120,7 @@ export async function getSettings(): Promise<FinoraSettings> {
       ...parsed,
       notifications: {
         ...DEFAULT_SETTINGS.notifications,
-        ...(parsed.notifications ?? {}),
+        ...parsed.notifications,
       },
       trustedDevices: parsed.trustedDevices?.length
         ? parsed.trustedDevices
@@ -138,7 +140,7 @@ export async function saveSettings(patch: Partial<FinoraSettings>): Promise<Fino
     ...patch,
     notifications: {
       ...current.notifications,
-      ...(patch.notifications ?? {}),
+      ...patch.notifications,
     },
     trustedDevices: patch.trustedDevices ?? current.trustedDevices,
   };

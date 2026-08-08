@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -133,14 +134,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   accountLabelText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   eyeBtn: {
     padding: 4,
   },
   balanceDisplay: {
-    fontSize: 34,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 35,
     fontWeight: '700',
     letterSpacing: -1,
     marginVertical: 4,
@@ -162,7 +165,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   actionBtnText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
   pressed: {

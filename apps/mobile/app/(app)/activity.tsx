@@ -1,10 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+
+import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
 import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
 import { ActivityListItem } from '@/components/activity/ActivityListItem';
-import type { ActivityFilter, Transaction } from '@/components/activity/types';
 import { useTheme } from '@/hooks/use-theme';
 import { listTransactions } from '@/lib/transactions-storage';
 
@@ -33,6 +35,23 @@ export default function ActivityScreen() {
     return txs.filter((t) => t.direction === filter);
   }, [filter, txs]);
 
+  const handleTransactionPress = useCallback(
+    (tx: Transaction) => {
+      router.push(`/transaction/${tx.id}` as Href);
+    },
+    [router],
+  );
+  const renderTransaction = useCallback(
+    ({ item, index }: { item: Transaction; index: number }) => (
+      <ActivityListItem
+        tx={item}
+        isLast={index === filtered.length - 1}
+        onPress={handleTransactionPress}
+      />
+    ),
+    [filtered.length, handleTransactionPress],
+  );
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
@@ -49,6 +68,10 @@ export default function ActivityScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -56,15 +79,7 @@ export default function ActivityScreen() {
             No transactions yet.
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <ActivityListItem
-            tx={item}
-            isLast={index === filtered.length - 1}
-            onPress={(tx) => {
-              router.push(`/transaction/${tx.id}` as Href);
-            }}
-          />
-        )}
+        renderItem={renderTransaction}
       />
     </View>
   );
@@ -77,13 +92,15 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
-    fontSize: 24,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     marginBottom: 14,
@@ -95,7 +112,8 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
   },

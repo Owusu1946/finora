@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -208,7 +209,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   toastText: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
   },
   scrollContent: {

@@ -1,16 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import type { ApprovalRequest } from '@/components/approvals/types';
 
 import { FinancialPlanConfirmationCard } from '@/components/approvals/FinancialPlanConfirmationCard';
-import type { ApprovalRequest } from '@/components/approvals/types';
 import {
   PaymentConfirmationCard,
   type PaymentConfirmationStatus,
@@ -174,9 +169,7 @@ export default function ApprovalDetailScreen() {
     await resolveApproval(approval.id, 'rejected');
     setLocalStatus('cancelled');
     setApproval((prev) =>
-      prev
-        ? { ...prev, status: 'rejected', resolvedAt: new Date().toISOString() }
-        : prev,
+      prev ? { ...prev, status: 'rejected', resolvedAt: new Date().toISOString() } : prev,
     );
     setBusy(false);
     haptics.selection();
@@ -192,9 +185,7 @@ export default function ApprovalDetailScreen() {
           <Text style={[styles.bannerEyebrow, { color: colors.mutedForeground }]}>
             {isPlan ? 'Agent plan' : 'Agent request'}
           </Text>
-          <Text style={[styles.bannerTitle, { color: colors.foreground }]}>
-            {approval.agent}
-          </Text>
+          <Text style={[styles.bannerTitle, { color: colors.foreground }]}>{approval.agent}</Text>
           <Text style={[styles.bannerMeta, { color: colors.mutedForeground }]}>
             Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
           </Text>
@@ -251,9 +242,7 @@ export default function ApprovalDetailScreen() {
               { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
             ]}
           >
-            <Text style={[styles.linkLabel, { color: colors.foreground }]}>
-              Back to inbox
-            </Text>
+            <Text style={[styles.linkLabel, { color: colors.foreground }]}>Back to inbox</Text>
           </Pressable>
         ) : null}
       </ScrollView>
@@ -283,17 +272,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   bannerEyebrow: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   bannerTitle: {
-    fontSize: 18,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 19,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   bannerMeta: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   linkBtn: {
@@ -304,7 +296,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   linkLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

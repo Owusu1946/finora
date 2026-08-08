@@ -1,8 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import type { AccountType } from '@/lib/account';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { AccountType } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 
 type AccountPickerProps = {
@@ -93,12 +95,14 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   label: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   description: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     lineHeight: 20,
     letterSpacing: -0.1,
     paddingLeft: 14,

@@ -1,7 +1,8 @@
+import { AppText as Text } from '@/components/ui/text';
 import type { ReasoningMessagePartComponent } from '@assistant-ui/react-native';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -75,8 +76,7 @@ export function ReasoningTrigger({
 }) {
   const { colors } = useTheme();
   const { open, onToggle } = useReasoningContext();
-  const suffix =
-    typeof duration === 'number' && duration > 0 ? ` (${Math.round(duration)}s)` : '';
+  const suffix = typeof duration === 'number' && duration > 0 ? ` (${Math.round(duration)}s)` : '';
 
   return (
     <Pressable
@@ -164,7 +164,8 @@ const styles = StyleSheet.create({
   triggerLabel: {
     flex: 1,
     flexShrink: 1,
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -178,7 +179,8 @@ const styles = StyleSheet.create({
     maxHeight: 200,
   },
   reasoningText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     lineHeight: 19,
     letterSpacing: -0.1,
     marginBottom: 4,

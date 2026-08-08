@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { StyleSheet, View } from 'react-native';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -74,7 +75,8 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   title: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -93,13 +95,15 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   pillLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.1,
   },
   text: {
     marginTop: 2,
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
 });

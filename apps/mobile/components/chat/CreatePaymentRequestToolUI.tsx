@@ -7,6 +7,7 @@ import {
   type PaymentRequestResult,
   type PaymentRequestSeed,
 } from '@/components/chat/PaymentRequestCard';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type CreatePaymentRequestArgs = PaymentRequestSeed;
@@ -35,10 +36,7 @@ function PaymentRequestToolRender({
   if (status.type === 'running' && args == null) {
     return (
       <View
-        style={[
-          styles.preparing,
-          { borderColor: colors.border, backgroundColor: colors.composer },
-        ]}
+        style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
       >
         <ActivityIndicator color={colors.mutedForeground} />
       </View>
@@ -82,7 +80,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

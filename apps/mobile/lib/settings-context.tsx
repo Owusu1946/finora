@@ -27,6 +27,7 @@ type SettingsContextValue = {
   update: (patch: Partial<FinoraSettings>) => Promise<void>;
   setTheme: (theme: ThemePreference) => Promise<void>;
   setLanguage: (language: AppLanguage) => Promise<void>;
+  setLargerText: (largerText: boolean) => Promise<void>;
   isDark: boolean;
   colors: Palette;
 };
@@ -70,6 +71,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [update],
   );
 
+  const setLargerText = useCallback(
+    async (largerText: boolean) => {
+      await update({ largerText });
+    },
+    [update],
+  );
+
   const isDark = useMemo(() => {
     if (settings.theme === 'dark') return true;
     if (settings.theme === 'light') return false;
@@ -86,10 +94,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       update,
       setTheme,
       setLanguage,
+      setLargerText,
       isDark,
       colors,
     }),
-    [settings, loading, refresh, update, setTheme, setLanguage, isDark, colors],
+    [settings, loading, refresh, update, setTheme, setLanguage, setLargerText, isDark, colors],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

@@ -1,8 +1,10 @@
+import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Transaction } from '@/components/activity/types';
+
 import { TransactionTimeline } from '@/components/activity/TransactionTimeline';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -74,16 +76,9 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
             ? `${formatAmount(tx.symbol, tx.amount)} → ${tx.toCurrency}`
             : tx.counterparty}
         </Text>
-        <View
-          style={[
-            styles.statusPill,
-            { backgroundColor: colors.muted },
-          ]}
-        >
+        <View style={[styles.statusPill, { backgroundColor: colors.muted }]}>
           <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[tx.status] }]} />
-          <Text style={[styles.statusText, { color: STATUS_COLOR[tx.status] }]}>
-            {tx.status}
-          </Text>
+          <Text style={[styles.statusText, { color: STATUS_COLOR[tx.status] }]}>{tx.status}</Text>
         </View>
       </View>
 
@@ -135,7 +130,10 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
         {tx.fee != null ? (
           <DetailRow
             label='Fee'
-            value={formatAmount(tx.feeCurrency === tx.currency ? tx.symbol : (tx.feeCurrency ?? ''), tx.fee)}
+            value={formatAmount(
+              tx.feeCurrency === tx.currency ? tx.symbol : (tx.feeCurrency ?? ''),
+              tx.fee,
+            )}
             colors={colors}
           />
         ) : null}
@@ -185,11 +183,7 @@ function DetailRow({
       >
         <Text
           selectable
-          style={[
-            styles.detailValue,
-            mono && styles.mono,
-            { color: colors.foreground },
-          ]}
+          style={[styles.detailValue, mono && styles.mono, { color: colors.foreground }]}
           numberOfLines={2}
         >
           {value}
@@ -219,12 +213,14 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   amount: {
-    fontSize: 32,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 33,
     fontWeight: '600',
     letterSpacing: -0.8,
   },
   counterparty: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -243,7 +239,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   statusText: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'capitalize',
   },
@@ -254,7 +251,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
     marginBottom: 2,
@@ -265,7 +263,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   detailLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   detailValueWrap: {
@@ -275,7 +274,8 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     flex: 1,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -290,7 +290,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   toastText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

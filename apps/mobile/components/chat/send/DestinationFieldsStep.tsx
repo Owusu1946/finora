@@ -1,9 +1,11 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import type { CorridorFieldKey, SettlementMethod } from '@/lib/send-corridors';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { CorridorFieldKey, SettlementMethod } from '@/lib/send-corridors';
 import { SETTLEMENT_METHOD_LABELS } from '@/lib/send-corridors';
 
 export type DestinationFields = {
@@ -110,7 +112,10 @@ export function DestinationFieldsStep({
       {fields.map((key) => {
         if (key === 'network') {
           return (
-            <View key={key} style={styles.fieldBlock}>
+            <View
+              key={key}
+              style={styles.fieldBlock}
+            >
               <Text style={[styles.label, { color: colors.mutedForeground }]}>Network</Text>
               <View style={styles.chips}>
                 {MOMO_NETWORKS.map((n) => (
@@ -127,7 +132,10 @@ export function DestinationFieldsStep({
         }
         if (key === 'blockchain') {
           return (
-            <View key={key} style={styles.fieldBlock}>
+            <View
+              key={key}
+              style={styles.fieldBlock}
+            >
               <Text style={[styles.label, { color: colors.mutedForeground }]}>Chain</Text>
               <View style={styles.chips}>
                 {CHAINS.map((n) => (
@@ -144,7 +152,10 @@ export function DestinationFieldsStep({
         }
         if (key === 'accountCategory') {
           return (
-            <View key={key} style={styles.fieldBlock}>
+            <View
+              key={key}
+              style={styles.fieldBlock}
+            >
               <Text style={[styles.label, { color: colors.mutedForeground }]}>Account type</Text>
               <View style={styles.chips}>
                 {(['CHECKING', 'SAVINGS'] as const).map((n) => (
@@ -163,14 +174,17 @@ export function DestinationFieldsStep({
         const meta = FIELD_META[key];
         const value = (values[key as keyof DestinationFields] as string | undefined) ?? '';
         return (
-          <View key={key} style={styles.fieldBlock}>
+          <View
+            key={key}
+            style={styles.fieldBlock}
+          >
             <Text style={[styles.label, { color: colors.mutedForeground }]}>{meta.label}</Text>
             <TextInput
               value={value}
               onChangeText={(t) => set(key as keyof DestinationFields, t)}
               placeholder={meta.placeholder}
               placeholderTextColor={colors.mutedForeground}
-              autoCapitalize={meta.autoCap === 'none' ? 'none' : meta.autoCap ?? 'sentences'}
+              autoCapitalize={meta.autoCap === 'none' ? 'none' : (meta.autoCap ?? 'sentences')}
               style={[
                 styles.input,
                 {
@@ -201,12 +215,7 @@ export function DestinationFieldsStep({
             styles.navBtnPrimary,
             {
               backgroundColor: colors.foreground,
-              opacity:
-                !complete || !(values.recipientName ?? '').trim()
-                  ? 0.4
-                  : pressed
-                    ? 0.85
-                    : 1,
+              opacity: !complete || !(values.recipientName ?? '').trim() ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
@@ -222,7 +231,8 @@ const styles = StyleSheet.create({
   fieldBlock: { gap: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   label: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
@@ -232,7 +242,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
   },
   nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
@@ -251,6 +262,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLabel: { fontSize: 15, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 15, fontWeight: '600' },
+  navLabel: { fontSize: 16, fontWeight: '600' },
+  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
 });

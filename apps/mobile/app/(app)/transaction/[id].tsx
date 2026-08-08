@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+
+import type { Transaction } from '@/components/activity/types';
 
 import { TransactionDetail } from '@/components/activity/TransactionDetail';
-import type { Transaction } from '@/components/activity/types';
 import { useTheme } from '@/hooks/use-theme';
 import { getTransaction } from '@/lib/transactions-storage';
 
@@ -59,7 +61,8 @@ const styles = StyleSheet.create({
   missing: {
     marginTop: 40,
     textAlign: 'center',
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
   },
 });

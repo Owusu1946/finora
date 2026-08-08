@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { useTheme } from '@/hooks/use-theme';
@@ -83,11 +84,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   walletCode: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   walletBadgeText: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
   walletListRight: {
@@ -95,11 +98,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   walletAmount: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   walletUsdEst: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
 });

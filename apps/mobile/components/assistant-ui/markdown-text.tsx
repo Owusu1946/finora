@@ -1,4 +1,5 @@
 import type { TextMessagePartComponent } from '@assistant-ui/react-native';
+
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useMemo } from 'react';
@@ -6,12 +7,11 @@ import { StyleSheet } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
 import type { Palette } from '@/constants/theme';
+
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  createPaymentAppLink,
-  preparationIdFromUrl,
-} from '@/lib/open-payment-link';
+import { createPaymentAppLink, preparationIdFromUrl } from '@/lib/open-payment-link';
+import { useSettings } from '@/lib/settings-context';
 
 function openLink(url: string) {
   const prep = preparationIdFromUrl(url);
@@ -33,11 +33,13 @@ function onLinkPress(url: string) {
   return false;
 }
 
-function markdownStyles(colors: Palette) {
+function markdownStyles(colors: Palette, largerText: boolean) {
+  const offset = largerText ? 2 : 0;
   const body = {
     color: colors.foreground,
-    fontSize: 16,
-    lineHeight: 25,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17 + offset,
+    lineHeight: 25 + offset,
     letterSpacing: -0.2,
   } as const;
 
@@ -51,24 +53,27 @@ function markdownStyles(colors: Palette) {
     },
     heading1: {
       ...body,
-      fontSize: 22,
-      lineHeight: 28,
+      fontFamily: 'DMSans_400Regular',
+      fontSize: 23 + offset,
+      lineHeight: 28 + offset,
       fontWeight: '700',
       marginBottom: 8,
       marginTop: 4,
     },
     heading2: {
       ...body,
-      fontSize: 19,
-      lineHeight: 26,
+      fontFamily: 'DMSans_400Regular',
+      fontSize: 20 + offset,
+      lineHeight: 26 + offset,
       fontWeight: '700',
       marginBottom: 6,
       marginTop: 4,
     },
     heading3: {
       ...body,
-      fontSize: 17,
-      lineHeight: 24,
+      fontFamily: 'DMSans_400Regular',
+      fontSize: 18 + offset,
+      lineHeight: 24 + offset,
       fontWeight: '600',
       marginBottom: 4,
       marginTop: 2,
@@ -98,7 +103,7 @@ function markdownStyles(colors: Palette) {
       backgroundColor: colors.muted,
       color: colors.foreground,
       fontFamily: 'monospace',
-      fontSize: 14,
+      fontSize: 15 + offset,
       paddingHorizontal: 5,
       paddingVertical: 1,
       borderRadius: Radius.sm,
@@ -107,8 +112,8 @@ function markdownStyles(colors: Palette) {
       backgroundColor: colors.muted,
       color: colors.foreground,
       fontFamily: 'monospace',
-      fontSize: 13,
-      lineHeight: 20,
+      fontSize: 14 + offset,
+      lineHeight: 20 + offset,
       padding: 12,
       marginVertical: 8,
       borderRadius: Radius.md,
@@ -119,8 +124,8 @@ function markdownStyles(colors: Palette) {
       backgroundColor: colors.muted,
       color: colors.foreground,
       fontFamily: 'monospace',
-      fontSize: 13,
-      lineHeight: 20,
+      fontSize: 14 + offset,
+      lineHeight: 20 + offset,
       padding: 12,
       marginVertical: 8,
       borderRadius: Radius.md,
@@ -174,10 +179,17 @@ function markdownStyles(colors: Palette) {
 
 export const AssistantMarkdownText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
-  const styles = useMemo(() => markdownStyles(colors), [colors]);
+  const { settings } = useSettings();
+  const styles = useMemo(
+    () => markdownStyles(colors, settings.largerText),
+    [colors, settings.largerText],
+  );
 
   return (
-    <Markdown style={styles} onLinkPress={onLinkPress}>
+    <Markdown
+      style={styles}
+      onLinkPress={onLinkPress}
+    >
       {text}
     </Markdown>
   );

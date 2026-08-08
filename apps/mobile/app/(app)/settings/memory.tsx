@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   SettingsRow,
@@ -197,12 +198,14 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   emptyBody: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 18,
@@ -221,7 +224,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   kindText: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
@@ -232,17 +236,20 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   memoryTitle: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   memoryDetail: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   memoryWhen: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     marginTop: 2,
   },

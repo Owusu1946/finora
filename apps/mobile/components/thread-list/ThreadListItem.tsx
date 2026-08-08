@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import { ThreadListItemPrimitive, useAui, useAuiState } from '@assistant-ui/react-native';
-import { Text, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -49,7 +50,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   title: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     letterSpacing: -0.2,
   },
 });

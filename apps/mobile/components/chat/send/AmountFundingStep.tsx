@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -130,7 +131,8 @@ const styles = StyleSheet.create({
   block: { gap: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
@@ -141,7 +143,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
   },
   nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
@@ -160,6 +163,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLabel: { fontSize: 15, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 15, fontWeight: '600' },
+  navLabel: { fontSize: 16, fontWeight: '600' },
+  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
 });

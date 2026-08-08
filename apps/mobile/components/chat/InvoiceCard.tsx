@@ -1,3 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
+import { useAui } from '@assistant-ui/react-native';
+import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -5,13 +8,12 @@ import {
   Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
+
+import type { Invoice } from '@/components/invoices/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
-import type { Invoice } from '@/components/invoices/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -20,7 +22,6 @@ import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { dismissInvoice, markInvoicePaid } from '@/lib/invoices-storage';
 import { recordSentPayment } from '@/lib/transactions-storage';
-import { useAui } from '@assistant-ui/react-native';
 
 type InvoiceCardProps = {
   invoice: Invoice;
@@ -140,12 +141,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
 
   return (
     <>
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <View style={styles.header}>
           <Animated.View
             style={[
@@ -331,9 +327,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
           <Pressable
             onPress={() => {
               haptics.selection();
-              router.push(
-                `/transaction/${txRecordId ?? transactionId}` as Href,
-              );
+              router.push(`/transaction/${txRecordId ?? transactionId}` as Href);
             }}
             style={({ pressed }) => [
               styles.linkBtn,
@@ -345,9 +339,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               size={16}
               color={colors.foreground}
             />
-            <Text style={[styles.linkLabel, { color: colors.foreground }]}>
-              View transaction
-            </Text>
+            <Text style={[styles.linkLabel, { color: colors.foreground }]}>View transaction</Text>
           </Pressable>
         ) : null}
       </View>
@@ -404,11 +396,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   amount: {
-    fontSize: 24,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.5,
   },
@@ -418,7 +412,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   sourceText: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
   },
@@ -433,11 +428,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rowLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   rowValue: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -457,7 +454,8 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {},
   btnLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   steps: {
@@ -477,7 +475,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
   },
   linkBtn: {
     minHeight: 44,
@@ -489,7 +488,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   linkLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
 });

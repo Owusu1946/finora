@@ -1,32 +1,33 @@
+import { AppText as Text } from '@/components/ui/text';
 import {
-    AuiIf,
-    ErrorPrimitive,
-    groupPartByType,
-    MessagePrimitive,
-    useAuiState,
-    type TextMessagePartComponent,
+  AuiIf,
+  ErrorPrimitive,
+  groupPartByType,
+  MessagePrimitive,
+  useAuiState,
+  type TextMessagePartComponent,
 } from '@assistant-ui/react-native';
-import { useEffect, useRef } from 'react';
-import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
+import { memo, useEffect, useRef } from 'react';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
 
-import { Radius } from '@/constants/theme';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import {
-    MessageAttachmentPill,
-    MessageDocumentAttachment,
-    MessageImageAttachment,
+  MessageAttachmentPill,
+  MessageDocumentAttachment,
+  MessageImageAttachment,
 } from './attachment';
 import { EditComposer } from './edit-composer';
 import { AssistantMarkdownText } from './markdown-text';
 import { MessageActionBar } from './message-action-bar';
 import { MessageBranchPicker } from './message-branch-picker';
 import {
-    Reasoning,
-    ReasoningContent,
-    ReasoningRoot,
-    ReasoningText,
-    ReasoningTrigger,
+  Reasoning,
+  ReasoningContent,
+  ReasoningRoot,
+  ReasoningText,
+  ReasoningTrigger,
 } from './reasoning';
 import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from './tool-group';
 
@@ -187,17 +188,18 @@ function AssistantMessage() {
   );
 }
 
-export function MessageBubble() {
+export const MessageBubble = memo(function MessageBubble() {
   const role = useAuiState((s) => s.message.role);
   if (role === 'user') return <UserMessage />;
   return <AssistantMessage />;
-}
+});
 
 const styles = StyleSheet.create({
   userContainer: {
     alignItems: 'flex-end',
   },
   userBubble: {
+    ...Rounded,
     maxWidth: '85%',
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -218,7 +220,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   userText: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     lineHeight: 22,
     letterSpacing: -0.2,
   },
@@ -241,6 +244,7 @@ const styles = StyleSheet.create({
     marginLeft: -4,
   },
   error: {
+    ...Rounded,
     marginTop: 8,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,
@@ -248,7 +252,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   errorText: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     lineHeight: 20,
   },
 });

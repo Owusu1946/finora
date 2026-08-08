@@ -1,8 +1,11 @@
+import { AppText as Text } from '@/components/ui/text';
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+
+import type { Invoice } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
-import type { Invoice } from '@/components/invoices/types';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ListInvoicesArgs = {
@@ -40,10 +43,7 @@ export const ListInvoicesToolUI = makeAssistantToolUI<ListInvoicesArgs, ListInvo
     if (!invoices?.length) {
       return (
         <View
-          style={[
-            styles.empty,
-            { borderColor: colors.border, backgroundColor: colors.composer },
-          ]}
+          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
             No unpaid supplier invoices found. Connect Gmail in Integrations or add one manually.
@@ -73,24 +73,26 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     padding: 16,
   },
   preparingText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   empty: {
     marginVertical: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     padding: 16,
   },
   emptyText: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
   },
@@ -99,7 +101,8 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   stackTitle: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
     marginLeft: 4,
     marginBottom: 2,

@@ -1,3 +1,4 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -5,19 +6,16 @@ import {
   Pressable,
   Share,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { MockQrCode } from '@/components/chat/MockQrCode';
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { haptics } from '@/lib/haptics';
 import {
   FUNDING_SOURCE_COPY,
   methodsForSource,
@@ -25,6 +23,7 @@ import {
   type FundingMethod,
   type FundingSource,
 } from '@/lib/funding-methods';
+import { haptics } from '@/lib/haptics';
 
 export type FundAccountSeed = {
   source?: FundingSource;
@@ -63,12 +62,13 @@ export function FundAccountWizard({
   const { colors, isDark } = useTheme();
   const [step, setStep] = useState<Step>(() => initialStep(seed));
   const [source, setSource] = useState<FundingSource | null>(seed.source ?? null);
-  const [method, setMethod] = useState<FundingMethod | null>(() =>
-    pickMethod({
-      source: seed.source === 'momo_pull' ? 'mobile_money' : seed.source,
-      currency: seed.currency,
-      methodId: seed.methodId,
-    }) ?? null,
+  const [method, setMethod] = useState<FundingMethod | null>(
+    () =>
+      pickMethod({
+        source: seed.source === 'momo_pull' ? 'mobile_money' : seed.source,
+        currency: seed.currency,
+        methodId: seed.methodId,
+      }) ?? null,
   );
   const [amount, setAmount] = useState<number | null>(seed.amount ?? null);
   const [customAmount, setCustomAmount] = useState('');
@@ -92,7 +92,11 @@ export function FundAccountWizard({
       if (cancelled || creditedRef.current) return;
       const credited =
         amount ??
-        (source === 'crypto' ? 50 : source === 'mobile_money' || source === 'momo_pull' ? 100 : 250);
+        (source === 'crypto'
+          ? 50
+          : source === 'mobile_money' || source === 'momo_pull'
+            ? 100
+            : 250);
       const tx = `WW-IN-${Math.floor(Math.random() * 1e8)
         .toString(16)
         .padStart(8, '0')
@@ -152,12 +156,7 @@ export function FundAccountWizard({
   })();
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       {step === 'source' ? (
         <View style={styles.block}>
           <WizardStepHeader
@@ -169,8 +168,7 @@ export function FundAccountWizard({
           <View style={styles.sourceList}>
             {allSources.map((s) => {
               const copy = FUNDING_SOURCE_COPY[s];
-              const icon =
-                s === 'bank' ? 'bank' : s === 'crypto' ? 'wallet' : 'phone';
+              const icon = s === 'bank' ? 'bank' : s === 'crypto' ? 'wallet' : 'phone';
               return (
                 <Pressable
                   key={s}
@@ -273,12 +271,7 @@ export function FundAccountWizard({
             title={method.title}
             subtitle={method.subtitle}
           />
-          <View
-            style={[
-              styles.qrWrap,
-              { backgroundColor: isDark ? '#fff' : colors.background },
-            ]}
-          >
+          <View style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}>
             <MockQrCode
               value={method.qrPayload}
               size={140}
@@ -348,9 +341,7 @@ export function FundAccountWizard({
                 { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={[styles.primaryLabel, { color: colors.background }]}>
-                I’ve sent it
-              </Text>
+              <Text style={[styles.primaryLabel, { color: colors.background }]}>I’ve sent it</Text>
             </Pressable>
           </View>
           <NavBack
@@ -466,9 +457,7 @@ export function FundAccountWizard({
                 },
               ]}
             >
-              <Text style={[styles.primaryLabel, { color: colors.background }]}>
-                Send prompt
-              </Text>
+              <Text style={[styles.primaryLabel, { color: colors.background }]}>Send prompt</Text>
             </Pressable>
           </View>
         </View>
@@ -489,9 +478,7 @@ export function FundAccountWizard({
           <View style={styles.waitingBox}>
             <ActivityIndicator color={colors.foreground} />
             <Text style={[styles.waitingText, { color: colors.mutedForeground }]}>
-              {source === 'momo_pull'
-                ? 'Collection pending…'
-                : 'Listening for an inbound credit…'}
+              {source === 'momo_pull' ? 'Collection pending…' : 'Listening for an inbound credit…'}
             </Text>
           </View>
         </View>
@@ -538,7 +525,7 @@ function NavBack({
         { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
       ]}
     >
-      <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 14 }}>Back</Text>
+      <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 15 }}>Back</Text>
     </Pressable>
   );
 }
@@ -570,11 +557,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sourceTitle: { fontSize: 15, fontWeight: '600' },
-  sourceBlurb: { fontSize: 12, fontWeight: '500', marginTop: 2, lineHeight: 16 },
+  sourceTitle: { fontSize: 16, fontWeight: '600' },
+  sourceBlurb: { fontSize: 13, fontWeight: '500', marginTop: 2, lineHeight: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
@@ -594,8 +582,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  fieldLabel: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
-  fieldValue: { fontSize: 14, fontWeight: '500' },
+  fieldLabel: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
+  fieldValue: { fontSize: 15, fontWeight: '500' },
   copyBtn: {
     width: 34,
     height: 34,
@@ -603,7 +591,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hint: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
+  hint: { fontSize: 13, fontWeight: '500', lineHeight: 17 },
   actions: { flexDirection: 'row', gap: 10 },
   primaryBtn: {
     flex: 1.4,
@@ -620,14 +608,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryLabel: { fontSize: 15, fontWeight: '600' },
-  secondaryLabel: { fontSize: 15, fontWeight: '600' },
+  primaryLabel: { fontSize: 16, fontWeight: '600' },
+  secondaryLabel: { fontSize: 16, fontWeight: '600' },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
   },
   waitingBox: {
@@ -635,7 +624,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 24,
   },
-  waitingText: { fontSize: 13, fontWeight: '500' },
+  waitingText: { fontSize: 14, fontWeight: '500' },
   successIcon: {
     width: 48,
     height: 48,
@@ -646,18 +635,20 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     textAlign: 'center',
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
   successAmount: {
     textAlign: 'center',
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '700',
     letterSpacing: -0.5,
   },
-  cancel: { textAlign: 'center', fontWeight: '600', fontSize: 14 },
+  cancel: { textAlign: 'center', fontWeight: '600', fontSize: 15 },
   backOnly: {
     minHeight: 40,
     borderWidth: StyleSheet.hairlineWidth,

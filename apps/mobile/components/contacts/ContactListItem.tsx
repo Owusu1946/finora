@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
@@ -24,7 +26,12 @@ function relativeDate(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function ContactListItem({ contact, index, isLast, onPress }: ContactListItemProps) {
+export const ContactListItem = memo(function ContactListItem({
+  contact,
+  index,
+  isLast,
+  onPress,
+}: ContactListItemProps) {
   const { colors } = useTheme();
   const avatarBg = AVATAR_COLORS[index % AVATAR_COLORS.length];
 
@@ -87,7 +94,7 @@ export function ContactListItem({ contact, index, isLast, onPress }: ContactList
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
@@ -105,7 +112,8 @@ const styles = StyleSheet.create({
   },
   initials: {
     color: '#fff',
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
@@ -119,11 +127,13 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   name: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   detail: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
   right: {
@@ -132,7 +142,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dateText: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
 });

@@ -1,6 +1,15 @@
+import { AppText as Text } from '@/components/ui/text';
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Linking, LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native';
+import {
+  Linking,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  UIManager,
+  View,
+} from 'react-native';
 
 import { SettingsScreen } from '@/components/settings/SettingsPrimitives';
 import { Icon } from '@/components/ui/icon';
@@ -12,8 +21,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const APP_VERSION =
-  Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '0.1.0';
+const APP_VERSION = Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '0.1.0';
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -64,9 +72,7 @@ function FaqItem({
           color={colors.mutedForeground}
         />
       </Pressable>
-      {open ? (
-        <Text style={[styles.faqA, { color: colors.mutedForeground }]}>{a}</Text>
-      ) : null}
+      {open ? <Text style={[styles.faqA, { color: colors.mutedForeground }]}>{a}</Text> : null}
     </View>
   );
 }
@@ -85,10 +91,7 @@ export default function AboutFinoraScreen() {
       </View>
 
       <View
-        style={[
-          styles.faqCard,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
+        style={[styles.faqCard, { backgroundColor: colors.composer, borderColor: colors.border }]}
       >
         {FAQS.map((item, index) => (
           <View
@@ -140,12 +143,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '700',
     letterSpacing: -0.6,
   },
   subtitle: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
   },
   faqCard: {
@@ -164,12 +169,14 @@ const styles = StyleSheet.create({
   },
   faqQ: {
     flex: 1,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   faqA: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     paddingBottom: 14,
@@ -182,10 +189,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   link: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
   },
   dot: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
   },
 });

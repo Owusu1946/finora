@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { Radius } from '@/constants/theme';
@@ -91,6 +92,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLabel: { fontSize: 15, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 15, fontWeight: '600' },
+  navLabel: { fontSize: 16, fontWeight: '600' },
+  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
 });

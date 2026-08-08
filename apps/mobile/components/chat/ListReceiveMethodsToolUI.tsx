@@ -1,10 +1,8 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import {
-  ReceiveMoneyCard,
-  type ReceiveMethod,
-} from '@/components/chat/ReceiveMoneyCard';
+import { ReceiveMoneyCard, type ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ListReceiveArgs = {
@@ -20,20 +18,14 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.preparing,
-        { borderColor: colors.border, backgroundColor: colors.composer },
-      ]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <ActivityIndicator color={colors.mutedForeground} />
     </View>
   );
 }
 
-export const ListReceiveMethodsToolUI = makeAssistantToolUI<
-  ListReceiveArgs,
-  ListReceiveResult
->({
+export const ListReceiveMethodsToolUI = makeAssistantToolUI<ListReceiveArgs, ListReceiveResult>({
   toolName: 'list_receive_methods',
   display: 'standalone',
   render: ({ args, result, status }) => {
@@ -65,7 +57,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

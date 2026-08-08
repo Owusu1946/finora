@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 
@@ -25,7 +26,8 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
   label: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
 });

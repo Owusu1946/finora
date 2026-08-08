@@ -1,12 +1,6 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  type TextInputProps,
-} from 'react-native';
+import { Pressable, StyleSheet, View, type TextInputProps } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -84,7 +78,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -100,13 +95,14 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     letterSpacing: -0.2,
     paddingVertical: 0,
   },
   error: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
 });
-

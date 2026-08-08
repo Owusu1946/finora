@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -5,7 +6,6 @@ import {
   Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -299,13 +299,7 @@ export function ConversionCard({
   );
 }
 
-function ConvertedHero({
-  quote,
-  conversionId,
-}: {
-  quote: ConversionQuote;
-  conversionId?: string;
-}) {
+function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conversionId?: string }) {
   const { colors } = useTheme();
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -419,12 +413,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   title: {
-    fontSize: 20,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 21,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
@@ -447,11 +443,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   legLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
   },
   legValue: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -462,11 +460,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   metaLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   metaValue: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -485,7 +485,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   btnLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -499,7 +500,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   statusText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
   steps: {
@@ -519,7 +521,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     letterSpacing: -0.2,
   },
   sentHero: {
@@ -536,16 +539,19 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   sentTitle: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   sentAmount: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   sentTo: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     marginBottom: 8,
   },

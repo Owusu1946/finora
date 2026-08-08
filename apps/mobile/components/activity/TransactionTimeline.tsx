@@ -1,6 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { StyleSheet, View } from 'react-native';
 
 import type { TransactionTimelineStep } from '@/components/activity/types';
+
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -25,11 +27,7 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
         const done = step.status === 'done';
         const active = step.status === 'active';
         const failed = step.status === 'failed';
-        const accent = failed
-          ? '#EF4444'
-          : done || active
-            ? colors.foreground
-            : colors.border;
+        const accent = failed ? '#EF4444' : done || active ? colors.foreground : colors.border;
 
         return (
           <View
@@ -75,8 +73,7 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
                 style={[
                   styles.label,
                   {
-                    color:
-                      failed || done || active ? colors.foreground : colors.mutedForeground,
+                    color: failed || done || active ? colors.foreground : colors.mutedForeground,
                     fontWeight: active ? '600' : '500',
                   },
                 ]}
@@ -132,11 +129,13 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
   },
   label: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     letterSpacing: -0.2,
   },
   time: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
 });

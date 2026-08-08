@@ -1,13 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
+
+import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import { InvoiceListItem } from '@/components/invoices/InvoiceListItem';
-import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 import { useTheme } from '@/hooks/use-theme';
-import { listInvoices } from '@/lib/invoices-storage';
 import { haptics } from '@/lib/haptics';
+import { listInvoices } from '@/lib/invoices-storage';
 
 const FILTERS: { id: InvoiceFilter; label: string }[] = [
   { id: 'due', label: 'Due' },
@@ -41,6 +43,28 @@ export default function InvoicesScreen() {
     if (filter === 'all') return items.filter((i) => i.status !== 'dismissed');
     return items.filter((i) => i.status === filter);
   }, [filter, items]);
+  const handleInvoicePress = useCallback(
+    (invoice: Invoice) => {
+      if (invoice.status === 'due') {
+        setSelected(invoice);
+        return;
+      }
+      if (invoice.transactionId) {
+        router.push(`/transaction/${invoice.transactionId}` as Href);
+      }
+    },
+    [router],
+  );
+  const renderInvoice = useCallback(
+    ({ item, index }: { item: Invoice; index: number }) => (
+      <InvoiceListItem
+        invoice={item}
+        isLast={index === filtered.length - 1}
+        onPress={handleInvoicePress}
+      />
+    ),
+    [filtered.length, handleInvoicePress],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -59,10 +83,7 @@ export default function InvoicesScreen() {
                 haptics.selection();
                 setFilter(item.id);
               }}
-              style={[
-                styles.chip,
-                { backgroundColor: active ? colors.foreground : colors.muted },
-              ]}
+              style={[styles.chip, { backgroundColor: active ? colors.foreground : colors.muted }]}
             >
               <Text
                 style={[
@@ -81,6 +102,10 @@ export default function InvoicesScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -88,21 +113,7 @@ export default function InvoicesScreen() {
             No invoices here. Try “Find unpaid invoices” in chat after connecting Gmail.
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <InvoiceListItem
-            invoice={item}
-            isLast={index === filtered.length - 1}
-            onPress={(invoice) => {
-              if (invoice.status === 'due') {
-                setSelected(invoice);
-                return;
-              }
-              if (invoice.transactionId) {
-                router.push(`/transaction/${invoice.transactionId}` as Href);
-              }
-            }}
-          />
-        )}
+        renderItem={renderInvoice}
       />
 
       <Modal
@@ -147,13 +158,15 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
-    fontSize: 24,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     marginBottom: 14,
@@ -170,7 +183,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   chipLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
   list: {
@@ -179,7 +193,8 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
   },
@@ -195,7 +210,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
-    fontSize: 18,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 19,
     fontWeight: '600',
   },
 });

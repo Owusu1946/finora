@@ -1,0 +1,6 @@
+[mcp_servers.mcp-docs-server]
+command = "pnpm"
+args = [
+    "dlx",
+    "@assistant-ui/mcp-docs-server",
+]

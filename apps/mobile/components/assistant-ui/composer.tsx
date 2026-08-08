@@ -1,9 +1,17 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useRouter } from 'expo-router';
-import { View, Platform, ActionSheetIOS, Alert, StyleSheet, Pressable } from 'react-native';
+import {
+  View,
+  Platform,
+  ActionSheetIOS,
+  Alert,
+  Keyboard,
+  StyleSheet,
+  Pressable,
+} from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -186,7 +194,11 @@ function ScanButton() {
         { backgroundColor: pressed ? colors.muted : 'transparent' },
       ]}
     >
-      <Icon name='qr' size={20} color={colors.mutedForeground} />
+      <Icon
+        name='qr'
+        size={20}
+        color={colors.mutedForeground}
+      />
     </Pressable>
   );
 }
@@ -198,7 +210,11 @@ function SendButton() {
   return (
     <ComposerPrimitive.Send
       accessibilityLabel='Send message'
-      onPressIn={() => canSend && haptics.success()}
+      onPressIn={() => {
+        if (!canSend) return;
+        haptics.success();
+        Keyboard.dismiss();
+      }}
       style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
       <Icon
@@ -278,15 +294,19 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   shell: {
+    ...Rounded,
     flexDirection: 'column',
-    gap: 6,
+    gap: 10,
     borderRadius: Radius.composer,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 8,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
   },
 
   input: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     lineHeight: 22,
     minHeight: 28,
     maxHeight: 132,
@@ -301,14 +321,15 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 4,
+    paddingTop: 2,
   },
   spacer: {
     flex: 1,
   },
   actionButton: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

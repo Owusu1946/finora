@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -64,7 +65,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   label: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

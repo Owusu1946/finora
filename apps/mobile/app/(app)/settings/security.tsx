@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
-import { Alert, Platform, StyleSheet, Text } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, Platform, StyleSheet } from 'react-native';
 
 import { useChangePasscode } from '@/components/passcode/use-change-passcode';
 import {
@@ -121,9 +122,7 @@ export default function SecuritySettingsScreen() {
               isLast={index === settings.trustedDevices.length - 1}
               showChevron={!device.current}
               onPress={
-                device.current
-                  ? undefined
-                  : () => handleRevokeDevice(device.id, device.name)
+                device.current ? undefined : () => handleRevokeDevice(device.id, device.name)
               }
               right={
                 device.current ? (
@@ -146,7 +145,8 @@ const styles = StyleSheet.create({
     gap: 22,
   },
   currentPill: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '600',
   },
 });

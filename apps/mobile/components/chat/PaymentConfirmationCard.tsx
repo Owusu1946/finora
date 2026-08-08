@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -5,7 +6,6 @@ import {
   Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 
@@ -50,12 +50,7 @@ export type PaymentConfirmation = {
   deliveryHint?: string;
 };
 
-export type PaymentConfirmationStatus =
-  | 'pending'
-  | 'sending'
-  | 'sent'
-  | 'cancelled'
-  | 'failed';
+export type PaymentConfirmationStatus = 'pending' | 'sending' | 'sent' | 'cancelled' | 'failed';
 
 type PaymentConfirmationCardProps = {
   payment: PaymentConfirmation;
@@ -260,8 +255,7 @@ export function PaymentConfirmationCard({
                 colors={colors}
               />
             ) : null}
-            {payment.fundingCurrency &&
-            payment.fundingCurrency !== payment.currency ? (
+            {payment.fundingCurrency && payment.fundingCurrency !== payment.currency ? (
               <DetailRow
                 label='Fund from'
                 value={payment.fundingCurrency}
@@ -387,12 +381,7 @@ export function PaymentConfirmationCard({
       ) : null}
 
       {cancelled || failed ? (
-        <View
-          style={[
-            styles.statusPill,
-            { backgroundColor: colors.destructiveSurface },
-          ]}
-        >
+        <View style={[styles.statusPill, { backgroundColor: colors.destructiveSurface }]}>
           <Icon
             name='remove'
             size={14}
@@ -626,12 +615,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   amount: {
-    fontSize: 26,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 27,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
@@ -646,7 +637,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   rowLabel: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -657,7 +649,8 @@ const styles = StyleSheet.create({
   },
   rowValue: {
     flex: 1,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -683,7 +676,8 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {},
   btnLabel: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -697,7 +691,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   statusText: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
@@ -719,7 +714,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     letterSpacing: -0.2,
   },
   sentHero: {
@@ -737,17 +733,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   sentTitle: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   sentAmount: {
-    fontSize: 30,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 31,
     fontWeight: '600',
     letterSpacing: -0.7,
   },
   sentTo: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
     marginBottom: 8,
@@ -770,13 +769,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   saveContactLabel: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   viewDetailsHint: {
     marginTop: 4,
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
 });

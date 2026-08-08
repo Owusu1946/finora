@@ -8,11 +8,9 @@ import {
   type ConversionStatus,
 } from '@/components/chat/ConversionCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  appendAgentFollowUp,
-  conversionDoneFollowUp,
-} from '@/lib/agent-follow-up';
+import { appendAgentFollowUp, conversionDoneFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 
 type PrepareConversionArgs = {
@@ -46,10 +44,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.preparing,
-        { borderColor: colors.border, backgroundColor: colors.composer },
-      ]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <ActivityIndicator color={colors.mutedForeground} />
     </View>
@@ -190,7 +185,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

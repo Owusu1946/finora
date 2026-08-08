@@ -1,6 +1,7 @@
-import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import {
   SettingsRow,
@@ -120,7 +121,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetter: {
-    fontSize: 22,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 23,
     fontWeight: '600',
   },
   profileMeta: {
@@ -129,12 +131,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   profileName: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   profileEmail: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
   },
   segmentPad: {

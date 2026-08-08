@@ -2,6 +2,7 @@ import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { BalancesCard, type BalanceWallet } from '@/components/chat/BalancesCard';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type GetBalancesResult = {
@@ -13,10 +14,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.preparing,
-        { borderColor: colors.border, backgroundColor: colors.composer },
-      ]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <ActivityIndicator color={colors.mutedForeground} />
     </View>
@@ -45,7 +43,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

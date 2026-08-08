@@ -1,9 +1,10 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
-import { SEND_CORRIDORS } from '@/lib/send-corridors';
 import { useTheme } from '@/hooks/use-theme';
+import { SEND_CORRIDORS } from '@/lib/send-corridors';
 
 const POPULAR = ['GH', 'US', 'GB', 'DE', 'NG', 'KE'];
 
@@ -121,7 +122,8 @@ const styles = StyleSheet.create({
   block: { gap: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
@@ -132,7 +134,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '500',
   },
 });

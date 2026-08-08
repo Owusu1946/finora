@@ -1,11 +1,6 @@
-import { useRef } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { useRef, type ElementRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -19,14 +14,9 @@ type AuthOtpInputProps = {
   autoFocus?: boolean;
 };
 
-export function AuthOtpInput({
-  value,
-  onChange,
-  error,
-  autoFocus = true,
-}: AuthOtpInputProps) {
+export function AuthOtpInput({ value, onChange, error, autoFocus = true }: AuthOtpInputProps) {
   const { colors } = useTheme();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ElementRef<typeof TextInput>>(null);
   const digits = value.padEnd(OTP_LENGTH).slice(0, OTP_LENGTH).split('');
 
   return (
@@ -102,7 +92,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   digit: {
-    fontSize: 22,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 23,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
@@ -112,7 +103,8 @@ const styles = StyleSheet.create({
     color: 'transparent',
   },
   error: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },

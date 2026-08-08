@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AUTH_OTP_LENGTH, AuthOtpInput } from '@/components/auth/AuthOtpInput';
@@ -159,12 +160,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   subtitle: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 23,
@@ -175,13 +178,15 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   resend: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
     paddingVertical: 4,
   },
   devHint: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
     marginTop: 4,

@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+
+import type { RecurringFilter, RecurringPayment } from '@/components/recurring/types';
 
 import { RecurringListItem } from '@/components/recurring/RecurringListItem';
-import type { RecurringFilter, RecurringPayment } from '@/components/recurring/types';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { listRecurring, updateRecurringStatus } from '@/lib/recurring-storage';
@@ -36,6 +38,31 @@ export default function RecurringScreen() {
     if (filter === 'all') return items.filter((r) => r.status !== 'cancelled');
     return items.filter((r) => r.status === filter);
   }, [filter, items]);
+  const handlePause = useCallback(
+    async (item: RecurringPayment) => {
+      await updateRecurringStatus(item.id, 'paused');
+      void refresh();
+    },
+    [refresh],
+  );
+  const handleResume = useCallback(
+    async (item: RecurringPayment) => {
+      await updateRecurringStatus(item.id, 'active');
+      void refresh();
+    },
+    [refresh],
+  );
+  const renderRecurring = useCallback(
+    ({ item, index }: { item: RecurringPayment; index: number }) => (
+      <RecurringListItem
+        item={item}
+        isLast={index === filtered.length - 1}
+        onPause={handlePause}
+        onResume={handleResume}
+      />
+    ),
+    [filtered.length, handlePause, handleResume],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -55,10 +82,7 @@ export default function RecurringScreen() {
                 haptics.selection();
                 setFilter(item.id);
               }}
-              style={[
-                styles.chip,
-                { backgroundColor: active ? colors.foreground : colors.muted },
-              ]}
+              style={[styles.chip, { backgroundColor: active ? colors.foreground : colors.muted }]}
             >
               <Text
                 style={[
@@ -77,6 +101,10 @@ export default function RecurringScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -84,20 +112,7 @@ export default function RecurringScreen() {
             No recurring payments yet.
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <RecurringListItem
-            item={item}
-            isLast={index === filtered.length - 1}
-            onPause={async (rec) => {
-              await updateRecurringStatus(rec.id, 'paused');
-              void refresh();
-            }}
-            onResume={async (rec) => {
-              await updateRecurringStatus(rec.id, 'active');
-              void refresh();
-            }}
-          />
-        )}
+        renderItem={renderRecurring}
       />
     </View>
   );
@@ -110,13 +125,15 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
-    fontSize: 24,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     marginBottom: 14,
@@ -132,7 +149,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   chipLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
   },
   list: {
@@ -141,7 +159,8 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
   },

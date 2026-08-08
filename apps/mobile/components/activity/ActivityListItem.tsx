@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 
@@ -42,7 +44,11 @@ function formatAmount(symbol: string, amount: number): string {
   })}`;
 }
 
-export function ActivityListItem({ tx, isLast, onPress }: ActivityListItemProps) {
+export const ActivityListItem = memo(function ActivityListItem({
+  tx,
+  isLast,
+  onPress,
+}: ActivityListItemProps) {
   const { colors } = useTheme();
 
   const sign = tx.direction === 'received' ? '+' : '-';
@@ -133,7 +139,7 @@ export function ActivityListItem({ tx, isLast, onPress }: ActivityListItemProps)
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
@@ -166,11 +172,13 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   counterparty: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   detail: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '400',
   },
   right: {
@@ -178,7 +186,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   amount: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '600',
   },
   strikethrough: {
@@ -195,7 +204,8 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusLabel: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
     textTransform: 'capitalize',
   },

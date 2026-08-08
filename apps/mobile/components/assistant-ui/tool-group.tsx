@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -152,7 +153,8 @@ const styles = StyleSheet.create({
   },
   triggerLabel: {
     flexShrink: 1,
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -174,17 +176,19 @@ const styles = StyleSheet.create({
   },
   toolName: {
     flex: 1,
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   toolStatus: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '500',
     textTransform: 'uppercase',
   },
   toolMeta: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 17,
     fontFamily: 'Menlo',
   },

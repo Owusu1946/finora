@@ -1,12 +1,11 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   ScrollView,
   Pressable,
   Modal,
-  TextInput,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -314,9 +313,7 @@ export function FxConvertModal({
                         onPress={handleMax}
                         style={[styles.maxBadge, { backgroundColor: colors.foreground }]}
                       >
-                        <Text style={[styles.maxBadgeText, { color: colors.background }]}>
-                          Max
-                        </Text>
+                        <Text style={[styles.maxBadgeText, { color: colors.background }]}>Max</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -543,7 +540,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sheetTitle: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
   },
   body: {
@@ -564,7 +562,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   accessoryDoneText: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '600',
   },
   swapStack: {
@@ -576,7 +575,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   legLabel: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
   },
   legRow: {
@@ -586,7 +586,8 @@ const styles = StyleSheet.create({
   },
   amountInput: {
     flex: 1,
-    fontSize: 34,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 35,
     fontWeight: '600',
     letterSpacing: -0.5,
     paddingVertical: 0,
@@ -603,7 +604,8 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   currencyPillCode: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '700',
   },
   availableRow: {
@@ -613,7 +615,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   availableText: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   maxBadge: {
@@ -622,7 +625,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   maxBadgeText: {
-    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
     fontWeight: '700',
   },
   flipWrap: {
@@ -648,12 +652,14 @@ const styles = StyleSheet.create({
   },
   warnText: {
     flex: 1,
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   rateHint: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -665,7 +671,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   primaryBtnText: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '700',
   },
   successState: {
@@ -674,11 +681,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   successTitle: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
   },
   successSub: {
-    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
     textAlign: 'center',
   },
   pickerBackdrop: {
@@ -702,7 +711,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   pickerTitle: {
-    fontSize: 17,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
     fontWeight: '600',
   },
   pickerList: {
@@ -723,15 +733,18 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   pickerCode: {
-    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
     fontWeight: '700',
   },
   pickerName: {
-    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
     fontWeight: '500',
   },
   pickerBalance: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '600',
   },
 });

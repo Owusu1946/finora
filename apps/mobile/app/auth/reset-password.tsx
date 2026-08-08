@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthField } from '@/components/auth/AuthField';
@@ -90,8 +91,7 @@ export default function ResetPasswordScreen() {
             }}
           >
             <Text style={[styles.linkRow, { color: colors.mutedForeground }]}>
-              Back to{' '}
-              <Text style={{ color: colors.foreground, fontWeight: '600' }}>Sign in</Text>
+              Back to <Text style={{ color: colors.foreground, fontWeight: '600' }}>Sign in</Text>
             </Text>
           </Pressable>
         </View>
@@ -137,12 +137,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    fontSize: 28,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   subtitle: {
-    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 23,
@@ -156,7 +158,8 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   linkRow: {
-    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
     paddingVertical: 4,

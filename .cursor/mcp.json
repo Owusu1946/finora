@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "mcp-docs-server": {
-      "command": "bunx",
-      "args": ["-y", "@assistant-ui/mcp-docs-server"]
+      "command": "pnpm",
+      "args": ["dlx", "@assistant-ui/mcp-docs-server"]
     }
   }
 }
