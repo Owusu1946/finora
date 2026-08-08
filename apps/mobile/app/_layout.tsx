@@ -3,6 +3,12 @@ import {
   useLocalRuntime,
 } from '@assistant-ui/react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, type Href } from 'expo-router';
@@ -11,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+import '../global.css';
 
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
@@ -76,7 +83,13 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts(Platform.OS === 'ios' ? {} : MaterialIcons.font);
+  const [fontsLoaded] = useFonts({
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+    ...(Platform.OS === 'ios' ? {} : MaterialIcons.font),
+  });
   const [boot, setBoot] = useState<{
     authenticated: boolean;
     onboardingCompleted: boolean;
