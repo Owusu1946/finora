@@ -7,10 +7,8 @@ import {
   ArrowLeft01Icon,
   ArrowLeftRightIcon,
   ArrowRight01Icon,
-  ArrowUp01Icon,
   ArrowUpRight01Icon,
   ArrowUpDownIcon,
-  Attachment01Icon,
   Building02Icon,
   Call02Icon,
   Cancel01Icon,
@@ -19,6 +17,7 @@ import {
   CheckIcon,
   Copy01Icon,
   Edit02Icon,
+  Eraser01Icon,
   File01Icon,
   FingerPrintScanIcon,
   Image01Icon,
@@ -85,7 +84,8 @@ export type IconName =
   | 'thumb-up'
   | 'thumb-down'
   | 'quote'
-  | 'biometric';
+  | 'biometric'
+  | 'eraser';
 
 export type IconProps = {
   name: IconName;
@@ -137,4 +137,5 @@ export const HUGE_ICONS = {
   'thumb-down': ThumbsDownIcon,
   quote: QuoteDownIcon,
   biometric: FingerPrintScanIcon,
+  eraser: Eraser01Icon,
 } as const;
