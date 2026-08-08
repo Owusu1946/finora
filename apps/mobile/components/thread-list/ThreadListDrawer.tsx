@@ -95,6 +95,10 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
       ]}
     >
       <View style={styles.brandRow}>
+        <View style={styles.brandCopy}>
+          <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
+          <AccountBadge variant='text' />
+        </View>
         <Pressable
           accessibilityLabel='Close navigation menu'
           hitSlop={10}
@@ -111,10 +115,6 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
             color={colors.foreground}
           />
         </Pressable>
-        <View style={styles.brandCopy}>
-          <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
-          <AccountBadge variant='text' />
-        </View>
       </View>
 
       <ThreadListPrimitive.Root style={styles.root}>
@@ -261,6 +261,7 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
     paddingHorizontal: 20,
     marginBottom: 12,
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   },
   brand: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '700',
     letterSpacing: -0.4,
   },
@@ -296,13 +297,13 @@ const styles = StyleSheet.create({
   },
   newLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   sectionLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     letterSpacing: -0.2,
   },
   tabDot: {
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: -0.2,
   },
   badge: {
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
 });
