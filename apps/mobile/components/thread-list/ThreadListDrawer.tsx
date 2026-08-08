@@ -95,8 +95,26 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
       ]}
     >
       <View style={styles.brandRow}>
-        <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
-        <AccountBadge variant='text' />
+        <Pressable
+          accessibilityLabel='Close navigation menu'
+          hitSlop={10}
+          onPressIn={haptics.selection}
+          onPress={() => navigation.closeDrawer()}
+          style={({ pressed }) => [
+            styles.closeButton,
+            { backgroundColor: pressed ? colors.muted : 'transparent' },
+          ]}
+        >
+          <Icon
+            name='remove'
+            size={20}
+            color={colors.foreground}
+          />
+        </Pressable>
+        <View style={styles.brandCopy}>
+          <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
+          <AccountBadge variant='text' />
+        </View>
       </View>
 
       <ThreadListPrimitive.Root style={styles.root}>
@@ -241,8 +259,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     paddingHorizontal: 20,
     marginBottom: 12,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.pill,
+  },
+  brandCopy: {
+    gap: 1,
   },
   brand: {
     fontFamily: 'DMSans_400Regular',
