@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   reasoningText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 19,
     letterSpacing: -0.1,
     marginBottom: 4,

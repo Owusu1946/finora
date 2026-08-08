@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   addOptionRow: {
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   addOptionText: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

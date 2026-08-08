@@ -26,14 +26,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.4,
     marginBottom: 8,
   },
   description: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 24,
     letterSpacing: -0.2,
     maxWidth: 340,

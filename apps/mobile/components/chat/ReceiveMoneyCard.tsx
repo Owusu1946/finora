@@ -392,13 +392,13 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
@@ -427,13 +427,13 @@ const styles = StyleSheet.create({
   },
   methodTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   methodSub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
     lineHeight: 18,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   qrHint: {
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     marginTop: -4,
   },
@@ -468,13 +468,13 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   fieldValue: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   primaryLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   },
   secondaryLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -539,14 +539,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
     textAlign: 'center',
   },
   modalSub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
     marginTop: -4,

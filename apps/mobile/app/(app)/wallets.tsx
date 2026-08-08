@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   scrollContent: {

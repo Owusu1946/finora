@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
   filterTabText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   filterTabActiveText: {

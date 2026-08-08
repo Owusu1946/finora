@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   skip: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -292,21 +292,21 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 23,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   },
   ctaLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

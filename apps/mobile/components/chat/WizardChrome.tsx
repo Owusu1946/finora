@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   header: {
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   },
   progress: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
@@ -122,14 +122,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '600',
     letterSpacing: -0.3,
     marginTop: 4,
   },
   subtitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },

@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   sectionFooter: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 17,
     marginHorizontal: 4,
@@ -318,13 +318,13 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   rowDetail: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   },
   segmentLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },

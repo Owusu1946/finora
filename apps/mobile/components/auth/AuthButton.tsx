@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

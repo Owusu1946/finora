@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   chipName: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     maxWidth: 140,
   },
   removeButton: {
@@ -311,13 +311,13 @@ const styles = StyleSheet.create({
   },
   pillName: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     maxWidth: 160,
     flexShrink: 1,
   },
   pillExt: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
   },

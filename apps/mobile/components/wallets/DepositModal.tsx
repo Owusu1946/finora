@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   sheetBalanceBox: {
@@ -288,12 +288,12 @@ const styles = StyleSheet.create({
   },
   sheetBalanceLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
   sheetBalanceValue: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '700',
     marginTop: 2,
   },
@@ -305,18 +305,18 @@ const styles = StyleSheet.create({
   },
   sheetRowLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   sheetRowValue: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   sheetRowValueMono: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontWeight: '500',
   },
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   pressed: {

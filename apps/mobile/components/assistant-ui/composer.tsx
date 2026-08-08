@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
 
   input: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 22,
     minHeight: 28,
     maxHeight: 132,

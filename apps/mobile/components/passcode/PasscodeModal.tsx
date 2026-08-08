@@ -249,14 +249,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.5,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 22,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
     minHeight: 20,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   keyLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '500',
     letterSpacing: -0.4,
   },

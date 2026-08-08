@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   preparingText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   empty: {
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
   },
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   stackTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     marginLeft: 4,
     marginBottom: 2,

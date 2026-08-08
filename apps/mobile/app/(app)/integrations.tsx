@@ -162,14 +162,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     marginBottom: 18,
@@ -198,12 +198,12 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
   },
   cardDetail: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   statusDot: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   found: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   actions: {
@@ -237,12 +237,12 @@ const styles = StyleSheet.create({
   },
   btnLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   hint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
   },

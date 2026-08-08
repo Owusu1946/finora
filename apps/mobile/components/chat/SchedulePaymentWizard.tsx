@@ -360,7 +360,7 @@ export function SchedulePaymentWizard({
               />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.railTitle, { color: colors.foreground }]}>{opt.label}</Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>{opt.hint}</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{opt.hint}</Text>
               </View>
             </Pressable>
           ))}
@@ -596,17 +596,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
   },
   hint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   sectionLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
   },
   railTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   preview: {
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
   previewText: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },

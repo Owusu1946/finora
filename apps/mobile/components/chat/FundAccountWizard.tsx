@@ -526,7 +526,7 @@ function NavBack({
         { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
       ]}
     >
-      <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 14 }}>Back</Text>
+      <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 15 }}>Back</Text>
     </Pressable>
   );
 }
@@ -558,12 +558,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sourceTitle: { fontSize: 15, fontWeight: '600' },
-  sourceBlurb: { fontSize: 12, fontWeight: '500', marginTop: 2, lineHeight: 16 },
+  sourceTitle: { fontSize: 16, fontWeight: '600' },
+  sourceBlurb: { fontSize: 13, fontWeight: '500', marginTop: 2, lineHeight: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.3,
     textTransform: 'uppercase',
@@ -583,8 +583,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  fieldLabel: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
-  fieldValue: { fontSize: 14, fontWeight: '500' },
+  fieldLabel: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
+  fieldValue: { fontSize: 15, fontWeight: '500' },
   copyBtn: {
     width: 34,
     height: 34,
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hint: { fontSize: 12, fontWeight: '500', lineHeight: 17 },
+  hint: { fontSize: 13, fontWeight: '500', lineHeight: 17 },
   actions: { flexDirection: 'row', gap: 10 },
   primaryBtn: {
     flex: 1.4,
@@ -609,15 +609,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryLabel: { fontSize: 15, fontWeight: '600' },
-  secondaryLabel: { fontSize: 15, fontWeight: '600' },
+  primaryLabel: { fontSize: 16, fontWeight: '600' },
+  secondaryLabel: { fontSize: 16, fontWeight: '600' },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
   },
   waitingBox: {
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 24,
   },
-  waitingText: { fontSize: 13, fontWeight: '500' },
+  waitingText: { fontSize: 14, fontWeight: '500' },
   successIcon: {
     width: 48,
     height: 48,
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   successTitle: {
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
@@ -645,11 +645,11 @@ const styles = StyleSheet.create({
   successAmount: {
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '700',
     letterSpacing: -0.5,
   },
-  cancel: { textAlign: 'center', fontWeight: '600', fontSize: 14 },
+  cancel: { textAlign: 'center', fontWeight: '600', fontSize: 15 },
   backOnly: {
     minHeight: 40,
     borderWidth: StyleSheet.hairlineWidth,

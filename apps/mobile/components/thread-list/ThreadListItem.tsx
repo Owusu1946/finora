@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     letterSpacing: -0.2,
   },
 });

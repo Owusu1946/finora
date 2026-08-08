@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },

@@ -144,13 +144,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '700',
     letterSpacing: -0.6,
   },
   subtitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
   },
   faqCard: {
@@ -170,13 +170,13 @@ const styles = StyleSheet.create({
   faqQ: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   faqA: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
     paddingBottom: 14,
@@ -190,11 +190,11 @@ const styles = StyleSheet.create({
   },
   link: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
   },
   dot: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
   },
 });

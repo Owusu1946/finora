@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
   },
 });

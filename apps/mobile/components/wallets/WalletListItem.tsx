@@ -84,12 +84,12 @@ const styles = StyleSheet.create({
   },
   walletCode: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   walletBadgeText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '400',
   },
   walletListRight: {
@@ -98,12 +98,12 @@ const styles = StyleSheet.create({
   },
   walletAmount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   walletUsdEst: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '400',
   },
 });

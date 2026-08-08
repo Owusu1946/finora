@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   triggerLabel: {
     flexShrink: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -176,18 +176,18 @@ const styles = StyleSheet.create({
   toolName: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   toolStatus: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
     textTransform: 'uppercase',
   },
   toolMeta: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 17,
     fontFamily: 'Menlo',
   },

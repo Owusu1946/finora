@@ -272,19 +272,19 @@ const styles = StyleSheet.create({
   },
   bannerEyebrow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   bannerTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   bannerMeta: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   linkBtn: {
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   linkLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

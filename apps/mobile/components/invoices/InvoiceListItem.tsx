@@ -98,12 +98,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   detail: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
   },
   right: {
     alignItems: 'flex-end',
@@ -111,12 +111,12 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   status: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     textTransform: 'capitalize',
   },

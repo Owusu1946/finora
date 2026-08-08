@@ -244,11 +244,11 @@ function ResolveSendFlow({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.contactName, { color: colors.foreground }]}>{c.name}</Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
                   {c.method} · {c.identifier}
                 </Text>
               </View>
-              <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>{c.currency}</Text>
+              <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{c.currency}</Text>
             </Pressable>
           ))}
         </View>
@@ -403,11 +403,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
   },
   contactName: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   editLink: {

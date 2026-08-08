@@ -95,13 +95,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   description: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
     letterSpacing: -0.1,
     paddingLeft: 14,

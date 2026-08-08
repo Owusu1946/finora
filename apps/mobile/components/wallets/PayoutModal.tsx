@@ -232,12 +232,12 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   formLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     marginBottom: 4,
   },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
   },
   walletChip: {
     flexDirection: 'row',
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   walletChipText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   primaryBtn: {
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   successState: {
@@ -283,12 +283,12 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   successSub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     textAlign: 'center',
   },
   pressed: {

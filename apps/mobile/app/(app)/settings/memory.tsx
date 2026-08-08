@@ -198,13 +198,13 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   emptyBody: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 18,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   kindText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.2,
     textTransform: 'uppercase',
@@ -236,19 +236,19 @@ const styles = StyleSheet.create({
   },
   memoryTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   memoryDetail: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   memoryWhen: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     marginTop: 2,
   },

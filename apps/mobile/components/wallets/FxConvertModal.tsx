@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   body: {
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   },
   accessoryDoneText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
   },
   swapStack: {
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
   },
   legLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   legRow: {
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
   amountInput: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 34,
+    fontSize: 35,
     fontWeight: '600',
     letterSpacing: -0.5,
     paddingVertical: 0,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   },
   currencyPillCode: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   availableRow: {
@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
   },
   availableText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   maxBadge: {
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
   },
   maxBadgeText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   flipWrap: {
@@ -654,13 +654,13 @@ const styles = StyleSheet.create({
   warnText: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 18,
   },
   rateHint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
   successState: {
@@ -683,12 +683,12 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   successSub: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     textAlign: 'center',
   },
   pickerBackdrop: {
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   },
   pickerTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
   },
   pickerList: {
@@ -735,17 +735,17 @@ const styles = StyleSheet.create({
   },
   pickerCode: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
   pickerName: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   pickerBalance: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   avatarLetter: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: '600',
   },
   profileMeta: {
@@ -131,13 +131,13 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   profileEmail: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
   },
   segmentPad: {

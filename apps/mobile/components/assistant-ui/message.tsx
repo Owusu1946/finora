@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   userText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 22,
     letterSpacing: -0.2,
   },
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 20,
   },
 });

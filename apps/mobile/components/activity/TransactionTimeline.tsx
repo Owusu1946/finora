@@ -129,12 +129,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     letterSpacing: -0.2,
   },
   time: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '400',
   },
 });

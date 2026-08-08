@@ -197,19 +197,19 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   total: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   totalHint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   eyeBtn: {
@@ -239,13 +239,13 @@ const styles = StyleSheet.create({
   },
   currency: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   name: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   rowAmounts: {
@@ -254,13 +254,13 @@ const styles = StyleSheet.create({
   },
   balance: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   usd: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   actions: {
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.1,
   },

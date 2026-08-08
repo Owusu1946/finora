@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  rowLabel: { fontSize: 13, fontWeight: '500' },
-  rowValue: { fontSize: 14, letterSpacing: -0.2 },
+  rowLabel: { fontSize: 14, fontWeight: '500' },
+  rowValue: { fontSize: 15, letterSpacing: -0.2 },
   nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
   navBtn: {
     flex: 1,
@@ -153,6 +153,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLabel: { fontSize: 15, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 15, fontWeight: '600' },
+  navLabel: { fontSize: 16, fontWeight: '600' },
+  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
 });

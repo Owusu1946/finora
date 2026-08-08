@@ -36,7 +36,7 @@ function markdownStyles(colors: Palette) {
   const body = {
     color: colors.foreground,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 25,
     letterSpacing: -0.2,
   } as const;
@@ -52,7 +52,7 @@ function markdownStyles(colors: Palette) {
     heading1: {
       ...body,
       fontFamily: 'DMSans_400Regular',
-      fontSize: 22,
+      fontSize: 23,
       lineHeight: 28,
       fontWeight: '700',
       marginBottom: 8,
@@ -61,7 +61,7 @@ function markdownStyles(colors: Palette) {
     heading2: {
       ...body,
       fontFamily: 'DMSans_400Regular',
-      fontSize: 19,
+      fontSize: 20,
       lineHeight: 26,
       fontWeight: '700',
       marginBottom: 6,
@@ -70,7 +70,7 @@ function markdownStyles(colors: Palette) {
     heading3: {
       ...body,
       fontFamily: 'DMSans_400Regular',
-      fontSize: 17,
+      fontSize: 18,
       lineHeight: 24,
       fontWeight: '600',
       marginBottom: 4,
@@ -101,7 +101,7 @@ function markdownStyles(colors: Palette) {
       backgroundColor: colors.muted,
       color: colors.foreground,
       fontFamily: 'monospace',
-      fontSize: 14,
+      fontSize: 15,
       paddingHorizontal: 5,
       paddingVertical: 1,
       borderRadius: Radius.sm,
@@ -110,7 +110,7 @@ function markdownStyles(colors: Palette) {
       backgroundColor: colors.muted,
       color: colors.foreground,
       fontFamily: 'monospace',
-      fontSize: 13,
+      fontSize: 14,
       lineHeight: 20,
       padding: 12,
       marginVertical: 8,
@@ -122,7 +122,7 @@ function markdownStyles(colors: Palette) {
       backgroundColor: colors.muted,
       color: colors.foreground,
       fontFamily: 'monospace',
-      fontSize: 13,
+      fontSize: 14,
       lineHeight: 20,
       padding: 12,
       marginVertical: 8,

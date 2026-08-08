@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   },
   digit: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 22,
+    fontSize: 23,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },

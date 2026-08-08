@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
@@ -95,13 +95,13 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     letterSpacing: -0.2,
     paddingVertical: 0,
   },
   error: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
 });

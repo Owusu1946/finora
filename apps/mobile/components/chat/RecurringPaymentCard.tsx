@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   amount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 24,
+    fontSize: 25,
     fontWeight: '600',
     letterSpacing: -0.5,
   },
@@ -251,12 +251,12 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   rowValue: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
   },
   actions: {
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   btnPrimary: {},
   btnLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

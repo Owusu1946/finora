@@ -137,13 +137,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   subtitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 23,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   linkRow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
     paddingVertical: 4,

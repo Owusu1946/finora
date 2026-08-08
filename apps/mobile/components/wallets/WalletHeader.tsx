@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   accountLabelText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   eyeBtn: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   balanceDisplay: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 34,
+    fontSize: 35,
     fontWeight: '700',
     letterSpacing: -1,
     marginVertical: 4,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   actionBtnText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   pressed: {

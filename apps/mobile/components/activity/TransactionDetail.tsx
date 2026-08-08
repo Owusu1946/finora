@@ -213,13 +213,13 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 32,
+    fontSize: 33,
     fontWeight: '600',
     letterSpacing: -0.8,
   },
   counterparty: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     textTransform: 'capitalize',
   },
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
     marginBottom: 2,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
   },
   detailValueWrap: {
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   detailValue: {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

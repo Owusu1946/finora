@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   editLink: { paddingVertical: 4, paddingHorizontal: 4 },
-  editText: { fontSize: 13, fontWeight: '500' },
+  editText: { fontSize: 14, fontWeight: '500' },
   navSolo: { flexDirection: 'row', gap: 10 },
   navBtn: {
     flex: 1,
@@ -506,5 +506,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLabel: { fontSize: 15, fontWeight: '600' },
+  navLabel: { fontSize: 16, fontWeight: '600' },
 });

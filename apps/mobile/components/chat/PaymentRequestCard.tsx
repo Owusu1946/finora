@@ -520,18 +520,18 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   title: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   memo: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     fontStyle: 'italic',
     marginTop: -4,
@@ -550,12 +550,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 14,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '500',
   },
   skip: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
     paddingVertical: 4,
@@ -569,18 +569,18 @@ const styles = StyleSheet.create({
   },
   reviewAmount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   reviewMemo: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
   },
   reviewHint: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   nav: {
@@ -604,12 +604,12 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   navLabelPrimary: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   qrWrap: {
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
   qrHint: {
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     marginTop: -4,
   },
@@ -639,12 +639,12 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
   fieldValue: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
   },
   primaryLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
   secondaryBtnFull: {
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   },
   secondaryLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   modalBackdrop: {
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '600',
   },
   modalQr: {

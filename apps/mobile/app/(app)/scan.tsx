@@ -333,7 +333,7 @@ function AmountStep({
         onPress={onBack}
         style={styles.linkBtn}
       >
-        <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>Scan again</Text>
+        <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan again</Text>
       </Pressable>
     </>
   );
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
   },
   primaryBtn: {
     marginTop: 8,
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
   },
   secondaryBtn: {
@@ -472,12 +472,12 @@ const styles = StyleSheet.create({
   },
   pasteLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   error: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 18,
   },
 });

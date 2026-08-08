@@ -369,26 +369,26 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
   intent: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   amount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
+    fontSize: 29,
     fontWeight: '700',
     letterSpacing: -0.8,
     marginTop: 4,
   },
   meta: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
   },
   divider: {
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   kindText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
   },
@@ -420,13 +420,13 @@ const styles = StyleSheet.create({
   },
   itemLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   itemAmount: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   },
   stepLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
+    fontSize: 14,
     letterSpacing: -0.1,
   },
   actions: {
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   btnPrimary: {},
   btnLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
   sentBlock: {
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   },
   txId: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   },
   linkLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
