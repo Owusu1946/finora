@@ -44,9 +44,7 @@ export default function PayRequestDeepLinkScreen() {
   return (
     <View style={[styles.wrap, { backgroundColor: colors.background }]}>
       <ActivityIndicator color={colors.mutedForeground} />
-      <Text style={[styles.label, { color: colors.mutedForeground }]}>
-        Opening payment…
-      </Text>
+      <Text style={[styles.label, { color: colors.mutedForeground }]}>Opening payment…</Text>
     </View>
   );
 }
@@ -59,6 +57,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   label: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
   },
 });

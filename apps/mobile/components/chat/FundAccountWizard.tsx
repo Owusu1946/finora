@@ -10,14 +10,13 @@ import {
   View,
 } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { MockQrCode } from '@/components/chat/MockQrCode';
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { haptics } from '@/lib/haptics';
 import {
   FUNDING_SOURCE_COPY,
   methodsForSource,
@@ -25,6 +24,7 @@ import {
   type FundingMethod,
   type FundingSource,
 } from '@/lib/funding-methods';
+import { haptics } from '@/lib/haptics';
 
 export type FundAccountSeed = {
   source?: FundingSource;
@@ -63,12 +63,13 @@ export function FundAccountWizard({
   const { colors, isDark } = useTheme();
   const [step, setStep] = useState<Step>(() => initialStep(seed));
   const [source, setSource] = useState<FundingSource | null>(seed.source ?? null);
-  const [method, setMethod] = useState<FundingMethod | null>(() =>
-    pickMethod({
-      source: seed.source === 'momo_pull' ? 'mobile_money' : seed.source,
-      currency: seed.currency,
-      methodId: seed.methodId,
-    }) ?? null,
+  const [method, setMethod] = useState<FundingMethod | null>(
+    () =>
+      pickMethod({
+        source: seed.source === 'momo_pull' ? 'mobile_money' : seed.source,
+        currency: seed.currency,
+        methodId: seed.methodId,
+      }) ?? null,
   );
   const [amount, setAmount] = useState<number | null>(seed.amount ?? null);
   const [customAmount, setCustomAmount] = useState('');
@@ -92,7 +93,11 @@ export function FundAccountWizard({
       if (cancelled || creditedRef.current) return;
       const credited =
         amount ??
-        (source === 'crypto' ? 50 : source === 'mobile_money' || source === 'momo_pull' ? 100 : 250);
+        (source === 'crypto'
+          ? 50
+          : source === 'mobile_money' || source === 'momo_pull'
+            ? 100
+            : 250);
       const tx = `WW-IN-${Math.floor(Math.random() * 1e8)
         .toString(16)
         .padStart(8, '0')
@@ -152,12 +157,7 @@ export function FundAccountWizard({
   })();
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       {step === 'source' ? (
         <View style={styles.block}>
           <WizardStepHeader
@@ -169,8 +169,7 @@ export function FundAccountWizard({
           <View style={styles.sourceList}>
             {allSources.map((s) => {
               const copy = FUNDING_SOURCE_COPY[s];
-              const icon =
-                s === 'bank' ? 'bank' : s === 'crypto' ? 'wallet' : 'phone';
+              const icon = s === 'bank' ? 'bank' : s === 'crypto' ? 'wallet' : 'phone';
               return (
                 <Pressable
                   key={s}
@@ -273,12 +272,7 @@ export function FundAccountWizard({
             title={method.title}
             subtitle={method.subtitle}
           />
-          <View
-            style={[
-              styles.qrWrap,
-              { backgroundColor: isDark ? '#fff' : colors.background },
-            ]}
-          >
+          <View style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}>
             <MockQrCode
               value={method.qrPayload}
               size={140}
@@ -348,9 +342,7 @@ export function FundAccountWizard({
                 { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={[styles.primaryLabel, { color: colors.background }]}>
-                I’ve sent it
-              </Text>
+              <Text style={[styles.primaryLabel, { color: colors.background }]}>I’ve sent it</Text>
             </Pressable>
           </View>
           <NavBack
@@ -466,9 +458,7 @@ export function FundAccountWizard({
                 },
               ]}
             >
-              <Text style={[styles.primaryLabel, { color: colors.background }]}>
-                Send prompt
-              </Text>
+              <Text style={[styles.primaryLabel, { color: colors.background }]}>Send prompt</Text>
             </Pressable>
           </View>
         </View>
@@ -489,9 +479,7 @@ export function FundAccountWizard({
           <View style={styles.waitingBox}>
             <ActivityIndicator color={colors.foreground} />
             <Text style={[styles.waitingText, { color: colors.mutedForeground }]}>
-              {source === 'momo_pull'
-                ? 'Collection pending…'
-                : 'Listening for an inbound credit…'}
+              {source === 'momo_pull' ? 'Collection pending…' : 'Listening for an inbound credit…'}
             </Text>
           </View>
         </View>
@@ -574,6 +562,7 @@ const styles = StyleSheet.create({
   sourceBlurb: { fontSize: 12, fontWeight: '500', marginTop: 2, lineHeight: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.3,
@@ -627,6 +616,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
   },
@@ -646,6 +636,7 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -653,6 +644,7 @@ const styles = StyleSheet.create({
   },
   successAmount: {
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '700',
     letterSpacing: -0.5,

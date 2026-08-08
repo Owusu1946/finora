@@ -1,9 +1,10 @@
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+
+import type { Transaction } from '@/components/activity/types';
 
 import { TransactionDetail } from '@/components/activity/TransactionDetail';
-import type { Transaction } from '@/components/activity/types';
 import { useTheme } from '@/hooks/use-theme';
 import { getTransaction } from '@/lib/transactions-storage';
 
@@ -59,6 +60,7 @@ const styles = StyleSheet.create({
   missing: {
     marginTop: 40,
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
   },

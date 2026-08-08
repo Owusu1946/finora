@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   label: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,

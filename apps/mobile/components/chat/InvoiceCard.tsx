@@ -1,3 +1,5 @@
+import { useAui } from '@assistant-ui/react-native';
+import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,10 +10,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
+
+import type { Invoice } from '@/components/invoices/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
-import type { Invoice } from '@/components/invoices/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -20,7 +22,6 @@ import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { dismissInvoice, markInvoicePaid } from '@/lib/invoices-storage';
 import { recordSentPayment } from '@/lib/transactions-storage';
-import { useAui } from '@assistant-ui/react-native';
 
 type InvoiceCardProps = {
   invoice: Invoice;
@@ -140,12 +141,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
 
   return (
     <>
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <View style={styles.header}>
           <Animated.View
             style={[
@@ -331,9 +327,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
           <Pressable
             onPress={() => {
               haptics.selection();
-              router.push(
-                `/transaction/${txRecordId ?? transactionId}` as Href,
-              );
+              router.push(`/transaction/${txRecordId ?? transactionId}` as Href);
             }}
             style={({ pressed }) => [
               styles.linkBtn,
@@ -345,9 +339,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               size={16}
               color={colors.foreground}
             />
-            <Text style={[styles.linkLabel, { color: colors.foreground }]}>
-              View transaction
-            </Text>
+            <Text style={[styles.linkLabel, { color: colors.foreground }]}>View transaction</Text>
           </Pressable>
         ) : null}
       </View>
@@ -404,10 +396,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
   amount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.5,
@@ -418,6 +412,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   sourceText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'capitalize',
@@ -433,10 +428,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rowLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },
   rowValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
@@ -457,6 +454,7 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {},
   btnLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -477,6 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
   },
   linkBtn: {
@@ -489,6 +488,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   linkLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },

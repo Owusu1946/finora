@@ -11,8 +11,9 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { Icon } from '@/components/ui/icon';
 import type { IconName } from '@/components/ui/icon-mappings';
+
+import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -31,7 +32,9 @@ export function SettingsScreen({
 
   if (loading) {
     return (
-      <View style={[styles.screenRoot, styles.screenCenter, { backgroundColor: colors.background }]}>
+      <View
+        style={[styles.screenRoot, styles.screenCenter, { backgroundColor: colors.background }]}
+      >
         <ActivityIndicator color={colors.mutedForeground} />
       </View>
     );
@@ -239,10 +242,7 @@ export function SettingsSegmented({
               haptics.selection();
               onChange(opt.id);
             }}
-            style={[
-              styles.segmentItem,
-              active && { backgroundColor: colors.background },
-            ]}
+            style={[styles.segmentItem, active && { backgroundColor: colors.background }]}
           >
             <Text
               style={[
@@ -277,6 +277,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -289,6 +290,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sectionFooter: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 17,
@@ -315,11 +317,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   rowLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   rowDetail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: -0.1,
@@ -338,6 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   segmentLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,

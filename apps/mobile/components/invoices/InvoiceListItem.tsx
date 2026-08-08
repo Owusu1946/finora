@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import type { Invoice } from '@/components/invoices/types';
+
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -96,10 +97,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   detail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
   },
   right: {
@@ -107,10 +110,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   amount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   status: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'capitalize',

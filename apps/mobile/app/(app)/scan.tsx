@@ -440,6 +440,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
   },
   primaryBtn: {
@@ -449,6 +450,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '700',
   },
@@ -469,10 +471,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   pasteLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
   error: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     lineHeight: 18,
   },

@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import {
-  RecurringPaymentCard,
-  type RecurringDraft,
-} from '@/components/chat/RecurringPaymentCard';
+import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
+
+import { RecurringPaymentCard, type RecurringDraft } from '@/components/chat/RecurringPaymentCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
-import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -125,7 +123,7 @@ export function SchedulePaymentWizard({
         label,
         value: destValue.trim() || '—',
       },
-      reference: purpose ? `${purpose} · auto-pay` : seed.reference ?? 'Scheduled payment',
+      reference: purpose ? `${purpose} · auto-pay` : (seed.reference ?? 'Scheduled payment'),
       nextRunAt: computeNextRun(frequency, dayOfMonth, timeOfDay),
     };
   }, [
@@ -176,12 +174,7 @@ export function SchedulePaymentWizard({
   }
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <WizardStepHeader
         step={stepIndex}
         total={STEPS.length}
@@ -602,14 +595,17 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
   },
   hint: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
   sectionLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -624,6 +620,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   railTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -637,6 +634,7 @@ const styles = StyleSheet.create({
   },
   previewText: {
     flex: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,

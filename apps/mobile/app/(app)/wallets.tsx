@@ -208,6 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   toastText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '600',
   },

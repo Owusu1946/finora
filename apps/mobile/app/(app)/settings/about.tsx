@@ -1,6 +1,15 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Linking, LayoutAnimation, Platform, Pressable, StyleSheet, Text, UIManager, View } from 'react-native';
+import {
+  Linking,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
+} from 'react-native';
 
 import { SettingsScreen } from '@/components/settings/SettingsPrimitives';
 import { Icon } from '@/components/ui/icon';
@@ -12,8 +21,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const APP_VERSION =
-  Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '0.1.0';
+const APP_VERSION = Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '0.1.0';
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -64,9 +72,7 @@ function FaqItem({
           color={colors.mutedForeground}
         />
       </Pressable>
-      {open ? (
-        <Text style={[styles.faqA, { color: colors.mutedForeground }]}>{a}</Text>
-      ) : null}
+      {open ? <Text style={[styles.faqA, { color: colors.mutedForeground }]}>{a}</Text> : null}
     </View>
   );
 }
@@ -85,10 +91,7 @@ export default function AboutFinoraScreen() {
       </View>
 
       <View
-        style={[
-          styles.faqCard,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
+        style={[styles.faqCard, { backgroundColor: colors.composer, borderColor: colors.border }]}
       >
         {FAQS.map((item, index) => (
           <View
@@ -140,11 +143,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '700',
     letterSpacing: -0.6,
   },
   subtitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -164,11 +169,13 @@ const styles = StyleSheet.create({
   },
   faqQ: {
     flex: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   faqA: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -182,10 +189,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   link: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
   },
   dot: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
   },
 });

@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     letterSpacing: -0.2,
   },

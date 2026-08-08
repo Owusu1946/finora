@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   input: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     lineHeight: 22,
     minHeight: 28,

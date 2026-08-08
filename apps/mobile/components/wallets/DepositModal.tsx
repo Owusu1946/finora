@@ -277,6 +277,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sheetTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -286,10 +287,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sheetBalanceLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '500',
   },
   sheetBalanceValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 20,
     fontWeight: '700',
     marginTop: 2,
@@ -301,12 +304,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sheetRowLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   sheetRowValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -330,6 +335,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   primaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },

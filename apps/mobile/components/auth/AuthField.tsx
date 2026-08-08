@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  type TextInputProps,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -84,6 +77,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: -0.1,
@@ -100,13 +94,14 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     letterSpacing: -0.2,
     paddingVertical: 0,
   },
   error: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },
 });
-

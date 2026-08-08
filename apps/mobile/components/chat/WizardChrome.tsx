@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -35,12 +36,7 @@ export function WizardChip({
       ]}
     >
       {leading ? <View style={styles.leading}>{leading}</View> : null}
-      <Text
-        style={[
-          styles.label,
-          { color: selected ? colors.background : colors.foreground },
-        ]}
-      >
+      <Text style={[styles.label, { color: selected ? colors.background : colors.foreground }]}>
         {label}
       </Text>
     </Pressable>
@@ -100,6 +96,7 @@ const styles = StyleSheet.create({
     marginLeft: -2,
   },
   label: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -108,6 +105,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   progress: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -123,12 +121,14 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 18,
     fontWeight: '600',
     letterSpacing: -0.3,
     marginTop: 4,
   },
   subtitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,

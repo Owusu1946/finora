@@ -25,12 +25,14 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.4,
     marginBottom: 8,
   },
   description: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     lineHeight: 24,
     letterSpacing: -0.2,

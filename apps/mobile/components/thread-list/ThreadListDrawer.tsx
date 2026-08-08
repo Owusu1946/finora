@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   brand: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 20,
     fontWeight: '700',
     letterSpacing: -0.4,
@@ -263,11 +264,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   newLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
   },
   sectionLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
     paddingHorizontal: 20,
@@ -305,6 +308,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   tabLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     letterSpacing: -0.2,
   },
@@ -322,6 +326,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   navLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     letterSpacing: -0.2,
   },
@@ -334,6 +339,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   badgeText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '700',
   },

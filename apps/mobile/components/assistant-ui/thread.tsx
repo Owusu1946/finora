@@ -153,6 +153,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   brand: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.6,
@@ -160,6 +161,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   welcome: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.4,
@@ -179,6 +181,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   chipText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     letterSpacing: -0.2,
   },

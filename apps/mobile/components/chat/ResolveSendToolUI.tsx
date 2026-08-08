@@ -1,36 +1,21 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
-import {
-  SendMoneyWizard,
-  type SendMoneySeed,
-} from '@/components/chat/SendMoneyWizard';
-import { WizardStepHeader } from '@/components/chat/WizardChrome';
 import type { Contact } from '@/components/contacts/types';
+
+import { SendMoneyWizard, type SendMoneySeed } from '@/components/chat/SendMoneyWizard';
+import { WizardStepHeader } from '@/components/chat/WizardChrome';
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  appendAgentFollowUp,
-  paymentSentFollowUp,
-} from '@/lib/agent-follow-up';
+import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up';
 import { contactToSendSeed, findContactsByName } from '@/lib/contact-lookup';
-import {
-  findContactByIdentifier,
-  listContacts,
-  saveContact,
-} from '@/lib/contacts-storage';
+import { findContactByIdentifier, listContacts, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
@@ -107,9 +92,7 @@ function ResolveSendFlow({
   const router = useRouter();
   const { requestApproval, modal } = usePasscodeApproval();
 
-  const [candidates, setCandidates] = useState<ResolveSendCandidate[]>(
-    seed.candidates ?? [],
-  );
+  const [candidates, setCandidates] = useState<ResolveSendCandidate[]>(seed.candidates ?? []);
   const [loadingContacts, setLoadingContacts] = useState(
     !(seed.candidates && seed.candidates.length > 0),
   );
@@ -123,9 +106,7 @@ function ResolveSendFlow({
   const [txRecordId, setTxRecordId] = useState<string | null>(null);
   const [contactSaved, setContactSaved] = useState(false);
   const [contactSaving, setContactSaving] = useState(false);
-  const [confirmedPayment, setConfirmedPayment] = useState<PaymentConfirmation | null>(
-    null,
-  );
+  const [confirmedPayment, setConfirmedPayment] = useState<PaymentConfirmation | null>(null);
   const finishedRef = useRef(false);
   const followedUpRef = useRef(false);
 
@@ -212,10 +193,7 @@ function ResolveSendFlow({
   if (loadingContacts) {
     return (
       <View
-        style={[
-          styles.preparing,
-          { borderColor: colors.border, backgroundColor: colors.composer },
-        ]}
+        style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
       >
         <ActivityIndicator color={colors.mutedForeground} />
       </View>
@@ -224,19 +202,12 @@ function ResolveSendFlow({
 
   if (!contact) {
     return (
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <WizardStepHeader
           step={1}
           total={2}
           title={
-            seed.queryName
-              ? `Who did you mean by “${seed.queryName}”?`
-              : 'Who should receive it?'
+            seed.queryName ? `Who did you mean by “${seed.queryName}”?` : 'Who should receive it?'
           }
           subtitle={
             seed.queryName
@@ -309,9 +280,7 @@ function ResolveSendFlow({
           }}
           style={styles.editLink}
         >
-          <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>
-            ← Change contact
-          </Text>
+          <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>← Change contact</Text>
         </Pressable>
       ) : null}
       <SendMoneyWizard
@@ -433,9 +402,11 @@ const styles = StyleSheet.create({
   initials: {
     color: '#fff',
     fontWeight: '700',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
   },
   contactName: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },

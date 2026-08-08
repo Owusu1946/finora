@@ -75,8 +75,7 @@ export function ReasoningTrigger({
 }) {
   const { colors } = useTheme();
   const { open, onToggle } = useReasoningContext();
-  const suffix =
-    typeof duration === 'number' && duration > 0 ? ` (${Math.round(duration)}s)` : '';
+  const suffix = typeof duration === 'number' && duration > 0 ? ` (${Math.round(duration)}s)` : '';
 
   return (
     <Pressable
@@ -164,6 +163,7 @@ const styles = StyleSheet.create({
   triggerLabel: {
     flex: 1,
     flexShrink: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: -0.1,
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
     maxHeight: 200,
   },
   reasoningText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     lineHeight: 19,
     letterSpacing: -0.1,

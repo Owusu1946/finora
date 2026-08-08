@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   label: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontVariant: ['tabular-nums'],
   },

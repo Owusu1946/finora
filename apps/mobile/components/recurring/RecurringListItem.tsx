@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import type { RecurringPayment } from '@/components/recurring/types';
+
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -89,9 +90,7 @@ export function RecurringListItem({
             <Text style={[styles.action, { color: '#10B981' }]}>Resume</Text>
           </Pressable>
         ) : (
-          <Text style={[styles.status, { color: STATUS_COLOR[item.status] }]}>
-            {item.status}
-          </Text>
+          <Text style={[styles.status, { color: STATUS_COLOR[item.status] }]}>{item.status}</Text>
         )}
       </View>
     </View>
@@ -118,10 +117,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   detail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
   },
   right: {
@@ -129,14 +130,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   amount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   action: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '600',
   },
   status: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'capitalize',

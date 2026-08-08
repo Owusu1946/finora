@@ -166,11 +166,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   subtitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
@@ -185,6 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   linkRow: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',

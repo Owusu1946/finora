@@ -1,4 +1,5 @@
 import type { TextMessagePartComponent } from '@assistant-ui/react-native';
+
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useMemo } from 'react';
@@ -6,12 +7,10 @@ import { StyleSheet } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
 import type { Palette } from '@/constants/theme';
+
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  createPaymentAppLink,
-  preparationIdFromUrl,
-} from '@/lib/open-payment-link';
+import { createPaymentAppLink, preparationIdFromUrl } from '@/lib/open-payment-link';
 
 function openLink(url: string) {
   const prep = preparationIdFromUrl(url);
@@ -36,6 +35,7 @@ function onLinkPress(url: string) {
 function markdownStyles(colors: Palette) {
   const body = {
     color: colors.foreground,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     lineHeight: 25,
     letterSpacing: -0.2,
@@ -51,6 +51,7 @@ function markdownStyles(colors: Palette) {
     },
     heading1: {
       ...body,
+      fontFamily: 'DMSans_400Regular',
       fontSize: 22,
       lineHeight: 28,
       fontWeight: '700',
@@ -59,6 +60,7 @@ function markdownStyles(colors: Palette) {
     },
     heading2: {
       ...body,
+      fontFamily: 'DMSans_400Regular',
       fontSize: 19,
       lineHeight: 26,
       fontWeight: '700',
@@ -67,6 +69,7 @@ function markdownStyles(colors: Palette) {
     },
     heading3: {
       ...body,
+      fontFamily: 'DMSans_400Regular',
       fontSize: 17,
       lineHeight: 24,
       fontWeight: '600',
@@ -177,7 +180,10 @@ export const AssistantMarkdownText: TextMessagePartComponent = ({ text }) => {
   const styles = useMemo(() => markdownStyles(colors), [colors]);
 
   return (
-    <Markdown style={styles} onLinkPress={onLinkPress}>
+    <Markdown
+      style={styles}
+      onLinkPress={onLinkPress}
+    >
       {text}
     </Markdown>
   );

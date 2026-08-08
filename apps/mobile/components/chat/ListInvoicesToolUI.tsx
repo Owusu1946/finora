@@ -1,8 +1,9 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import type { Invoice } from '@/components/invoices/types';
+
+import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import { useTheme } from '@/hooks/use-theme';
 
 type ListInvoicesArgs = {
@@ -40,10 +41,7 @@ export const ListInvoicesToolUI = makeAssistantToolUI<ListInvoicesArgs, ListInvo
     if (!invoices?.length) {
       return (
         <View
-          style={[
-            styles.empty,
-            { borderColor: colors.border, backgroundColor: colors.composer },
-          ]}
+          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
             No unpaid supplier invoices found. Connect Gmail in Integrations or add one manually.
@@ -80,6 +78,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   preparingText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -90,6 +89,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   stackTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 4,

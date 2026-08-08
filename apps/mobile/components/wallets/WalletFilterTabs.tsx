@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   filterTabText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },

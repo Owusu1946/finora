@@ -166,10 +166,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   counterparty: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   detail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '400',
   },
@@ -178,6 +180,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   amount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -195,6 +198,7 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'capitalize',

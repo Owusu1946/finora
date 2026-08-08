@@ -12,9 +12,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { AccountType } from '@/lib/account';
+
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { AccountType } from '@/lib/account';
 import { setAccountType } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
@@ -268,6 +269,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   skip: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.1,
@@ -289,18 +291,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   brandTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '600',
     letterSpacing: -0.6,
     textAlign: 'center',
   },
   subtitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,
@@ -321,6 +326,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   ctaLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,

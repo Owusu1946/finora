@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sheetTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -118,6 +119,7 @@ const styles = StyleSheet.create({
   },
   addOptionText: {
     flex: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },

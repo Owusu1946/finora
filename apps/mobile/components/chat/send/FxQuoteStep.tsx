@@ -39,10 +39,7 @@ export function FxQuoteStep({
         subtitle='Indicative rate · finalised at settlement'
       />
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.background, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.background, borderColor: colors.border }]}
       >
         <Row
           label='You send'
@@ -86,9 +83,7 @@ export function FxQuoteStep({
             },
           ]}
         >
-          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>
-            Review payment
-          </Text>
+          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>Review payment</Text>
         </Pressable>
       </View>
     </View>
@@ -115,6 +110,7 @@ function Row({
           {
             color: colors.foreground,
             fontWeight: emphasize ? '700' : '600',
+            fontFamily: 'DMSans_400Regular',
             fontSize: emphasize ? 17 : 14,
           },
         ]}

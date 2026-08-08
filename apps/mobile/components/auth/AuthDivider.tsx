@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
   label: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },

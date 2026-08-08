@@ -1,13 +1,14 @@
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
+
+import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import { InvoiceListItem } from '@/components/invoices/InvoiceListItem';
-import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 import { useTheme } from '@/hooks/use-theme';
-import { listInvoices } from '@/lib/invoices-storage';
 import { haptics } from '@/lib/haptics';
+import { listInvoices } from '@/lib/invoices-storage';
 
 const FILTERS: { id: InvoiceFilter; label: string }[] = [
   { id: 'due', label: 'Due' },
@@ -59,10 +60,7 @@ export default function InvoicesScreen() {
                 haptics.selection();
                 setFilter(item.id);
               }}
-              style={[
-                styles.chip,
-                { backgroundColor: active ? colors.foreground : colors.muted },
-              ]}
+              style={[styles.chip, { backgroundColor: active ? colors.foreground : colors.muted }]}
             >
               <Text
                 style={[
@@ -147,12 +145,14 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   chipLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -179,6 +180,7 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -195,6 +197,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 18,
     fontWeight: '600',
   },

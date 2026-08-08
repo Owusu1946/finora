@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAui } from '@assistant-ui/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -53,12 +53,7 @@ export default function IntegrationsScreen() {
         Connect tools so Finora can find supplier invoices and bills for you.
       </Text>
 
-      <View
-        style={[
-          styles.card,
-          { borderColor: colors.border, backgroundColor: colors.composer },
-        ]}
-      >
+      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
         <View style={styles.cardHeader}>
           <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             <Icon
@@ -105,9 +100,7 @@ export default function IntegrationsScreen() {
                   },
                 ]}
               >
-                <Text style={[styles.btnLabel, { color: colors.background }]}>
-                  Review in chat
-                </Text>
+                <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
               </Pressable>
               <Pressable
                 disabled={busy}
@@ -168,12 +161,14 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -202,10 +197,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   cardTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
   },
   cardDetail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -218,6 +215,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   found: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -238,10 +236,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   btnLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },
   hint: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 18,

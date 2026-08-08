@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   accountLabelText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   balanceDisplay: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 34,
     fontWeight: '700',
     letterSpacing: -1,
@@ -162,6 +164,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   actionBtnText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
   },

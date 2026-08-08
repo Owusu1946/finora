@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
   },
   initials: {
     color: '#fff',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: -0.3,
@@ -119,10 +120,12 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   name: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   detail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '400',
   },
@@ -132,6 +135,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   dateText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '400',
   },

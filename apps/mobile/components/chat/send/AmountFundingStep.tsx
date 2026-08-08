@@ -130,6 +130,7 @@ const styles = StyleSheet.create({
   block: { gap: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   section: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.3,
@@ -141,6 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.composer,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
   },

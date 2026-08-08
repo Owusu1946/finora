@@ -1,10 +1,11 @@
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
+
+import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
 import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
 import { ActivityListItem } from '@/components/activity/ActivityListItem';
-import type { ActivityFilter, Transaction } from '@/components/activity/types';
 import { useTheme } from '@/hooks/use-theme';
 import { listTransactions } from '@/lib/transactions-storage';
 
@@ -77,12 +78,14 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,

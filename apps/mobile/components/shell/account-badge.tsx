@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.2,
@@ -93,12 +94,14 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   pillLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.1,
   },
   text: {
     marginTop: 2,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },

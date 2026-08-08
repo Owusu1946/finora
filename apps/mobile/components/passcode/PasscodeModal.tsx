@@ -158,7 +158,12 @@ export function PasscodeModal({
             if (key === 'bio') {
               // Placeholder only — Face ID / Touch ID not wired yet.
               if (mode !== 'unlock') {
-                return <View key='bio' style={styles.key} />;
+                return (
+                  <View
+                    key='bio'
+                    style={styles.key}
+                  />
+                );
               }
               return (
                 <Pressable
@@ -243,12 +248,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.5,
     textAlign: 'center',
   },
   subtitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
     letterSpacing: -0.2,
@@ -269,6 +276,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   error: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
@@ -297,6 +305,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   keyLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '500',
     letterSpacing: -0.4,

@@ -314,9 +314,7 @@ export function FxConvertModal({
                         onPress={handleMax}
                         style={[styles.maxBadge, { backgroundColor: colors.foreground }]}
                       >
-                        <Text style={[styles.maxBadgeText, { color: colors.background }]}>
-                          Max
-                        </Text>
+                        <Text style={[styles.maxBadgeText, { color: colors.background }]}>Max</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -543,6 +541,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sheetTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -564,6 +563,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   accessoryDoneText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -576,6 +576,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   legLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -586,6 +587,7 @@ const styles = StyleSheet.create({
   },
   amountInput: {
     flex: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 34,
     fontWeight: '600',
     letterSpacing: -0.5,
@@ -603,6 +605,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   currencyPillCode: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -613,6 +616,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   availableText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },
@@ -622,6 +626,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   maxBadgeText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -648,11 +653,13 @@ const styles = StyleSheet.create({
   },
   warnText: {
     flex: 1,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
   },
   rateHint: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
     textAlign: 'center',
@@ -665,6 +672,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   primaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -674,10 +682,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   successTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
   },
   successSub: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     textAlign: 'center',
   },
@@ -702,6 +712,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   pickerTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
   },
@@ -723,14 +734,17 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   pickerCode: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '700',
   },
   pickerName: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },
   pickerBalance: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },

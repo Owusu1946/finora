@@ -271,6 +271,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   chipName: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     maxWidth: 140,
   },
@@ -309,11 +310,13 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   pillName: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     maxWidth: 160,
     flexShrink: 1,
   },
   pillExt: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',

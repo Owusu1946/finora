@@ -299,13 +299,7 @@ export function ConversionCard({
   );
 }
 
-function ConvertedHero({
-  quote,
-  conversionId,
-}: {
-  quote: ConversionQuote;
-  conversionId?: string;
-}) {
+function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conversionId?: string }) {
   const { colors } = useTheme();
   const scale = useRef(new Animated.Value(0.7)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -419,11 +413,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: -0.1,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 20,
     fontWeight: '600',
     letterSpacing: -0.4,
@@ -447,10 +443,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   legLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '500',
   },
   legValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
@@ -462,10 +460,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   metaLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },
   metaValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     letterSpacing: -0.1,
@@ -485,6 +485,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   btnLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
@@ -499,6 +500,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   statusText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -519,6 +521,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     letterSpacing: -0.2,
   },
@@ -536,15 +539,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   sentTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   sentAmount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   sentTo: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,

@@ -1,6 +1,6 @@
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
 
 import {
   SettingsRow,
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetter: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 22,
     fontWeight: '600',
   },
@@ -129,11 +130,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   profileName: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   profileEmail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
   },

@@ -1,10 +1,10 @@
 import {
-    AuiIf,
-    ErrorPrimitive,
-    groupPartByType,
-    MessagePrimitive,
-    useAuiState,
-    type TextMessagePartComponent,
+  AuiIf,
+  ErrorPrimitive,
+  groupPartByType,
+  MessagePrimitive,
+  useAuiState,
+  type TextMessagePartComponent,
 } from '@assistant-ui/react-native';
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
@@ -13,20 +13,20 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import {
-    MessageAttachmentPill,
-    MessageDocumentAttachment,
-    MessageImageAttachment,
+  MessageAttachmentPill,
+  MessageDocumentAttachment,
+  MessageImageAttachment,
 } from './attachment';
 import { EditComposer } from './edit-composer';
 import { AssistantMarkdownText } from './markdown-text';
 import { MessageActionBar } from './message-action-bar';
 import { MessageBranchPicker } from './message-branch-picker';
 import {
-    Reasoning,
-    ReasoningContent,
-    ReasoningRoot,
-    ReasoningText,
-    ReasoningTrigger,
+  Reasoning,
+  ReasoningContent,
+  ReasoningRoot,
+  ReasoningText,
+  ReasoningTrigger,
 } from './reasoning';
 import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from './tool-group';
 
@@ -218,6 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   userText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     lineHeight: 22,
     letterSpacing: -0.2,
@@ -248,6 +249,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   errorText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     lineHeight: 20,
   },

@@ -1,6 +1,6 @@
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 
 import {
   SettingsRow,
@@ -197,11 +197,13 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
   },
   emptyTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   emptyBody: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
@@ -221,6 +223,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   kindText: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.2,
@@ -232,16 +235,19 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   memoryTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   memoryDetail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
   },
   memoryWhen: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
     marginTop: 2,

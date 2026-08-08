@@ -186,7 +186,11 @@ function ScanButton() {
         { backgroundColor: pressed ? colors.muted : 'transparent' },
       ]}
     >
-      <Icon name='qr' size={20} color={colors.mutedForeground} />
+      <Icon
+        name='qr'
+        size={20}
+        color={colors.mutedForeground}
+      />
     </Pressable>
   );
 }
@@ -286,6 +290,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     lineHeight: 22,
     minHeight: 28,

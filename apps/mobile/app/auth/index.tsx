@@ -67,18 +67,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   brand: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '600',
     letterSpacing: -0.6,
     textAlign: 'center',
   },
   subtitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '500',
     letterSpacing: -0.2,

@@ -1,9 +1,10 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+
+import type { Contact, ContactFilter } from '@/components/contacts/types';
 
 import { ContactListItem } from '@/components/contacts/ContactListItem';
-import type { Contact, ContactFilter } from '@/components/contacts/types';
 import { useTheme } from '@/hooks/use-theme';
 import { listContacts } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
@@ -121,12 +122,14 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   subtitle: {
     marginTop: 6,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,
@@ -143,6 +146,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   chipLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -152,6 +156,7 @@ const styles = StyleSheet.create({
   empty: {
     marginTop: 32,
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     lineHeight: 20,

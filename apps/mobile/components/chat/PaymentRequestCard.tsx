@@ -1,27 +1,16 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { MockQrCode } from '@/components/chat/MockQrCode';
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import {
-  createPaymentAppLink,
-  createPaymentHttpsLink,
-} from '@/lib/open-payment-link';
+import { createPaymentAppLink, createPaymentHttpsLink } from '@/lib/open-payment-link';
 import { registerPaymentRequest } from '@/lib/payment-request-registry';
 
 export type PaymentRequestSeed = {
@@ -54,11 +43,7 @@ function initialStep(seed: PaymentRequestSeed): Step {
   return 'review';
 }
 
-function buildMockRequest(
-  amount: number,
-  currency: string,
-  memo?: string,
-): PaymentRequestResult {
+function buildMockRequest(amount: number, currency: string, memo?: string): PaymentRequestResult {
   const preparationId = `prep_payreq_${Date.now().toString(36)}`;
   const link = createPaymentHttpsLink(preparationId);
   // QR + Share open the app into chat (Expo Go / standalone deep link).
@@ -130,12 +115,7 @@ export function PaymentRequestWizard({
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <WizardStepHeader
         step={stepIndex}
         total={STEPS.length}
@@ -263,7 +243,9 @@ export function PaymentRequestWizard({
             {formatPaymentAmount(amount, currency)}
           </Text>
           {memo.trim() ? (
-            <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>“{memo.trim()}”</Text>
+            <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>
+              “{memo.trim()}”
+            </Text>
           ) : (
             <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>No note</Text>
           )}
@@ -358,12 +340,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <View style={styles.header}>
         <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
           <Icon
@@ -542,15 +519,18 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 20,
     fontWeight: '600',
     letterSpacing: -0.4,
   },
   memo: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
     fontStyle: 'italic',
@@ -569,10 +549,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
     paddingHorizontal: 14,
+    fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '500',
   },
   skip: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
@@ -586,15 +568,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reviewAmount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 28,
     fontWeight: '600',
     letterSpacing: -0.6,
   },
   reviewMemo: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
   },
   reviewHint: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
@@ -618,10 +603,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   navLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
   navLabelPrimary: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -632,6 +619,7 @@ const styles = StyleSheet.create({
   },
   qrHint: {
     textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
     marginTop: -4,
@@ -650,10 +638,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   fieldLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '500',
   },
   fieldValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     letterSpacing: -0.2,
@@ -677,6 +667,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -690,6 +681,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   secondaryLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -709,6 +701,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalTitle: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 18,
     fontWeight: '600',
   },

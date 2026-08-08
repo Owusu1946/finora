@@ -131,11 +131,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   title: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   detail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '400',
   },
@@ -154,6 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
   },
   statusLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'capitalize',

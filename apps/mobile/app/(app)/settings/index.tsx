@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 
 import {
   SettingsRow,
@@ -18,7 +20,6 @@ import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { hasPasscode } from '@/lib/passcode-storage';
 import { resetFinoraSession } from '@/lib/reset-session';
 import { useSettings } from '@/lib/settings-context';
-import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 
 function themeLabel(theme: ThemePreference): string {
   switch (theme) {
@@ -246,6 +247,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetter: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 22,
     fontWeight: '600',
   },
@@ -255,15 +257,18 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   profileName: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
   profileEmail: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
     fontWeight: '500',
   },
   profileType: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     marginTop: 2,

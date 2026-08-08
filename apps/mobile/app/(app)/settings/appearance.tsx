@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
+
 import {
   SettingsScreen,
   SettingsSection,
@@ -8,7 +10,6 @@ import {
 } from '@/components/settings/SettingsPrimitives';
 import { useTheme } from '@/hooks/use-theme';
 import { useSettings } from '@/lib/settings-context';
-import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 
 export default function AppearanceSettingsScreen() {
   const { colors } = useTheme();
@@ -70,6 +71,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hint: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,

@@ -1,8 +1,10 @@
+import { useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
+
+import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -10,7 +12,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { saveRecurring } from '@/lib/recurring-storage';
-import { useAui } from '@assistant-ui/react-native';
 
 export type RecurringDraft = {
   recipientName: string;
@@ -62,12 +63,7 @@ export function RecurringPaymentCard({
 
   return (
     <>
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.composer, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <View style={styles.header}>
           <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             <Icon
@@ -234,10 +230,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   eyebrow: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 13,
     fontWeight: '500',
   },
   amount: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 24,
     fontWeight: '600',
     letterSpacing: -0.5,
@@ -252,10 +250,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rowLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '500',
   },
   rowValue: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
   },
@@ -275,6 +275,7 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {},
   btnLabel: {
+    fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '600',
   },
