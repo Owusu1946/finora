@@ -6,7 +6,7 @@ External agents (ChatGPT, Claude, Cursor) connect here. Tools call `apps/api` â€
 
 ```bash
 # from repo root
-bun run mcp
+pnpm --filter @finora/mcp dev
 ```
 
 Endpoints (local Wrangler):

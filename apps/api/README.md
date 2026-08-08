@@ -7,5 +7,5 @@ Owns auth, approvals, WeWire access, and webhooks.
 ```bash
 # from repo root
 cp apps/api/.dev.vars.example apps/api/.dev.vars
-bun run api
+pnpm --filter @finora/api dev
 ```

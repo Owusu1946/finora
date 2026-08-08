@@ -1,6 +1,6 @@
 [mcp_servers.mcp-docs-server]
-command = "bunx"
+command = "pnpm"
 args = [
-    "-y",
+    "dlx",
     "@assistant-ui/mcp-docs-server",
 ]
