@@ -1,6 +1,5 @@
 import { useAui } from '@assistant-ui/react-native';
-import { DrawerToggleButton } from '@react-navigation/drawer';
-import { useDrawerStatus } from '@react-navigation/drawer';
+import { DrawerToggleButton, useDrawerStatus } from '@react-navigation/drawer';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
