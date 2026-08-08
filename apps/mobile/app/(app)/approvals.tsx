@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import type { ApprovalFilter, ApprovalRequest } from '@/components/approvals/types';
 
@@ -42,6 +43,22 @@ export default function ApprovalsScreen() {
   }, [filter, items]);
 
   const pendingCount = items.filter((a) => a.status === 'pending').length;
+  const handleApprovalPress = useCallback(
+    (approval: ApprovalRequest) => {
+      router.push(`/approval/${approval.id}` as Href);
+    },
+    [router],
+  );
+  const renderApproval = useCallback(
+    ({ item, index }: { item: ApprovalRequest; index: number }) => (
+      <ApprovalListItem
+        approval={item}
+        isLast={index === filtered.length - 1}
+        onPress={handleApprovalPress}
+      />
+    ),
+    [filtered.length, handleApprovalPress],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -85,6 +102,10 @@ export default function ApprovalsScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -94,15 +115,7 @@ export default function ApprovalsScreen() {
               : 'Nothing in this filter yet.'}
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <ApprovalListItem
-            approval={item}
-            isLast={index === filtered.length - 1}
-            onPress={(approval) => {
-              router.push(`/approval/${approval.id}` as Href);
-            }}
-          />
-        )}
+        renderItem={renderApproval}
       />
     </View>
   );

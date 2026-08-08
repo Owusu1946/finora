@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -7,7 +8,6 @@ import {
   Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 

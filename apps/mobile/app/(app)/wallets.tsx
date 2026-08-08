@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';

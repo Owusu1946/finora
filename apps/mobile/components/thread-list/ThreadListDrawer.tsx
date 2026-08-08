@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 import {
@@ -8,7 +9,7 @@ import {
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';

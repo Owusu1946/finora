@@ -1,7 +1,8 @@
+import { AppText as Text } from '@/components/ui/text';
 import Constants from 'expo-constants';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 

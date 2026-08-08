@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import {
   AuiIf,
   ErrorPrimitive,
@@ -6,10 +7,10 @@ import {
   useAuiState,
   type TextMessagePartComponent,
 } from '@assistant-ui/react-native';
-import { useEffect, useRef } from 'react';
-import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
+import { memo, useEffect, useRef } from 'react';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
 
-import { Radius } from '@/constants/theme';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 import {
@@ -187,17 +188,18 @@ function AssistantMessage() {
   );
 }
 
-export function MessageBubble() {
+export const MessageBubble = memo(function MessageBubble() {
   const role = useAuiState((s) => s.message.role);
   if (role === 'user') return <UserMessage />;
   return <AssistantMessage />;
-}
+});
 
 const styles = StyleSheet.create({
   userContainer: {
     alignItems: 'flex-end',
   },
   userBubble: {
+    ...Rounded,
     maxWidth: '85%',
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -242,6 +244,7 @@ const styles = StyleSheet.create({
     marginLeft: -4,
   },
   error: {
+    ...Rounded,
     marginTop: 8,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth,

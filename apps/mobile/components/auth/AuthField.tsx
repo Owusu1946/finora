@@ -1,5 +1,6 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, View, type TextInputProps } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';

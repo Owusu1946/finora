@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Transaction } from '@/components/activity/types';
 

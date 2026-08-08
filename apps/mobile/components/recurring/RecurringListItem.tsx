@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import type { RecurringPayment } from '@/components/recurring/types';
 
@@ -19,7 +21,7 @@ const FREQ: Record<RecurringPayment['frequency'], string> = {
   quarterly: 'Quarterly',
 };
 
-export function RecurringListItem({
+export const RecurringListItem = memo(function RecurringListItem({
   item,
   isLast,
   onPause,
@@ -95,7 +97,7 @@ export function RecurringListItem({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

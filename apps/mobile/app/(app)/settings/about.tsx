@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import {
@@ -6,7 +7,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   UIManager,
   View,
 } from 'react-native';

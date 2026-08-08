@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';

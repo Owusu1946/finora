@@ -1,16 +1,19 @@
+import { AppText as Text } from '@/components/ui/text';
 import { ThreadPrimitive } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
 import { Composer } from './composer';
 import { MessageBubble } from './message';
 import { ScrollToBottomButton, useScrollToBottom } from './scroll-to-bottom';
+
+const renderMessage = () => <MessageBubble />;
 
 const suggestions = [
   'Check my balance',
@@ -76,8 +79,12 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
             keyboardDismissMode='interactive'
             onScroll={onScroll}
             scrollEventThrottle={16}
+            initialNumToRender={8}
+            maxToRenderPerBatch={6}
+            updateCellsBatchingPeriod={50}
+            windowSize={7}
           >
-            {() => <MessageBubble />}
+            {renderMessage}
           </ThreadPrimitive.MessagesFlatList>
 
           <ScrollToBottomButton
@@ -175,6 +182,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
+    ...Rounded,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: Radius.pill,

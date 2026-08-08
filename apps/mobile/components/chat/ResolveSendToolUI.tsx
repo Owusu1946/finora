@@ -1,7 +1,8 @@
+import { AppText as Text } from '@/components/ui/text';
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

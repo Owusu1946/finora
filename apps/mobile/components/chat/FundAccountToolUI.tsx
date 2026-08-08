@@ -2,14 +2,13 @@ import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { FundingSource } from '@/lib/funding-methods';
+
+import { FundAccountWizard, type FundAccountSeed } from '@/components/chat/FundAccountWizard';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
-import {
-  FundAccountWizard,
-  type FundAccountSeed,
-} from '@/components/chat/FundAccountWizard';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import type { FundingSource } from '@/lib/funding-methods';
 import { recordReceivedFunding } from '@/lib/transactions-storage';
 
 type FundAccountArgs = FundAccountSeed;
@@ -26,10 +25,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.preparing,
-        { borderColor: colors.border, backgroundColor: colors.composer },
-      ]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <ActivityIndicator color={colors.mutedForeground} />
     </View>
@@ -107,7 +103,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

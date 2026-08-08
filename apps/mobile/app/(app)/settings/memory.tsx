@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   SettingsRow,

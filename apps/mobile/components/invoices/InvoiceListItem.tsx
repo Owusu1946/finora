@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
@@ -18,7 +20,7 @@ function formatDue(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function InvoiceListItem({
+export const InvoiceListItem = memo(function InvoiceListItem({
   invoice,
   isLast,
   onPress,
@@ -75,7 +77,7 @@ export function InvoiceListItem({
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

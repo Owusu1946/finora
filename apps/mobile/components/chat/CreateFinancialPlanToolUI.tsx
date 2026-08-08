@@ -3,14 +3,16 @@ import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
+
 import { FinancialPlanConfirmationCard } from '@/components/approvals/FinancialPlanConfirmationCard';
 import {
   MOCK_BUSINESS_PLAN,
   type FinancialPlanItem,
   type FinancialPlanPayload,
 } from '@/components/approvals/types';
-import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
@@ -56,10 +58,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.preparing,
-        { borderColor: colors.border, backgroundColor: colors.composer },
-      ]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <ActivityIndicator color={colors.mutedForeground} />
     </View>
@@ -249,7 +248,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { Transaction } from '@/components/activity/types';
 

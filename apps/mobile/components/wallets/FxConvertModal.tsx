@@ -1,12 +1,11 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   ScrollView,
   Pressable,
   Modal,
-  TextInput,
   Keyboard,
   KeyboardAvoidingView,
   Platform,

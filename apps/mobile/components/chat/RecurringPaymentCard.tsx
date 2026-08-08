@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 

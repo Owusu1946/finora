@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { Icon } from '@/components/ui/icon';

@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { CorridorFieldKey, SettlementMethod } from '@/lib/send-corridors';
 

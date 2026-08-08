@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { StyleSheet, View } from 'react-native';
 
 import type { TransactionTimelineStep } from '@/components/activity/types';
 

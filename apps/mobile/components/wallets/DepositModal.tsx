@@ -1,7 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
 import {
   StyleSheet,
-  Text,
   View,
   ScrollView,
   Pressable,

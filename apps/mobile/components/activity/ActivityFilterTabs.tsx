@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

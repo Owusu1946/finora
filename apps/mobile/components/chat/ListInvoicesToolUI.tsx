@@ -1,9 +1,11 @@
+import { AppText as Text } from '@/components/ui/text';
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ListInvoicesArgs = {
@@ -71,7 +73,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
@@ -85,7 +87,7 @@ const styles = StyleSheet.create({
   empty: {
     marginVertical: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     padding: 16,
   },
   emptyText: {

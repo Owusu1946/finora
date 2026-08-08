@@ -145,6 +145,8 @@ export default function AppLayout() {
       screenOptions={{
         headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
+        headerLeftContainerStyle: { paddingLeft: 16 },
+        headerRightContainerStyle: { gap: 10, paddingRight: 16 },
         headerShadowVisible: false,
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
@@ -160,7 +162,7 @@ export default function AppLayout() {
         },
         sceneStyle: {
           backgroundColor: colors.background,
-          boxShadow: '-6px 0px 20px rgba(0, 0, 0, 0.2)',
+          boxShadow: '-5px 0px 16px rgba(0, 0, 0, 0.14)',
         },
       }}
     >
@@ -172,7 +174,6 @@ export default function AppLayout() {
           headerTransparent: true,
           headerStyle: { backgroundColor: 'transparent' },
           headerLeft: () => <DrawerTrigger />,
-          headerRightContainerStyle: { gap: 8, marginRight: 12 },
         }}
       />
       <Drawer.Screen
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
   },
   drawerAction: {

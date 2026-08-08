@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';

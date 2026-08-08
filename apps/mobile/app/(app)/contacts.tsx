@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Contact, ContactFilter } from '@/components/contacts/types';
 
@@ -42,6 +43,20 @@ export default function ContactsScreen() {
     }
     return contacts;
   }, [contacts, filter]);
+  const handleContactPress = useCallback(() => {
+    router.push('/(app)');
+  }, [router]);
+  const renderContact = useCallback(
+    ({ item, index }: { item: Contact; index: number }) => (
+      <ContactListItem
+        contact={item}
+        index={index}
+        isLast={index === filtered.length - 1}
+        onPress={handleContactPress}
+      />
+    ),
+    [filtered.length, handleContactPress],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -90,6 +105,10 @@ export default function ContactsScreen() {
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          contentInsetAdjustmentBehavior='automatic'
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={9}
           onRefresh={refresh}
           refreshing={loading}
           ListEmptyComponent={
@@ -97,18 +116,7 @@ export default function ContactsScreen() {
               No contacts yet. Send money in chat, then tap Save contact.
             </Text>
           }
-          renderItem={({ item, index }) => (
-            <ContactListItem
-              contact={item}
-              index={index}
-              isLast={index === filtered.length - 1}
-              onPress={(contact) => {
-                router.push('/(app)');
-                // Chat will pick up a pay-by-name prompt next when wired; for now land in chat.
-                void contact;
-              }}
-            />
-          )}
+          renderItem={renderContact}
         />
       )}
     </View>

@@ -1,7 +1,8 @@
+import { AppText as Text } from '@/components/ui/text';
 import type { ReasoningMessagePartComponent } from '@assistant-ui/react-native';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';

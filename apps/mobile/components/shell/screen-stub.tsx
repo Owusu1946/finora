@@ -1,4 +1,5 @@
-import { Text, StyleSheet, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 

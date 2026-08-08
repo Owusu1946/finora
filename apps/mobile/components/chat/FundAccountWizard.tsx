@@ -1,3 +1,4 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -5,8 +6,6 @@ import {
   Pressable,
   Share,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 

@@ -1,3 +1,4 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useAui } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -9,8 +10,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 

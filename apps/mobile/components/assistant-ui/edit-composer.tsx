@@ -1,5 +1,6 @@
+import { AppTextInput as TextInput } from '@/components/ui/text';
 import { useAui, useAuiState, ComposerPrimitive } from '@assistant-ui/react-native';
-import { View, TextInput, Platform, StyleSheet } from 'react-native';
+import { View, Platform, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';

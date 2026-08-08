@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   View,
   type StyleProp,
   type ViewStyle,
@@ -14,6 +13,7 @@ import {
 import type { IconName } from '@/components/ui/icon-mappings';
 
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -286,6 +286,7 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     borderRadius: Radius.card,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: Radius.pill,
     padding: 3,
     gap: 2,
   },
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: Radius.pill,
   },
   segmentLabel: {
     fontFamily: 'DMSans_400Regular',

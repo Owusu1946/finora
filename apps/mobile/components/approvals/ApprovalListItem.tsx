@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
@@ -53,7 +55,11 @@ function detailFor(approval: ApprovalRequest): string {
   return `${approval.agent} · ${dest} · ${relativeTime(approval.createdAt)}`;
 }
 
-export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItemProps) {
+export const ApprovalListItem = memo(function ApprovalListItem({
+  approval,
+  isLast,
+  onPress,
+}: ApprovalListItemProps) {
   const { colors } = useTheme();
   const { status } = approval;
   const isPlan = approval.kind === 'plan';
@@ -109,7 +115,7 @@ export function ApprovalListItem({ approval, isLast, onPress }: ApprovalListItem
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

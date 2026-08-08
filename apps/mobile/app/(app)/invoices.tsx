@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
@@ -42,6 +43,28 @@ export default function InvoicesScreen() {
     if (filter === 'all') return items.filter((i) => i.status !== 'dismissed');
     return items.filter((i) => i.status === filter);
   }, [filter, items]);
+  const handleInvoicePress = useCallback(
+    (invoice: Invoice) => {
+      if (invoice.status === 'due') {
+        setSelected(invoice);
+        return;
+      }
+      if (invoice.transactionId) {
+        router.push(`/transaction/${invoice.transactionId}` as Href);
+      }
+    },
+    [router],
+  );
+  const renderInvoice = useCallback(
+    ({ item, index }: { item: Invoice; index: number }) => (
+      <InvoiceListItem
+        invoice={item}
+        isLast={index === filtered.length - 1}
+        onPress={handleInvoicePress}
+      />
+    ),
+    [filtered.length, handleInvoicePress],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -79,6 +102,10 @@ export default function InvoicesScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -86,21 +113,7 @@ export default function InvoicesScreen() {
             No invoices here. Try “Find unpaid invoices” in chat after connecting Gmail.
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <InvoiceListItem
-            invoice={item}
-            isLast={index === filtered.length - 1}
-            onPress={(invoice) => {
-              if (invoice.status === 'due') {
-                setSelected(invoice);
-                return;
-              }
-              if (invoice.transactionId) {
-                router.push(`/transaction/${invoice.transactionId}` as Href);
-              }
-            }}
-          />
-        )}
+        renderItem={renderInvoice}
       />
 
       <Modal

@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { ApprovalRequest } from '@/components/approvals/types';
 

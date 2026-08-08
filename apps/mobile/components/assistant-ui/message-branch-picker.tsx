@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import { BranchPickerPrimitive, useAuiState } from '@assistant-ui/react-native';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';

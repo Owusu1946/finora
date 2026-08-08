@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Platform, StyleSheet, Text } from 'react-native';
+import { Alert, Platform, StyleSheet } from 'react-native';
 
 import { useChangePasscode } from '@/components/passcode/use-change-passcode';
 import {

@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import type { RecurringFilter, RecurringPayment } from '@/components/recurring/types';
 
@@ -37,6 +38,31 @@ export default function RecurringScreen() {
     if (filter === 'all') return items.filter((r) => r.status !== 'cancelled');
     return items.filter((r) => r.status === filter);
   }, [filter, items]);
+  const handlePause = useCallback(
+    async (item: RecurringPayment) => {
+      await updateRecurringStatus(item.id, 'paused');
+      void refresh();
+    },
+    [refresh],
+  );
+  const handleResume = useCallback(
+    async (item: RecurringPayment) => {
+      await updateRecurringStatus(item.id, 'active');
+      void refresh();
+    },
+    [refresh],
+  );
+  const renderRecurring = useCallback(
+    ({ item, index }: { item: RecurringPayment; index: number }) => (
+      <RecurringListItem
+        item={item}
+        isLast={index === filtered.length - 1}
+        onPause={handlePause}
+        onResume={handleResume}
+      />
+    ),
+    [filtered.length, handlePause, handleResume],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -75,6 +101,10 @@ export default function RecurringScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -82,20 +112,7 @@ export default function RecurringScreen() {
             No recurring payments yet.
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <RecurringListItem
-            item={item}
-            isLast={index === filtered.length - 1}
-            onPause={async (rec) => {
-              await updateRecurringStatus(rec.id, 'paused');
-              void refresh();
-            }}
-            onResume={async (rec) => {
-              await updateRecurringStatus(rec.id, 'active');
-              void refresh();
-            }}
-          />
-        )}
+        renderItem={renderRecurring}
       />
     </View>
   );

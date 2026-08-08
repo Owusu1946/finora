@@ -1,3 +1,4 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -5,7 +6,6 @@ import {
   Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 

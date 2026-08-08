@@ -59,14 +59,20 @@ export const Colors: { light: Palette; dark: Palette } = {
 };
 
 export const Radius = {
-  sm: 6,
-  md: 8,
-  lg: 10,
-  card: 16,
-  bubble: 18,
-  composer: 24,
-  attachment: 14,
+  // Keep the scale visibly rounded across the app. These values are shared by
+  // cards, controls, bubbles, and inputs; avoid introducing one-off radii.
+  sm: 14,
+  md: 18,
+  lg: 22,
+  card: 26,
+  bubble: 28,
+  composer: 32,
+  attachment: 22,
   pill: 999,
+} as const;
+
+export const Rounded = {
+  borderCurve: 'continuous' as const,
 } as const;
 
 export const Spacing = {

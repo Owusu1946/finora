@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 
@@ -8,12 +8,13 @@ import {
   SettingsSegmented,
   SettingsSwitchRow,
 } from '@/components/settings/SettingsPrimitives';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useSettings } from '@/lib/settings-context';
 
 export default function AppearanceSettingsScreen() {
   const { colors } = useTheme();
-  const { settings, loading, update, setTheme, setLanguage } = useSettings();
+  const { settings, loading, update, setTheme, setLanguage, setLargerText } = useSettings();
 
   return (
     <SettingsScreen loading={loading}>
@@ -48,6 +49,17 @@ export default function AppearanceSettingsScreen() {
             ]}
           />
         </View>
+      </SettingsSection>
+
+      <SettingsSection title='Accessibility'>
+        <SettingsSwitchRow
+          label='Larger text'
+          detail='Increase text across Finora by 2px'
+          icon='eye'
+          value={settings.largerText}
+          onValueChange={(value) => void setLargerText(value)}
+          isLast
+        />
       </SettingsSection>
 
       <SettingsSection>

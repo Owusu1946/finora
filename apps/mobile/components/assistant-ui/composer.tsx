@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { View, Platform, ActionSheetIOS, Alert, StyleSheet, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
-import { Radius, Spacing } from '@/constants/theme';
+import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -282,11 +282,14 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   shell: {
+    ...Rounded,
     flexDirection: 'column',
-    gap: 6,
+    gap: 10,
     borderRadius: Radius.composer,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 8,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
   },
 
   input: {
@@ -306,14 +309,15 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
+    paddingTop: 2,
   },
   spacer: {
     flex: 1,
   },
   actionButton: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

@@ -4,19 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
-import {
-  SendMoneyWizard,
-  type SendMoneySeed,
-} from '@/components/chat/SendMoneyWizard';
+import type { PurposeCode, SettlementMethod } from '@/lib/send-corridors';
+
+import { SendMoneyWizard, type SendMoneySeed } from '@/components/chat/SendMoneyWizard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  appendAgentFollowUp,
-  paymentSentFollowUp,
-} from '@/lib/agent-follow-up';
+import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up';
 import { findContactByIdentifier, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
-import type { PurposeCode, SettlementMethod } from '@/lib/send-corridors';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
 type PreparePaymentArgs = SendMoneySeed & {
@@ -43,10 +39,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[
-        styles.preparing,
-        { borderColor: colors.border, backgroundColor: colors.composer },
-      ]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <ActivityIndicator color={colors.mutedForeground} />
     </View>
@@ -86,11 +79,7 @@ function PreparePaymentFlow({
   resultStatus: PreparePaymentResult['status'] | undefined;
   preparationId: string;
   resultTransactionId?: string;
-  onFinished: (payload: {
-    preparationId: string;
-    transactionId: string;
-    status: 'sent';
-  }) => void;
+  onFinished: (payload: { preparationId: string; transactionId: string; status: 'sent' }) => void;
   onCancelled: () => void;
 }) {
   const aui = useAui();
@@ -215,10 +204,7 @@ function PreparePaymentFlow({
   );
 }
 
-export const PreparePaymentToolUI = makeAssistantToolUI<
-  PreparePaymentArgs,
-  PreparePaymentResult
->({
+export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, PreparePaymentResult>({
   toolName: 'prepare_payment',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
@@ -257,7 +243,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

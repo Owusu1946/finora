@@ -1,11 +1,10 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import {
-  RecurringPaymentCard,
-  type RecurringDraft,
-} from '@/components/chat/RecurringPaymentCard';
 import type { RecurringFrequency } from '@/components/recurring/types';
+
+import { RecurringPaymentCard, type RecurringDraft } from '@/components/chat/RecurringPaymentCard';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type PrepareRecurringArgs = {
@@ -81,7 +80,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     minHeight: 72,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },

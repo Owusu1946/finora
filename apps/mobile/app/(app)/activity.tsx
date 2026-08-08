@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 
 import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
@@ -34,6 +35,23 @@ export default function ActivityScreen() {
     return txs.filter((t) => t.direction === filter);
   }, [filter, txs]);
 
+  const handleTransactionPress = useCallback(
+    (tx: Transaction) => {
+      router.push(`/transaction/${tx.id}` as Href);
+    },
+    [router],
+  );
+  const renderTransaction = useCallback(
+    ({ item, index }: { item: Transaction; index: number }) => (
+      <ActivityListItem
+        tx={item}
+        isLast={index === filtered.length - 1}
+        onPress={handleTransactionPress}
+      />
+    ),
+    [filtered.length, handleTransactionPress],
+  );
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
@@ -50,6 +68,10 @@ export default function ActivityScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        contentInsetAdjustmentBehavior='automatic'
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
@@ -57,15 +79,7 @@ export default function ActivityScreen() {
             No transactions yet.
           </Text>
         }
-        renderItem={({ item, index }) => (
-          <ActivityListItem
-            tx={item}
-            isLast={index === filtered.length - 1}
-            onPress={(tx) => {
-              router.push(`/transaction/${tx.id}` as Href);
-            }}
-          />
-        )}
+        renderItem={renderTransaction}
       />
     </View>
   );

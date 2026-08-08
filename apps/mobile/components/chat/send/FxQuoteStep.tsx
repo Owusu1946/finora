@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardStepHeader } from '@/components/chat/WizardChrome';

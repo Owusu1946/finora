@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';

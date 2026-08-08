@@ -1,5 +1,6 @@
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 

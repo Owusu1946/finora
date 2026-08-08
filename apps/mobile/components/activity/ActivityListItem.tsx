@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 
@@ -42,7 +44,11 @@ function formatAmount(symbol: string, amount: number): string {
   })}`;
 }
 
-export function ActivityListItem({ tx, isLast, onPress }: ActivityListItemProps) {
+export const ActivityListItem = memo(function ActivityListItem({
+  tx,
+  isLast,
+  onPress,
+}: ActivityListItemProps) {
   const { colors } = useTheme();
 
   const sign = tx.direction === 'received' ? '+' : '-';
@@ -133,7 +139,7 @@ export function ActivityListItem({ tx, isLast, onPress }: ActivityListItemProps)
       </View>
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

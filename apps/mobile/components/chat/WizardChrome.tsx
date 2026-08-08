@@ -1,6 +1,7 @@
+import { AppText as Text } from '@/components/ui/text';
 import type { ReactNode } from 'react';
 
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

@@ -1,5 +1,6 @@
+import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
+import { StyleSheet, View, Pressable, Modal } from 'react-native';
 
 import { CurrencyIcon, SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
