@@ -1,10 +1,18 @@
-import { AppText as Text } from '@/components/ui/text';
 import { ThreadPrimitive } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useIsFocused } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Keyboard, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Keyboard,
+  Platform,
+  Pressable,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -45,7 +53,11 @@ function SuggestionChip({ prompt }: { prompt: string }) {
 function EmptyState() {
   const { colors } = useTheme();
   return (
-    <View style={styles.empty}>
+    <Pressable
+      accessible={false}
+      onPress={Keyboard.dismiss}
+      style={styles.empty}
+    >
       <Text style={[styles.brand, { color: colors.mutedForeground }]}>Finora</Text>
       <Text style={[styles.welcome, { color: colors.foreground }]}>How can I help you today?</Text>
       <View style={styles.chips}>
@@ -56,7 +68,7 @@ function EmptyState() {
           />
         ))}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -100,21 +112,26 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
 export function Thread() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const isFocused = useIsFocused();
   const { colors } = useTheme();
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
 
   useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    if (!isFocused) {
+      setKeyboardVisible(false);
+      Keyboard.dismiss();
+      return;
+    }
 
-    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    setKeyboardVisible(Keyboard.isVisible());
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
 
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, []);
+  }, [isFocused]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -122,13 +139,14 @@ export function Thread() {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={headerHeight}
+        enabled={isFocused}
       >
         <View style={styles.flex}>
           <ChatMessages headerHeight={headerHeight} />
         </View>
         <View
           style={{
-            paddingBottom: keyboardVisible ? 8 : insets.bottom + 8,
+            paddingBottom: keyboardVisible ? 2 : insets.bottom + 6,
           }}
         >
           <Composer />

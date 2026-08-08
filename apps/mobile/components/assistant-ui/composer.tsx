@@ -1,6 +1,14 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useRouter } from 'expo-router';
-import { View, Platform, ActionSheetIOS, Alert, StyleSheet, Pressable } from 'react-native';
+import {
+  View,
+  Platform,
+  ActionSheetIOS,
+  Alert,
+  Keyboard,
+  StyleSheet,
+  Pressable,
+} from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
@@ -202,7 +210,11 @@ function SendButton() {
   return (
     <ComposerPrimitive.Send
       accessibilityLabel='Send message'
-      onPressIn={() => canSend && haptics.success()}
+      onPressIn={() => {
+        if (!canSend) return;
+        haptics.success();
+        Keyboard.dismiss();
+      }}
       style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
       <Icon
@@ -309,7 +321,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 4,
     paddingTop: 2,
   },
   spacer: {

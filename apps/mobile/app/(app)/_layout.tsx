@@ -1,9 +1,10 @@
 import { useAui } from '@assistant-ui/react-native';
 import { DrawerToggleButton, useDrawerStatus } from '@react-navigation/drawer';
 import { DrawerActions } from '@react-navigation/native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
@@ -138,6 +139,13 @@ function screenOptions(title: string) {
 
 export default function AppLayout() {
   const { colors } = useTheme();
+  const pathname = usePathname();
+  const previousPathname = useRef(pathname);
+
+  useEffect(() => {
+    if (previousPathname.current !== pathname) Keyboard.dismiss();
+    previousPathname.current = pathname;
+  }, [pathname]);
 
   return (
     <Drawer
