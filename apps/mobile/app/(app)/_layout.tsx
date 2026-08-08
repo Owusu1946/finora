@@ -73,7 +73,7 @@ function ScanHeaderButton() {
   );
 }
 
-function ChatDrawerButton() {
+function DrawerTrigger() {
   const { colors } = useTheme();
   const drawerStatus = useDrawerStatus();
 
@@ -143,6 +143,7 @@ export default function AppLayout() {
     <Drawer
       drawerContent={(props) => <ThreadListDrawer {...props} />}
       screenOptions={{
+        headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
         headerShadowVisible: false,
         headerTintColor: colors.foreground,
@@ -170,7 +171,7 @@ export default function AppLayout() {
           headerTitle: () => null,
           headerTransparent: true,
           headerStyle: { backgroundColor: 'transparent' },
-          headerLeft: () => <ChatDrawerButton />,
+          headerLeft: () => <DrawerTrigger />,
           headerRightContainerStyle: { gap: 8, marginRight: 12 },
         }}
       />
