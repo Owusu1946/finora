@@ -57,7 +57,7 @@ function EmptyState() {
   );
 }
 
-function ChatMessages() {
+function ChatMessages({ headerHeight }: { headerHeight: number }) {
   const { flatListRef, isAtBottom, scrollToBottom, onScroll } = useScrollToBottom();
 
   return (
@@ -70,7 +70,7 @@ function ChatMessages() {
           <ThreadPrimitive.MessagesFlatList
             ref={flatListRef}
             style={styles.flex}
-            contentContainerStyle={styles.messageList}
+            contentContainerStyle={[styles.messageList, { paddingTop: headerHeight + 20 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps='handled'
             keyboardDismissMode='interactive'
@@ -117,7 +117,7 @@ export function Thread() {
         keyboardVerticalOffset={headerHeight}
       >
         <View style={styles.flex}>
-          <ChatMessages />
+          <ChatMessages headerHeight={headerHeight} />
         </View>
         <View
           style={{

@@ -1,8 +1,9 @@
 import { useAui } from '@assistant-ui/react-native';
+import { DrawerToggleButton } from '@react-navigation/drawer';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { Pressable } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
@@ -24,7 +25,14 @@ function NewChatButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={{ marginRight: 8 }}
+      style={({ pressed }) => [
+        styles.headerAction,
+        {
+          backgroundColor: colors.muted,
+          borderColor: colors.border,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
     >
       <Icon
         name='compose'
@@ -47,7 +55,14 @@ function ScanHeaderButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      style={{ marginRight: 12 }}
+      style={({ pressed }) => [
+        styles.headerAction,
+        {
+          backgroundColor: colors.muted,
+          borderColor: colors.border,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
     >
       <Icon
         name='qr'
@@ -55,6 +70,22 @@ function ScanHeaderButton() {
         color={colors.foreground}
       />
     </Pressable>
+  );
+}
+
+function ChatDrawerButton() {
+  const { colors } = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.headerAction,
+        styles.drawerAction,
+        { backgroundColor: colors.muted, borderColor: colors.border },
+      ]}
+    >
+      <DrawerToggleButton tintColor={colors.foreground} />
+    </View>
   );
 }
 
@@ -114,11 +145,15 @@ export default function AppLayout() {
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
         headerTitleAlign: 'center',
-        drawerType: 'front',
+        drawerType: 'slide',
+        overlayColor: 'rgba(0, 0, 0, 0.12)',
         swipeEnabled: true,
         drawerStyle: {
           width: 300,
           backgroundColor: colors.background,
+          borderRightColor: colors.border,
+          borderRightWidth: StyleSheet.hairlineWidth,
+          boxShadow: '6px 0px 20px rgba(0, 0, 0, 0.18)',
         },
         sceneStyle: {
           backgroundColor: colors.background,
@@ -127,7 +162,14 @@ export default function AppLayout() {
     >
       <Drawer.Screen
         name='index'
-        options={screenOptions('Chat')}
+        options={{
+          title: '',
+          headerTitle: () => null,
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent' },
+          headerLeft: () => <ChatDrawerButton />,
+          headerRightContainerStyle: { gap: 8, marginRight: 12 },
+        }}
       />
       <Drawer.Screen
         name='wallets'
@@ -195,3 +237,17 @@ export default function AppLayout() {
     </Drawer>
   );
 }
+
+const styles = StyleSheet.create({
+  headerAction: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  drawerAction: {
+    overflow: 'hidden',
+  },
+});
