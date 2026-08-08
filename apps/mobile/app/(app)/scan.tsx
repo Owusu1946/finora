@@ -1,10 +1,13 @@
 import { useAui } from '@assistant-ui/react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,11 +19,7 @@ import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import {
-  buildScanPayPrompt,
-  parsePaymentQr,
-  type ParsedPaymentQr,
-} from '@/lib/payment-qr';
+import { buildScanPayPrompt, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
 import { sendChatPrompt } from '@/lib/send-chat-prompt';
 
 const AMOUNTS = [25, 50, 100, 250, 500];
@@ -32,6 +31,7 @@ export default function ScanScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const aui = useAui();
+  const headerHeight = useHeaderHeight();
   const [permission, requestPermission] = useCameraPermissions();
   const [phase, setPhase] = useState<Phase>('scan');
   const [parsed, setParsed] = useState<ParsedPaymentQr | null>(null);
@@ -95,9 +95,11 @@ export default function ScanScreen() {
     finishPay(parsed, amount, currency);
   };
 
+  let content: ReactNode;
+
   if (Platform.OS === 'web') {
-    return (
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    content = (
+      <>
         <WizardStepHeader
           step={1}
           total={1}
@@ -128,17 +130,13 @@ export default function ScanScreen() {
             error={error}
           />
         )}
-      </View>
+      </>
     );
-  }
-
-  if (!permission) {
+  } else if (!permission) {
     return <View style={[styles.screen, { backgroundColor: colors.background }]} />;
-  }
-
-  if (!permission.granted) {
-    return (
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+  } else if (!permission.granted) {
+    content = (
+      <>
         <WizardStepHeader
           step={1}
           total={1}
@@ -152,9 +150,7 @@ export default function ScanScreen() {
           }}
           style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
         >
-          <Text style={[styles.primaryBtnText, { color: colors.background }]}>
-            Allow camera
-          </Text>
+          <Text style={[styles.primaryBtnText, { color: colors.background }]}>Allow camera</Text>
         </Pressable>
         <PasteBlock
           paste={paste}
@@ -162,13 +158,11 @@ export default function ScanScreen() {
           onSubmit={onPasteSubmit}
           error={error}
         />
-      </View>
+      </>
     );
-  }
-
-  if (phase === 'amount' && parsed) {
-    return (
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+  } else if (phase === 'amount' && parsed) {
+    content = (
+      <>
         <AmountStep
           parsed={parsed}
           amount={amount}
@@ -186,41 +180,64 @@ export default function ScanScreen() {
             setError(null);
           }}
         />
-      </View>
+      </>
+    );
+  } else {
+    content = (
+      <>
+        <WizardStepHeader
+          step={1}
+          total={2}
+          title='Scan to pay'
+          subtitle='Point at a Finora receive QR or payment-request code.'
+        />
+        <View style={[styles.cameraWrap, { borderColor: colors.border }]}>
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            facing='back'
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            onBarcodeScanned={locked ? undefined : onBarcodeScanned}
+          />
+          <View
+            style={styles.reticle}
+            pointerEvents='none'
+          >
+            <View style={[styles.reticleCorner, styles.tl, { borderColor: colors.foreground }]} />
+            <View style={[styles.reticleCorner, styles.tr, { borderColor: colors.foreground }]} />
+            <View style={[styles.reticleCorner, styles.bl, { borderColor: colors.foreground }]} />
+            <View style={[styles.reticleCorner, styles.br, { borderColor: colors.foreground }]} />
+          </View>
+        </View>
+        {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
+        <PasteBlock
+          paste={paste}
+          setPaste={setPaste}
+          onSubmit={onPasteSubmit}
+          error={null}
+        />
+      </>
     );
   }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <WizardStepHeader
-        step={1}
-        total={2}
-        title='Scan to pay'
-        subtitle='Point at a Finora receive QR or payment-request code.'
-      />
-      <View style={[styles.cameraWrap, { borderColor: colors.border }]}>
-        <CameraView
-          style={StyleSheet.absoluteFill}
-          facing='back'
-          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-          onBarcodeScanned={locked ? undefined : onBarcodeScanned}
-        />
-        <View style={styles.reticle} pointerEvents='none'>
-          <View style={[styles.reticleCorner, styles.tl, { borderColor: colors.foreground }]} />
-          <View style={[styles.reticleCorner, styles.tr, { borderColor: colors.foreground }]} />
-          <View style={[styles.reticleCorner, styles.bl, { borderColor: colors.foreground }]} />
-          <View style={[styles.reticleCorner, styles.br, { borderColor: colors.foreground }]} />
-        </View>
-      </View>
-      {error ? (
-        <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
-      ) : null}
-      <PasteBlock
-        paste={paste}
-        setPaste={setPaste}
-        onSubmit={onPasteSubmit}
-        error={null}
-      />
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={
+          Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
+        }
+        keyboardVerticalOffset={headerHeight}
+      >
+        <ScrollView
+          contentContainerStyle={styles.screenContent}
+          contentInsetAdjustmentBehavior='automatic'
+          keyboardShouldPersistTaps='handled'
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
+        >
+          {content}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -312,7 +329,10 @@ function AmountStep({
           Continue to confirm
         </Text>
       </Pressable>
-      <Pressable onPress={onBack} style={styles.linkBtn}>
+      <Pressable
+        onPress={onBack}
+        style={styles.linkBtn}
+      >
         <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>Scan again</Text>
       </Pressable>
     </>
@@ -333,14 +353,14 @@ function PasteBlock({
   const { colors } = useTheme();
   return (
     <View style={styles.pasteBlock}>
-      <Text style={[styles.pasteLabel, { color: colors.mutedForeground }]}>
-        Or paste a payload
-      </Text>
+      <Text style={[styles.pasteLabel, { color: colors.mutedForeground }]}>Or paste a payload</Text>
       <TextInput
         value={paste}
         onChangeText={setPaste}
+        onSubmitEditing={onSubmit}
         autoCapitalize='none'
         autoCorrect={false}
+        returnKeyType='go'
         placeholder='finora:momo:ghs:0550123456'
         placeholderTextColor={colors.mutedForeground}
         style={[
@@ -352,9 +372,7 @@ function PasteBlock({
           },
         ]}
       />
-      {error ? (
-        <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
-      ) : null}
+      {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
       <Pressable
         onPress={() => {
           haptics.selection();
@@ -362,7 +380,11 @@ function PasteBlock({
         }}
         style={[styles.secondaryBtn, { borderColor: colors.border }]}
       >
-        <Icon name='qr' size={16} color={colors.foreground} />
+        <Icon
+          name='qr'
+          size={16}
+          color={colors.foreground}
+        />
         <Text style={{ color: colors.foreground, fontWeight: '600', marginLeft: 8 }}>
           Use payload
         </Text>
@@ -374,6 +396,12 @@ function PasteBlock({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+  },
+  flex: {
+    flex: 1,
+  },
+  screenContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 24,

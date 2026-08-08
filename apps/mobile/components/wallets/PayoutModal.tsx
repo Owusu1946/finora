@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, Modal, TextInput } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -52,136 +62,149 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View
-          style={[
-            styles.sheetContainer,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
+      <KeyboardAvoidingView
+        style={styles.modalBackdrop}
+        behavior={
+          Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
+        }
+      >
+        <ScrollView
+          contentContainerStyle={styles.modalContent}
+          keyboardShouldPersistTaps='handled'
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Send Payout</Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-            >
-              <Icon
-                name='remove'
-                size={20}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-          </View>
-
-          {sendSuccess ? (
-            <View style={styles.successState}>
-              <Icon
-                name='check'
-                size={36}
-                color={colors.foreground}
-              />
-              <Text style={[styles.successTitle, { color: colors.foreground }]}>
-                Payout Submitted
-              </Text>
-              <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                Sent ${sendAmount} via WeWire infrastructure. Policy verified.
-              </Text>
-            </View>
-          ) : (
-            <View style={{ gap: 14 }}>
-              <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                Source Wallet
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
+          <View
+            style={[
+              styles.sheetContainer,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <View style={styles.sheetHeader}>
+              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Send Payout</Text>
+              <Pressable
+                onPress={onClose}
+                hitSlop={8}
               >
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {wallets.map((w) => (
-                    <Pressable
-                      key={`send-src-${w.id}`}
-                      onPress={() => setSendWalletId(w.id)}
-                      style={[
-                        styles.walletChip,
-                        {
-                          backgroundColor: sendWalletId === w.id ? colors.foreground : colors.muted,
-                        },
-                      ]}
-                    >
-                      <CurrencyIcon
-                        currency={w.currency}
-                        size={18}
-                      />
-                      <Text
+                <Icon
+                  name='remove'
+                  size={20}
+                  color={colors.mutedForeground}
+                />
+              </Pressable>
+            </View>
+
+            {sendSuccess ? (
+              <View style={styles.successState}>
+                <Icon
+                  name='check'
+                  size={36}
+                  color={colors.foreground}
+                />
+                <Text style={[styles.successTitle, { color: colors.foreground }]}>
+                  Payout Submitted
+                </Text>
+                <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
+                  Sent ${sendAmount} via WeWire infrastructure. Policy verified.
+                </Text>
+              </View>
+            ) : (
+              <View style={{ gap: 14 }}>
+                <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
+                  Source Wallet
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                >
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {wallets.map((w) => (
+                      <Pressable
+                        key={`send-src-${w.id}`}
+                        onPress={() => setSendWalletId(w.id)}
                         style={[
-                          styles.walletChipText,
+                          styles.walletChip,
                           {
-                            color: sendWalletId === w.id ? colors.background : colors.foreground,
+                            backgroundColor:
+                              sendWalletId === w.id ? colors.foreground : colors.muted,
                           },
                         ]}
                       >
-                        {w.currency}
-                      </Text>
-                    </Pressable>
-                  ))}
+                        <CurrencyIcon
+                          currency={w.currency}
+                          size={18}
+                        />
+                        <Text
+                          style={[
+                            styles.walletChipText,
+                            {
+                              color: sendWalletId === w.id ? colors.background : colors.foreground,
+                            },
+                          ]}
+                        >
+                          {w.currency}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </ScrollView>
+
+                <View>
+                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
+                    Recipient (IBAN / MoMo / Address)
+                  </Text>
+                  <TextInput
+                    value={sendRecipient}
+                    onChangeText={setSendRecipient}
+                    placeholder='e.g. GB82 CLRB ... or +233 24 ...'
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[
+                      styles.textInput,
+                      {
+                        backgroundColor: colors.muted,
+                        borderColor: colors.border,
+                        color: colors.foreground,
+                      },
+                    ]}
+                  />
                 </View>
-              </ScrollView>
 
-              <View>
-                <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-                  Recipient (IBAN / MoMo / Address)
-                </Text>
-                <TextInput
-                  value={sendRecipient}
-                  onChangeText={setSendRecipient}
-                  placeholder='e.g. GB82 CLRB ... or +233 24 ...'
-                  placeholderTextColor={colors.mutedForeground}
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.muted,
-                      borderColor: colors.border,
-                      color: colors.foreground,
-                    },
+                <View>
+                  <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>Amount</Text>
+                  <TextInput
+                    value={sendAmount}
+                    onChangeText={setSendAmount}
+                    placeholder='0.00'
+                    keyboardType='numeric'
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[
+                      styles.textInput,
+                      {
+                        backgroundColor: colors.muted,
+                        borderColor: colors.border,
+                        color: colors.foreground,
+                      },
+                    ]}
+                  />
+                </View>
+
+                <Pressable
+                  onPress={handleExecuteSend}
+                  style={({ pressed }) => [
+                    styles.primaryBtn,
+                    { backgroundColor: colors.foreground },
+                    pressed && styles.pressed,
                   ]}
-                />
+                >
+                  <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+                    Confirm & Send Payout
+                  </Text>
+                </Pressable>
               </View>
-
-              <View>
-                <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>Amount</Text>
-                <TextInput
-                  value={sendAmount}
-                  onChangeText={setSendAmount}
-                  placeholder='0.00'
-                  keyboardType='numeric'
-                  placeholderTextColor={colors.mutedForeground}
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.muted,
-                      borderColor: colors.border,
-                      color: colors.foreground,
-                    },
-                  ]}
-                />
-              </View>
-
-              <Pressable
-                onPress={handleExecuteSend}
-                style={({ pressed }) => [
-                  styles.primaryBtn,
-                  { backgroundColor: colors.foreground },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={[styles.primaryBtnText, { color: colors.background }]}>
-                  Confirm & Send Payout
-                </Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-      </View>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -190,6 +213,9 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  modalContent: {
+    flexGrow: 1,
     justifyContent: 'flex-end',
   },
   sheetContainer: {

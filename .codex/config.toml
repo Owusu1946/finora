@@ -1,0 +1,6 @@
+[mcp_servers.mcp-docs-server]
+command = "bunx"
+args = [
+    "-y",
+    "@assistant-ui/mcp-docs-server",
+]
