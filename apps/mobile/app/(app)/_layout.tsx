@@ -149,18 +149,18 @@ export default function AppLayout() {
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
         headerTitleAlign: 'center',
-        drawerType: 'slide',
-        overlayColor: 'rgba(0, 0, 0, 0.12)',
+        drawerType: 'back',
+        overlayColor: 'rgba(0, 0, 0, 0.26)',
         swipeEnabled: true,
         drawerStyle: {
-          width: 300,
+          width: '78%',
           backgroundColor: colors.background,
           borderRightColor: colors.border,
           borderRightWidth: StyleSheet.hairlineWidth,
-          boxShadow: '6px 0px 20px rgba(0, 0, 0, 0.18)',
         },
         sceneStyle: {
           backgroundColor: colors.background,
+          boxShadow: '-6px 0px 20px rgba(0, 0, 0, 0.2)',
         },
       }}
     >
