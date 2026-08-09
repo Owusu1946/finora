@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
+
 import {
   CreateVirtualCardWizard,
   type CreateVirtualCardSeed,
@@ -51,7 +52,7 @@ function CreateVirtualCardFlow({
           followedUpRef.current = true;
           appendAgentFollowUp(
             aui,
-            `${card.label} card •••• ${card.last4} is ready. Open Cards to reveal details, edit the limit, or freeze it anytime.`,
+            `Your ${card.label} card request is confirmed. I’ll let you know when the card details are ready in Cards.`,
           );
         }
       }}

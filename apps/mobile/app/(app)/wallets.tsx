@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Pressable, StyleSheet, View, ScrollView } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
@@ -18,6 +18,7 @@ import { Spacing, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, getAccountLabel } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
+import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
@@ -32,6 +33,17 @@ export default function WalletsScreen() {
 
   // Selected wallet for details/deposit view
   const [selectedWallet, setSelectedWallet] = useState<WalletItem | null>(null);
+  const [cardCount, setCardCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const refreshCards = () => {
+      void listVirtualCards().then((cards) =>
+        setCardCount(cards.filter((card) => card.status !== 'cancelled').length),
+      );
+    };
+    refreshCards();
+    return subscribeVirtualCards(refreshCards);
+  }, []);
 
   // Active modal handler
   const [activeModal, setActiveModal] = useState<
@@ -140,39 +152,43 @@ export default function WalletsScreen() {
           onOpenConvert={() => setActiveModal('convert')}
         />
 
-        <Pressable
-          onPress={() => {
-            haptics.selection();
-            router.push('/virtual-card' as Href);
-          }}
-          style={({ pressed }) => [
-            styles.cardEntry,
-            {
-              backgroundColor: colors.muted,
-              borderColor: colors.border,
-              opacity: pressed ? 0.78 : 1,
-            },
-          ]}
-        >
-          <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
+        {cardCount === 0 ? (
+          <Pressable
+            onPress={() => {
+              haptics.selection();
+              router.push('/virtual-card' as Href);
+            }}
+            style={({ pressed }) => [
+              styles.cardEntry,
+              {
+                backgroundColor: colors.muted,
+                borderColor: colors.border,
+                opacity: pressed ? 0.78 : 1,
+              },
+            ]}
+          >
+            <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
+              <Icon
+                name='wallet'
+                size={17}
+                color={colors.background}
+              />
+            </View>
+            <View style={styles.cardEntryCopy}>
+              <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>
+                Virtual card
+              </Text>
+              <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
+                Create a card for online spending
+              </Text>
+            </View>
             <Icon
-              name='wallet'
-              size={17}
-              color={colors.background}
+              name='chevron-right'
+              size={18}
+              color={colors.mutedForeground}
             />
-          </View>
-          <View style={styles.cardEntryCopy}>
-            <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>Virtual card</Text>
-            <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
-              Create a card for online spending
-            </Text>
-          </View>
-          <Icon
-            name='chevron-right'
-            size={18}
-            color={colors.mutedForeground}
-          />
-        </Pressable>
+          </Pressable>
+        ) : null}
 
         {/* 2. Filter Tabs Bar */}
         <WalletFilterTabs

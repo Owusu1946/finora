@@ -2,16 +2,19 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import type { VirtualCardCurrency } from '@/components/cards/types';
+
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput } from '@/components/ui/text';
 import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { createVirtualCard } from '@/lib/virtual-cards-storage';
 
-type Currency = 'USD' | 'EUR' | 'GBP';
+type Currency = VirtualCardCurrency;
 type Purpose = 'Subscriptions' | 'Travel' | 'Online purchases' | 'Team spend';
-type Step = 'details' | 'review' | 'submitted';
+type Step = 'details' | 'review';
 
 const currencies: Currency[] = ['USD', 'EUR', 'GBP'];
 const purposes: Purpose[] = ['Subscriptions', 'Travel', 'Online purchases', 'Team spend'];
@@ -85,62 +88,71 @@ export function VirtualCardRequestFlow() {
   const { colors } = useTheme();
   const router = useRouter();
   const { requestApproval, modal } = usePasscodeApproval();
-  const [step, setStep] = useState<Step>('details');
+  const [step, setStep] = useState<Step | 'submitted'>('details');
   const [currency, setCurrency] = useState<Currency>('USD');
   const [purpose, setPurpose] = useState<Purpose>('Subscriptions');
   const [limit, setLimit] = useState('500');
+  const [busy, setBusy] = useState(false);
   const canReview = Number(limit) > 0;
 
   const submit = async () => {
+    if (busy) return;
     const approved = await requestApproval();
     if (!approved) return;
-    haptics.success();
-    setStep('submitted');
+    setBusy(true);
+    try {
+      await createVirtualCard({
+        label: purpose,
+        spendLimit: Number(limit),
+        currency,
+      });
+      haptics.success();
+      setStep('submitted');
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (step === 'submitted') {
     return (
-      <>
-        <ScrollView
-          contentInsetAdjustmentBehavior='automatic'
-          contentContainerStyle={styles.content}
-        >
-          <View style={styles.successWrap}>
-            <View style={[styles.successIcon, { backgroundColor: colors.foreground }]}>
-              <Icon
-                name='check'
-                size={24}
-                color={colors.background}
-              />
-            </View>
-            <Text style={[styles.title, { color: colors.foreground }]}>Your request is in</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-              We’re setting up your virtual card for {purpose.toLowerCase()}. You’ll see it here
-              when it’s ready.
-            </Text>
-            <VirtualCardPreview
-              currency={currency}
-              purpose={purpose}
-              limit={limit}
+      <ScrollView
+        contentInsetAdjustmentBehavior='automatic'
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.successWrap}>
+          <View style={[styles.successIcon, { backgroundColor: colors.foreground }]}>
+            <Icon
+              name='check'
+              size={24}
+              color={colors.background}
             />
-            <Pressable
-              onPress={() => {
-                haptics.selection();
-                router.back();
-              }}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                { backgroundColor: colors.foreground, opacity: pressed ? 0.76 : 1 },
-              ]}
-            >
-              <Text style={[styles.primaryButtonText, { color: colors.background }]}>
-                Back to wallets
-              </Text>
-            </Pressable>
           </View>
-        </ScrollView>
-        {modal}
-      </>
+          <Text style={[styles.title, { color: colors.foreground }]}>Your request is in</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            We’re setting up your virtual card for {purpose.toLowerCase()}. You’ll see its details
+            in Cards when it’s ready.
+          </Text>
+          <VirtualCardPreview
+            currency={currency}
+            purpose={purpose}
+            limit={limit}
+          />
+          <Pressable
+            onPress={() => {
+              haptics.selection();
+              router.back();
+            }}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.76 : 1 },
+            ]}
+          >
+            <Text style={[styles.primaryButtonText, { color: colors.background }]}>
+              Back to wallets
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     );
   }
 
@@ -251,18 +263,18 @@ export function VirtualCardRequestFlow() {
       )}
 
       <Pressable
-        disabled={!isReview && !canReview}
+        disabled={busy || (!isReview && !canReview)}
         onPress={() => (isReview ? void submit() : setStep('review'))}
         style={({ pressed }) => [
           styles.primaryButton,
           {
             backgroundColor: colors.foreground,
-            opacity: !isReview && !canReview ? 0.4 : pressed ? 0.76 : 1,
+            opacity: busy || (!isReview && !canReview) ? 0.4 : pressed ? 0.76 : 1,
           },
         ]}
       >
         <Text style={[styles.primaryButtonText, { color: colors.background }]}>
-          {isReview ? 'Request virtual card' : 'Review request'}
+          {isReview ? (busy ? 'Requesting…' : 'Request virtual card') : 'Review request'}
         </Text>
         <Icon
           name='arrow-up'

@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 
 import {
@@ -16,11 +15,13 @@ import type { IconName } from '@/components/ui/icon-mappings';
 
 import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
+import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
 import { ThreadListItem } from './ThreadListItem';
 
@@ -34,9 +35,7 @@ const MONEY_ITEMS_BASE: NavItem[] = [
   { href: '/activity', label: 'Activity', icon: 'activity' },
 ];
 
-const MONEY_ITEMS_BUSINESS: NavItem[] = [
-  { href: '/treasury', label: 'Treasury', icon: 'wallet' },
-];
+const MONEY_ITEMS_BUSINESS: NavItem[] = [{ href: '/treasury', label: 'Treasury', icon: 'wallet' }];
 
 const PAY_ITEMS_BASE: NavItem[] = [
   { href: '/approvals', label: 'Approvals', icon: 'shield' },
@@ -99,6 +98,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const router = useRouter();
   const drawerStatus = useDrawerStatus();
   const [pendingApprovals, setPendingApprovals] = useState(0);
+  const [unreadCards, setUnreadCards] = useState(false);
   const [business, setBusiness] = useState(() => isBusinessAccount());
   const navTabs = useMemo(() => buildNavTabs(business), [business]);
   const [activeTab, setActiveTab] = useState<NavTab>(() =>
@@ -112,6 +112,12 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     void countPendingApprovals().then(setPendingApprovals);
     setActiveTab(tabForPathname(pathname, buildNavTabs(nextBusiness)));
   }, [drawerStatus, pathname]);
+
+  useEffect(() => {
+    const refreshUnreadCards = () => void hasUnreadVirtualCards().then(setUnreadCards);
+    refreshUnreadCards();
+    return subscribeVirtualCards(refreshUnreadCards);
+  }, []);
 
   const activeGroup = useMemo(
     () => navTabs.find((t) => t.id === activeTab) ?? navTabs[0],
@@ -241,7 +247,8 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         {activeGroup.items.map((item) => {
           const href = String(item.href);
           const active = pathname.startsWith(href);
-          const showBadge = href === '/approvals' && pendingApprovals > 0;
+          const showApprovalBadge = href === '/approvals' && pendingApprovals > 0;
+          const showCardBadge = href === '/cards' && unreadCards;
           return (
             <Pressable
               key={href}
@@ -272,12 +279,14 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               >
                 {item.label}
               </Text>
-              {showBadge ? (
+              {showApprovalBadge ? (
                 <View style={[styles.badge, { backgroundColor: colors.foreground }]}>
                   <Text style={[styles.badgeText, { color: colors.background }]}>
                     {pendingApprovals}
                   </Text>
                 </View>
+              ) : showCardBadge ? (
+                <View style={[styles.unreadDot, { backgroundColor: colors.foreground }]} />
               ) : null}
             </Pressable>
           );
@@ -407,5 +416,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 12,
     fontWeight: '700',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
 });

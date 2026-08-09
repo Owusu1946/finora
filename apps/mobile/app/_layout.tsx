@@ -16,9 +16,7 @@ import 'react-native-reanimated';
 
 import '../global.css';
 
-import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
-import { useSplashGate } from '@/components/splash/useSplashGate';
-import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
+import { VirtualCardIssuedPopup } from '@/components/cards/VirtualCardIssuedPopup';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
@@ -52,6 +50,9 @@ import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierP
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
+import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
+import { useSplashGate } from '@/components/splash/useSplashGate';
+import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
@@ -177,6 +178,7 @@ export default function RootLayout() {
                 <ListVirtualCardsToolUI />
                 <GetVirtualCardToolUI />
                 <RootNavigator />
+                <VirtualCardIssuedPopup />
               </AssistantRuntimeProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>
