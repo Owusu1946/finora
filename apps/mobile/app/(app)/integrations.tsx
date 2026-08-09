@@ -9,6 +9,7 @@ import { IMessageLogo } from '@/components/integrations/imessage-logo';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
 import { haptics } from '@/lib/haptics';
 import {
   connectGmail,
@@ -20,7 +21,6 @@ import {
   getIntegrations,
   type IntegrationsState,
 } from '@/lib/integrations-storage';
-import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
 import { listDueInvoices } from '@/lib/invoices-storage';
 import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
 
@@ -174,6 +174,7 @@ export default function IntegrationsScreen() {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'

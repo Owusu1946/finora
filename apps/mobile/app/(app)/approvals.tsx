@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -6,6 +5,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import type { ApprovalFilter, ApprovalRequest } from '@/components/approvals/types';
 
 import { ApprovalListItem } from '@/components/approvals/ApprovalListItem';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
@@ -99,6 +99,7 @@ export default function ApprovalsScreen() {
       </View>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}

@@ -23,10 +23,7 @@ export default function ExpensesScreen() {
     }, []),
   );
 
-  const total = useMemo(
-    () => (items ?? []).reduce((s, e) => s + e.amount, 0),
-    [items],
-  );
+  const total = useMemo(() => (items ?? []).reduce((s, e) => s + e.amount, 0), [items]);
 
   if (!isBusinessAccount()) {
     return (
@@ -52,6 +49,7 @@ export default function ExpensesScreen() {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'

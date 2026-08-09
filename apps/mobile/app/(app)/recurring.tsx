@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -6,6 +5,7 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import type { RecurringFilter, RecurringPayment } from '@/components/recurring/types';
 
 import { RecurringListItem } from '@/components/recurring/RecurringListItem';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { listRecurring, updateRecurringStatus } from '@/lib/recurring-storage';
@@ -98,6 +98,7 @@ export default function RecurringScreen() {
       </View>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}

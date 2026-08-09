@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
@@ -7,6 +6,7 @@ import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
 import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
 import { ActivityListItem } from '@/components/activity/ActivityListItem';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listTransactions } from '@/lib/transactions-storage';
 
@@ -65,6 +65,7 @@ export default function ActivityScreen() {
       />
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}

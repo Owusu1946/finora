@@ -1,10 +1,12 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
-import { VirtualCardManagePanel } from '@/components/cards/VirtualCardManagePanel';
 import type { VirtualCard } from '@/components/cards/types';
+
+import { VirtualCardManagePanel } from '@/components/cards/VirtualCardManagePanel';
+import { SwipeBackView } from '@/components/navigation/swipe-back-view';
+import { AppText as Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getVirtualCard, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
@@ -34,33 +36,29 @@ export default function CardDetailScreen() {
     });
   }, [refresh]);
 
-  if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.mutedForeground} />
-      </View>
-    );
-  }
-
-  if (!card) {
-    return (
-      <View style={[styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={[styles.missing, { color: colors.foreground }]}>Card not found</Text>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.background }}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <VirtualCardManagePanel
-        card={card}
-        onChanged={setCard}
-      />
-    </ScrollView>
+    <SwipeBackView>
+      {loading ? (
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.mutedForeground} />
+        </View>
+      ) : !card ? (
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <Text style={[styles.missing, { color: colors.foreground }]}>Card not found</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={{ backgroundColor: colors.background }}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <VirtualCardManagePanel
+            card={card}
+            onChanged={setCard}
+          />
+        </ScrollView>
+      )}
+    </SwipeBackView>
   );
 }
 

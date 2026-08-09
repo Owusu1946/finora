@@ -1,24 +1,21 @@
-import { AppText as Text } from '@/components/ui/text';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { formatCardAmount, remainingLimit, type VirtualCard } from '@/components/cards/types';
 import { VirtualCardMiniFace } from '@/components/cards/VirtualCardFace';
-import {
-  formatCardAmount,
-  remainingLimit,
-  type VirtualCard,
-} from '@/components/cards/types';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
-export function VirtualCardListItem({
+export const VirtualCardListItem = memo(function VirtualCardListItem({
   card,
   isLast,
   onPress,
 }: {
   card: VirtualCard;
   isLast?: boolean;
-  onPress: () => void;
+  onPress: (id: string) => void;
 }) {
   const { colors } = useTheme();
   const statusLabel =
@@ -28,7 +25,7 @@ export function VirtualCardListItem({
     <Pressable
       onPress={() => {
         haptics.selection();
-        onPress();
+        onPress(card.id);
       }}
       style={({ pressed }) => [
         styles.row,
@@ -41,10 +38,16 @@ export function VirtualCardListItem({
     >
       <VirtualCardMiniFace card={card} />
       <View style={styles.copy}>
-        <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>
+        <Text
+          style={[styles.title, { color: colors.foreground }]}
+          numberOfLines={1}
+        >
           {card.label}
         </Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]} numberOfLines={1}>
+        <Text
+          style={[styles.sub, { color: colors.mutedForeground }]}
+          numberOfLines={1}
+        >
           •••• {card.last4}
         </Text>
       </View>
@@ -56,8 +59,7 @@ export function VirtualCardListItem({
           style={[
             styles.status,
             {
-              color:
-                card.status === 'active' ? colors.mutedForeground : colors.destructive,
+              color: card.status === 'active' ? colors.mutedForeground : colors.destructive,
             },
           ]}
         >
@@ -71,7 +73,7 @@ export function VirtualCardListItem({
       />
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {

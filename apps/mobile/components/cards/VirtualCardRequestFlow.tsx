@@ -118,6 +118,7 @@ export function VirtualCardRequestFlow() {
   if (step === 'submitted') {
     return (
       <ScrollView
+        showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior='automatic'
         contentContainerStyle={styles.content}
       >
@@ -161,6 +162,7 @@ export function VirtualCardRequestFlow() {
   const isReview = step === 'review';
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior='automatic'
       contentContainerStyle={styles.content}
     >

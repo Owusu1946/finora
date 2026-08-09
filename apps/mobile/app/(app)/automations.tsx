@@ -7,11 +7,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
-import {
-  listAutomations,
-  setAutomationStatus,
-  type Automation,
-} from '@/lib/automations-storage';
+import { listAutomations, setAutomationStatus, type Automation } from '@/lib/automations-storage';
 import { haptics } from '@/lib/haptics';
 
 export default function AutomationsScreen() {
@@ -54,6 +50,7 @@ export default function AutomationsScreen() {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'

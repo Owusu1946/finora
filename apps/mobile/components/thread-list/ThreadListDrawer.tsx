@@ -7,7 +7,7 @@ import {
 } from '@assistant-ui/react-native';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -125,6 +125,21 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   );
 
   const payHasPending = pendingApprovals > 0;
+  const selectThread = useCallback(() => {
+    router.push('/');
+    navigation.closeDrawer();
+  }, [navigation, router]);
+  const renderThread = useCallback(
+    ({ index }: { index: number }) => (
+      <ThreadListItemByIndexProvider
+        index={index}
+        archived={false}
+      >
+        <ThreadListItem onSelect={selectThread} />
+      </ThreadListItemByIndexProvider>
+    ),
+    [selectThread],
+  );
 
   return (
     <View
@@ -180,19 +195,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Recent</Text>
 
         <ThreadListPrimitive.Items
-          renderItem={({ index }) => (
-            <ThreadListItemByIndexProvider
-              index={index}
-              archived={false}
-            >
-              <ThreadListItem
-                onSelect={() => {
-                  router.push('/');
-                  navigation.closeDrawer();
-                }}
-              />
-            </ThreadListItemByIndexProvider>
-          )}
+          renderItem={renderThread}
           style={styles.list}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
