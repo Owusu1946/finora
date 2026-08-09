@@ -1,5 +1,5 @@
 export type VirtualCardNetwork = 'visa' | 'mastercard';
-export type VirtualCardCurrency = 'USD' | 'GHS' | 'EUR';
+export type VirtualCardCurrency = 'USD' | 'GHS' | 'EUR' | 'GBP';
 export type VirtualCardStatus = 'active' | 'frozen' | 'cancelled';
 export type VirtualCardFilter = 'all' | 'active' | 'frozen';
 
@@ -21,6 +21,7 @@ export type VirtualCard = {
 export type CreateVirtualCardInput = {
   label: string;
   spendLimit: number;
+  currency?: VirtualCardCurrency;
   network?: VirtualCardNetwork;
 };
 
@@ -71,7 +72,13 @@ export const MOCK_VIRTUAL_CARDS: VirtualCard[] = [
 
 export function formatCardAmount(amount: number, currency: string) {
   const symbol =
-    currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GHS' ? 'GHS ' : `${currency} `;
+    currency === 'USD'
+      ? '$'
+      : currency === 'EUR'
+        ? '€'
+        : currency === 'GHS'
+          ? 'GHS '
+          : `${currency} `;
   return `${symbol}${amount.toLocaleString(undefined, {
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,

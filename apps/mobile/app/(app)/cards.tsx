@@ -1,16 +1,19 @@
-import { AppText as Text } from '@/components/ui/text';
-import { useAui } from '@assistant-ui/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, FlatList, Pressable, StyleSheet, View } from 'react-native';
+
+import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
 
 import { VirtualCardListItem } from '@/components/cards/VirtualCardListItem';
-import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
+import { AppText as Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import { sendChatPrompt } from '@/lib/send-chat-prompt';
-import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
+import {
+  clearUnreadVirtualCards,
+  listVirtualCards,
+  subscribeVirtualCards,
+} from '@/lib/virtual-cards-storage';
 
 const FILTERS: { id: VirtualCardFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -21,7 +24,6 @@ const FILTERS: { id: VirtualCardFilter; label: string }[] = [
 export default function CardsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const aui = useAui();
   const [filter, setFilter] = useState<VirtualCardFilter>('all');
   const [items, setItems] = useState<VirtualCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +38,17 @@ export default function CardsScreen() {
   useFocusEffect(
     useCallback(() => {
       void refresh();
-      return subscribeVirtualCards(() => {
+      if (AppState.currentState === 'active') void clearUnreadVirtualCards();
+      const unsubscribe = subscribeVirtualCards(() => {
         void refresh();
       });
+      const subscription = AppState.addEventListener('change', (state) => {
+        if (state === 'active') void clearUnreadVirtualCards();
+      });
+      return () => {
+        unsubscribe();
+        subscription.remove();
+      };
     }, [refresh]),
   );
 
@@ -49,8 +59,7 @@ export default function CardsScreen() {
 
   const createCard = () => {
     haptics.selection();
-    sendChatPrompt(aui, 'Create a virtual card');
-    router.push('/' as Href);
+    router.push('/virtual-card' as Href);
   };
 
   return (
@@ -89,7 +98,10 @@ export default function CardsScreen() {
               style={[styles.chip, { backgroundColor: active ? colors.foreground : colors.muted }]}
             >
               <Text
-                style={[styles.chipLabel, { color: active ? colors.background : colors.foreground }]}
+                style={[
+                  styles.chipLabel,
+                  { color: active ? colors.background : colors.foreground },
+                ]}
               >
                 {item.label}
               </Text>
@@ -109,7 +121,8 @@ export default function CardsScreen() {
             </Text>
             {!loading ? (
               <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-                Create a Netflix or Meta ads card from chat, or tap New.
+                Start with a purpose, currency, and spend limit, or type “create virtual card” in
+                chat for the guided chat flow.
               </Text>
             ) : null}
           </View>
