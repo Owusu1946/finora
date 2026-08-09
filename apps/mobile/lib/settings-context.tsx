@@ -18,7 +18,7 @@ import {
   type AppLanguage,
   type FinoraSettings,
   type ThemePreference,
-} from '@/lib/settings-storage';
+} from './settings-storage';
 
 type SettingsContextValue = {
   settings: FinoraSettings;
