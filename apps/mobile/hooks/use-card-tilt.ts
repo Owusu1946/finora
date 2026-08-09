@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
 
 const MAX_TILT = 1;
-const SMOOTH = 0.18;
+const SMOOTH = 0.2;
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
@@ -69,8 +69,8 @@ export function useCardTilt(enabled = true, onFlipGesture?: () => void): {
 
           const deltaBeta = beta - baselineBeta;
           const deltaGamma = gamma - baselineGamma;
-          const nx = clamp(-deltaBeta / 0.45, -MAX_TILT, MAX_TILT);
-          const ny = clamp(deltaGamma / 0.4, -MAX_TILT, MAX_TILT);
+          const nx = clamp(-deltaBeta / 0.38, -MAX_TILT, MAX_TILT);
+          const ny = clamp(deltaGamma / 0.34, -MAX_TILT, MAX_TILT);
           const wristSpeed = Math.abs(m.rotationRate?.gamma ?? 0);
 
           // Ignore tiny sensor noise while the phone is still.

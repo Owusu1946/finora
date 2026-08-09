@@ -1,10 +1,7 @@
 import { AppText as Text } from '@/components/ui/text';
 import {
-  BlurMask,
   Canvas,
-  Group,
   LinearGradient as SkiaLinearGradient,
-  RadialGradient,
   RoundedRect,
   vec,
 } from '@shopify/react-native-skia';
@@ -292,27 +289,19 @@ function MetalGlossSurface({
   tiltY: SharedValue<number>;
   muted?: boolean;
 }) {
-  const glareCenter = useDerivedValue(() => {
-    const x = width * (0.32 + tiltY.value * 0.5);
-    const y = height * (0.22 - tiltX.value * 0.48);
-    return vec(x, y);
-  });
-
   const bandStart = useDerivedValue(() => {
-    const x = width * (-0.45 + tiltY.value * 0.72);
-    const y = height * (-0.45 - tiltX.value * 0.5);
+    const x = width * (-0.5 + tiltY.value * 0.85);
+    const y = height * (-0.5 - tiltX.value * 0.58);
     return vec(x, y);
   });
 
   const bandEnd = useDerivedValue(() => {
-    const x = width * (0.75 + tiltY.value * 0.72);
-    const y = height * (1.3 - tiltX.value * 0.5);
+    const x = width * (0.82 + tiltY.value * 0.85);
+    const y = height * (1.35 - tiltX.value * 0.58);
     return vec(x, y);
   });
 
   if (width < 8 || height < 8) return null;
-
-  const glareRadius = Math.max(width, height) * 0.42;
 
   return (
     <Canvas style={StyleSheet.absoluteFill}>
@@ -353,55 +342,28 @@ function MetalGlossSurface({
         />
       </RoundedRect>
 
-      {/* Soft ambient metal sheen */}
+      {/* Linear metal sheen that tracks tilt */}
       <RoundedRect
         x={0}
         y={0}
         width={width}
         height={height}
         r={CARD_RADIUS}
-        opacity={muted ? 0.16 : 0.34}
+        opacity={muted ? 0.2 : 0.42}
       >
         <SkiaLinearGradient
           start={bandStart}
           end={bandEnd}
           colors={[
             'rgba(255,255,255,0)',
-            'rgba(255,255,255,0.01)',
-            'rgba(235,242,255,0.16)',
-            'rgba(255,255,255,0.045)',
+            'rgba(255,255,255,0.015)',
+            'rgba(235,242,255,0.22)',
+            'rgba(255,255,255,0.07)',
             'rgba(255,255,255,0)',
           ]}
-          positions={[0, 0.36, 0.49, 0.58, 1]}
+          positions={[0, 0.34, 0.49, 0.58, 1]}
         />
       </RoundedRect>
-
-      {/* Specular hotspot that tracks tilt — Apple Cash gloss */}
-      <Group opacity={muted ? 0.08 : 0.24}>
-        <RoundedRect
-          x={0}
-          y={0}
-          width={width}
-          height={height}
-          r={CARD_RADIUS}
-        >
-          <RadialGradient
-            c={glareCenter}
-            r={glareRadius}
-            colors={[
-              'rgba(255,255,255,0.34)',
-              'rgba(225,235,255,0.12)',
-              'rgba(255,255,255,0.025)',
-              'rgba(255,255,255,0)',
-            ]}
-            positions={[0, 0.2, 0.52, 1]}
-          />
-          <BlurMask
-            blur={15}
-            style='normal'
-          />
-        </RoundedRect>
-      </Group>
 
       {/* Top edge catch-light */}
       <RoundedRect
@@ -410,12 +372,12 @@ function MetalGlossSurface({
         width={width}
         height={height * 0.22}
         r={CARD_RADIUS}
-        opacity={0.34}
+        opacity={0.38}
       >
         <SkiaLinearGradient
           start={vec(0, 0)}
           end={vec(0, height * 0.22)}
-          colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.025)', 'rgba(255,255,255,0)']}
+          colors={['rgba(255,255,255,0.24)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)']}
           positions={[0, 0.25, 1]}
         />
       </RoundedRect>
@@ -465,9 +427,9 @@ export function VirtualCardFace({
       opacity: opacity.value,
       transform: [
         { perspective: 1200 },
-        { rotateX: `${tiltX.value * (compact ? 2 : 3.2) * tiltMix}deg` },
-        { rotateY: `${tiltY.value * (compact ? 2.5 : 4) * tiltMix}deg` },
-        { scale: scale.value * depth * (1 - Math.abs(tiltX.value) * 0.01 * tiltMix) },
+        { rotateX: `${tiltX.value * (compact ? 2.6 : 4.4) * tiltMix}deg` },
+        { rotateY: `${tiltY.value * (compact ? 3.2 : 5.5) * tiltMix}deg` },
+        { scale: scale.value * depth * (1 - Math.abs(tiltX.value) * 0.012 * tiltMix) },
       ],
     };
   });

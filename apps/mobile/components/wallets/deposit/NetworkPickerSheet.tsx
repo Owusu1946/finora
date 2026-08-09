@@ -33,13 +33,7 @@ export function NetworkPickerSheet({
   const isCrypto = step === 'network_picker';
 
   return (
-    <View
-      style={[
-        styles.sheetContainer,
-        { backgroundColor: colors.card, borderColor: colors.border },
-      ]}
-    >
-      <View style={styles.handle} />
+    <View style={styles.sheetBody}>
       <View style={styles.sheetHeader}>
         <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
           {isCrypto ? 'Select wallet' : 'Select network'}
