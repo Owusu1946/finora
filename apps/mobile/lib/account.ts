@@ -10,6 +10,10 @@ export function getAccountType(): AccountType {
   return currentAccountType;
 }
 
+export function isBusinessAccount(type: AccountType = getAccountType()) {
+  return type === 'business';
+}
+
 /** Dev/testing helper — onboarding will set this for real. */
 export function setAccountType(type: AccountType) {
   currentAccountType = type;

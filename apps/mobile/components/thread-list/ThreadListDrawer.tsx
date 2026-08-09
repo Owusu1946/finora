@@ -18,6 +18,7 @@ import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
 
@@ -27,38 +28,62 @@ type NavTab = 'money' | 'pay' | 'more';
 
 type NavItem = { href: Href; label: string; icon: IconName };
 
-const NAV_TABS: { id: NavTab; label: string; items: NavItem[] }[] = [
-  {
-    id: 'money',
-    label: 'Money',
-    items: [
-      { href: '/wallets', label: 'Wallets', icon: 'wallet' },
-      { href: '/cards', label: 'Cards', icon: 'card' },
-      { href: '/activity', label: 'Activity', icon: 'activity' },
-    ],
-  },
-  {
-    id: 'pay',
-    label: 'Pay',
-    items: [
-      { href: '/approvals', label: 'Approvals', icon: 'shield' },
-      { href: '/invoices', label: 'Invoices', icon: 'file' },
-      { href: '/recurring', label: 'Recurring', icon: 'reload' },
-    ],
-  },
-  {
-    id: 'more',
-    label: 'More',
-    items: [
-      { href: '/contacts', label: 'Contacts', icon: 'contacts' },
-      { href: '/integrations', label: 'Integrations', icon: 'integrations' },
-      { href: '/settings', label: 'Settings', icon: 'settings' },
-    ],
-  },
+const MONEY_ITEMS_BASE: NavItem[] = [
+  { href: '/wallets', label: 'Wallets', icon: 'wallet' },
+  { href: '/cards', label: 'Cards', icon: 'card' },
+  { href: '/activity', label: 'Activity', icon: 'activity' },
 ];
 
-function tabForPathname(pathname: string): NavTab {
-  for (const tab of NAV_TABS) {
+const MONEY_ITEMS_BUSINESS: NavItem[] = [
+  { href: '/treasury', label: 'Treasury', icon: 'wallet' },
+];
+
+const PAY_ITEMS_BASE: NavItem[] = [
+  { href: '/approvals', label: 'Approvals', icon: 'shield' },
+  { href: '/invoices', label: 'Invoices', icon: 'file' },
+  { href: '/recurring', label: 'Recurring', icon: 'reload' },
+];
+
+const PAY_ITEMS_BUSINESS: NavItem[] = [
+  { href: '/payroll', label: 'Payroll', icon: 'contacts' },
+  { href: '/suppliers', label: 'Suppliers', icon: 'bank' },
+  { href: '/beneficiaries', label: 'Beneficiaries', icon: 'bank' },
+  { href: '/expenses', label: 'Expenses', icon: 'card' },
+];
+
+const MORE_ITEMS_BASE: NavItem[] = [
+  { href: '/contacts', label: 'Contacts', icon: 'contacts' },
+  { href: '/integrations', label: 'Integrations', icon: 'integrations' },
+  { href: '/settings', label: 'Settings', icon: 'settings' },
+];
+
+const MORE_ITEMS_BUSINESS: NavItem[] = [
+  { href: '/automations', label: 'Automations', icon: 'reload' },
+  { href: '/policies', label: 'Policies', icon: 'shield' },
+];
+
+function buildNavTabs(business: boolean) {
+  return [
+    {
+      id: 'money' as const,
+      label: 'Money',
+      items: business ? [...MONEY_ITEMS_BASE, ...MONEY_ITEMS_BUSINESS] : MONEY_ITEMS_BASE,
+    },
+    {
+      id: 'pay' as const,
+      label: 'Pay',
+      items: business ? [...PAY_ITEMS_BASE, ...PAY_ITEMS_BUSINESS] : PAY_ITEMS_BASE,
+    },
+    {
+      id: 'more' as const,
+      label: 'More',
+      items: business ? [...MORE_ITEMS_BASE, ...MORE_ITEMS_BUSINESS] : MORE_ITEMS_BASE,
+    },
+  ];
+}
+
+function tabForPathname(pathname: string, tabs: ReturnType<typeof buildNavTabs>): NavTab {
+  for (const tab of tabs) {
     if (tab.items.some((item) => pathname.startsWith(String(item.href)))) {
       return tab.id;
     }
@@ -74,17 +99,23 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const router = useRouter();
   const drawerStatus = useDrawerStatus();
   const [pendingApprovals, setPendingApprovals] = useState(0);
-  const [activeTab, setActiveTab] = useState<NavTab>(() => tabForPathname(pathname));
+  const [business, setBusiness] = useState(() => isBusinessAccount());
+  const navTabs = useMemo(() => buildNavTabs(business), [business]);
+  const [activeTab, setActiveTab] = useState<NavTab>(() =>
+    tabForPathname(pathname, buildNavTabs(isBusinessAccount())),
+  );
 
   useEffect(() => {
     if (drawerStatus !== 'open') return;
+    const nextBusiness = isBusinessAccount();
+    setBusiness(nextBusiness);
     void countPendingApprovals().then(setPendingApprovals);
-    setActiveTab(tabForPathname(pathname));
+    setActiveTab(tabForPathname(pathname, buildNavTabs(nextBusiness)));
   }, [drawerStatus, pathname]);
 
   const activeGroup = useMemo(
-    () => NAV_TABS.find((t) => t.id === activeTab) ?? NAV_TABS[0],
-    [activeTab],
+    () => navTabs.find((t) => t.id === activeTab) ?? navTabs[0],
+    [activeTab, navTabs],
   );
 
   const payHasPending = pendingApprovals > 0;
@@ -172,7 +203,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         ]}
       >
         <View style={[styles.tabBar, { backgroundColor: colors.muted }]}>
-          {NAV_TABS.map((tab) => {
+          {navTabs.map((tab) => {
             const selected = tab.id === activeTab;
             const showDot = tab.id === 'pay' && payHasPending;
             return (

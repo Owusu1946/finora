@@ -14,13 +14,25 @@ import {
   contactToSendSeed,
   findContactsByName,
 } from '@/lib/contact-lookup';
+import { isBusinessAccount } from '@/lib/account';
+import { listAutomations } from '@/lib/automations-storage';
+import { listBeneficiaries } from '@/lib/beneficiaries-storage';
 import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
 import { listContacts } from '@/lib/contacts-storage';
+import {
+  createEmployee,
+  defaultPayrollPeriod,
+  listActiveEmployees,
+} from '@/lib/employees-storage';
+import { listExpenses } from '@/lib/expenses-storage';
 import { CURRENT_FINORA_ACCOUNT, lookupFinoraTag } from '@/lib/finora-tags';
 import { inferFundingSource, listFundingMethods } from '@/lib/funding-methods';
 import { getIntegrations } from '@/lib/integrations-storage';
 import { mockRecipientNameForQr, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
+import { listPolicies, simulatePolicy } from '@/lib/policies-storage';
 import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
+import { listSuppliers } from '@/lib/suppliers-storage';
+import { getTreasuryOverview } from '@/lib/treasury';
 import {
   findVirtualCardByLabel,
   getVirtualCard,
@@ -53,7 +65,7 @@ const BALANCE_RE =
 const CONVERT_RE =
   /\b(convert|exchange|fx|swap|change)\b|\b(usd|ghs|eur|gbp|usdt|usdc)\s*(to|into)\s*(usd|ghs|eur|gbp|usdt|usdc)\b/i;
 const INVOICE_RE =
-  /\b(invoice|invoices|supplier(?:s)?|unpaid bill|bills? from|find (?:my )?bills)\b/i;
+  /\b(invoice|invoices|unpaid bill|bills? from|find (?:my )?bills|supplier invoices?|unpaid invoices?)\b/i;
 const CALENDAR_DUES_RE =
   /\b(calendar|what.?s due|due on my calendar|money events?|rent (?:and|&) payroll|payroll (?:and|&) rent|due this week|upcoming (?:dues?|bills?|payments?))\b/i;
 const SMS_REQUESTS_RE =
@@ -62,6 +74,26 @@ const RECURRING_RE =
   /\b(every\s+(week|month|quarter)|recurring|schedule|weekly|monthly|quarterly|auto(?:matic)?(?:ally)?\s+pay|standing\s+order|set\s*up\s+(my\s+)?(rent|payment|payout|salary)|rent\s+payment|setup\s+(a\s+)?(recurring|scheduled)|i want to (setup|set up|schedule))\b/i;
 const FINANCIAL_PLAN_RE =
   /\bpay\s+everyone\b|\bpay\s+everything\s+due\b|\beverything\s+due\s+today\b|\bpay\s+all\s+(due|bills|invoices|suppliers)\b|\bfinancial\s+plan\b|\brun\s+(payroll\s+and|all)\b/i;
+const PAYROLL_RE =
+  /\b(run\s+payroll|pay\s+(?:the\s+)?(?:team|staff|employees?)|payroll\s+run|prepare\s+payroll)\b/i;
+const LIST_EMPLOYEES_RE =
+  /\b(show|list|my|view)\b.{0,20}\b(employees?|team|roster)\b|\b(team roster|employees?)\b/i;
+const LIST_SUPPLIERS_RE = /\b(show|list|my|view)\b.{0,16}\bsuppliers?\b|\bsuppliers?\s+directory\b/i;
+const CREATE_EMPLOYEE_RE = /\b(add|create|hire)\s+(?:an?\s+)?employee\b/i;
+const LIST_BENEFICIARIES_RE =
+  /\b(show|list|my|view)\b.{0,16}\bbeneficiar(?:y|ies)\b|\bbeneficiar(?:y|ies)\b/i;
+const LIST_POLICIES_RE =
+  /\b(show|list|my|view)\b.{0,20}\b(approval\s+)?polic(?:y|ies)\b|\bwhat happens if i (?:send|pay)\b|\bsimulate\s+polic/i;
+const LIST_AUTOMATIONS_RE =
+  /\b(show|list|my|view)\b.{0,16}\bautomations?\b|\bautomations?\b/i;
+const LIST_EXPENSES_RE =
+  /\b(show|list|my|view)\b.{0,24}\b(business\s+)?expenses?\b|\bbusiness expenses?\b/i;
+const TREASURY_RE =
+  /\b(treasury|cash position|operating balance|treasury overview)\b/i;
+const VIRTUAL_ACCOUNTS_RE =
+  /\b(show|list|my|view)\b.{0,20}\bvirtual accounts?\b|\bvirtual accounts?\b/i;
+const FINANCIAL_REPORT_RE =
+  /\b(financial (report|insights?|summary)|cash flow|spending (summary|report)|business report)\b/i;
 const CREATE_CARD_RE =
   /\b(create|issue|make|new)\b.{0,24}\b(virtual\s+)?card\b|\bvirtual\s+card\s+for\b|\bcard\s+for\s+(netflix|meta|aws|travel)\b/i;
 const LIST_CARDS_RE = /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b/i;
@@ -132,19 +164,123 @@ async function resolveManagedCard(prompt: string) {
 }
 
 function isInvoiceIntent(prompt: string) {
-  return INVOICE_RE.test(prompt) && !isFinancialPlanIntent(prompt) && !isCalendarDuesIntent(prompt);
+  return (
+    INVOICE_RE.test(prompt) &&
+    !isFinancialPlanIntent(prompt) &&
+    !isCalendarDuesIntent(prompt) &&
+    !isListSuppliersIntent(prompt) &&
+    !isPayrollIntent(prompt)
+  );
 }
 
 function isCalendarDuesIntent(prompt: string) {
-  return CALENDAR_DUES_RE.test(prompt) && !isFinancialPlanIntent(prompt);
+  return (
+    CALENDAR_DUES_RE.test(prompt) && !isFinancialPlanIntent(prompt) && !isPayrollIntent(prompt)
+  );
 }
 
 function isSmsRequestsIntent(prompt: string) {
   return SMS_REQUESTS_RE.test(prompt);
 }
 
+function isPayrollIntent(prompt: string) {
+  return PAYROLL_RE.test(prompt) && !isFinancialPlanIntent(prompt);
+}
+
+function isListEmployeesIntent(prompt: string) {
+  return LIST_EMPLOYEES_RE.test(prompt) && !isPayrollIntent(prompt) && !isCreateEmployeeIntent(prompt);
+}
+
+function isListSuppliersIntent(prompt: string) {
+  return LIST_SUPPLIERS_RE.test(prompt);
+}
+
+function isCreateEmployeeIntent(prompt: string) {
+  return CREATE_EMPLOYEE_RE.test(prompt);
+}
+
+function isListBeneficiariesIntent(prompt: string) {
+  return LIST_BENEFICIARIES_RE.test(prompt);
+}
+
+function isListPoliciesIntent(prompt: string) {
+  return LIST_POLICIES_RE.test(prompt);
+}
+
+function isListAutomationsIntent(prompt: string) {
+  return LIST_AUTOMATIONS_RE.test(prompt);
+}
+
+function isListExpensesIntent(prompt: string) {
+  return LIST_EXPENSES_RE.test(prompt);
+}
+
+function isTreasuryIntent(prompt: string) {
+  return TREASURY_RE.test(prompt);
+}
+
+function isVirtualAccountsIntent(prompt: string) {
+  return VIRTUAL_ACCOUNTS_RE.test(prompt) && !isReceiveIntent(prompt);
+}
+
+function isFinancialReportIntent(prompt: string) {
+  return FINANCIAL_REPORT_RE.test(prompt);
+}
+
 function isRecurringIntent(prompt: string) {
-  return RECURRING_RE.test(prompt) && !isCalendarDuesIntent(prompt);
+  return RECURRING_RE.test(prompt) && !isCalendarDuesIntent(prompt) && !isPayrollIntent(prompt);
+}
+
+function isBusinessFeatureIntent(prompt: string) {
+  return (
+    isPayrollIntent(prompt) ||
+    isListEmployeesIntent(prompt) ||
+    isListSuppliersIntent(prompt) ||
+    isCreateEmployeeIntent(prompt) ||
+    isListBeneficiariesIntent(prompt) ||
+    isListPoliciesIntent(prompt) ||
+    isListAutomationsIntent(prompt) ||
+    isListExpensesIntent(prompt) ||
+    isTreasuryIntent(prompt) ||
+    isFinancialReportIntent(prompt)
+  );
+}
+
+function businessOnlyMessage() {
+  return 'Payroll, suppliers, and team tools are available on Business accounts. Switch account type in Settings to try the demo.';
+}
+
+function parseCreateEmployeeSeed(prompt: string) {
+  const after = prompt.match(
+    /\b(?:add|create|hire)\s+(?:an?\s+)?employee\s+(.+)$/i,
+  )?.[1]?.trim();
+  if (!after) return null;
+  const amount = parseAmount(after);
+  const currency = amount?.currency ?? parseCurrencyHint(after) ?? 'USD';
+  const salary = amount?.amount;
+  const cleaned = after
+    .replace(/(?:\$|£|€)?\s*\d+(?:\.\d{1,2})?\s*(?:ghs|usd|eur|gbp)?/i, '')
+    .replace(/\b(ghs|usd|eur|gbp)\b/i, '')
+    .trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return null;
+  const roleHints = ['designer', 'engineer', 'ops', 'finance', 'sales', 'manager'];
+  const roleIdx = parts.findIndex((p) => roleHints.includes(p.toLowerCase()));
+  const role =
+    roleIdx >= 0
+      ? parts[roleIdx]!.replace(/^\w/, (c) => c.toUpperCase())
+      : parts.length > 2
+        ? parts.slice(2).join(' ')
+        : 'Team member';
+  const name =
+    roleIdx >= 0 ? parts.slice(0, roleIdx).join(' ') : parts.slice(0, Math.min(2, parts.length)).join(' ');
+  if (!name) return null;
+  return {
+    name,
+    role,
+    salary: salary && Number.isFinite(salary) ? salary : 2000,
+    currency,
+  };
 }
 
 function filterEventsByRange(
@@ -276,7 +412,11 @@ function isSendIntent(prompt: string) {
     !isPaymentRequestIntent(prompt) &&
     !CONVERT_RE.test(prompt) &&
     !isInvoiceIntent(prompt) &&
-    !isRecurringIntent(prompt)
+    !isRecurringIntent(prompt) &&
+    !isPayrollIntent(prompt) &&
+    !isListSuppliersIntent(prompt) &&
+    !isListEmployeesIntent(prompt) &&
+    !isCreateEmployeeIntent(prompt)
   );
 }
 
@@ -827,6 +967,774 @@ export const finoraChatAdapter = {
         ],
       };
       return;
+    }
+
+    if (isBusinessFeatureIntent(prompt) && !isBusinessAccount()) {
+      yield {
+        content: [{ type: 'text', text: businessOnlyMessage() }],
+      };
+      return;
+    }
+
+    if (isTreasuryIntent(prompt)) {
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Treasury overview requested.\nAggregating wallets and upcoming outflows…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_get_treasury_overview',
+            toolName: 'get_treasury_overview',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(500);
+      if (abortSignal.aborted) return;
+      const overview = await getTreasuryOverview();
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nBuilt treasury snapshot.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_get_treasury_overview',
+            toolName: 'get_treasury_overview',
+            args,
+            argsText,
+            result: { overview },
+          },
+          {
+            type: 'text',
+            text: `Treasury snapshot ready — ${overview.balances.length} wallets and ${overview.upcomingOutflows.length} upcoming outflow line${overview.upcomingOutflows.length === 1 ? '' : 's'}.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListExpensesIntent(prompt)) {
+      const expenses = await listExpenses();
+      const total = expenses.reduce((s, e) => s + e.amount, 0);
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Business expenses requested.\nLoading card and vendor spend…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_expenses',
+            toolName: 'list_expenses',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${expenses.length} expense(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_expenses',
+            toolName: 'list_expenses',
+            args,
+            argsText,
+            result: { expenses, total, currency: 'USD' },
+          },
+          {
+            type: 'text',
+            text: `Business expenses this month: USD ${total.toLocaleString()} across ${expenses.length} charge${expenses.length === 1 ? '' : 's'}.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListBeneficiariesIntent(prompt)) {
+      const beneficiaries = await listBeneficiaries();
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Beneficiaries requested.\nLoading verified payout destinations…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_beneficiaries',
+            toolName: 'list_beneficiaries',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${beneficiaries.length}.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_beneficiaries',
+            toolName: 'list_beneficiaries',
+            args,
+            argsText,
+            result: { beneficiaries },
+          },
+          {
+            type: 'text',
+            text: `You have ${beneficiaries.length} payout beneficiar${beneficiaries.length === 1 ? 'y' : 'ies'} on file.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListPoliciesIntent(prompt)) {
+      const policies = await listPolicies();
+      const amount = parseAmount(prompt);
+      const amountUsd = amount?.currency === 'USD' ? amount.amount : amount?.amount;
+      const isNewRecipient = /\bnew (recipient|beneficiary|supplier)\b/i.test(prompt);
+      const simulation =
+        amountUsd != null
+          ? simulatePolicy(policies, amountUsd, isNewRecipient || /\bnew\b/i.test(prompt))
+          : undefined;
+      const args = { amountUsd, isNewRecipient };
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Approval policies requested.\nLoading rules…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_policies',
+            toolName: 'list_policies',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\n${policies.length} policy rule(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_policies',
+            toolName: 'list_policies',
+            args,
+            argsText,
+            result: { policies, simulation },
+          },
+          {
+            type: 'text',
+            text: simulation
+              ? simulation.requiresApproval
+                ? 'That action would require your approval under the current policies.'
+                : 'That action would not trip an enabled policy — approval may still be required for money movement.'
+              : `You have ${policies.filter((p) => p.enabled).length} enabled approval polic${policies.filter((p) => p.enabled).length === 1 ? 'y' : 'ies'}.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListAutomationsIntent(prompt)) {
+      const automations = await listAutomations();
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Automations requested.\nLoading business rules…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_automations',
+            toolName: 'list_automations',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${automations.length}.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_automations',
+            toolName: 'list_automations',
+            args,
+            argsText,
+            result: { automations },
+          },
+          {
+            type: 'text',
+            text: `${automations.filter((a) => a.status === 'active').length} active automation${automations.filter((a) => a.status === 'active').length === 1 ? '' : 's'} — they only prepare actions, never settle money.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isFinancialReportIntent(prompt)) {
+      const expenses = await listExpenses();
+      const outflow = expenses.reduce((s, e) => s + e.amount, 0);
+      const inflow = 12400;
+      const report = {
+        title: 'Business financial summary',
+        period: defaultPayrollPeriod(),
+        inflow,
+        outflow,
+        net: inflow - outflow,
+        currency: 'USD',
+        highlights: [
+          `Card/SaaS spend ${outflow.toLocaleString()} USD this month.`,
+          'Payroll is the largest upcoming outflow — run it from chat when ready.',
+          'Operating USD float is tracked under Treasury.',
+        ],
+      };
+      const args = { period: report.period };
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Financial report requested.\nSummarizing inflows, expenses, and cash position…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_generate_financial_insights',
+            toolName: 'generate_financial_insights',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(500);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nReport ready.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_generate_financial_insights',
+            toolName: 'generate_financial_insights',
+            args,
+            argsText,
+            result: { report },
+          },
+          {
+            type: 'text',
+            text: `Here’s your ${report.period} business summary. Net ${report.currency} ${report.net.toLocaleString()}.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isVirtualAccountsIntent(prompt)) {
+      const accounts = listFundingMethods().filter((m) => m.kind === 'virtual_account');
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Virtual accounts requested.\nLoading receive bank details…';
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_virtual_accounts',
+            toolName: 'list_virtual_accounts',
+            args,
+            argsText,
+          },
+        ],
+      };
+      await wait(400);
+      if (abortSignal.aborted) return;
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${accounts.length}.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_virtual_accounts',
+            toolName: 'list_virtual_accounts',
+            args,
+            argsText,
+            result: { accounts },
+          },
+          {
+            type: 'text',
+            text: `You have ${accounts.length} virtual account${accounts.length === 1 ? '' : 's'} for bank deposits. Say “Receive money” for the full share card.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isPayrollIntent(prompt)) {
+      const period = defaultPayrollPeriod();
+      const employees = await listActiveEmployees();
+      const total = employees.reduce((sum, e) => sum + e.salary, 0);
+      const currency = employees[0]?.currency ?? 'USD';
+      const args = {
+        period,
+        employeeIds: employees.map((e) => e.id),
+      };
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Payroll run requested.\nLoading active employees and summing salaries…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_prepare_payroll',
+            toolName: 'prepare_payroll',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(550);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nPrepared ${employees.length} salary line(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_prepare_payroll',
+            toolName: 'prepare_payroll',
+            args,
+            argsText,
+            result: {
+              period,
+              employees,
+              total,
+              currency,
+              preparationId: `prep_payroll_${Date.now()}`,
+            },
+          },
+          {
+            type: 'text',
+            text:
+              employees.length > 0
+                ? `Payroll for ${period}: ${employees.length} employee${
+                    employees.length === 1 ? '' : 's'
+                  }, ${currency} ${total.toLocaleString()}. Approve with your passcode — each salary settles as its own payout.`
+                : 'No active employees on the roster. Open Payroll to add your team.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListEmployeesIntent(prompt)) {
+      const employees = await listActiveEmployees();
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Team roster requested.\nLoading employees…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_employees',
+            toolName: 'list_employees',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${employees.length} employee(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_employees',
+            toolName: 'list_employees',
+            args,
+            argsText,
+            result: { employees },
+          },
+          {
+            type: 'text',
+            text:
+              employees.length > 0
+                ? `Here’s your team (${employees.length}). Say “Run payroll” when you’re ready to pay them.`
+                : 'No employees yet. Try “Add employee Ama Boateng designer 2500 USD”.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isCreateEmployeeIntent(prompt)) {
+      const seed = parseCreateEmployeeSeed(prompt);
+      const args = seed ?? {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Add employee requested.\nSaving to the business roster…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_employee',
+            toolName: 'create_employee',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(450);
+      if (abortSignal.aborted) return;
+
+      if (!seed) {
+        yield {
+          content: [
+            {
+              type: 'tool-call',
+              toolCallId: 'call_create_employee',
+              toolName: 'create_employee',
+              args,
+              argsText,
+              result: {},
+            },
+            {
+              type: 'text',
+              text: 'Tell me the name, role, and salary — e.g. “Add employee Ama Boateng designer 2500 USD”.',
+            },
+          ],
+        };
+        return;
+      }
+
+      const employee = await createEmployee({
+        name: seed.name,
+        role: seed.role,
+        salary: seed.salary,
+        currency: seed.currency,
+        destination: {
+          kind: 'bank_account',
+          label: 'Bank · ACH',
+          value: '•••• pending',
+          beneficiaryAccountId: `ba_emp_${Date.now().toString(36)}`,
+          rail: 'ACH',
+        },
+      });
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nSaved ${employee.name}.`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_employee',
+            toolName: 'create_employee',
+            args,
+            argsText,
+            result: { employee },
+          },
+          {
+            type: 'text',
+            text: `Added ${employee.name} to Payroll. Open the roster anytime from the drawer.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListSuppliersIntent(prompt)) {
+      const suppliers = await listSuppliers();
+      const args = {};
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Supplier directory requested.\nLoading saved vendors…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_suppliers',
+            toolName: 'list_suppliers',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${suppliers.length} supplier(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_suppliers',
+            toolName: 'list_suppliers',
+            args,
+            argsText,
+            result: { suppliers },
+          },
+          {
+            type: 'text',
+            text:
+              suppliers.length > 0
+                ? `You have ${suppliers.length} supplier${
+                    suppliers.length === 1 ? '' : 's'
+                  }. Try “Pay TechFlow 780 GBP”.`
+                : 'No suppliers saved yet.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (/\b(pay|send|payout)\b/i.test(prompt) && !isFinancialPlanIntent(prompt) && !isPayrollIntent(prompt)) {
+      const employees = await listActiveEmployees();
+      const matchedEmployee = employees.find((e) => {
+        const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const first = e.name.split(/\s+/)[0] ?? '';
+        return (
+          new RegExp(`\\b${escape(e.name)}\\b`, 'i').test(prompt) ||
+          (first.length > 2 && new RegExp(`\\b${escape(first)}\\b`, 'i').test(prompt))
+        );
+      });
+      if (matchedEmployee) {
+        if (!isBusinessAccount()) {
+          yield { content: [{ type: 'text', text: businessOnlyMessage() }] };
+          return;
+        }
+        const parsed = parseAmount(prompt);
+        const amount = parsed?.amount ?? 500;
+        const currency = parsed?.currency ?? matchedEmployee.currency;
+        const memo = /\bbonus\b/i.test(prompt)
+          ? 'Bonus'
+          : /\bsalary\b/i.test(prompt)
+            ? 'Salary'
+            : 'Employee payment';
+        const args = {
+          employeeId: matchedEmployee.id,
+          amount,
+          currency,
+          memo,
+        };
+        const argsText = JSON.stringify(args);
+        const reasoning = `Employee payment requested.\nPreparing payout to ${matchedEmployee.name}…`;
+        yield { content: [{ type: 'reasoning', text: reasoning }] };
+        await wait(400);
+        if (abortSignal.aborted) return;
+        yield {
+          content: [
+            { type: 'reasoning', text: reasoning },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_prepare_employee_payment',
+              toolName: 'prepare_employee_payment',
+              args,
+              argsText,
+            },
+          ],
+        };
+        await wait(500);
+        if (abortSignal.aborted) return;
+        yield {
+          content: [
+            {
+              type: 'reasoning',
+              text: `${reasoning}\nReady to confirm.`,
+            },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_prepare_employee_payment',
+              toolName: 'prepare_employee_payment',
+              args,
+              argsText,
+              result: {
+                employee: matchedEmployee,
+                amount,
+                currency,
+                memo,
+              },
+            },
+            {
+              type: 'text',
+              text: `Ready to pay ${matchedEmployee.name} ${currency} ${amount.toLocaleString()} (${memo}). Approve with your passcode.`,
+            },
+          ],
+        };
+        return;
+      }
+    }
+
+    {
+      const suppliers = await listSuppliers();
+      const matched =
+        /\b(pay|send|payout)\b/i.test(prompt) && !isFinancialPlanIntent(prompt)
+          ? suppliers.find((s) => {
+              const escape = (value: string) =>
+                value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const first = s.name.split(/\s+/)[0] ?? '';
+              return (
+                new RegExp(`\\b${escape(s.name)}\\b`, 'i').test(prompt) ||
+                (first.length > 2 && new RegExp(`\\b${escape(first)}\\b`, 'i').test(prompt))
+              );
+            })
+          : null;
+
+      if (matched) {
+        if (!isBusinessAccount()) {
+          yield {
+            content: [{ type: 'text', text: businessOnlyMessage() }],
+          };
+          return;
+        }
+
+        const parsed = parseAmount(prompt);
+        const amount = parsed?.amount ?? matched.defaultAmount ?? 500;
+        const currency = parsed?.currency ?? matched.currency;
+        const reference =
+          prompt.match(/\b(INV[- ]?\d+|invoice\s+\d+)\b/i)?.[1] ?? undefined;
+        const args = {
+          supplierId: matched.id,
+          supplierName: matched.name,
+          amount: { amount, currency },
+          reference,
+        };
+        const argsText = JSON.stringify(args);
+        const reasoning = `Supplier payment requested.\nPreparing payout to ${matched.name}…`;
+
+        yield { content: [{ type: 'reasoning', text: reasoning }] };
+        await wait(400);
+        if (abortSignal.aborted) return;
+
+        yield {
+          content: [
+            { type: 'reasoning', text: reasoning },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_prepare_supplier_payment',
+              toolName: 'prepare_supplier_payment',
+              args,
+              argsText,
+            },
+          ],
+        };
+
+        await wait(500);
+        if (abortSignal.aborted) return;
+
+        yield {
+          content: [
+            {
+              type: 'reasoning',
+              text: `${reasoning}\nReady to confirm.`,
+            },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_prepare_supplier_payment',
+              toolName: 'prepare_supplier_payment',
+              args,
+              argsText,
+              result: {
+                supplier: matched,
+                amount,
+                currency,
+                reference,
+                preparationId: `prep_sup_${matched.id}_${Date.now()}`,
+              },
+            },
+            {
+              type: 'text',
+              text: `Ready to pay ${matched.name} ${currency} ${amount.toLocaleString()} via ${matched.destination.label}. Approve with your passcode.`,
+            },
+          ],
+        };
+        return;
+      }
     }
 
     if (isCreateCardIntent(prompt)) {

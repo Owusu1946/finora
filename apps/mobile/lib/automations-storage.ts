@@ -1,0 +1,86 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export type Automation = {
+  id: string;
+  name: string;
+  trigger: string;
+  action: string;
+  status: 'active' | 'paused';
+};
+
+const KEY = 'finora.automations.v1';
+const memory = new Map<string, string>();
+
+export const MOCK_AUTOMATIONS: Automation[] = [
+  {
+    id: 'auto-1',
+    name: 'Pay small invoices',
+    trigger: 'Gmail invoice under 500 USD',
+    action: 'Prepare invoice payment for approval',
+    status: 'active',
+  },
+  {
+    id: 'auto-2',
+    name: 'Operating float alert',
+    trigger: 'USD wallet below 10,000',
+    action: 'Notify in chat and Approvals',
+    status: 'active',
+  },
+  {
+    id: 'auto-3',
+    name: 'Friday supplier batch',
+    trigger: 'Every Friday 09:00',
+    action: 'Prepare due supplier payments',
+    status: 'paused',
+  },
+];
+
+async function getItem(key: string): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(key);
+  } catch {
+    return memory.get(key) ?? null;
+  }
+}
+
+async function setItem(key: string, value: string): Promise<void> {
+  memory.set(key, value);
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch {
+    // memory fallback
+  }
+}
+
+export async function listAutomations(): Promise<Automation[]> {
+  const raw = await getItem(KEY);
+  if (!raw) {
+    await setItem(KEY, JSON.stringify(MOCK_AUTOMATIONS));
+    return [...MOCK_AUTOMATIONS];
+  }
+  try {
+    const parsed = JSON.parse(raw) as Automation[];
+    return Array.isArray(parsed) ? parsed : [...MOCK_AUTOMATIONS];
+  } catch {
+    return [...MOCK_AUTOMATIONS];
+  }
+}
+
+export async function setAutomationStatus(
+  id: string,
+  status: Automation['status'],
+): Promise<Automation | null> {
+  const items = await listAutomations();
+  const next = items.map((a) => (a.id === id ? { ...a, status } : a));
+  await setItem(KEY, JSON.stringify(next));
+  return next.find((a) => a.id === id) ?? null;
+}
+
+export async function clearAutomations(): Promise<void> {
+  memory.delete(KEY);
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+}

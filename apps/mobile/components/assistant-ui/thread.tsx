@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 
 import { Composer } from './composer';
@@ -23,11 +24,19 @@ import { ScrollToBottomButton, useScrollToBottom } from './scroll-to-bottom';
 
 const renderMessage = () => <MessageBubble />;
 
-const suggestions = [
+const PERSONAL_SUGGESTIONS = [
   'Check my balance',
   'Send 50 GHS to 0559182794',
   'Receive money',
   'Convert 100 USD to GHS',
+];
+
+const BUSINESS_SUGGESTIONS = [
+  'Show treasury overview',
+  'Run payroll',
+  'Pay TechFlow 780 GBP',
+  'Show business expenses this month',
+  'Pay everything due today',
 ];
 
 function SuggestionChip({ prompt }: { prompt: string }) {
@@ -52,6 +61,7 @@ function SuggestionChip({ prompt }: { prompt: string }) {
 
 function EmptyState() {
   const { colors } = useTheme();
+  const suggestions = isBusinessAccount() ? BUSINESS_SUGGESTIONS : PERSONAL_SUGGESTIONS;
   return (
     <Pressable
       accessible={false}

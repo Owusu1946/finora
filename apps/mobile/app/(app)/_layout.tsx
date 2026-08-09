@@ -218,6 +218,34 @@ export default function AppLayout() {
         options={screenOptions('Recurring')}
       />
       <Drawer.Screen
+        name='payroll'
+        options={screenOptions('Payroll')}
+      />
+      <Drawer.Screen
+        name='suppliers'
+        options={screenOptions('Suppliers')}
+      />
+      <Drawer.Screen
+        name='beneficiaries'
+        options={screenOptions('Beneficiaries')}
+      />
+      <Drawer.Screen
+        name='expenses'
+        options={screenOptions('Expenses')}
+      />
+      <Drawer.Screen
+        name='treasury'
+        options={screenOptions('Treasury')}
+      />
+      <Drawer.Screen
+        name='automations'
+        options={screenOptions('Automations')}
+      />
+      <Drawer.Screen
+        name='policies'
+        options={screenOptions('Policies')}
+      />
+      <Drawer.Screen
         name='contacts'
         options={screenOptions('Contacts')}
       />

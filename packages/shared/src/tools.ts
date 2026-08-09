@@ -490,6 +490,18 @@ export const ResumeRecurringPaymentInputSchema = PauseRecurringPaymentInputSchem
 export const ListSuppliersInputSchema = EmptyInputSchema;
 export const ListEmployeesInputSchema = EmptyInputSchema;
 
+export const CreateEmployeeInputSchema = z
+  .object({
+    name: z.string().min(1),
+    role: z.string().min(1).optional(),
+    salary: z.number().positive(),
+    currency: CurrencySchema,
+    destinationKind: DestinationKindSchema.optional(),
+    destinationLabel: z.string().optional(),
+    destinationValue: z.string().optional(),
+  })
+  .strict();
+
 export const PrepareSupplierPaymentInputSchema = z
   .object({
     supplierId: z.string().optional(),

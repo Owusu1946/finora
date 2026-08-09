@@ -15,26 +15,39 @@ import 'react-native-reanimated';
 
 import '../global.css';
 
+import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
   CreatePaymentRequestToolUI,
   GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
 import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
+import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
 import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
 import { GetVirtualCardToolUI } from '@/components/chat/GetVirtualCardToolUI';
+import { ListAutomationsToolUI } from '@/components/chat/ListAutomationsToolUI';
+import { ListBeneficiariesToolUI } from '@/components/chat/ListBeneficiariesToolUI';
 import { ListCalendarDuesToolUI } from '@/components/chat/ListCalendarDuesToolUI';
+import { ListEmployeesToolUI } from '@/components/chat/ListEmployeesToolUI';
+import { ListExpensesToolUI } from '@/components/chat/ListExpensesToolUI';
 import { ListInvoicesToolUI } from '@/components/chat/ListInvoicesToolUI';
+import { ListPoliciesToolUI } from '@/components/chat/ListPoliciesToolUI';
 import { ListReceiveMethodsToolUI } from '@/components/chat/ListReceiveMethodsToolUI';
 import { ListSmsRequestsToolUI } from '@/components/chat/ListSmsRequestsToolUI';
+import { ListSuppliersToolUI } from '@/components/chat/ListSuppliersToolUI';
+import { ListVirtualAccountsToolUI } from '@/components/chat/ListVirtualAccountsToolUI';
 import { ListVirtualCardsToolUI } from '@/components/chat/ListVirtualCardsToolUI';
 import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
+import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeePaymentToolUI';
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
+import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
+import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
+import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
@@ -130,6 +143,19 @@ export default function RootLayout() {
               <ListInvoicesToolUI />
               <ListCalendarDuesToolUI />
               <ListSmsRequestsToolUI />
+              <ListEmployeesToolUI />
+              <ListSuppliersToolUI />
+              <ListBeneficiariesToolUI />
+              <ListPoliciesToolUI />
+              <ListAutomationsToolUI />
+              <ListExpensesToolUI />
+              <ListVirtualAccountsToolUI />
+              <TreasuryOverviewToolUI />
+              <FinancialReportToolUI />
+              <PreparePayrollToolUI />
+              <PrepareSupplierPaymentToolUI />
+              <PrepareEmployeePaymentToolUI />
+              <CreateEmployeeToolUI />
               <PrepareRecurringToolUI />
               <SchedulePaymentWizardToolUI />
               <ResolveSendToolUI />
