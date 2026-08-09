@@ -2,7 +2,7 @@ import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/rea
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   View,
   Platform,
@@ -12,12 +12,21 @@ import {
   StyleSheet,
   Pressable,
   TextInput,
+  Text as RNText,
+  type TextStyle,
   type TextInputProps,
 } from 'react-native';
 
+import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  FINORA_TAG_GLOBAL_MIN_CHARS,
+  searchFinoraTags,
+  type FinoraTagSuggestion,
+} from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
 
 import {
@@ -32,6 +41,75 @@ const COMPOSER_ATTACHMENT_COMPONENTS = {
   File: ComposerDocumentAttachment,
   Attachment: ComposerAttachmentChip,
 };
+
+const TAG_TOKEN_RE = /@[a-z][a-z0-9_]{0,23}/gi;
+const TAG_ACCENT = {
+  light: '#0F766E',
+  dark: '#2DD4BF',
+} as const;
+
+/**
+ * Overlay must use the same font metrics as TextInput.
+ * Color-only tagging — never change weight/family, or the caret drifts.
+ * Use RN Text (not AppText) so larger-text scaling cannot desync the layers.
+ */
+function ComposerHighlightedText({
+  text,
+  textStyle,
+  foreground,
+  tagColor,
+}: {
+  text: string;
+  textStyle: TextStyle;
+  foreground: string;
+  tagColor: string;
+}) {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  TAG_TOKEN_RE.lastIndex = 0;
+  while ((match = TAG_TOKEN_RE.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(
+        <RNText
+          key={`plain-${lastIndex}`}
+          style={{ color: foreground }}
+        >
+          {text.slice(lastIndex, match.index)}
+        </RNText>,
+      );
+    }
+    nodes.push(
+      <RNText
+        key={`tag-${match.index}`}
+        style={{ color: tagColor }}
+      >
+        {match[0]}
+      </RNText>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length || nodes.length === 0) {
+    nodes.push(
+      <RNText
+        key={`plain-${lastIndex}`}
+        style={{ color: foreground }}
+      >
+        {text.slice(lastIndex)}
+      </RNText>,
+    );
+  }
+
+  return (
+    <RNText
+      pointerEvents='none'
+      style={[textStyle, styles.highlightLayer]}
+    >
+      {nodes}
+      {text.endsWith('\n') ? '\n' : null}
+    </RNText>
+  );
+}
 
 function AttachButton() {
   const { colors } = useTheme();
@@ -244,23 +322,161 @@ function CancelButton() {
 
 /** Local buffer avoids RN cursor jumps from store-controlled TextInput. */
 function ComposerInput(props: TextInputProps) {
+  const { colors, isDark } = useTheme();
   const aui = useAui();
   const storeText = useAuiState((s) => s.composer.text);
   const [localText, setLocalText] = useState(storeText);
+  const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
+  const [directoryLoaded, setDirectoryLoaded] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
+  // Keep overlay mode stable while editing so deleting a tag never remounts styles.
+  const useHighlightOverlay = localText.length > 0;
 
   useEffect(() => {
     setLocalText((prev) => (prev !== storeText ? storeText : prev));
   }, [storeText]);
 
+  const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
+  const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setDirectoryLoaded(false);
+      setTagProfiles([]);
+      return;
+    }
+    let active = true;
+    void searchFinoraTags(mentionQuery).then((next) => {
+      if (!active) return;
+      setTagProfiles(next);
+      setDirectoryLoaded(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [mentionQuery]);
+
+  const selectTag = (profile: FinoraTagSuggestion) => {
+    if (!mentionMatch || mentionQuery === null) return;
+    const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
+    const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
+    setLocalText(next);
+    aui.composer.setText(next);
+    haptics.selection();
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const emptyHint =
+    mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
+      ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
+      : 'No recent match. Type the exact Finora Tag to send.';
+
+  const { style: inputStyleProp, ...inputProps } = props;
+  const flatInputStyle = StyleSheet.flatten(inputStyleProp) ?? {};
+  const overlayTextStyle: TextStyle = {
+    fontFamily: flatInputStyle.fontFamily,
+    fontSize: flatInputStyle.fontSize,
+    lineHeight: flatInputStyle.lineHeight,
+    fontWeight: flatInputStyle.fontWeight,
+    letterSpacing: flatInputStyle.letterSpacing,
+    paddingHorizontal: flatInputStyle.paddingHorizontal,
+    paddingTop: flatInputStyle.paddingTop,
+    paddingBottom: flatInputStyle.paddingBottom,
+    paddingLeft: flatInputStyle.paddingLeft,
+    paddingRight: flatInputStyle.paddingRight,
+    padding: flatInputStyle.padding,
+    textAlign: flatInputStyle.textAlign,
+    ...Platform.select({
+      android: { includeFontPadding: false, textAlignVertical: 'top' as const },
+      default: {},
+    }),
+  };
+
   return (
-    <TextInput
-      {...props}
-      value={localText}
-      onChangeText={(text) => {
-        setLocalText(text);
-        aui.composer.setText(text);
-      }}
-    />
+    <View style={styles.inputWrap}>
+      {mentionQuery !== null && directoryLoaded && (
+        <View
+          style={[
+            styles.mentionMenu,
+            { backgroundColor: colors.background, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.mentionEyebrow, { color: colors.mutedForeground }]}>
+            Recent Finora Tags
+          </Text>
+          {tagProfiles.length ? (
+            tagProfiles.map((profile, index) => (
+              <Pressable
+                key={profile.accountId}
+                accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
+                onPress={() => selectTag(profile)}
+                style={({ pressed }) => [
+                  styles.mentionRow,
+                  pressed && { backgroundColor: colors.muted },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.mentionAvatar,
+                    { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+                  ]}
+                >
+                  <Text style={styles.mentionInitials}>{profile.initials}</Text>
+                </View>
+                <View style={styles.mentionMeta}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.mentionName, { color: colors.foreground }]}
+                  >
+                    {profile.displayName}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.mentionHandle, { color: colors.mutedForeground }]}
+                  >
+                    @{profile.tag} · {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
+                  </Text>
+                </View>
+              </Pressable>
+            ))
+          ) : (
+            <Text style={[styles.mentionEmpty, { color: colors.mutedForeground }]}>
+              {emptyHint}
+            </Text>
+          )}
+        </View>
+      )}
+      <View style={styles.highlightWrap}>
+        {useHighlightOverlay ? (
+          <ComposerHighlightedText
+            text={localText}
+            textStyle={overlayTextStyle}
+            foreground={colors.foreground}
+            tagColor={tagColor}
+          />
+        ) : null}
+        <TextInput
+          {...inputProps}
+          ref={inputRef}
+          value={localText}
+          style={[
+            inputStyleProp,
+            useHighlightOverlay && styles.transparentInput,
+            Platform.select({
+              android: { includeFontPadding: false, textAlignVertical: 'top' },
+              web: useHighlightOverlay ? ({ caretColor: colors.foreground } as object) : undefined,
+              default: {},
+            }),
+          ]}
+          selectionColor={tagColor}
+          onChangeText={(text) => {
+            setLocalText(text);
+            aui.composer.setText(text);
+          }}
+        />
+      </View>
+    </View>
   );
 }
 
@@ -280,7 +496,7 @@ export function Composer() {
 
         <ComposerInput
           style={inputStyle}
-          placeholder='Ask Finora…'
+          placeholder='Ask Finora… use @ to tag'
           placeholderTextColor={colors.mutedForeground}
           multiline
           maxLength={4000}
@@ -334,6 +550,75 @@ const styles = StyleSheet.create({
       web: { outlineStyle: 'none' } as object,
       default: {},
     }),
+  },
+  inputWrap: {
+    width: '100%',
+  },
+  highlightWrap: {
+    position: 'relative',
+    width: '100%',
+  },
+  highlightLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  transparentInput: {
+    color: 'transparent',
+  },
+  mentionMenu: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.lg,
+    marginBottom: 8,
+    padding: 6,
+  },
+  mentionEyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.7,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    textTransform: 'uppercase',
+  },
+  mentionRow: {
+    minHeight: 50,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  mentionAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mentionInitials: {
+    color: '#FFFFFF',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  mentionMeta: {
+    flex: 1,
+    gap: 1,
+  },
+  mentionName: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  mentionHandle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+  },
+  mentionEmpty: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
   },
   actionRow: {
     flexDirection: 'row',

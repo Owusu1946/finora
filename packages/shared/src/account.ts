@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { FinoraTagSchema } from './finora-tag';
+
 export const AccountTypeSchema = z.enum(['personal', 'business']);
 export type AccountType = z.infer<typeof AccountTypeSchema>;
 
@@ -8,6 +10,7 @@ export const FinoraAccountSchema = z.object({
   userId: z.string(),
   type: AccountTypeSchema,
   displayName: z.string().min(1),
+  finoraTag: FinoraTagSchema,
   wewireSubCustomerId: z.string().uuid().nullable(),
   createdAt: z.string().datetime(),
 });

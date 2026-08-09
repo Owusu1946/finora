@@ -20,7 +20,6 @@ export type VirtualCard = {
 
 export type CreateVirtualCardInput = {
   label: string;
-  currency: VirtualCardCurrency;
   spendLimit: number;
   network?: VirtualCardNetwork;
 };
@@ -59,10 +58,10 @@ export const MOCK_VIRTUAL_CARDS: VirtualCard[] = [
     label: 'Operations',
     last4: '9012',
     network: 'visa',
-    currency: 'GHS',
+    currency: 'USD',
     status: 'frozen',
-    spendLimit: 5000,
-    spent: 1200,
+    spendLimit: 500,
+    spent: 120,
     createdAt: '2026-05-20T09:15:00.000Z',
     pan: '4000000000009012',
     expiry: '03/30',

@@ -32,6 +32,7 @@ const now = () => new Date().toISOString();
 
 export type MockSubCustomer = {
   id: string;
+  finoraTag: string;
   type: 'INDIVIDUAL' | 'BUSINESS';
   email: string;
   country: string;
@@ -39,6 +40,7 @@ export type MockSubCustomer = {
   lastName?: string;
   businessName?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'ARCHIVED';
+  walletCurrencies: string[];
   onboardingStatus:
     | 'NOT_STARTED'
     | 'IN_PROGRESS'
@@ -80,26 +82,58 @@ export const mockStore = {
   subcustomers: [
     {
       id: 'sc_personal_001',
+      finoraTag: 'kennethowusu',
       type: 'INDIVIDUAL',
       email: 'kenneth@finora.app',
       country: 'GH',
       firstName: 'Kenneth',
       lastName: 'Owusu',
       status: 'ACTIVE',
+      walletCurrencies: ['GHS', 'USD', 'USDT'],
       onboardingStatus: 'APPROVED',
       purpose: ['PAYMENTS'],
       createdAt: '2026-01-10T10:00:00Z',
     },
     {
       id: 'sc_business_001',
+      finoraTag: 'finorademo',
       type: 'BUSINESS',
       email: 'ops@finora.business',
       country: 'GH',
       businessName: 'Finora Demo Ltd',
       status: 'ACTIVE',
+      walletCurrencies: ['GHS', 'USD'],
       onboardingStatus: 'IN_PROGRESS',
       purpose: ['PAYMENTS', 'PAYROLL'],
       createdAt: '2026-02-01T10:00:00Z',
+    },
+    {
+      id: 'sc_personal_002',
+      finoraTag: 'okenneth',
+      type: 'INDIVIDUAL',
+      email: 'okenneth@example.com',
+      country: 'GH',
+      firstName: 'O. Kenneth',
+      lastName: 'Mensah',
+      status: 'ACTIVE',
+      walletCurrencies: ['GHS', 'USD'],
+      onboardingStatus: 'APPROVED',
+      purpose: ['PAYMENTS'],
+      createdAt: '2026-03-08T10:00:00Z',
+    },
+    {
+      id: 'sc_personal_003',
+      finoraTag: 'ama',
+      type: 'INDIVIDUAL',
+      email: 'ama@example.com',
+      country: 'GH',
+      firstName: 'Ama',
+      lastName: 'Asante',
+      status: 'ACTIVE',
+      walletCurrencies: ['GHS'],
+      onboardingStatus: 'APPROVED',
+      purpose: ['PAYMENTS'],
+      createdAt: '2026-04-11T10:00:00Z',
     },
   ] as MockSubCustomer[],
   wallets: [
@@ -294,7 +328,12 @@ export const mockStore = {
   kyc: {
     sc_business_001: {
       requirements: [
-        { id: 'reg', label: 'Certificate of incorporation', required: true, status: 'uploaded' as const },
+        {
+          id: 'reg',
+          label: 'Certificate of incorporation',
+          required: true,
+          status: 'uploaded' as const,
+        },
         { id: 'addr', label: 'Proof of address', required: true, status: 'missing' as const },
         { id: 'ubo', label: 'Beneficial owners', required: true, status: 'missing' as const },
       ],
@@ -407,7 +446,11 @@ export function newId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function createPreparation(kind: MockApproval['kind'], payload: Record<string, unknown>, agent?: string) {
+export function createPreparation(
+  kind: MockApproval['kind'],
+  payload: Record<string, unknown>,
+  agent?: string,
+) {
   const preparationId = newId('prep');
   const approval: MockApproval = {
     id: newId('apr'),

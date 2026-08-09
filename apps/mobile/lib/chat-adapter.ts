@@ -1,29 +1,26 @@
 import type { ThreadMessage } from '@assistant-ui/react-native';
 
-import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
 import type { BalanceWallet } from '@/components/chat/BalancesCard';
 import type { ConversionQuote } from '@/components/chat/ConversionCard';
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
-import type { VirtualCardCurrency } from '@/components/cards/types';
 import type { Invoice } from '@/components/invoices/types';
-import { MOCK_INVOICES } from '@/components/invoices/types';
 import type { RecurringFrequency } from '@/components/recurring/types';
+
+import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
+import { MOCK_INVOICES } from '@/components/invoices/types';
 import {
   contactToPaymentDestination,
   contactToSendSeed,
   findContactsByName,
 } from '@/lib/contact-lookup';
+import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
 import { listContacts } from '@/lib/contacts-storage';
-import {
-  inferFundingSource,
-  listFundingMethods,
-} from '@/lib/funding-methods';
-import {
-  mockRecipientNameForQr,
-  parsePaymentQr,
-  type ParsedPaymentQr,
-} from '@/lib/payment-qr';
+import { CURRENT_FINORA_ACCOUNT, lookupFinoraTag } from '@/lib/finora-tags';
+import { inferFundingSource, listFundingMethods } from '@/lib/funding-methods';
+import { getIntegrations } from '@/lib/integrations-storage';
+import { mockRecipientNameForQr, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
+import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
 import {
   findVirtualCardByLabel,
   getVirtualCard,
@@ -44,8 +41,7 @@ function lastUserText(messages: readonly ThreadMessage[]) {
   );
 }
 
-const SEND_RE =
-  /\b(send|pay|transfer|payout)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
+const SEND_RE = /\b(send|pay|transfer|payout)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
 const FUND_RE =
   /\b(deposit|fund|top\s*up|add money|add funds|load (?:my )?(?:wallet|account)|charge my momo)\b/i;
 const RECEIVE_RE =
@@ -58,14 +54,17 @@ const CONVERT_RE =
   /\b(convert|exchange|fx|swap|change)\b|\b(usd|ghs|eur|gbp|usdt|usdc)\s*(to|into)\s*(usd|ghs|eur|gbp|usdt|usdc)\b/i;
 const INVOICE_RE =
   /\b(invoice|invoices|supplier(?:s)?|unpaid bill|bills? from|find (?:my )?bills)\b/i;
+const CALENDAR_DUES_RE =
+  /\b(calendar|what.?s due|due on my calendar|money events?|rent (?:and|&) payroll|payroll (?:and|&) rent|due this week|upcoming (?:dues?|bills?|payments?))\b/i;
+const SMS_REQUESTS_RE =
+  /\b(sms|text message|momo (?:sms|prompt)|payment requests? from (?:my )?(?:sms|texts?)|requests? from (?:my )?sms)\b/i;
 const RECURRING_RE =
   /\b(every\s+(week|month|quarter)|recurring|schedule|weekly|monthly|quarterly|auto(?:matic)?(?:ally)?\s+pay|standing\s+order|set\s*up\s+(my\s+)?(rent|payment|payout|salary)|rent\s+payment|setup\s+(a\s+)?(recurring|scheduled)|i want to (setup|set up|schedule))\b/i;
 const FINANCIAL_PLAN_RE =
   /\bpay\s+everyone\b|\bpay\s+everything\s+due\b|\beverything\s+due\s+today\b|\bpay\s+all\s+(due|bills|invoices|suppliers)\b|\bfinancial\s+plan\b|\brun\s+(payroll\s+and|all)\b/i;
 const CREATE_CARD_RE =
   /\b(create|issue|make|new)\b.{0,24}\b(virtual\s+)?card\b|\bvirtual\s+card\s+for\b|\bcard\s+for\s+(netflix|meta|aws|travel)\b/i;
-const LIST_CARDS_RE =
-  /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b/i;
+const LIST_CARDS_RE = /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b/i;
 const MANAGE_CARD_RE =
   /\b(freeze|unfreeze|cancel)\b.{0,24}\bcard\b|\bcard\b.{0,24}\b(freeze|unfreeze|cancel|details|limit)\b/i;
 
@@ -93,25 +92,22 @@ function parseCardSeed(prompt: string) {
   else if (lower.includes('aws')) label = 'AWS';
   else if (lower.includes('travel')) label = 'Travel';
   else {
-    const forMatch = prompt.match(/\b(?:card|virtual card)\s+for\s+([A-Za-z][A-Za-z0-9 &-]{1,40})/i);
+    const forMatch = prompt.match(
+      /\b(?:card|virtual card)\s+for\s+([A-Za-z][A-Za-z0-9 &-]{1,40})/i,
+    );
     if (forMatch?.[1]) label = forMatch[1].trim();
   }
 
-  const currencyMatch = prompt.match(/\b(USD|GHS|EUR|\$|€)\b/i);
-  let currency: VirtualCardCurrency | undefined;
-  if (currencyMatch) {
-    const raw = currencyMatch[1]!.toUpperCase();
-    currency = raw === '$' ? 'USD' : raw === '€' ? 'EUR' : (raw as VirtualCardCurrency);
-  }
-
-  const amountMatch = prompt.match(
-    /(?:\$|€|USD|GHS|EUR)?\s*(\d+(?:\.\d{1,2})?)\s*(?:USD|GHS|EUR)?(?:\s*limit)?/i,
-  );
+  // WeWire markets virtual cards as USD cards. Do not reinterpret a limit
+  // explicitly stated in another currency as the same numeric USD amount.
+  const unsupportedCurrency = /\b(?:GHS|EUR)\b|€/i.test(prompt);
+  const amountMatch = unsupportedCurrency
+    ? null
+    : prompt.match(/(?:\$|USD)?\s*(\d+(?:\.\d{1,2})?)\s*(?:USD)?(?:\s*limit)?/i);
   const spendLimit = amountMatch ? Number(amountMatch[1]) : undefined;
 
   return {
     label,
-    currency,
     spendLimit: Number.isFinite(spendLimit) ? spendLimit : undefined,
   };
 }
@@ -136,11 +132,31 @@ async function resolveManagedCard(prompt: string) {
 }
 
 function isInvoiceIntent(prompt: string) {
-  return INVOICE_RE.test(prompt) && !isFinancialPlanIntent(prompt);
+  return INVOICE_RE.test(prompt) && !isFinancialPlanIntent(prompt) && !isCalendarDuesIntent(prompt);
+}
+
+function isCalendarDuesIntent(prompt: string) {
+  return CALENDAR_DUES_RE.test(prompt) && !isFinancialPlanIntent(prompt);
+}
+
+function isSmsRequestsIntent(prompt: string) {
+  return SMS_REQUESTS_RE.test(prompt);
 }
 
 function isRecurringIntent(prompt: string) {
-  return RECURRING_RE.test(prompt);
+  return RECURRING_RE.test(prompt) && !isCalendarDuesIntent(prompt);
+}
+
+function filterEventsByRange(
+  events: Awaited<ReturnType<typeof listUpcomingCalendarMoneyEvents>>,
+  range: 'week' | 'month',
+) {
+  const horizonMs = (range === 'month' ? 31 : 7) * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  return events.filter((event) => {
+    const due = new Date(event.dueAt).getTime();
+    return due >= now - 12 * 60 * 60 * 1000 && due <= now + horizonMs;
+  });
 }
 
 function parseRecipientQuery(prompt: string): string | null {
@@ -164,6 +180,10 @@ function parseRecipientQuery(prompt: string): string | null {
   return null;
 }
 
+function parseFinoraTag(prompt: string) {
+  return prompt.match(/(?:^|\s)@([a-z][a-z0-9_]{2,23})\b/i)?.[1]?.toLowerCase() ?? null;
+}
+
 function parseSchedulePurpose(prompt: string): string | undefined {
   if (/\brent\b/i.test(prompt)) return 'Rent';
   if (/\bsalary|payroll|wage\b/i.test(prompt)) return 'Salary';
@@ -176,9 +196,7 @@ function parseScheduleSeed(prompt: string) {
   const amount = parseAmount(prompt);
   const destination = parseDestination(prompt);
   const purpose = parseSchedulePurpose(prompt);
-  const name =
-    parseRecipientQuery(prompt) ??
-    (purpose === 'Rent' ? undefined : undefined);
+  const name = parseRecipientQuery(prompt) ?? (purpose === 'Rent' ? undefined : undefined);
 
   return {
     purpose,
@@ -208,6 +226,8 @@ function parseScheduleSeed(prompt: string) {
 function isPaymentRequestIntent(prompt: string) {
   // Paying an existing request / scanning a QR is not "create payment request".
   if (extractPaymentQrFromPrompt(prompt)) return false;
+  // SMS inbox payment requests are a separate integration flow.
+  if (isSmsRequestsIntent(prompt)) return false;
   return PAYMENT_REQUEST_RE.test(prompt);
 }
 
@@ -265,11 +285,7 @@ function isFundIntent(prompt: string) {
 }
 
 function isReceiveIntent(prompt: string) {
-  return (
-    RECEIVE_RE.test(prompt) &&
-    !isPaymentRequestIntent(prompt) &&
-    !isFundIntent(prompt)
-  );
+  return RECEIVE_RE.test(prompt) && !isPaymentRequestIntent(prompt) && !isFundIntent(prompt);
 }
 
 function isBalanceIntent(prompt: string) {
@@ -352,9 +368,24 @@ function parseDestinationCountry(prompt: string): string | undefined {
   if (iso && COUNTRY_ALIASES[iso[1]!.toLowerCase()] === undefined) {
     const code = iso[1]!.toUpperCase();
     if (
-      ['GH', 'NG', 'KE', 'UG', 'TZ', 'ZA', 'DE', 'FR', 'NL', 'GB', 'US', 'CA', 'AE', 'IN', 'JP', 'CN'].includes(
-        code,
-      )
+      [
+        'GH',
+        'NG',
+        'KE',
+        'UG',
+        'TZ',
+        'ZA',
+        'DE',
+        'FR',
+        'NL',
+        'GB',
+        'US',
+        'CA',
+        'AE',
+        'IN',
+        'JP',
+        'CN',
+      ].includes(code)
     ) {
       return code;
     }
@@ -423,8 +454,7 @@ function enrichPrepareArgs(
         : undefined);
   const settlementMethod = parseSettlementMethod(prompt, destination);
   const funding =
-    parseSendFromWallet(prompt) ??
-    (typeof base.currency === 'string' ? base.currency : undefined);
+    parseSendFromWallet(prompt) ?? (typeof base.currency === 'string' ? base.currency : undefined);
 
   return {
     ...base,
@@ -440,9 +470,7 @@ function enrichPrepareArgs(
   };
 }
 
-function parsePrefer(
-  prompt: string,
-): 'virtual_account' | 'mobile_money' | 'crypto' | undefined {
+function parsePrefer(prompt: string): 'virtual_account' | 'mobile_money' | 'crypto' | undefined {
   if (/\b(crypto|usdt|usdc|wallet address|trc|erc)\b/i.test(prompt)) return 'crypto';
   if (/\b(momo|mobile money|mtn|telecel)\b/i.test(prompt)) return 'mobile_money';
   if (/\b(iban|virtual account|bank|swift|fps|sepa)\b/i.test(prompt)) {
@@ -600,9 +628,8 @@ function parseFrequency(prompt: string): RecurringFrequency {
 function buildMockRecurring(prompt: string) {
   const payment = buildMockPayment(prompt);
   const named =
-    prompt.match(
-      /\b(?:to|pay)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?(?:\s+Ltd)?)\b/,
-    )?.[1] ?? payment.recipientName;
+    prompt.match(/\b(?:to|pay)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?(?:\s+Ltd)?)\b/)?.[1] ??
+    payment.recipientName;
 
   // Prefer known suppliers when mentioned
   const lower = prompt.toLowerCase();
@@ -637,8 +664,9 @@ function buildMockRecurring(prompt: string) {
 
 function buildMockConversion(prompt: string): ConversionQuote {
   const pair =
-    prompt.match(/\b(usd|ghs|eur|gbp|usdt|usdc)\s*(?:to|into|->)\s*(usd|ghs|eur|gbp|usdt|usdc)\b/i) ??
-    null;
+    prompt.match(
+      /\b(usd|ghs|eur|gbp|usdt|usdc)\s*(?:to|into|->)\s*(usd|ghs|eur|gbp|usdt|usdc)\b/i,
+    ) ?? null;
   const fromCurrency = (pair?.[1] ?? 'USD').toUpperCase();
   const toCurrency = (pair?.[2] ?? 'GHS').toUpperCase();
   const amountMatch = prompt.match(/\b(\d+(?:\.\d{1,2})?)\b/);
@@ -694,7 +722,8 @@ export const finoraChatAdapter = {
           destinationKind: qr.destination.kind,
           destinationLabel: qr.destination.label,
           destinationValue: qr.destination.value,
-          reference: qr.reference ?? (qr.preparationId ? `Request ${qr.preparationId}` : 'QR payment'),
+          reference:
+            qr.reference ?? (qr.preparationId ? `Request ${qr.preparationId}` : 'QR payment'),
         },
         qr.destination,
       );
@@ -968,8 +997,7 @@ export const finoraChatAdapter = {
       const invoices = buildMockDueInvoices();
       const args = { source: 'gmail' as const, status: 'due' as const };
       const argsText = JSON.stringify(args);
-      const reasoning =
-        'Supplier invoices requested.\nChecking Gmail connection and unpaid bills…';
+      const reasoning = 'Supplier invoices requested.\nChecking Gmail connection and unpaid bills…';
 
       yield { content: [{ type: 'reasoning', text: reasoning }] };
       await wait(400);
@@ -1011,6 +1039,163 @@ export const finoraChatAdapter = {
               invoices.length > 0
                 ? `Found ${invoices.length} unpaid supplier invoice${invoices.length === 1 ? '' : 's'} from Gmail. Pay any with your passcode, or open Invoices in the drawer.`
                 : 'No unpaid invoices right now. Connect Gmail under Integrations if you haven’t.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isCalendarDuesIntent(prompt)) {
+      const range = /\bmonth\b/i.test(prompt) ? ('month' as const) : ('week' as const);
+      const args = { range };
+      const argsText = JSON.stringify(args);
+      const reasoning =
+        'Calendar money events requested.\nChecking Google Calendar for rent, payroll, and bill dues…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_calendar_dues',
+            toolName: 'list_calendar_dues',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(600);
+      if (abortSignal.aborted) return;
+
+      const integrations = await getIntegrations();
+      if (!integrations.calendarConnected) {
+        yield {
+          content: [
+            {
+              type: 'reasoning',
+              text: `${reasoning}\nCalendar not connected.`,
+            },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_list_calendar_dues',
+              toolName: 'list_calendar_dues',
+              args,
+              argsText,
+              result: { connected: false, events: [] },
+            },
+            {
+              type: 'text',
+              text: 'Google Calendar isn’t connected. Open Integrations to connect it, then ask again.',
+            },
+          ],
+        };
+        return;
+      }
+
+      const events = filterEventsByRange(await listUpcomingCalendarMoneyEvents(), range);
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${events.length} upcoming money event(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_calendar_dues',
+            toolName: 'list_calendar_dues',
+            args,
+            argsText,
+            result: { connected: true, events },
+          },
+          {
+            type: 'text',
+            text:
+              events.length > 0
+                ? `Found ${events.length} money event${events.length === 1 ? '' : 's'} on your calendar this ${range}. Pay any with your passcode — Finora still needs your approval.`
+                : `No upcoming money events on your calendar this ${range}.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isSmsRequestsIntent(prompt)) {
+      const args = { status: 'new' as const };
+      const argsText = JSON.stringify(args);
+      const reasoning =
+        'SMS payment requests requested.\nScanning connected SMS inbox for MoMo prompts and payment asks…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_sms_requests',
+            toolName: 'list_sms_requests',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(600);
+      if (abortSignal.aborted) return;
+
+      const integrations = await getIntegrations();
+      if (!integrations.smsConnected) {
+        yield {
+          content: [
+            {
+              type: 'reasoning',
+              text: `${reasoning}\nSMS not connected.`,
+            },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_list_sms_requests',
+              toolName: 'list_sms_requests',
+              args,
+              argsText,
+              result: { connected: false, requests: [] },
+            },
+            {
+              type: 'text',
+              text: 'SMS inbox isn’t connected. Open Integrations to connect SMS, then ask again.',
+            },
+          ],
+        };
+        return;
+      }
+
+      const requests = await listOpenSmsPaymentRequests();
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${requests.length} open request(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_sms_requests',
+            toolName: 'list_sms_requests',
+            args,
+            argsText,
+            result: { connected: true, requests },
+          },
+          {
+            type: 'text',
+            text:
+              requests.length > 0
+                ? `Found ${requests.length} payment request${requests.length === 1 ? '' : 's'} in SMS. Pay any with your passcode, or dismiss ones you can ignore.`
+                : 'No open payment requests in SMS right now.',
           },
         ],
       };
@@ -1070,9 +1255,7 @@ export const finoraChatAdapter = {
 
     if (isPaymentRequestIntent(prompt)) {
       const parsed = parseAmount(prompt);
-      const memoMatch = prompt.match(
-        /\b(?:for|note|memo|because)\s+([a-z0-9][\w\s'-]{1,40})/i,
-      );
+      const memoMatch = prompt.match(/\b(?:for|note|memo|because)\s+([a-z0-9][\w\s'-]{1,40})/i);
       const args = {
         amount: parsed?.amount,
         currency: parsed?.currency ?? parseCurrencyHint(prompt),
@@ -1229,6 +1412,87 @@ export const finoraChatAdapter = {
     }
 
     if (isSendIntent(prompt)) {
+      const finoraTag = parseFinoraTag(prompt);
+      if (finoraTag) {
+        const recipient = await lookupFinoraTag(finoraTag);
+        const parsedAmount = parseAmount(prompt);
+
+        if (!recipient) {
+          yield {
+            content: [
+              {
+                type: 'text',
+                text:
+                  finoraTag === CURRENT_FINORA_ACCOUNT.tag
+                    ? 'You cannot send money to your own Finora Tag.'
+                    : `I couldn’t find an active Finora account for @${finoraTag}. Check the tag and try again.`,
+              },
+            ],
+          };
+          return;
+        }
+
+        if (!parsedAmount) {
+          yield {
+            content: [
+              {
+                type: 'text',
+                text: `How much do you want to send to ${recipient.displayName} (@${recipient.tag})?`,
+              },
+            ],
+          };
+          return;
+        }
+
+        if (!recipient.walletCurrencies.includes(parsedAmount.currency)) {
+          yield {
+            content: [
+              {
+                type: 'text',
+                text: `@${recipient.tag} cannot receive ${parsedAmount.currency} in Finora yet. Their available wallets: ${recipient.walletCurrencies.join(', ')}.`,
+              },
+            ],
+          };
+          return;
+        }
+
+        const args = {
+          fromSubCustomerId: CURRENT_FINORA_ACCOUNT.subCustomerId,
+          toSubCustomerId: recipient.subCustomerId,
+          amount: {
+            value: parsedAmount.amount,
+            currency: parsedAmount.currency,
+          },
+          recipientName: recipient.displayName,
+          finoraTag: recipient.tag,
+          reference: `Finora transfer to @${recipient.tag}`,
+        };
+        const argsText = JSON.stringify(args);
+        const reasoning = `Resolved @${recipient.tag} to a verified Finora account.\nPreparing an internal wallet transfer…`;
+
+        yield { content: [{ type: 'reasoning', text: reasoning }] };
+        await wait(350);
+        if (abortSignal.aborted) return;
+
+        yield {
+          content: [
+            { type: 'reasoning', text: `${reasoning}\nReady for your approval.` },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_prepare_internal_transfer',
+              toolName: 'prepare_internal_transfer',
+              args,
+              argsText,
+            },
+            {
+              type: 'text',
+              text: `Review the Finora wallet transfer to ${recipient.displayName} (@${recipient.tag}).`,
+            },
+          ],
+        };
+        return;
+      }
+
       const walletCurrency = parseSendFromWallet(prompt);
       if (walletCurrency) {
         const contacts = await listContacts();

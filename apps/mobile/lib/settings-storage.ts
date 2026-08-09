@@ -51,6 +51,7 @@ export type TrustedDevice = {
 export type FinoraSettings = {
   displayName: string;
   email: string;
+  finoraTag: string;
   theme: ThemePreference;
   language: AppLanguage;
   largerText: boolean;
@@ -63,6 +64,7 @@ export type FinoraSettings = {
 export const DEFAULT_SETTINGS: FinoraSettings = {
   displayName: 'Kenneth Owusu',
   email: 'kenneth@finora.app',
+  finoraTag: 'kennethowusu',
   theme: 'system',
   language: 'en',
   largerText: false,

@@ -14,7 +14,11 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
-export type PaymentDestinationKind = 'mobile_money' | 'bank_account' | 'crypto_wallet';
+export type PaymentDestinationKind =
+  | 'mobile_money'
+  | 'bank_account'
+  | 'crypto_wallet'
+  | 'internal_wallet';
 
 export type PaymentFxQuote = {
   from: string;
@@ -30,7 +34,7 @@ export type PaymentConfirmation = {
   recipientName: string;
   destination: {
     kind: PaymentDestinationKind;
-    /** Human label, e.g. "MTN MoMo", "Bank account", "USDT · TRC-20" */
+    /** Human label, e.g. "MTN MoMo", "Bank account", "Finora Tag" */
     label: string;
     /** Phone, account number, or wallet address */
     value: string;
