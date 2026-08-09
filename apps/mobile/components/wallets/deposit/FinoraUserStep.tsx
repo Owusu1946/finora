@@ -3,9 +3,9 @@ import { FinoraMark } from '@/components/ui/finora-mark';
 import { ScrollView, View } from 'react-native';
 
 import {
-  CopyAddressRow,
-  InfoBanner,
-  PrimaryButton,
+    CopyAddressRow,
+    InfoBanner,
+    PrimaryButton,
 } from './primitives';
 import { depositStyles as styles } from './styles';
 import type { DepositPalette } from './types';

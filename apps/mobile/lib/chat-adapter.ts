@@ -9,20 +9,20 @@ import type { RecurringFrequency } from '@/components/recurring/types';
 
 import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
 import { MOCK_INVOICES } from '@/components/invoices/types';
-import {
-  contactToPaymentDestination,
-  contactToSendSeed,
-  findContactsByName,
-} from '@/lib/contact-lookup';
 import { isBusinessAccount } from '@/lib/account';
 import { listAutomations } from '@/lib/automations-storage';
 import { listBeneficiaries } from '@/lib/beneficiaries-storage';
 import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
+import {
+    contactToPaymentDestination,
+    contactToSendSeed,
+    findContactsByName,
+} from '@/lib/contact-lookup';
 import { listContacts } from '@/lib/contacts-storage';
 import {
-  createEmployee,
-  defaultPayrollPeriod,
-  listActiveEmployees,
+    createEmployee,
+    defaultPayrollPeriod,
+    listActiveEmployees,
 } from '@/lib/employees-storage';
 import { listExpenses } from '@/lib/expenses-storage';
 import { CURRENT_FINORA_ACCOUNT, lookupFinoraTag } from '@/lib/finora-tags';
@@ -34,10 +34,10 @@ import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
 import { listSuppliers } from '@/lib/suppliers-storage';
 import { getTreasuryOverview } from '@/lib/treasury';
 import {
-  findVirtualCardByLabel,
-  getVirtualCard,
-  listVirtualCards,
-  setVirtualCardStatus,
+    findVirtualCardByLabel,
+    getVirtualCard,
+    listVirtualCards,
+    setVirtualCardStatus,
 } from '@/lib/virtual-cards-storage';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

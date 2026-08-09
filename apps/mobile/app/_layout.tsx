@@ -1,9 +1,9 @@
 import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react-native';
 import {
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_600SemiBold,
-  DMSans_700Bold,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -16,14 +16,11 @@ import 'react-native-reanimated';
 
 import '../global.css';
 
-import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
-import { useSplashGate } from '@/components/splash/useSplashGate';
-import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
-  CreatePaymentRequestToolUI,
-  GeneratePaymentLinkToolUI,
+    CreatePaymentRequestToolUI,
+    GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
 import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
 import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
@@ -52,6 +49,9 @@ import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierP
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
+import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
+import { useSplashGate } from '@/components/splash/useSplashGate';
+import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';

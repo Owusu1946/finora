@@ -2,13 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { setAccountType } from '@/lib/account';
 import { clearApprovals } from '@/lib/approvals-storage';
-import { clearContacts } from '@/lib/contacts-storage';
-import { clearRecentFinoraTags } from '@/lib/finora-tags';
 import { clearAutomations } from '@/lib/automations-storage';
 import { clearBeneficiaries } from '@/lib/beneficiaries-storage';
 import { clearCalendarEvents } from '@/lib/calendar-events-storage';
+import { clearContacts } from '@/lib/contacts-storage';
 import { clearEmployees } from '@/lib/employees-storage';
 import { clearExpenses } from '@/lib/expenses-storage';
+import { clearRecentFinoraTags } from '@/lib/finora-tags';
 import { clearIntegrations } from '@/lib/integrations-storage';
 import { clearInvoices } from '@/lib/invoices-storage';
 import { clearMemoryStore } from '@/lib/memory-storage';
