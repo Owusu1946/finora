@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -117,42 +117,47 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         </View>
       </View>
 
-      <View style={styles.tabs}>
-        {methods.map((method) => {
-          const selected = method.id === active.id;
-          return (
-            <Pressable
-              key={method.id}
-              onPress={() => {
-                haptics.selection();
-                setActiveId(method.id);
-                setCopiedKey(null);
-              }}
-              style={({ pressed }) => [
-                styles.tab,
-                {
-                  backgroundColor: selected ? colors.foreground : colors.muted,
-                  opacity: pressed ? 0.88 : 1,
-                },
-              ]}
-            >
-              <CurrencyIcon
-                currency={method.currency}
-                size={18}
-              />
-              <Text
-                style={[
-                  styles.tabLabel,
-                  { color: selected ? colors.background : colors.foreground },
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+      >
+        <View style={styles.tabs}>
+          {methods.map((method) => {
+            const selected = method.id === active.id;
+            return (
+              <Pressable
+                key={method.id}
+                onPress={() => {
+                  haptics.selection();
+                  setActiveId(method.id);
+                  setCopiedKey(null);
+                }}
+                style={({ pressed }) => [
+                  styles.tab,
+                  {
+                    backgroundColor: selected ? colors.foreground : colors.muted,
+                    opacity: pressed ? 0.88 : 1,
+                  },
                 ]}
-                numberOfLines={1}
               >
-                {method.currency}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+                <CurrencyIcon
+                  currency={method.currency}
+                  size={18}
+                />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    { color: selected ? colors.background : colors.foreground },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {method.currency}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
 
       <View style={styles.methodHead}>
         <Text style={[styles.methodTitle, { color: colors.foreground }]}>{active.title}</Text>
@@ -402,18 +407,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tab: {
-    flex: 1,
-    minHeight: 36,
     borderRadius: Radius.pill,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   tabLabel: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     letterSpacing: -0.1,
   },

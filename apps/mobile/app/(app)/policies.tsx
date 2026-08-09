@@ -8,11 +8,7 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
-import {
-  listPolicies,
-  setPolicyEnabled,
-  type ApprovalPolicy,
-} from '@/lib/policies-storage';
+import { listPolicies, setPolicyEnabled, type ApprovalPolicy } from '@/lib/policies-storage';
 
 export default function PoliciesScreen() {
   const { colors } = useTheme();
@@ -54,6 +50,7 @@ export default function PoliciesScreen() {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'

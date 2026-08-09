@@ -51,6 +51,7 @@ export default function SuppliersScreen() {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
@@ -91,7 +92,9 @@ export default function SuppliersScreen() {
                 {supplier.destination.label} · {supplier.destination.value}
               </Text>
               {supplier.notes ? (
-                <Text style={[styles.meta, { color: colors.mutedForeground }]}>{supplier.notes}</Text>
+                <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+                  {supplier.notes}
+                </Text>
               ) : null}
             </View>
             {supplier.defaultAmount != null ? (

@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -6,6 +5,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-
 import type { Contact, ContactFilter } from '@/components/contacts/types';
 
 import { ContactListItem } from '@/components/contacts/ContactListItem';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listContacts } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
@@ -102,6 +102,7 @@ export default function ContactsScreen() {
         />
       ) : (
         <FlatList
+          showsVerticalScrollIndicator={false}
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}

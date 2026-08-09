@@ -64,6 +64,7 @@ export default function PayrollScreen() {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
@@ -74,7 +75,9 @@ export default function PayrollScreen() {
         approval.
       </Text>
 
-      <View style={[styles.summary, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+      <View
+        style={[styles.summary, { borderColor: colors.border, backgroundColor: colors.composer }]}
+      >
         <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Next run total</Text>
         <Text style={[styles.summaryAmount, { color: colors.foreground }]}>
           {formatPaymentAmount(total, currency)}

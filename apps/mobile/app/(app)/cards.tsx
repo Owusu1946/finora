@@ -111,6 +111,7 @@ export default function CardsScreen() {
       </View>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}

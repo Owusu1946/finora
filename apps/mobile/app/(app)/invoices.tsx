@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -7,6 +6,7 @@ import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import { InvoiceListItem } from '@/components/invoices/InvoiceListItem';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { listInvoices } from '@/lib/invoices-storage';
@@ -99,6 +99,7 @@ export default function InvoicesScreen() {
       </View>
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
