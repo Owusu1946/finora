@@ -193,6 +193,15 @@ export default function AppLayout() {
         options={screenOptions('Cards')}
       />
       <Drawer.Screen
+        name='virtual-card'
+        options={{
+          ...screenOptions('Request card'),
+          drawerItemStyle: { display: 'none' },
+          headerLeft: () => <BackHeaderButton fallback='cards' />,
+          headerRight: () => null,
+        }}
+      />
+      <Drawer.Screen
         name='activity'
         options={screenOptions('Activity')}
       />

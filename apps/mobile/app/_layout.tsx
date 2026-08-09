@@ -1,9 +1,9 @@
 import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react-native';
 import {
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_600SemiBold,
-    DMSans_700Bold,
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -16,11 +16,12 @@ import 'react-native-reanimated';
 
 import '../global.css';
 
+import { VirtualCardIssuedPopup } from '@/components/cards/VirtualCardIssuedPopup';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
-    CreatePaymentRequestToolUI,
-    GeneratePaymentLinkToolUI,
+  CreatePaymentRequestToolUI,
+  GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
 import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
 import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
@@ -177,6 +178,7 @@ export default function RootLayout() {
                 <ListVirtualCardsToolUI />
                 <GetVirtualCardToolUI />
                 <RootNavigator />
+                <VirtualCardIssuedPopup />
               </AssistantRuntimeProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>

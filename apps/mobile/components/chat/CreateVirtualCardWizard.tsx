@@ -1,9 +1,6 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
-import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import {
   formatCardAmount,
   type CreateVirtualCardInput,
@@ -11,6 +8,7 @@ import {
 } from '@/components/cards/types';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -42,7 +40,6 @@ export function CreateVirtualCardWizard({
   onIssued?: (card: VirtualCard) => void;
 }) {
   const { colors } = useTheme();
-  const router = useRouter();
   const { requestApproval, modal } = usePasscodeApproval();
   const [step, setStep] = useState<Step>(() => initialStep(seed));
   const [label, setLabel] = useState(seed.label ?? '');
@@ -59,8 +56,7 @@ export function CreateVirtualCardWizard({
 
   const resolvedLabel = label || customLabel.trim();
   const resolvedLimit =
-    spendLimit ??
-    (customLimit.trim() ? Number(customLimit.replace(/,/g, '')) : null);
+    spendLimit ?? (customLimit.trim() ? Number(customLimit.replace(/,/g, '')) : null);
 
   const issue = async () => {
     if (!resolvedLabel || !resolvedLimit || resolvedLimit <= 0 || busy) return;
@@ -226,35 +222,18 @@ export function CreateVirtualCardWizard({
 
       {step === 'issued' && issued ? (
         <View style={styles.issuedBlock}>
-          <View style={styles.issuedCardFrame}>
-            <VirtualCardFace
-              card={issued}
-              appear
-              tilt={false}
-            />
+          <View style={[styles.issuedIcon, { backgroundColor: colors.foreground }]}>
+            <Text style={[styles.issuedCheck, { color: colors.background }]}>✓</Text>
           </View>
           <View style={styles.issuedCopy}>
-            <Text style={[styles.issuedTitle, { color: colors.foreground }]}>Card ready</Text>
+            <Text style={[styles.issuedTitle, { color: colors.foreground }]}>
+              Request confirmed
+            </Text>
             <Text style={[styles.issuedSub, { color: colors.mutedForeground }]}>
-              {issued.label} · •••• {issued.last4} · {issued.currency}
+              We’re issuing your {issued.label} card. You’ll receive its card details as soon as
+              they’re ready.
             </Text>
           </View>
-          <Pressable
-            onPress={() => {
-              haptics.selection();
-              router.push(`/card/${issued.id}` as Href);
-            }}
-            style={({ pressed }) => [
-              styles.manageButton,
-              {
-                backgroundColor: colors.muted,
-                borderColor: colors.border,
-                opacity: pressed ? 0.72 : 1,
-              },
-            ]}
-          >
-            <Text style={[styles.manageButtonText, { color: colors.foreground }]}>Manage card</Text>
-          </Pressable>
         </View>
       ) : null}
 
@@ -299,7 +278,12 @@ function PrimaryButton({
         },
       ]}
     >
-      <Text style={[styles.primaryText, { color: disabled ? colors.mutedForeground : colors.primaryForeground }]}>
+      <Text
+        style={[
+          styles.primaryText,
+          { color: disabled ? colors.mutedForeground : colors.primaryForeground },
+        ]}
+      >
         {label}
       </Text>
     </Pressable>
@@ -417,27 +401,16 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 12,
   },
-  issuedCardFrame: {
-    width: '100%',
-    maxWidth: 420,
-    alignSelf: 'center',
-    paddingHorizontal: 2,
-    paddingVertical: 8,
+  issuedIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  issuedCheck: { fontFamily: 'DMSans_700Bold', fontSize: 22 },
   issuedCopy: {
     gap: 2,
     paddingHorizontal: 4,
-  },
-  manageButton: {
-    alignSelf: 'flex-start',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    marginLeft: 4,
-  },
-  manageButtonText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 13,
   },
 });

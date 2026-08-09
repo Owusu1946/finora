@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 
 import {
   MOCK_VIRTUAL_CARDS,
@@ -9,9 +10,11 @@ import {
 } from '@/components/cards/types';
 
 const KEY = 'finora.virtual-cards.v1';
+const UNREAD_KEY = 'finora.virtual-cards.unread.v1';
 
 const memory = new Map<string, string>();
 const listeners = new Set<() => void>();
+const issuanceListeners = new Set<(card: VirtualCard) => void>();
 
 async function getItem(key: string): Promise<string | null> {
   try {
@@ -37,6 +40,30 @@ function notify() {
 export function subscribeVirtualCards(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+export function subscribeVirtualCardIssuance(listener: (card: VirtualCard) => void): () => void {
+  issuanceListeners.add(listener);
+  return () => issuanceListeners.delete(listener);
+}
+
+export async function hasUnreadVirtualCards(): Promise<boolean> {
+  return (await getItem(UNREAD_KEY)) === '1';
+}
+
+export async function clearUnreadVirtualCards(): Promise<void> {
+  if (!(await hasUnreadVirtualCards())) return;
+  await setItem(UNREAD_KEY, '0');
+  notify();
+}
+
+async function publishIssuance(card: VirtualCard) {
+  if (AppState.currentState === 'active') {
+    issuanceListeners.forEach((listener) => listener(card));
+    return;
+  }
+  await setItem(UNREAD_KEY, '1');
+  notify();
 }
 
 async function persist(cards: VirtualCard[]) {
@@ -102,7 +129,7 @@ export async function createVirtualCard(input: CreateVirtualCardInput): Promise<
     label: input.label.trim() || 'Virtual card',
     last4: pan.slice(-4),
     network,
-    currency: 'USD',
+    currency: input.currency ?? 'USD',
     status: 'active',
     spendLimit: input.spendLimit,
     spent: 0,
@@ -112,6 +139,7 @@ export async function createVirtualCard(input: CreateVirtualCardInput): Promise<
     cvv: randomDigits(3),
   };
   await persist([card, ...cards]);
+  await publishIssuance(card);
   return card;
 }
 
@@ -135,11 +163,6 @@ export async function setVirtualCardStatus(
 }
 
 export async function clearVirtualCards(): Promise<void> {
-  memory.delete(KEY);
-  try {
-    await AsyncStorage.removeItem(KEY);
-  } catch {
-    // ignore
-  }
-  notify();
+  await persist([]);
+  await clearUnreadVirtualCards();
 }
