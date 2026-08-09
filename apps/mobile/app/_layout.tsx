@@ -50,6 +50,7 @@ import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierP
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
+import { AppSwitcherPrivacy } from '@/components/privacy/AppSwitcherPrivacy';
 import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
 import { useSplashGate } from '@/components/splash/useSplashGate';
 import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
@@ -204,6 +205,8 @@ export default function RootLayout() {
           onLayout={onOverlayLayout}
         />
       ) : null}
+      {/* Covers UI in App Switcher / Recents so balances aren't previewed. */}
+      <AppSwitcherPrivacy />
     </GestureHandlerRootView>
   );
 }
