@@ -22,6 +22,7 @@ import { clearTransactions } from '@/lib/transactions-storage';
 
 const KEYS = [
   'finora.auth.session',
+  'finora.auth.tagConfigured',
   'finora.onboarding.completed',
   'finora.accountType',
   'finora.passcode.hash',

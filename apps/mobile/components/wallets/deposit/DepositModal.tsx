@@ -1,14 +1,10 @@
 import React from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Modal, View } from 'react-native';
 
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { useTheme } from '@/hooks/use-theme';
+
+import { useSettings } from '@/lib/settings-context';
 
 import { FinoraUserStep } from './FinoraUserStep';
 import {
@@ -28,6 +24,9 @@ import { useDepositState } from './useDepositState';
 
 export function DepositModal({ visible, selectedWallet, onClose, onCopy }: DepositModalProps) {
   const { colors } = useTheme();
+  const { settings } = useSettings();
+  const finoraTag = settings.finoraTag;
+  const finoraTagLabel = `@${finoraTag}`;
   const state = useDepositState({ visible, selectedWallet, onClose, onCopy });
 
   const {
@@ -56,114 +55,105 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
 
   const isMomoFlow = isMomoFlowStep(step);
 
-  return (
-    <Modal
-      visible={visible}
-      animationType='slide'
-      transparent={!isMomoFlow}
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+  // MoMo awaiting/completed is a full-screen focused flow, not a sheet.
+  if (isMomoFlow) {
+    return (
+      <Modal
+        visible={visible}
+        animationType='slide'
+        onRequestClose={handleClose}
       >
-        {isMomoFlow ? (
-          <MomoFlowScreen
-            step={step}
+        <MomoFlowScreen
+          step={step}
+          colors={colors}
+          momoNetwork={momoNetwork}
+          momoNetworkLabel={momoNetworkLabel}
+          phone={phone}
+          amount={amount}
+          amountNum={amountNum}
+          momoFee={momoFee}
+          onStepChange={setStep}
+          onPhoneChange={setPhone}
+          onAmountChange={setAmount}
+          onPickContact={handlePickContact}
+          onDone={handleClose}
+        />
+      </Modal>
+    );
+  }
+
+  return (
+    <SheetModal
+      visible={visible}
+      onClose={handleClose}
+      keyboardAvoiding
+      style={[styles.sheetContainer, step !== 'methods' && !isPickerStep(step) && styles.sheetTall]}
+      showHandle={step === 'methods' || isPickerStep(step)}
+    >
+      {isPickerStep(step) ? (
+        <NetworkPickerSheet
+          step={step}
+          colors={colors}
+          networkId={networkId}
+          momoNetwork={momoNetwork}
+          onClose={() => setStep(getPickerCloseStep(step))}
+          onSelectCrypto={(id) => {
+            setNetworkId(id);
+            setStep('stablecoin');
+          }}
+          onSelectMomo={(id) => {
+            setMomoNetwork(id);
+            setStep('momo');
+          }}
+        />
+      ) : (
+        <View style={styles.sheetBody}>
+          <DepositSheetHeader
+            title={getSheetTitle(step)}
             colors={colors}
-            momoNetwork={momoNetwork}
-            momoNetworkLabel={momoNetworkLabel}
-            phone={phone}
-            amount={amount}
-            amountNum={amountNum}
-            momoFee={momoFee}
-            onStepChange={setStep}
-            onPhoneChange={setPhone}
-            onAmountChange={setAmount}
-            onPickContact={handlePickContact}
-            onDone={handleClose}
+            showBack={shouldShowBack(step)}
+            onBack={() => setStep('methods')}
+            onClose={handleClose}
           />
-        ) : (
-          <View style={styles.modalBackdrop}>
-            <Pressable
-              style={StyleSheet.absoluteFill}
-              onPress={handleClose}
+
+          {step === 'methods' ? (
+            <MethodSelectionStep
+              colors={colors}
+              onSelect={setStep}
             />
+          ) : null}
 
-            {isPickerStep(step) ? (
-              <NetworkPickerSheet
-                step={step}
-                colors={colors}
-                networkId={networkId}
-                momoNetwork={momoNetwork}
-                onClose={() => setStep(getPickerCloseStep(step))}
-                onSelectCrypto={(id) => {
-                  setNetworkId(id);
-                  setStep('stablecoin');
-                }}
-                onSelectMomo={(id) => {
-                  setMomoNetwork(id);
-                  setStep('momo');
-                }}
-              />
-            ) : (
-              <View
-                style={[
-                  styles.sheetContainer,
-                  step !== 'methods' && styles.sheetTall,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                ]}
-              >
-                {step === 'methods' ? <View style={styles.handle} /> : null}
+          {step === 'finora_user' ? (
+            <FinoraUserStep
+              colors={colors}
+              finoraTag={finoraTag}
+              copied={copied}
+              onCopy={() => void handleCopyAddress(finoraTagLabel, 'Finora tag')}
+              onShare={() =>
+                void handleShare(`Send me money on Finora: ${finoraTagLabel}`, 'Finora tag')
+              }
+            />
+          ) : null}
 
-                <DepositSheetHeader
-                  title={getSheetTitle(step)}
-                  colors={colors}
-                  showBack={shouldShowBack(step)}
-                  onBack={() => setStep('methods')}
-                  onClose={handleClose}
-                />
-
-                {step === 'methods' ? (
-                  <MethodSelectionStep
-                    colors={colors}
-                    onSelect={setStep}
-                  />
-                ) : null}
-
-                {step === 'finora_user' ? (
-                  <FinoraUserStep
-                    colors={colors}
-                    copied={copied}
-                    onCopy={() => void handleCopyAddress('@kenneth', 'Finora tag')}
-                    onShare={() =>
-                      void handleShare('Send me money on Finora: @kenneth', 'Finora tag')
-                    }
-                  />
-                ) : null}
-
-                {step === 'stablecoin' ? (
-                  <StablecoinStep
-                    colors={colors}
-                    asset={asset}
-                    network={network}
-                    copied={copied}
-                    onAssetChange={setAsset}
-                    onOpenNetworkPicker={() => setStep('network_picker')}
-                    onCopy={() => void handleCopyAddress(network.address, 'Wallet address')}
-                    onShare={() =>
-                      void handleShare(
-                        `Finora ${asset} · ${network.name}\n${network.address}`,
-                        `Receive ${asset}`,
-                      )
-                    }
-                  />
-                ) : null}
-              </View>
-            )}
-          </View>
-        )}
-      </KeyboardAvoidingView>
-    </Modal>
+          {step === 'stablecoin' ? (
+            <StablecoinStep
+              colors={colors}
+              asset={asset}
+              network={network}
+              copied={copied}
+              onAssetChange={setAsset}
+              onOpenNetworkPicker={() => setStep('network_picker')}
+              onCopy={() => void handleCopyAddress(network.address, 'Wallet address')}
+              onShare={() =>
+                void handleShare(
+                  `Finora ${asset} · ${network.name}\n${network.address}`,
+                  `Receive ${asset}`,
+                )
+              }
+            />
+          ) : null}
+        </View>
+      )}
+    </SheetModal>
   );
 }

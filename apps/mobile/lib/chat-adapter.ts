@@ -25,7 +25,7 @@ import {
     listActiveEmployees,
 } from '@/lib/employees-storage';
 import { listExpenses } from '@/lib/expenses-storage';
-import { CURRENT_FINORA_ACCOUNT, lookupFinoraTag } from '@/lib/finora-tags';
+import { CURRENT_FINORA_ACCOUNT, getCurrentFinoraTag, lookupFinoraTag } from '@/lib/finora-tags';
 import { inferFundingSource, listFundingMethods } from '@/lib/funding-methods';
 import { getIntegrations } from '@/lib/integrations-storage';
 import { mockRecipientNameForQr, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
@@ -2331,7 +2331,7 @@ export const finoraChatAdapter = {
               {
                 type: 'text',
                 text:
-                  finoraTag === CURRENT_FINORA_ACCOUNT.tag
+                  finoraTag === getCurrentFinoraTag()
                     ? 'You cannot send money to your own Finora Tag.'
                     : `I couldn’t find an active Finora account for @${finoraTag}. Check the tag and try again.`,
               },

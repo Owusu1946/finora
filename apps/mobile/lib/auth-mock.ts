@@ -28,6 +28,21 @@ export const MOCK_EMAIL_OTP = '123456';
 
 const pendingOtps = new Map<string, string>();
 
+type PendingSignupProfile = {
+  name: string;
+  email: string;
+};
+
+let pendingSignupProfile: PendingSignupProfile | null = null;
+
+export function getPendingSignupProfile() {
+  return pendingSignupProfile;
+}
+
+export function clearPendingSignupProfile() {
+  pendingSignupProfile = null;
+}
+
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
@@ -53,6 +68,10 @@ export async function signInEmail(email: string, password: string): Promise<Auth
   if (!email.trim() || !password) {
     return { ok: false, error: 'Enter email and password.' };
   }
+  pendingSignupProfile = {
+    name: email.split('@')[0]?.replace(/\./g, ' ') || 'Finora user',
+    email: normalizeEmail(email),
+  };
   await setAuthSession();
   return { ok: true };
 }
@@ -70,6 +89,10 @@ export async function signUpEmail(input: {
   if (input.password.length < 8) {
     return { ok: false, error: 'Password must be at least 8 characters.' };
   }
+  pendingSignupProfile = {
+    name: input.name.trim() || 'Finora user',
+    email: normalizeEmail(input.email),
+  };
   return { ok: true };
 }
 
@@ -157,6 +180,12 @@ export async function resetPasswordWithOtp(input: {
 
 export async function signInGoogle(): Promise<AuthResult> {
   await delay(700);
+  if (!pendingSignupProfile) {
+    pendingSignupProfile = {
+      name: 'Finora user',
+      email: 'you@gmail.com',
+    };
+  }
   await setAuthSession();
   return { ok: true };
 }

@@ -5,16 +5,14 @@ import {
   View,
   ScrollView,
   Pressable,
-  Modal,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   InputAccessoryView,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CurrencyIcon, type SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -93,7 +91,6 @@ export function FxConvertModal({
   onConvertSuccess,
 }: FxConvertModalProps) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [fromCurrency, setFromCurrency] = useState<SupportedCurrency>('USD');
   const [toCurrency, setToCurrency] = useState<SupportedCurrency>('GHS');
@@ -217,73 +214,51 @@ export function FxConvertModal({
   );
 
   return (
-    <Modal
-      visible={visible}
-      animationType='slide'
-      transparent
-      onRequestClose={handleClose}
-    >
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+    <>
+      <SheetModal
+        visible={visible}
+        onClose={handleClose}
+        keyboardAvoiding
+        style={styles.sheetContainer}
       >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={handleClose}
-        >
-          <View
-            style={[
-              styles.sheetContainer,
-              {
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                paddingBottom: Math.max(insets.bottom, 16),
-              },
-            ]}
+        <View style={styles.sheetHeader}>
+          <Pressable
+            onPress={handleClose}
+            hitSlop={10}
+            style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
           >
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            <Icon
+              name='chevron-left'
+              size={20}
+              color={colors.foreground}
+            />
+          </Pressable>
+          <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Swap money</Text>
+          <View style={styles.headerIconBtn} />
+        </View>
 
-            <View style={styles.sheetHeader}>
-              <Pressable
-                onPress={handleClose}
-                hitSlop={10}
-                style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
-              >
-                <Icon
-                  name='chevron-left'
-                  size={20}
-                  color={colors.foreground}
-                />
-              </Pressable>
-              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Swap money</Text>
-              <View style={styles.headerIconBtn} />
-            </View>
-
-            {convertSuccess ? (
-              <View style={styles.successState}>
-                <Icon
-                  name='check'
-                  size={36}
-                  color={colors.foreground}
-                />
-                <Text style={[styles.successTitle, { color: colors.foreground }]}>
-                  Swap complete
-                </Text>
-                <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                  {formatBalance(amountNum)} {fromCurrency} → {formatBalance(receiveAmount)}{' '}
-                  {toCurrency}
-                </Text>
-              </View>
-            ) : (
-              <ScrollView
-                style={styles.flex}
-                contentContainerStyle={styles.body}
-                keyboardShouldPersistTaps='handled'
-                keyboardDismissMode='on-drag'
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-              >
+        {convertSuccess ? (
+          <View style={styles.successState}>
+            <Icon
+              name='check'
+              size={36}
+              color={colors.foreground}
+            />
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>Swap complete</Text>
+            <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
+              {formatBalance(amountNum)} {fromCurrency} → {formatBalance(receiveAmount)}{' '}
+              {toCurrency}
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.flex}
+            contentContainerStyle={styles.body}
+            keyboardShouldPersistTaps='handled'
+            keyboardDismissMode='on-drag'
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
                 <View style={styles.swapStack}>
                   <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
                     <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>Pay</Text>
@@ -375,26 +350,24 @@ export function FxConvertModal({
                   </Text>
                 )}
 
-                <Pressable
-                  onPress={handleExecuteConversion}
-                  disabled={!canSwap}
-                  style={({ pressed }) => [
-                    styles.primaryBtn,
-                    {
-                      backgroundColor: colors.foreground,
-                      opacity: !canSwap ? 0.35 : pressed ? 0.85 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.primaryBtnText, { color: colors.background }]}>
-                    {isConverting ? 'Swapping…' : `Swap ${fromCurrency} → ${toCurrency}`}
-                  </Text>
-                </Pressable>
-              </ScrollView>
-            )}
-          </View>
-        </Pressable>
-      </KeyboardAvoidingView>
+            <Pressable
+              onPress={handleExecuteConversion}
+              disabled={!canSwap}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                {
+                  backgroundColor: colors.foreground,
+                  opacity: !canSwap ? 0.35 : pressed ? 0.85 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+                {isConverting ? 'Swapping…' : `Swap ${fromCurrency} → ${toCurrency}`}
+              </Text>
+            </Pressable>
+          </ScrollView>
+        )}
+      </SheetModal>
 
       {Platform.OS === 'ios' ? (
         <InputAccessoryView nativeID={AMOUNT_ACCESSORY_ID}>
@@ -415,88 +388,67 @@ export function FxConvertModal({
         </InputAccessoryView>
       ) : null}
 
-      <Modal
+      <SheetModal
         visible={picker !== null}
-        animationType='slide'
-        transparent
-        onRequestClose={() => setPicker(null)}
+        onClose={() => setPicker(null)}
+        style={styles.pickerSheet}
       >
-        <Pressable
-          style={styles.pickerBackdrop}
-          onPress={() => setPicker(null)}
-        >
+        <View style={styles.pickerHeader}>
+          <Text style={[styles.pickerTitle, { color: colors.foreground }]}>Select currency</Text>
           <Pressable
-            style={[
-              styles.pickerSheet,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                paddingBottom: Math.max(insets.bottom, 16),
-              },
-            ]}
-            onPress={(e) => e.stopPropagation()}
+            onPress={() => setPicker(null)}
+            hitSlop={8}
+            style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
           >
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            <View style={styles.pickerHeader}>
-              <Text style={[styles.pickerTitle, { color: colors.foreground }]}>
-                Select currency
-              </Text>
-              <Pressable
-                onPress={() => setPicker(null)}
-                hitSlop={8}
-                style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
-              >
-                <Icon
-                  name='remove'
-                  size={18}
-                  color={colors.foreground}
-                />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.pickerList}
-            >
-              {pickerWallets.map((w) => {
-                const selected =
-                  picker === 'pay' ? w.currency === fromCurrency : w.currency === toCurrency;
-                return (
-                  <Pressable
-                    key={w.id}
-                    onPress={() => handleSelectCurrency(w.currency)}
-                    style={({ pressed }) => [
-                      styles.pickerRow,
-                      {
-                        backgroundColor: selected ? colors.muted : colors.background,
-                        borderColor: colors.border,
-                        opacity: pressed ? 0.85 : 1,
-                      },
-                    ]}
-                  >
-                    <CurrencyIcon
-                      currency={w.currency}
-                      size={36}
-                    />
-                    <View style={styles.pickerMeta}>
-                      <Text style={[styles.pickerCode, { color: colors.foreground }]}>
-                        {w.currency}
-                      </Text>
-                      <Text style={[styles.pickerName, { color: colors.mutedForeground }]}>
-                        {w.name}
-                      </Text>
-                    </View>
-                    <Text style={[styles.pickerBalance, { color: colors.foreground }]}>
-                      {formatBalance(w.balance)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            <Icon
+              name='remove'
+              size={18}
+              color={colors.foreground}
+            />
           </Pressable>
-        </Pressable>
-      </Modal>
-    </Modal>
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.pickerList}
+        >
+          {pickerWallets.map((w) => {
+            const selected =
+              picker === 'pay' ? w.currency === fromCurrency : w.currency === toCurrency;
+            return (
+              <Pressable
+                key={w.id}
+                onPress={() => handleSelectCurrency(w.currency)}
+                style={({ pressed }) => [
+                  styles.pickerRow,
+                  {
+                    backgroundColor: selected ? colors.muted : colors.background,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <CurrencyIcon
+                  currency={w.currency}
+                  size={36}
+                />
+                <View style={styles.pickerMeta}>
+                  <Text style={[styles.pickerCode, { color: colors.foreground }]}>
+                    {w.currency}
+                  </Text>
+                  <Text style={[styles.pickerName, { color: colors.mutedForeground }]}>
+                    {w.name}
+                  </Text>
+                </View>
+                <Text style={[styles.pickerBalance, { color: colors.foreground }]}>
+                  {formatBalance(w.balance)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </SheetModal>
+    </>
   );
 }
 
@@ -504,27 +456,10 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
   sheetContainer: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 20,
-    paddingTop: 8,
     gap: 8,
     minHeight: '72%',
-    maxHeight: '92%',
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 8,
   },
   sheetHeader: {
     flexDirection: 'row',
@@ -690,17 +625,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-  pickerBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
   pickerSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 16,
-    paddingTop: 8,
     maxHeight: '70%',
   },
   pickerHeader: {

@@ -50,13 +50,14 @@ import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierP
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
+import { AppSwitcherPrivacy } from '@/components/privacy/AppSwitcherPrivacy';
 import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
 import { useSplashGate } from '@/components/splash/useSplashGate';
 import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
-import { getAuthSession } from '@/lib/auth-storage';
+import { getAuthSession, getTagConfigured } from '@/lib/auth-storage';
 import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
@@ -72,7 +73,7 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 function RootNavigator() {
-  const { authenticated } = useAuthGate();
+  const { authenticated, tagConfigured } = useAuthGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const { isDark, colors } = useTheme();
   useDrainPendingPaymentLink();
@@ -99,6 +100,9 @@ function RootNavigator() {
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
       {onboardingCompleted && !authenticated ? <Redirect href={'/auth' as Href} /> : null}
+      {onboardingCompleted && authenticated && !tagConfigured ? (
+        <Redirect href={'/auth/choose-tag' as Href} />
+      ) : null}
       <StatusBar style='auto' />
     </ThemeProvider>
   );
@@ -114,6 +118,7 @@ export default function RootLayout() {
   const [boot, setBoot] = useState<{
     authenticated: boolean;
     onboardingCompleted: boolean;
+    tagConfigured: boolean;
   } | null>(null);
   const bootReady = fontsLoaded && boot !== null;
   const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
@@ -123,12 +128,17 @@ export default function RootLayout() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [session, onboarding] = await Promise.all([getAuthSession(), getOnboardingState()]);
+      const [session, onboarding, tagConfigured] = await Promise.all([
+        getAuthSession(),
+        getOnboardingState(),
+        getTagConfigured(),
+      ]);
       if (cancelled) return;
       if (onboarding.accountType) setAccountType(onboarding.accountType);
       setBoot({
         authenticated: session,
         onboardingCompleted: onboarding.completed,
+        tagConfigured,
       });
     })();
     return () => {
@@ -143,7 +153,10 @@ export default function RootLayout() {
         <SplashPlaceholder />
       ) : (
         <SettingsProvider>
-          <AuthGateProvider authenticated={boot.authenticated}>
+          <AuthGateProvider
+            authenticated={boot.authenticated}
+            tagConfigured={boot.tagConfigured}
+          >
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
               <AssistantRuntimeProvider runtime={runtime}>
                 <PreparePaymentToolUI />
@@ -192,6 +205,8 @@ export default function RootLayout() {
           onLayout={onOverlayLayout}
         />
       ) : null}
+      {/* Covers UI in App Switcher / Recents so balances aren't previewed. */}
+      <AppSwitcherPrivacy />
     </GestureHandlerRootView>
   );
 }

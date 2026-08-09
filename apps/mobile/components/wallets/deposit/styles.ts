@@ -6,10 +6,9 @@ export const depositStyles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
+  sheetBody: {
+    paddingHorizontal: 20,
+    gap: 14,
   },
   sheetFullScreen: {
     flex: 1,
@@ -23,14 +22,8 @@ export const depositStyles = StyleSheet.create({
     flexGrow: 1,
   },
   sheetContainer: {
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 20,
-    gap: 14,
-    maxHeight: '92%',
+    paddingHorizontal: 0,
+    gap: 0,
   },
   sheetTall: {
     minHeight: '78%',

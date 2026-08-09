@@ -1,5 +1,7 @@
-import { normalizeFinoraTag, type FinoraTagAccount } from '@finora/shared';
+import { FinoraTagSchema, normalizeFinoraTag, type FinoraTagAccount } from '@finora/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { getCachedSettings } from '@/lib/settings-storage';
 
 export type FinoraTagProfile = FinoraTagAccount & {
   initials: string;
@@ -15,6 +17,30 @@ export const CURRENT_FINORA_ACCOUNT = {
   subCustomerId: 'sc_personal_001',
   tag: 'kennethowusu',
 } as const;
+
+/** Active user's Finora tag from settings (falls back to demo constant). */
+export function getCurrentFinoraTag() {
+  const tag = getCachedSettings().finoraTag?.trim();
+  return tag ? normalizeFinoraTag(tag) : CURRENT_FINORA_ACCOUNT.tag;
+}
+
+export const FINORA_TAG_MIN_LENGTH = 3;
+
+export type FinoraTagAvailability =
+  | { ok: true; tag: string }
+  | { ok: false; reason: 'invalid' | 'taken' | 'too_short' };
+
+export function suggestFinoraTagFromName(name: string, email?: string) {
+  const compact = name.trim().replace(/\s+/g, '_');
+  const fromName = normalizeFinoraTag(compact);
+  if (fromName.length >= FINORA_TAG_MIN_LENGTH) return fromName;
+
+  const local = email?.split('@')[0] ?? '';
+  const fromEmail = normalizeFinoraTag(local);
+  if (fromEmail.length >= FINORA_TAG_MIN_LENGTH) return fromEmail;
+
+  return fromName || fromEmail;
+}
 
 /** Prefix search against the global directory never runs below this length. */
 export const FINORA_TAG_GLOBAL_MIN_CHARS = 3;
@@ -74,6 +100,56 @@ const MOCK_FINORA_DIRECTORY: FinoraTagProfile[] = [
   },
 ];
 
+const RESERVED_FINORA_TAGS = new Set([
+  CURRENT_FINORA_ACCOUNT.tag,
+  'finorademo',
+  ...MOCK_FINORA_DIRECTORY.map((p) => p.tag),
+]);
+
+export function checkFinoraTagAvailability(raw: string): FinoraTagAvailability {
+  const tag = normalizeFinoraTag(raw);
+  const current = getCurrentFinoraTag();
+  if (tag.length < FINORA_TAG_MIN_LENGTH) {
+    return { ok: false, reason: 'too_short' };
+  }
+  const parsed = FinoraTagSchema.safeParse(tag);
+  if (!parsed.success) {
+    return { ok: false, reason: 'invalid' };
+  }
+  if (parsed.data !== current && RESERVED_FINORA_TAGS.has(parsed.data)) {
+    return { ok: false, reason: 'taken' };
+  }
+  return { ok: true, tag: parsed.data };
+}
+
+/** Register the signed-in user's tag in the mock directory for receive/lookup flows. */
+export function registerCurrentUserFinoraTag(input: {
+  tag: string;
+  displayName: string;
+  email?: string;
+}) {
+  const tag = normalizeFinoraTag(input.tag);
+  if (!tag) return;
+
+  const existing = MOCK_FINORA_DIRECTORY.find((profile) => profile.tag === tag);
+  if (existing) {
+    existing.displayName = input.displayName.trim() || tag;
+    return;
+  }
+
+  MOCK_FINORA_DIRECTORY.unshift({
+    accountId: CURRENT_FINORA_ACCOUNT.accountId,
+    subCustomerId: CURRENT_FINORA_ACCOUNT.subCustomerId,
+    tag,
+    displayName: input.displayName.trim() || tag,
+    initials: initialsFromName(input.displayName || tag),
+    country: 'GH',
+    status: 'active',
+    walletCurrencies: ['GHS', 'USD'],
+  });
+  RESERVED_FINORA_TAGS.add(tag);
+}
+
 /** Demo seed so @ opens people you've "already paid", not the global directory. */
 const SEED_RECENT_TAGS = ['okenneth', 'ama'] as const;
 
@@ -92,7 +168,7 @@ function matchesQuery(profile: Pick<FinoraTagProfile, 'tag' | 'displayName'>, qu
 /** Exact account lookup. Never falls back to saved contacts. */
 export async function lookupFinoraTag(value: string) {
   const tag = normalizeFinoraTag(value);
-  if (!tag || tag === CURRENT_FINORA_ACCOUNT.tag) return null;
+  if (!tag || tag === getCurrentFinoraTag()) return null;
   return MOCK_FINORA_DIRECTORY.find((profile) => profile.tag === tag) ?? null;
 }
 
@@ -113,7 +189,7 @@ export async function listRecentFinoraTags(): Promise<FinoraTagSuggestion[]> {
 
   const profiles: FinoraTagSuggestion[] = [];
   for (const tag of tags) {
-    if (tag === CURRENT_FINORA_ACCOUNT.tag) continue;
+    if (tag === getCurrentFinoraTag()) continue;
     const profile = await lookupFinoraTag(tag);
     if (!profile || profile.status !== 'active') continue;
     profiles.push({ ...profile, source: 'recent' });
@@ -130,7 +206,7 @@ export async function rememberFinoraTagRecipient(input: {
   country?: string;
 }): Promise<void> {
   const tag = normalizeFinoraTag(input.tag);
-  if (!tag || tag === CURRENT_FINORA_ACCOUNT.tag) return;
+  if (!tag || tag === getCurrentFinoraTag()) return;
 
   // Keep the mock directory in sync for people we only learned via a transfer.
   if (!(await lookupFinoraTag(tag))) {

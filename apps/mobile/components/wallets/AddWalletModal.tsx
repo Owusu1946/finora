@@ -1,9 +1,10 @@
 import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
-import { StyleSheet, View, Pressable, Modal } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CurrencyIcon, SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -28,77 +29,57 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
   ];
 
   return (
-    <Modal
+    <SheetModal
       visible={visible}
-      animationType='slide'
-      transparent
-      onRequestClose={onClose}
+      onClose={onClose}
+      style={styles.sheet}
     >
-      <View style={styles.modalBackdrop}>
-        <View
-          style={[
-            styles.sheetContainer,
-            { backgroundColor: colors.card, borderColor: colors.border },
-          ]}
+      <View style={styles.sheetHeader}>
+        <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Add Currency Wallet</Text>
+        <Pressable
+          onPress={onClose}
+          hitSlop={8}
         >
-          <View style={styles.sheetHeader}>
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
-              Add Currency Wallet
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-            >
-              <Icon
-                name='remove'
-                size={20}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-          </View>
-
-          <View style={{ gap: 8 }}>
-            {options.map((item) => (
-              <Pressable
-                key={item.code}
-                onPress={() => {
-                  haptics.selection();
-                  onClose();
-                }}
-                style={[styles.addOptionRow, { backgroundColor: colors.muted }]}
-              >
-                <CurrencyIcon
-                  currency={item.code}
-                  size={30}
-                />
-                <Text style={[styles.addOptionText, { color: colors.foreground }]}>
-                  {item.code} • {item.name}
-                </Text>
-                <Icon
-                  name='add'
-                  size={16}
-                  color={colors.mutedForeground}
-                />
-              </Pressable>
-            ))}
-          </View>
-        </View>
+          <Icon
+            name='remove'
+            size={20}
+            color={colors.mutedForeground}
+          />
+        </Pressable>
       </View>
-    </Modal>
+
+      <View style={{ gap: 8 }}>
+        {options.map((item) => (
+          <Pressable
+            key={item.code}
+            onPress={() => {
+              haptics.selection();
+              onClose();
+            }}
+            style={[styles.addOptionRow, { backgroundColor: colors.muted }]}
+          >
+            <CurrencyIcon
+              currency={item.code}
+              size={30}
+            />
+            <Text style={[styles.addOptionText, { color: colors.foreground }]}>
+              {item.code} • {item.name}
+            </Text>
+            <Icon
+              name='add'
+              size={16}
+              color={colors.mutedForeground}
+            />
+          </Pressable>
+        ))}
+      </View>
+    </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 20,
+  sheet: {
+    paddingHorizontal: 20,
     gap: 16,
   },
   sheetHeader: {
