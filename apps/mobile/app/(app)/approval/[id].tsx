@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -10,7 +9,9 @@ import {
   PaymentConfirmationCard,
   type PaymentConfirmationStatus,
 } from '@/components/chat/PaymentConfirmationCard';
+import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getApproval, resolveApproval } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
@@ -176,78 +177,80 @@ export default function ApprovalDetailScreen() {
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.banner, { backgroundColor: colors.muted }]}>
-          <Text style={[styles.bannerEyebrow, { color: colors.mutedForeground }]}>
-            {isPlan ? 'Agent plan' : 'Agent request'}
-          </Text>
-          <Text style={[styles.bannerTitle, { color: colors.foreground }]}>{approval.agent}</Text>
-          <Text style={[styles.bannerMeta, { color: colors.mutedForeground }]}>
-            Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
-          </Text>
-        </View>
-
-        {isPlan && approval.plan ? (
-          <FinancialPlanConfirmationCard
-            plan={approval.plan}
-            status={status}
-            loading={busy}
-            sendingStep={sendingStep}
-            transactionId={transactionId}
-            onViewDetails={canOpenTx ? openTransaction : undefined}
-            onConfirm={onConfirm}
-            onCancel={onCancel}
-          />
-        ) : approval.payment ? (
-          <PaymentConfirmationCard
-            payment={approval.payment}
-            status={status}
-            loading={busy}
-            sendingStep={sendingStep}
-            transactionId={transactionId}
-            onViewDetails={canOpenTx ? openTransaction : undefined}
-            onConfirm={onConfirm}
-            onCancel={onCancel}
-          />
-        ) : (
-          <Text style={{ color: colors.mutedForeground }}>Invalid approval payload.</Text>
-        )}
-
-        {status === 'sent' ? (
-          <Pressable
-            onPress={openTransaction}
-            style={({ pressed }) => [
-              styles.linkBtn,
-              { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-            ]}
-          >
-            <Text style={[styles.linkLabel, { color: colors.foreground }]}>
-              View transaction detail
+    <SwipeBackView>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.banner, { backgroundColor: colors.muted }]}>
+            <Text style={[styles.bannerEyebrow, { color: colors.mutedForeground }]}>
+              {isPlan ? 'Agent plan' : 'Agent request'}
             </Text>
-          </Pressable>
-        ) : null}
+            <Text style={[styles.bannerTitle, { color: colors.foreground }]}>{approval.agent}</Text>
+            <Text style={[styles.bannerMeta, { color: colors.mutedForeground }]}>
+              Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
+            </Text>
+          </View>
 
-        {status === 'cancelled' ? (
-          <Pressable
-            onPress={() => {
-              haptics.selection();
-              router.back();
-            }}
-            style={({ pressed }) => [
-              styles.linkBtn,
-              { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-            ]}
-          >
-            <Text style={[styles.linkLabel, { color: colors.foreground }]}>Back to inbox</Text>
-          </Pressable>
-        ) : null}
-      </ScrollView>
-      {modal}
-    </View>
+          {isPlan && approval.plan ? (
+            <FinancialPlanConfirmationCard
+              plan={approval.plan}
+              status={status}
+              loading={busy}
+              sendingStep={sendingStep}
+              transactionId={transactionId}
+              onViewDetails={canOpenTx ? openTransaction : undefined}
+              onConfirm={onConfirm}
+              onCancel={onCancel}
+            />
+          ) : approval.payment ? (
+            <PaymentConfirmationCard
+              payment={approval.payment}
+              status={status}
+              loading={busy}
+              sendingStep={sendingStep}
+              transactionId={transactionId}
+              onViewDetails={canOpenTx ? openTransaction : undefined}
+              onConfirm={onConfirm}
+              onCancel={onCancel}
+            />
+          ) : (
+            <Text style={{ color: colors.mutedForeground }}>Invalid approval payload.</Text>
+          )}
+
+          {status === 'sent' ? (
+            <Pressable
+              onPress={openTransaction}
+              style={({ pressed }) => [
+                styles.linkBtn,
+                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+              ]}
+            >
+              <Text style={[styles.linkLabel, { color: colors.foreground }]}>
+                View transaction detail
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {status === 'cancelled' ? (
+            <Pressable
+              onPress={() => {
+                haptics.selection();
+                router.back();
+              }}
+              style={({ pressed }) => [
+                styles.linkBtn,
+                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+              ]}
+            >
+              <Text style={[styles.linkLabel, { color: colors.foreground }]}>Back to inbox</Text>
+            </Pressable>
+          ) : null}
+        </ScrollView>
+        {modal}
+      </View>
+    </SwipeBackView>
   );
 }
 

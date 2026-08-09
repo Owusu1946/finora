@@ -1,4 +1,3 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useAui } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -14,7 +13,9 @@ import {
 } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
+import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -219,25 +220,27 @@ export default function ScanScreen() {
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={
-          Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
-        }
-        keyboardVerticalOffset={headerHeight}
-      >
-        <ScrollView
-          contentContainerStyle={styles.screenContent}
-          contentInsetAdjustmentBehavior='automatic'
-          keyboardShouldPersistTaps='handled'
-          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-          showsVerticalScrollIndicator={false}
+    <SwipeBackView>
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={
+            Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
+          }
+          keyboardVerticalOffset={headerHeight}
         >
-          {content}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+          <ScrollView
+            contentContainerStyle={styles.screenContent}
+            contentInsetAdjustmentBehavior='automatic'
+            keyboardShouldPersistTaps='handled'
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            showsVerticalScrollIndicator={false}
+          >
+            {content}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
+    </SwipeBackView>
   );
 }
 

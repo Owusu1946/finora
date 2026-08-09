@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -6,6 +5,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import type { Transaction } from '@/components/activity/types';
 
 import { TransactionDetail } from '@/components/activity/TransactionDetail';
+import { SwipeBackView } from '@/components/navigation/swipe-back-view';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getTransaction } from '@/lib/transactions-storage';
 
@@ -30,28 +31,26 @@ export default function TransactionDetailScreen() {
     }, [id]),
   );
 
-  if (loading) {
-    return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <ActivityIndicator
-          style={{ marginTop: 40 }}
-          color={colors.mutedForeground}
-        />
-      </View>
-    );
-  }
-
-  if (!tx) {
-    return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <Text style={[styles.missing, { color: colors.mutedForeground }]}>
-          Transaction not found.
-        </Text>
-      </View>
-    );
-  }
-
-  return <TransactionDetail tx={tx} />;
+  return (
+    <SwipeBackView>
+      {loading ? (
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
+          <ActivityIndicator
+            style={{ marginTop: 40 }}
+            color={colors.mutedForeground}
+          />
+        </View>
+      ) : !tx ? (
+        <View style={[styles.root, { backgroundColor: colors.background }]}>
+          <Text style={[styles.missing, { color: colors.mutedForeground }]}>
+            Transaction not found.
+          </Text>
+        </View>
+      ) : (
+        <TransactionDetail tx={tx} />
+      )}
+    </SwipeBackView>
+  );
 }
 
 const styles = StyleSheet.create({

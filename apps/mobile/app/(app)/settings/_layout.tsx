@@ -62,6 +62,8 @@ export default function SettingsLayout() {
   return (
     <Stack
       screenOptions={{
+        fullScreenGestureEnabled: true,
+        gestureEnabled: true,
         headerShadowVisible: false,
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
