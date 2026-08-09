@@ -1,10 +1,11 @@
-import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
+import { useRouter, type Href } from 'expo-router';
 import { useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { Pressable, StyleSheet, View, ScrollView } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { AddWalletModal } from '@/components/wallets/AddWalletModal';
 import { DepositModal } from '@/components/wallets/DepositModal';
 import { FxConvertModal } from '@/components/wallets/FxConvertModal';
@@ -20,6 +21,7 @@ import { haptics } from '@/lib/haptics';
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const accountType = getAccountType();
   const accountLabel = getAccountLabel(accountType);
 
@@ -138,6 +140,40 @@ export default function WalletsScreen() {
           onOpenConvert={() => setActiveModal('convert')}
         />
 
+        <Pressable
+          onPress={() => {
+            haptics.selection();
+            router.push('/virtual-card' as Href);
+          }}
+          style={({ pressed }) => [
+            styles.cardEntry,
+            {
+              backgroundColor: colors.muted,
+              borderColor: colors.border,
+              opacity: pressed ? 0.78 : 1,
+            },
+          ]}
+        >
+          <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
+            <Icon
+              name='wallet'
+              size={17}
+              color={colors.background}
+            />
+          </View>
+          <View style={styles.cardEntryCopy}>
+            <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>Virtual card</Text>
+            <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
+              Create a card for online spending
+            </Text>
+          </View>
+          <Icon
+            name='chevron-right'
+            size={18}
+            color={colors.mutedForeground}
+          />
+        </Pressable>
+
         {/* 2. Filter Tabs Bar */}
         <WalletFilterTabs
           filter={filter}
@@ -224,5 +260,32 @@ const styles = StyleSheet.create({
   },
   walletListContainer: {
     flexDirection: 'column',
+  },
+  cardEntry: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.card,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cardEntryIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardEntryCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  cardEntryTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+  },
+  cardEntrySubtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
   },
 });
