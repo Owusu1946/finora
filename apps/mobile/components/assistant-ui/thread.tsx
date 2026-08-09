@@ -137,9 +137,11 @@ export function Thread() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // Android `height` resizes the whole tree when the picker/keyboard
+        // dismisses and feels like a full reload — leave avoidance to insets.
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={headerHeight}
-        enabled={isFocused}
+        enabled={isFocused && Platform.OS === 'ios'}
       >
         <View style={styles.flex}>
           <ChatMessages headerHeight={headerHeight} />

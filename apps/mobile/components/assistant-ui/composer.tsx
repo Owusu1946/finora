@@ -1,5 +1,8 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Platform,
@@ -8,6 +11,8 @@ import {
   Keyboard,
   StyleSheet,
   Pressable,
+  TextInput,
+  type TextInputProps,
 } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
@@ -20,6 +25,13 @@ import {
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
 } from './attachment';
+
+const COMPOSER_ATTACHMENT_COMPONENTS = {
+  Image: ComposerImageAttachment,
+  Document: ComposerDocumentAttachment,
+  File: ComposerDocumentAttachment,
+  Attachment: ComposerAttachmentChip,
+};
 
 function AttachButton() {
   const { colors } = useTheme();
@@ -60,108 +72,95 @@ function AttachButton() {
   };
 
   const handleNativePickImage = async () => {
-    try {
-      const ImagePicker = await import('expo-image-picker');
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.8,
-        allowsMultipleSelection: true,
-      });
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Allow photo library access to attach images.');
+      return;
+    }
 
-      if (!result.canceled && result.assets) {
-        for (const asset of result.assets) {
-          aui.composer.addAttachment({
-            name: asset.fileName || `image_${Date.now()}.jpg`,
-            type: 'image',
-            contentType: asset.mimeType || 'image/jpeg',
-            content: [{ type: 'image', image: asset.uri }],
-          });
-        }
-      }
-    } catch {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsMultipleSelection: true,
+    });
+
+    if (result.canceled || !result.assets?.length) return;
+
+    for (const asset of result.assets) {
       aui.composer.addAttachment({
-        name: 'photo.jpg',
+        name: asset.fileName || `image_${Date.now()}.jpg`,
         type: 'image',
-        contentType: 'image/jpeg',
-        content: [
-          {
-            type: 'image',
-            image: 'https://picsum.photos/400/300',
-          },
-        ],
+        contentType: asset.mimeType || 'image/jpeg',
+        content: [{ type: 'image', image: asset.uri }],
       });
     }
   };
 
   const handleNativePickDocument = async () => {
-    try {
-      const DocumentPicker = await import('expo-document-picker');
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        multiple: true,
-      });
+    const result = await DocumentPicker.getDocumentAsync({
+      type: '*/*',
+      multiple: true,
+    });
 
-      if (!result.canceled && result.assets) {
-        for (const asset of result.assets) {
-          const isImage = asset.mimeType?.startsWith('image/');
-          if (isImage) {
-            aui.composer.addAttachment({
-              name: asset.name,
-              type: 'image',
-              contentType: asset.mimeType,
-              content: [{ type: 'image', image: asset.uri }],
-            });
-          } else {
-            aui.composer.addAttachment({
-              name: asset.name,
-              type: 'document',
-              contentType: asset.mimeType,
-              content: [{ type: 'text', text: `[Attached document: ${asset.name}]` }],
-            });
-          }
-        }
+    if (result.canceled || !result.assets?.length) return;
+
+    for (const asset of result.assets) {
+      const isImage = asset.mimeType?.startsWith('image/');
+      if (isImage) {
+        aui.composer.addAttachment({
+          name: asset.name,
+          type: 'image',
+          contentType: asset.mimeType,
+          content: [{ type: 'image', image: asset.uri }],
+        });
+      } else {
+        aui.composer.addAttachment({
+          name: asset.name,
+          type: 'document',
+          contentType: asset.mimeType,
+          content: [{ type: 'text', text: `[Attached document: ${asset.name}]` }],
+        });
       }
-    } catch {
-      aui.composer.addAttachment({
-        name: 'statement.pdf',
-        type: 'document',
-        contentType: 'application/pdf',
-        content: [{ type: 'text', text: '[Attached document: statement.pdf]' }],
-      });
     }
   };
 
   const handlePress = () => {
     haptics.selection();
+    // Settle keyboard layout before the system picker takes over.
+    Keyboard.dismiss();
+
     if (Platform.OS === 'web' || typeof document !== 'undefined') {
       openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
-    } else {
-      if (Platform.OS === 'ios') {
-        ActionSheetIOS.showActionSheetWithOptions(
-          {
-            options: ['Cancel', 'Photo Library', 'Choose Document'],
-            cancelButtonIndex: 0,
-          },
-          (buttonIndex) => {
-            if (buttonIndex === 1) handleNativePickImage();
-            else if (buttonIndex === 2) handleNativePickDocument();
-          },
-        );
-      } else {
-        Alert.alert('Add Attachment', 'Choose attachment type', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Photo', onPress: handleNativePickImage },
-          { text: 'Document', onPress: handleNativePickDocument },
-        ]);
-      }
+      return;
     }
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Photo Library', 'Choose Document'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) void handleNativePickImage();
+          else if (buttonIndex === 2) void handleNativePickDocument();
+        },
+      );
+      return;
+    }
+
+    Alert.alert('Add Attachment', 'Choose attachment type', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Photo', onPress: () => void handleNativePickImage() },
+      { text: 'Document', onPress: () => void handleNativePickDocument() },
+    ]);
   };
 
   return (
-    <ComposerPrimitive.AddAttachment
+    <Pressable
       accessibilityLabel='Attach file or photo'
-      onPressIn={handlePress}
-      style={({ pressed }: { pressed: boolean }) => [
+      hitSlop={8}
+      onPress={handlePress}
+      style={({ pressed }) => [
         styles.actionButton,
         {
           backgroundColor: pressed ? colors.muted : 'transparent',
@@ -173,7 +172,7 @@ function AttachButton() {
         size={20}
         color={colors.mutedForeground}
       />
-    </ComposerPrimitive.AddAttachment>
+    </Pressable>
   );
 }
 
@@ -243,26 +242,44 @@ function CancelButton() {
   );
 }
 
+/** Local buffer avoids RN cursor jumps from store-controlled TextInput. */
+function ComposerInput(props: TextInputProps) {
+  const aui = useAui();
+  const storeText = useAuiState((s) => s.composer.text);
+  const [localText, setLocalText] = useState(storeText);
+
+  useEffect(() => {
+    setLocalText((prev) => (prev !== storeText ? storeText : prev));
+  }, [storeText]);
+
+  return (
+    <TextInput
+      {...props}
+      value={localText}
+      onChangeText={(text) => {
+        setLocalText(text);
+        aui.composer.setText(text);
+      }}
+    />
+  );
+}
+
 export function Composer() {
   const { colors } = useTheme();
+  const inputStyle = useMemo(
+    () => [styles.input, { color: colors.foreground }],
+    [colors.foreground],
+  );
 
   return (
     <View style={styles.container}>
       <View
         style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
       >
-        {/* Attachment chips row */}
-        <ComposerPrimitive.Attachments
-          components={{
-            Image: ComposerImageAttachment,
-            Document: ComposerDocumentAttachment,
-            File: ComposerDocumentAttachment,
-            Attachment: ComposerAttachmentChip,
-          }}
-        />
+        <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
 
-        <ComposerPrimitive.Input
-          style={[styles.input, { color: colors.foreground }]}
+        <ComposerInput
+          style={inputStyle}
           placeholder='Ask Finora…'
           placeholderTextColor={colors.mutedForeground}
           multiline
