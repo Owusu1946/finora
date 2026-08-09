@@ -61,6 +61,22 @@ export default function CardsScreen() {
     haptics.selection();
     router.push('/virtual-card' as Href);
   };
+  const openCard = useCallback(
+    (id: string) => {
+      router.push(`/card/${id}` as Href);
+    },
+    [router],
+  );
+  const renderCard = useCallback(
+    ({ item, index }: { item: VirtualCard; index: number }) => (
+      <VirtualCardListItem
+        card={item}
+        isLast={index === filtered.length - 1}
+        onPress={openCard}
+      />
+    ),
+    [filtered.length, openCard],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -128,13 +144,7 @@ export default function CardsScreen() {
             ) : null}
           </View>
         }
-        renderItem={({ item, index }) => (
-          <VirtualCardListItem
-            card={item}
-            isLast={index === filtered.length - 1}
-            onPress={() => router.push(`/card/${item.id}` as Href)}
-          />
-        )}
+        renderItem={renderCard}
       />
     </View>
   );

@@ -1,12 +1,13 @@
-import { AppText as Text } from '@/components/ui/text';
 import { ThreadListItemPrimitive, useAui, useAuiState } from '@assistant-ui/react-native';
+import { memo } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
-export function ThreadListItem({ onSelect }: { onSelect: () => void }) {
+export const ThreadListItem = memo(function ThreadListItem({ onSelect }: { onSelect: () => void }) {
   const { colors } = useTheme();
   const aui = useAui();
   const isActive = useAuiState((s) => s.threads.mainThreadId === s.threadListItem.id);
@@ -39,7 +40,7 @@ export function ThreadListItem({ onSelect }: { onSelect: () => void }) {
       </Pressable>
     </ThreadListItemPrimitive.Root>
   );
-}
+});
 
 const styles = StyleSheet.create({
   item: {
