@@ -8,7 +8,6 @@ import {
   formatCardAmount,
   type CreateVirtualCardInput,
   type VirtualCard,
-  type VirtualCardCurrency,
 } from '@/components/cards/types';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -19,23 +18,16 @@ import { createVirtualCard } from '@/lib/virtual-cards-storage';
 
 export type CreateVirtualCardSeed = {
   label?: string;
-  currency?: VirtualCardCurrency;
   spendLimit?: number;
 };
 
-type Step = 'label' | 'currency' | 'limit' | 'review' | 'issued';
+type Step = 'label' | 'limit' | 'review' | 'issued';
 
 const LABEL_CHIPS = ['Netflix', 'Meta ads', 'General', 'AWS', 'Travel'];
-const CURRENCIES: VirtualCardCurrency[] = ['USD', 'GHS', 'EUR'];
-const LIMIT_CHIPS: Record<VirtualCardCurrency, number[]> = {
-  USD: [25, 50, 100, 300],
-  EUR: [25, 50, 100, 250],
-  GHS: [200, 500, 1000, 5000],
-};
+const LIMIT_CHIPS = [25, 50, 100, 300];
 
 function initialStep(seed: CreateVirtualCardSeed): Step {
   if (!seed.label) return 'label';
-  if (!seed.currency) return 'currency';
   if (seed.spendLimit == null) return 'limit';
   return 'review';
 }
@@ -55,14 +47,13 @@ export function CreateVirtualCardWizard({
   const [step, setStep] = useState<Step>(() => initialStep(seed));
   const [label, setLabel] = useState(seed.label ?? '');
   const [customLabel, setCustomLabel] = useState('');
-  const [currency, setCurrency] = useState<VirtualCardCurrency | null>(seed.currency ?? null);
   const [spendLimit, setSpendLimit] = useState<number | null>(seed.spendLimit ?? null);
   const [customLimit, setCustomLimit] = useState('');
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<VirtualCard | null>(null);
 
   const stepIndex = useMemo(() => {
-    const order: Step[] = ['label', 'currency', 'limit', 'review', 'issued'];
+    const order: Step[] = ['label', 'limit', 'review', 'issued'];
     return order.indexOf(step) + 1;
   }, [step]);
 
@@ -72,7 +63,7 @@ export function CreateVirtualCardWizard({
     (customLimit.trim() ? Number(customLimit.replace(/,/g, '')) : null);
 
   const issue = async () => {
-    if (!resolvedLabel || !currency || !resolvedLimit || resolvedLimit <= 0 || busy) return;
+    if (!resolvedLabel || !resolvedLimit || resolvedLimit <= 0 || busy) return;
     setBusy(true);
     const ok = await requestApproval();
     if (!ok) {
@@ -81,7 +72,6 @@ export function CreateVirtualCardWizard({
     }
     const input: CreateVirtualCardInput = {
       label: resolvedLabel,
-      currency,
       spendLimit: resolvedLimit,
     };
     const card = await createVirtualCard(input);
@@ -102,19 +92,21 @@ export function CreateVirtualCardWizard({
     >
       {step !== 'issued' ? (
         <WizardStepHeader
-          step={Math.min(stepIndex, 4)}
-          total={4}
+          step={Math.min(stepIndex, 3)}
+          total={3}
           title={
             step === 'label'
               ? 'What is this card for?'
-              : step === 'currency'
-                ? 'Card currency'
-                : step === 'limit'
-                  ? 'Monthly spend limit'
-                  : 'Review & issue'
+              : step === 'limit'
+                ? 'Monthly spend limit'
+                : 'Review & issue'
           }
           subtitle={
-            step === 'review' ? 'Confirm with your passcode to issue the card.' : undefined
+            step === 'review'
+              ? 'USD card · confirm with your passcode to issue.'
+              : step === 'limit'
+                ? 'Virtual cards are issued in USD.'
+                : undefined
           }
         />
       ) : null}
@@ -130,7 +122,7 @@ export function CreateVirtualCardWizard({
                 onPress={() => {
                   setLabel(chip);
                   setCustomLabel('');
-                  setStep('currency');
+                  setStep('limit');
                 }}
               />
             ))}
@@ -148,41 +140,18 @@ export function CreateVirtualCardWizard({
           <PrimaryButton
             label='Continue'
             disabled={!resolvedLabel}
-            onPress={() => setStep('currency')}
+            onPress={() => setStep('limit')}
           />
         </View>
       ) : null}
 
-      {step === 'currency' ? (
+      {step === 'limit' ? (
         <View style={styles.block}>
           <View style={styles.chips}>
-            {CURRENCIES.map((c) => (
-              <WizardChip
-                key={c}
-                label={c}
-                selected={currency === c}
-                onPress={() => {
-                  setCurrency(c);
-                  setSpendLimit(null);
-                  setStep('limit');
-                }}
-              />
-            ))}
-          </View>
-          <SecondaryButton
-            label='Back'
-            onPress={() => setStep('label')}
-          />
-        </View>
-      ) : null}
-
-      {step === 'limit' && currency ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
-            {LIMIT_CHIPS[currency].map((n) => (
+            {LIMIT_CHIPS.map((n) => (
               <WizardChip
                 key={n}
-                label={formatCardAmount(n, currency)}
+                label={formatCardAmount(n, 'USD')}
                 selected={spendLimit === n}
                 onPress={() => {
                   setSpendLimit(n);
@@ -199,14 +168,14 @@ export function CreateVirtualCardWizard({
               setSpendLimit(null);
             }}
             keyboardType='decimal-pad'
-            placeholder={`Custom ${currency} limit`}
+            placeholder='Custom USD limit'
             placeholderTextColor={colors.mutedForeground}
             style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
           />
           <View style={styles.rowActions}>
             <SecondaryButton
               label='Back'
-              onPress={() => setStep('currency')}
+              onPress={() => setStep('label')}
             />
             <PrimaryButton
               label='Continue'
@@ -217,7 +186,7 @@ export function CreateVirtualCardWizard({
         </View>
       ) : null}
 
-      {step === 'review' && currency && resolvedLimit ? (
+      {step === 'review' && resolvedLimit ? (
         <View style={styles.block}>
           <View style={[styles.review, { borderColor: colors.border }]}>
             <Row
@@ -226,11 +195,11 @@ export function CreateVirtualCardWizard({
             />
             <Row
               label='Currency'
-              value={currency}
+              value='USD'
             />
             <Row
               label='Limit'
-              value={formatCardAmount(resolvedLimit, currency)}
+              value={formatCardAmount(resolvedLimit, 'USD')}
             />
           </View>
           <View style={styles.rowActions}>

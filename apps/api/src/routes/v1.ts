@@ -1,5 +1,5 @@
+import { SEND_CORRIDORS, normalizeFinoraTag, previewFxQuote, type Currency } from '@finora/shared';
 import { Hono } from 'hono';
-import { SEND_CORRIDORS, previewFxQuote, type Currency } from '@finora/shared';
 
 import { createPreparation, mockStore, newId } from '../mock/store';
 
@@ -10,6 +10,19 @@ type AppEnv = { Bindings: Env };
  * Shape matches future live WeWire-backed handlers so MCP/mobile can stay stable.
  */
 export const v1 = new Hono<AppEnv>();
+
+function publicFinoraAccount(account: (typeof mockStore.subcustomers)[number]) {
+  return {
+    accountId: `acct_${account.id}`,
+    subCustomerId: account.id,
+    tag: account.finoraTag,
+    displayName:
+      account.businessName ?? [account.firstName, account.lastName].filter(Boolean).join(' '),
+    country: account.country,
+    status: account.status === 'ACTIVE' ? 'active' : 'suspended',
+    walletCurrencies: account.walletCurrencies,
+  };
+}
 
 // ─── Balances / wallets / receive ──────────────────────────────────────────
 
@@ -151,6 +164,15 @@ v1.post('/contacts', async (c) => {
 
 v1.post('/accounts/lookup', async (c) => {
   const body = await c.req.json<{ kind: string; value: string }>();
+  if (body.kind === 'internal_wallet') {
+    const tag = normalizeFinoraTag(body.value);
+    const account = mockStore.subcustomers.find(
+      (item) =>
+        item.finoraTag === tag && item.status === 'ACTIVE' && item.onboardingStatus === 'APPROVED',
+    );
+    if (!account) return c.json({ error: 'finora_tag_not_found' }, 404);
+    return c.json({ mode: 'mock', kind: body.kind, account: publicFinoraAccount(account) });
+  }
   return c.json({
     mode: 'mock',
     kind: body.kind,
@@ -158,6 +180,38 @@ v1.post('/accounts/lookup', async (c) => {
     resolvedName: body.kind === 'mobile_money' ? 'Mobile money recipient' : 'Account holder',
     status: 'resolvable',
   });
+});
+
+v1.get('/finora-tags/search', (c) => {
+  // Autocomplete must not dump the global directory on short prefixes.
+  // Recent-graph filtering is owned by the client; this endpoint only allows
+  // exact tag lookup once the query is long enough.
+  const query = normalizeFinoraTag(c.req.query('query') ?? '');
+  if (query.length < 3) {
+    return c.json({ mode: 'mock', accounts: [], reason: 'query_too_short' });
+  }
+  const exact = mockStore.subcustomers.find(
+    (item) =>
+      item.id !== 'sc_personal_001' &&
+      item.finoraTag === query &&
+      item.status === 'ACTIVE' &&
+      item.onboardingStatus === 'APPROVED',
+  );
+  return c.json({
+    mode: 'mock',
+    accounts: exact ? [publicFinoraAccount(exact)] : [],
+  });
+});
+
+v1.get('/finora-tags/:tag', (c) => {
+  const tag = normalizeFinoraTag(c.req.param('tag'));
+  const account = mockStore.subcustomers.find(
+    (item) =>
+      item.finoraTag === tag && item.status === 'ACTIVE' && item.onboardingStatus === 'APPROVED',
+  );
+  if (!account) return c.json({ error: 'finora_tag_not_found' }, 404);
+  if (account.id === 'sc_personal_001') return c.json({ error: 'self_transfer' }, 409);
+  return c.json({ mode: 'mock', account: publicFinoraAccount(account) });
 });
 
 // ─── Preparations (money movement → approval) ──────────────────────────────
@@ -184,14 +238,48 @@ v1.post('/disbursements/mobile-money/prepare', async (c) => {
 });
 
 v1.post('/transfers/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('internal_transfer', body), 201);
+  const body = await c.req.json<{
+    fromSubCustomerId?: string;
+    toSubCustomerId?: string;
+    amount?: { value?: number; currency?: string };
+    reference?: string;
+  }>();
+  if (
+    !body.fromSubCustomerId ||
+    !body.toSubCustomerId ||
+    body.fromSubCustomerId === body.toSubCustomerId
+  ) {
+    return c.json({ error: 'invalid_internal_transfer_accounts' }, 400);
+  }
+  const recipient = mockStore.subcustomers.find(
+    (item) =>
+      item.id === body.toSubCustomerId &&
+      item.status === 'ACTIVE' &&
+      item.onboardingStatus === 'APPROVED',
+  );
+  if (!recipient) return c.json({ error: 'recipient_not_found' }, 404);
+  const currency = body.amount?.currency?.toUpperCase();
+  if (!body.amount?.value || body.amount.value <= 0 || !currency) {
+    return c.json({ error: 'invalid_amount' }, 400);
+  }
+  if (!recipient.walletCurrencies.includes(currency)) {
+    return c.json(
+      { error: 'recipient_wallet_unavailable', available: recipient.walletCurrencies },
+      409,
+    );
+  }
+  return c.json(
+    createPreparation('internal_transfer', {
+      ...body,
+      recipient: publicFinoraAccount(recipient),
+    }),
+    201,
+  );
 });
 
 v1.post('/conversions/prepare', async (c) => {
   const body = await c.req.json<{ from: string; to: string; amount: number }>();
-  const rate =
-    mockStore.fxRates.find((r) => r.from === body.from && r.to === body.to)?.rate ?? 1;
+  const rate = mockStore.fxRates.find((r) => r.from === body.from && r.to === body.to)?.rate ?? 1;
   const fee = Number((body.amount * 0.004).toFixed(2));
   const toAmount = Number(((body.amount - fee) * rate).toFixed(2));
   return c.json(
@@ -211,9 +299,7 @@ v1.post('/conversions/prepare', async (c) => {
 v1.get('/approvals', (c) => {
   const status = c.req.query('status') ?? 'pending';
   const items =
-    status === 'all'
-      ? mockStore.approvals
-      : mockStore.approvals.filter((a) => a.status === status);
+    status === 'all' ? mockStore.approvals : mockStore.approvals.filter((a) => a.status === status);
   return c.json({ mode: 'mock', approvals: items });
 });
 
@@ -253,7 +339,12 @@ v1.post('/approvals/:id/resolve', async (c) => {
     mockStore.transactions.unshift({
       id: newId('tx'),
       wewireId: txId,
-      type: item.kind === 'conversion' ? 'CONVERSION' : item.kind === 'momo_disbursement' ? 'DISBURSEMENT' : 'PAYOUT',
+      type:
+        item.kind === 'conversion'
+          ? 'CONVERSION'
+          : item.kind === 'momo_disbursement'
+            ? 'DISBURSEMENT'
+            : 'PAYOUT',
       channel:
         item.kind === 'momo_disbursement'
           ? 'MOBILE_MONEY'
@@ -343,8 +434,7 @@ v1.get('/rates/:from/:to', (c) => {
 
 v1.post('/conversions/preview', async (c) => {
   const body = await c.req.json<{ from: string; to: string; amount: number }>();
-  const rate =
-    mockStore.fxRates.find((r) => r.from === body.from && r.to === body.to)?.rate ?? 1;
+  const rate = mockStore.fxRates.find((r) => r.from === body.from && r.to === body.to)?.rate ?? 1;
   const fee = Number((body.amount * 0.004).toFixed(2));
   const toAmount = Number(((body.amount - fee) * rate).toFixed(2));
   return c.json({
@@ -374,8 +464,15 @@ v1.get('/subcustomers', (c) => {
 
 v1.post('/subcustomers', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
+  const requestedTag = normalizeFinoraTag(
+    String(body.finoraTag ?? body.email ?? `finora${Date.now()}`),
+  );
+  if (mockStore.subcustomers.some((item) => item.finoraTag === requestedTag)) {
+    return c.json({ error: 'finora_tag_unavailable' }, 409);
+  }
   const sc = {
     id: newId('sc'),
+    finoraTag: requestedTag,
     type: (body.type as 'INDIVIDUAL' | 'BUSINESS') ?? 'INDIVIDUAL',
     email: String(body.email ?? ''),
     country: String(body.country ?? 'GH'),
@@ -383,8 +480,9 @@ v1.post('/subcustomers', async (c) => {
     lastName: body.lastName as string | undefined,
     businessName: body.businessName as string | undefined,
     status: 'ACTIVE' as const,
+    walletCurrencies: (body.walletCurrencies as string[] | undefined) ?? ['USD'],
     onboardingStatus: 'NOT_STARTED' as const,
-    purpose: (body.purpose as ('PAYMENTS')[]) ?? ['PAYMENTS'],
+    purpose: (body.purpose as 'PAYMENTS'[]) ?? ['PAYMENTS'],
     createdAt: new Date().toISOString(),
   };
   mockStore.subcustomers.unshift(sc);
@@ -463,8 +561,7 @@ v1.get('/invoices', (c) => {
   if (query) {
     items = items.filter(
       (i) =>
-        i.vendor.toLowerCase().includes(query) ||
-        i.invoiceNumber.toLowerCase().includes(query),
+        i.vendor.toLowerCase().includes(query) || i.invoiceNumber.toLowerCase().includes(query),
     );
   }
   return c.json({ mode: 'mock', invoices: items });
@@ -894,9 +991,12 @@ v1.post('/policies/check', async (c) => {
 
 v1.post('/intelligence/recommend-rail', async (c) => {
   const body = await c.req.json<{ amount?: number; currency?: string; country?: string }>();
-  const rail =
-    body.currency === 'GHS' || body.country === 'GH' ? 'mobile_money' : 'bank';
-  return c.json({ mode: 'mock', recommended: rail, reason: 'Fastest available rail for destination' });
+  const rail = body.currency === 'GHS' || body.country === 'GH' ? 'mobile_money' : 'bank';
+  return c.json({
+    mode: 'mock',
+    recommended: rail,
+    reason: 'Fastest available rail for destination',
+  });
 });
 
 v1.post('/intelligence/cheapest-rail', async (c) => {
@@ -922,7 +1022,11 @@ v1.post('/intelligence/best-wallet', async (c) => {
   const body = await c.req.json<{ currency?: string; amount?: number }>();
   const wallet =
     mockStore.wallets.find((w) => w.currency === (body.currency ?? 'USD')) ?? mockStore.wallets[0];
-  return c.json({ mode: 'mock', wallet, reason: 'Highest available balance in requested currency' });
+  return c.json({
+    mode: 'mock',
+    wallet,
+    reason: 'Highest available balance in requested currency',
+  });
 });
 
 v1.post('/intelligence/best-currency', async (c) => {

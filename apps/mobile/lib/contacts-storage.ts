@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { MOCK_CONTACTS, type Contact } from '@/components/contacts/types';
 import type { SupportedCurrency } from '@/components/ui/currency-icon';
-
 const KEY = 'finora.contacts.v2';
 
 const memory = new Map<string, string>();
@@ -38,8 +37,22 @@ export async function listContacts(): Promise<Contact[]> {
     return [...MOCK_CONTACTS];
   }
   try {
-    const parsed = JSON.parse(raw) as Contact[];
-    return Array.isArray(parsed) ? parsed : [...MOCK_CONTACTS];
+    const parsed = JSON.parse(raw) as Array<Contact & { handle?: string }>;
+    if (!Array.isArray(parsed)) return [...MOCK_CONTACTS];
+    const cleaned = parsed
+      .filter(
+        (contact) =>
+          !(
+            contact.id === 'c-10' &&
+            contact.handle === 'okenneth' &&
+            contact.identifier === '+233 •• ••• 5010'
+          ),
+      )
+      .map(({ handle: _legacyContactHandle, ...contact }) => contact);
+    if (JSON.stringify(cleaned) !== raw) {
+      await setItem(KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [...MOCK_CONTACTS];
   }

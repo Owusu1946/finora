@@ -16,6 +16,7 @@
     "@assistant-ui/react-native": "^0.1.33",
     "@expo-google-fonts/dm-sans": "^0.4.2",
     "@expo-google-fonts/fraunces": "^0.4.1",
+    "@finora/shared": "workspace:*",
     "@hugeicons/core-free-icons": "^4.2.3",
     "@hugeicons/react-native": "^1.0.15",
     "@react-native-async-storage/async-storage": "2.2.0",

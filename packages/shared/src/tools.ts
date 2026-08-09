@@ -19,7 +19,8 @@ import {
   WalletTransactionStatusSchema,
   WalletTransactionTypeSchema,
 } from './enums';
-import { MCP_TOOL_NAMES, type McpRegistryToolName, type RegistryToolName } from './registry';
+import { FinoraTagSchema } from './finora-tag';
+import { type McpRegistryToolName, type RegistryToolName } from './registry';
 
 /**
  * Zod input contracts for platform / MCP tools.
@@ -125,6 +126,12 @@ export const LookupAccountInputSchema = z
     value: z.string().min(1),
     network: MobileMoneyNetworkSchema.optional(),
     currency: CurrencySchema.optional(),
+  })
+  .strict();
+
+export const LookupFinoraTagInputSchema = z
+  .object({
+    tag: FinoraTagSchema,
   })
   .strict();
 

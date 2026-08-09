@@ -102,7 +102,7 @@ export async function createVirtualCard(input: CreateVirtualCardInput): Promise<
     label: input.label.trim() || 'Virtual card',
     last4: pan.slice(-4),
     network,
-    currency: input.currency,
+    currency: 'USD',
     status: 'active',
     spendLimit: input.spendLimit,
     spent: 0,

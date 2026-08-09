@@ -69,7 +69,7 @@ export default function AccountSettingsScreen() {
               {settings.displayName}
             </Text>
             <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>
-              {settings.email}
+              @{settings.finoraTag} · {settings.email}
             </Text>
           </View>
         </View>
