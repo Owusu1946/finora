@@ -33,6 +33,7 @@ const NAV_TABS: { id: NavTab; label: string; items: NavItem[] }[] = [
     label: 'Money',
     items: [
       { href: '/wallets', label: 'Wallets', icon: 'wallet' },
+      { href: '/cards', label: 'Cards', icon: 'card' },
       { href: '/activity', label: 'Activity', icon: 'activity' },
     ],
   },

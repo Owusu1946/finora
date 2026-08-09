@@ -16,6 +16,7 @@ import {
   CheckmarkCircle02Icon,
   CheckIcon,
   Copy01Icon,
+  CreditCardIcon,
   Edit02Icon,
   Eraser01Icon,
   File01Icon,
@@ -58,6 +59,7 @@ export type IconName =
   | 'brain'
   | 'tool'
   | 'wallet'
+  | 'card'
   | 'activity'
   | 'contacts'
   | 'integrations'
@@ -110,6 +112,7 @@ export const HUGE_ICONS = {
   brain: AiBrain01Icon,
   tool: Wrench01Icon,
   wallet: Wallet01Icon,
+  card: CreditCardIcon,
   activity: Activity01Icon,
   contacts: UserGroupIcon,
   integrations: Link01Icon,

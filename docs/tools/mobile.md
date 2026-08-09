@@ -37,6 +37,19 @@ Receive / payment-request cards encode real QRs ([`MockQrCode.tsx`](../../apps/m
 | `prepare_recurring` | Recurring card | (legacy path) |
 | `schedule_payment_wizard` | Multi-step schedule UI | “Set up rent monthly” |
 | `create_financial_plan` | Plan card (approve all) | “Pay everything due today” |
+| `create_virtual_card` | Issue wizard → passcode → card face | “Create a virtual card for Netflix with a $50 limit” |
+| `list_virtual_cards` | Stack of compact card faces | “Show my cards” |
+| `get_virtual_card` | Detail + manage (reveal / freeze / limit) | “Freeze my Netflix card” |
+
+### Virtual cards
+
+Mock-only for now (no WeWire card rails). Shared store: [`virtual-cards-storage.ts`](../../apps/mobile/lib/virtual-cards-storage.ts).
+
+- **Chat:** create / list / manage ToolUIs under [`components/chat/`](../../apps/mobile/components/chat/)
+- **Screens:** drawer Money → Cards ([`cards.tsx`](../../apps/mobile/app/(app)/cards.tsx)), detail ([`card/[id].tsx`](../../apps/mobile/app/(app)/card/[id].tsx))
+- **Reveal** full PAN / expiry / CVV always requires passcode (30s timeout)
+
+Demo: “Create a virtual card for Netflix with a $50 limit” → approve → open Cards → reveal → freeze.
 
 ### International send wizard
 
@@ -83,6 +96,7 @@ Register UIs in [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.ts
 | **Activity / transaction detail** | Timeline after settle |
 | **Integrations** | Connect Gmail (maps to `connect_gmail` idea) |
 | **Contacts / Recurring / Invoices screens** | CRUD UIs for platform capabilities |
+| **Cards** | Virtual card list + detail (mock issue / freeze / reveal) |
 
 `mark_notification_read` belongs here as an **app action** when a notifications UI exists — not as something the mock chat agent calls.
 

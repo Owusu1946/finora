@@ -5,6 +5,7 @@ import type { BalanceWallet } from '@/components/chat/BalancesCard';
 import type { ConversionQuote } from '@/components/chat/ConversionCard';
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
+import type { VirtualCardCurrency } from '@/components/cards/types';
 import type { Invoice } from '@/components/invoices/types';
 import { MOCK_INVOICES } from '@/components/invoices/types';
 import type { RecurringFrequency } from '@/components/recurring/types';
@@ -23,6 +24,12 @@ import {
   parsePaymentQr,
   type ParsedPaymentQr,
 } from '@/lib/payment-qr';
+import {
+  findVirtualCardByLabel,
+  getVirtualCard,
+  listVirtualCards,
+  setVirtualCardStatus,
+} from '@/lib/virtual-cards-storage';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -55,9 +62,77 @@ const RECURRING_RE =
   /\b(every\s+(week|month|quarter)|recurring|schedule|weekly|monthly|quarterly|auto(?:matic)?(?:ally)?\s+pay|standing\s+order|set\s*up\s+(my\s+)?(rent|payment|payout|salary)|rent\s+payment|setup\s+(a\s+)?(recurring|scheduled)|i want to (setup|set up|schedule))\b/i;
 const FINANCIAL_PLAN_RE =
   /\bpay\s+everyone\b|\bpay\s+everything\s+due\b|\beverything\s+due\s+today\b|\bpay\s+all\s+(due|bills|invoices|suppliers)\b|\bfinancial\s+plan\b|\brun\s+(payroll\s+and|all)\b/i;
+const CREATE_CARD_RE =
+  /\b(create|issue|make|new)\b.{0,24}\b(virtual\s+)?card\b|\bvirtual\s+card\s+for\b|\bcard\s+for\s+(netflix|meta|aws|travel)\b/i;
+const LIST_CARDS_RE =
+  /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b/i;
+const MANAGE_CARD_RE =
+  /\b(freeze|unfreeze|cancel)\b.{0,24}\bcard\b|\bcard\b.{0,24}\b(freeze|unfreeze|cancel|details|limit)\b/i;
 
 function isFinancialPlanIntent(prompt: string) {
   return FINANCIAL_PLAN_RE.test(prompt);
+}
+
+function isCreateCardIntent(prompt: string) {
+  return CREATE_CARD_RE.test(prompt);
+}
+
+function isListCardsIntent(prompt: string) {
+  return LIST_CARDS_RE.test(prompt) && !isCreateCardIntent(prompt) && !isManageCardIntent(prompt);
+}
+
+function isManageCardIntent(prompt: string) {
+  return MANAGE_CARD_RE.test(prompt);
+}
+
+function parseCardSeed(prompt: string) {
+  const lower = prompt.toLowerCase();
+  let label: string | undefined;
+  if (lower.includes('netflix')) label = 'Netflix';
+  else if (lower.includes('meta')) label = 'Meta ads';
+  else if (lower.includes('aws')) label = 'AWS';
+  else if (lower.includes('travel')) label = 'Travel';
+  else {
+    const forMatch = prompt.match(/\b(?:card|virtual card)\s+for\s+([A-Za-z][A-Za-z0-9 &-]{1,40})/i);
+    if (forMatch?.[1]) label = forMatch[1].trim();
+  }
+
+  const currencyMatch = prompt.match(/\b(USD|GHS|EUR|\$|€)\b/i);
+  let currency: VirtualCardCurrency | undefined;
+  if (currencyMatch) {
+    const raw = currencyMatch[1]!.toUpperCase();
+    currency = raw === '$' ? 'USD' : raw === '€' ? 'EUR' : (raw as VirtualCardCurrency);
+  }
+
+  const amountMatch = prompt.match(
+    /(?:\$|€|USD|GHS|EUR)?\s*(\d+(?:\.\d{1,2})?)\s*(?:USD|GHS|EUR)?(?:\s*limit)?/i,
+  );
+  const spendLimit = amountMatch ? Number(amountMatch[1]) : undefined;
+
+  return {
+    label,
+    currency,
+    spendLimit: Number.isFinite(spendLimit) ? spendLimit : undefined,
+  };
+}
+
+async function resolveManagedCard(prompt: string) {
+  const idMatch = prompt.match(/\bcard_([a-z0-9]+)\b/i);
+  if (idMatch) {
+    return getVirtualCard(`card_${idMatch[1]}`);
+  }
+  const forMatch = prompt.match(
+    /\b(?:freeze|unfreeze|cancel|show|open)\s+(?:my\s+)?([A-Za-z][A-Za-z0-9 &-]{1,40}?)\s+card\b/i,
+  );
+  if (forMatch?.[1]) {
+    return findVirtualCardByLabel(forMatch[1]);
+  }
+  const ofMatch = prompt.match(/\bcard\s+for\s+([A-Za-z][A-Za-z0-9 &-]{1,40})/i);
+  if (ofMatch?.[1]) {
+    return findVirtualCardByLabel(ofMatch[1]);
+  }
+  const cards = await listVirtualCards();
+  return cards.find((c) => c.status !== 'cancelled') ?? cards[0] ?? null;
 }
 
 function isInvoiceIntent(prompt: string) {
@@ -719,6 +794,170 @@ export const finoraChatAdapter = {
           {
             type: 'text',
             text: `Here’s a plan for “${plan.intent}”: ${plan.items.length} line items. Review each row, then Approve all with your passcode — or open Approvals in the drawer for the same plan from Claude Desktop.`,
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isCreateCardIntent(prompt)) {
+      const seed = parseCardSeed(prompt);
+      const args = { ...seed };
+      const argsText = JSON.stringify(args);
+      const reasoning =
+        'Virtual card requested.\nOpening issue wizard for label, currency, and spend limit…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_virtual_card',
+            toolName: 'create_virtual_card',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(400);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: `${reasoning}\nWizard ready.` },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_create_virtual_card',
+            toolName: 'create_virtual_card',
+            args,
+            argsText,
+          },
+          {
+            type: 'text',
+            text: seed.label
+              ? `Let’s issue a ${seed.label} card${seed.spendLimit ? ` with a ${seed.spendLimit} limit` : ''}. Confirm the details and approve with your passcode.`
+              : 'Let’s issue a virtual card. Pick a purpose, currency, and spend limit — then approve with your passcode.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isManageCardIntent(prompt)) {
+      let card = await resolveManagedCard(prompt);
+      const lower = prompt.toLowerCase();
+      if (card) {
+        if (/\bfreeze\b/i.test(lower) && !/\bunfreeze\b/i.test(lower) && card.status === 'active') {
+          card = (await setVirtualCardStatus(card.id, 'frozen')) ?? card;
+        } else if (/\bunfreeze\b/i.test(lower) && card.status === 'frozen') {
+          card = (await setVirtualCardStatus(card.id, 'active')) ?? card;
+        } else if (/\bcancel\b/i.test(lower) && card.status !== 'cancelled') {
+          card = (await setVirtualCardStatus(card.id, 'cancelled')) ?? card;
+        }
+      }
+      const args = { cardId: card?.id, label: card?.label };
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Virtual card management requested.\nLoading card controls…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_get_virtual_card',
+            toolName: 'get_virtual_card',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(450);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\n${card ? `Card ${card.label} ready.` : 'No matching card.'}`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_get_virtual_card',
+            toolName: 'get_virtual_card',
+            args,
+            argsText,
+            result: { card },
+          },
+          {
+            type: 'text',
+            text: card
+              ? `${card.label} •••• ${card.last4} is ${card.status}. Reveal details, edit the limit, or freeze from here — also under Cards in the drawer.`
+              : 'I couldn’t find that card. Try “Show my cards” or create one first.',
+          },
+        ],
+      };
+      return;
+    }
+
+    if (isListCardsIntent(prompt)) {
+      const cards = await listVirtualCards();
+      const activeOnly = /\bfrozen\b/i.test(prompt)
+        ? cards.filter((c) => c.status === 'frozen')
+        : cards.filter((c) => c.status !== 'cancelled');
+      const args = { status: 'all' as const };
+      const argsText = JSON.stringify(args);
+      const reasoning = 'Virtual cards requested.\nLoading issued cards…';
+
+      yield { content: [{ type: 'reasoning', text: reasoning }] };
+      await wait(350);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          { type: 'reasoning', text: reasoning },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_virtual_cards',
+            toolName: 'list_virtual_cards',
+            args,
+            argsText,
+          },
+        ],
+      };
+
+      await wait(450);
+      if (abortSignal.aborted) return;
+
+      yield {
+        content: [
+          {
+            type: 'reasoning',
+            text: `${reasoning}\nFound ${activeOnly.length} card(s).`,
+          },
+          {
+            type: 'tool-call',
+            toolCallId: 'call_list_virtual_cards',
+            toolName: 'list_virtual_cards',
+            args,
+            argsText,
+            result: { cards: activeOnly },
+          },
+          {
+            type: 'text',
+            text:
+              activeOnly.length > 0
+                ? `You have ${activeOnly.length} virtual card${activeOnly.length === 1 ? '' : 's'}. Tap one to manage, or open Cards in the drawer.`
+                : 'No virtual cards yet. Try “Create a virtual card for Netflix with a $50 limit.”',
           },
         ],
       };

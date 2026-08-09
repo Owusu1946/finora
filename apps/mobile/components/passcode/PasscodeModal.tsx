@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
@@ -8,7 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
 
-export type PasscodeMode = 'setup' | 'confirm-setup' | 'unlock';
+export type PasscodeMode = 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp';
 
 type PasscodeModalProps = {
   visible: boolean;
@@ -16,12 +22,30 @@ type PasscodeModalProps = {
   title?: string;
   subtitle?: string;
   error?: string | null;
+  /** Remaining unlock attempts before lockout. */
+  attemptsLeft?: number | null;
+  /** Pad locked after too many wrong tries. */
+  locked?: boolean;
+  /** Shown under the forgot link (e.g. masked email). */
+  forgotHint?: string | null;
+  /**
+   * Bumped on each failed attempt so digits clear + shake even when the
+   * error message string is unchanged.
+   */
+  failureSignal?: number;
   onClose: () => void;
   /** Called when the user finishes entering PASSCODE_LENGTH digits. */
   onComplete: (passcode: string) => void;
+  /** Start forgot-passcode recovery (unlock mode). */
+  onForgot?: () => void;
+  /** Clear a stale error when the user starts typing again. */
+  onClearError?: () => void;
 };
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'bio', '0', 'back'] as const;
+const MAX_ATTEMPTS = 3;
+
+export { MAX_ATTEMPTS };
 
 export function PasscodeModal({
   visible,
@@ -29,13 +53,23 @@ export function PasscodeModal({
   title,
   subtitle,
   error,
+  attemptsLeft,
+  locked = false,
+  forgotHint,
+  failureSignal = 0,
   onClose,
   onComplete,
+  onForgot,
+  onClearError,
 }: PasscodeModalProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [value, setValue] = useState('');
+  const shakeX = useSharedValue(0);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const lastSubmittedRef = useRef<string | null>(null);
   const keySize = Math.min(
     72,
     Math.max(
@@ -46,15 +80,35 @@ export function PasscodeModal({
   const keypadWidth = keySize * 3 + 36;
 
   useEffect(() => {
-    if (visible) setValue('');
+    if (!visible) return;
+    setValue('');
+    lastSubmittedRef.current = null;
   }, [visible, mode]);
 
   useEffect(() => {
-    if (value.length !== PASSCODE_LENGTH) return;
+    if (!visible || failureSignal < 1) return;
+    setValue('');
+    lastSubmittedRef.current = null;
+    haptics.error();
+    shakeX.value = withSequence(
+      withTiming(-12, { duration: 36 }),
+      withTiming(12, { duration: 36 }),
+      withTiming(-10, { duration: 36 }),
+      withTiming(10, { duration: 36 }),
+      withTiming(-6, { duration: 36 }),
+      withTiming(6, { duration: 36 }),
+      withTiming(0, { duration: 36 }),
+    );
+  }, [failureSignal, shakeX, visible]);
+
+  useEffect(() => {
+    if (locked || value.length !== PASSCODE_LENGTH) return;
+    if (lastSubmittedRef.current === value) return;
     const code = value;
-    const id = setTimeout(() => onComplete(code), 80);
+    lastSubmittedRef.current = code;
+    const id = setTimeout(() => onCompleteRef.current(code), 80);
     return () => clearTimeout(id);
-  }, [onComplete, value]);
+  }, [locked, value]);
 
   const copy = useMemo(() => {
     if (title && subtitle) return { title, subtitle };
@@ -70,23 +124,39 @@ export function PasscodeModal({
         subtitle: 'Enter the same passcode once more.',
       };
     }
+    if (mode === 'forgot-otp') {
+      return {
+        title: 'Check your email',
+        subtitle: forgotHint
+          ? `Enter the 6-digit code sent to ${forgotHint}.`
+          : 'Enter the 6-digit code we sent to your email.',
+      };
+    }
     return {
       title: 'Enter passcode',
       subtitle: 'Confirm this transaction with your Finora passcode.',
     };
-  }, [mode, subtitle, title]);
+  }, [forgotHint, mode, subtitle, title]);
+
+  const shakeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeX.value }],
+  }));
 
   const pushDigit = (digit: string) => {
-    if (value.length >= PASSCODE_LENGTH) return;
+    if (locked || value.length >= PASSCODE_LENGTH) return;
+    if (error) onClearError?.();
     haptics.selection();
     setValue((v) => v + digit);
   };
 
   const backspace = () => {
-    if (!value) return;
+    if (locked || !value) return;
+    if (error) onClearError?.();
     haptics.selection();
     setValue((v) => v.slice(0, -1));
   };
+
+  const showForgot = (mode === 'unlock' || mode === 'forgot-otp' || locked) && onForgot;
 
   return (
     <Modal
@@ -138,7 +208,7 @@ export function PasscodeModal({
               </Text>
             </View>
 
-            <View style={styles.dots}>
+            <Animated.View style={[styles.dots, shakeStyle]}>
               {Array.from({ length: PASSCODE_LENGTH }).map((_, i) => {
                 const filled = i < value.length;
                 return (
@@ -147,9 +217,9 @@ export function PasscodeModal({
                     style={[
                       styles.dot,
                       {
-                        borderColor: error ? colors.destructive : colors.border,
+                        borderColor: error || locked ? colors.destructive : colors.border,
                         backgroundColor: filled
-                          ? error
+                          ? error || locked
                             ? colors.destructive
                             : colors.foreground
                           : 'transparent',
@@ -158,20 +228,42 @@ export function PasscodeModal({
                   />
                 );
               })}
-            </View>
+            </Animated.View>
 
             {error ? (
               <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
+            ) : attemptsLeft != null && mode === 'unlock' && attemptsLeft < MAX_ATTEMPTS ? (
+              <Text style={[styles.error, { color: colors.mutedForeground }]}>
+                {attemptsLeft} {attemptsLeft === 1 ? 'try' : 'tries'} left
+              </Text>
             ) : (
               <View style={styles.errorSpacer} />
             )}
+
+            {showForgot ? (
+              <Pressable
+                accessibilityRole='button'
+                accessibilityLabel='Forgot passcode'
+                onPress={() => {
+                  if (!onForgot) return;
+                  haptics.selection();
+                  onForgot();
+                }}
+                style={styles.forgotBtn}
+              >
+                <Text style={[styles.forgotText, { color: colors.foreground }]}>
+                  {mode === 'forgot-otp' ? 'Resend code' : 'Forgot passcode?'}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={styles.forgotSpacer} />
+            )}
           </View>
 
-          <View style={[styles.pad, { width: keypadWidth }]}>
+          <View style={[styles.pad, { width: keypadWidth, opacity: locked ? 0.45 : 1 }]}>
             {KEYS.map((key) => {
               if (key === 'bio') {
-                // Placeholder only — Face ID / Touch ID not wired yet.
-                if (mode !== 'unlock') {
+                if (mode !== 'unlock' || locked) {
                   return (
                     <View
                       key='bio'
@@ -206,6 +298,7 @@ export function PasscodeModal({
                   <Pressable
                     key='back'
                     accessibilityLabel='Delete'
+                    disabled={locked}
                     onPress={backspace}
                     style={({ pressed }) => [
                       styles.key,
@@ -227,6 +320,7 @@ export function PasscodeModal({
                 <Pressable
                   key={key}
                   accessibilityLabel={`Digit ${key}`}
+                  disabled={locked}
                   onPress={() => pushDigit(key)}
                   style={({ pressed }) => [
                     styles.key,
@@ -320,6 +414,20 @@ const styles = StyleSheet.create({
   },
   errorSpacer: {
     height: 20,
+  },
+  forgotBtn: {
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  forgotText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    letterSpacing: -0.2,
+    textDecorationLine: 'underline',
+  },
+  forgotSpacer: {
+    height: 32,
   },
   pad: {
     flexDirection: 'row',

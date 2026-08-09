@@ -102,7 +102,7 @@ function ChatHeaderRight() {
   );
 }
 
-function BackHeaderButton() {
+function BackHeaderButton({ fallback = 'approvals' }: { fallback?: string }) {
   const navigation = useNavigation();
   const router = useRouter();
   const { colors } = useTheme();
@@ -117,7 +117,7 @@ function BackHeaderButton() {
           router.back();
           return;
         }
-        navigation.dispatch(DrawerActions.jumpTo('approvals'));
+        navigation.dispatch(DrawerActions.jumpTo(fallback));
       }}
       style={{ marginLeft: 4, padding: 4 }}
     >
@@ -189,8 +189,21 @@ export default function AppLayout() {
         options={screenOptions('Wallets')}
       />
       <Drawer.Screen
+        name='cards'
+        options={screenOptions('Cards')}
+      />
+      <Drawer.Screen
         name='activity'
         options={screenOptions('Activity')}
+      />
+      <Drawer.Screen
+        name='card/[id]'
+        options={{
+          ...screenOptions('Card'),
+          drawerItemStyle: { display: 'none' },
+          headerLeft: () => <BackHeaderButton fallback='cards' />,
+          headerRight: () => null,
+        }}
       />
       <Drawer.Screen
         name='approvals'
