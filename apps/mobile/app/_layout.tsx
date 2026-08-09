@@ -20,10 +20,13 @@ import {
   CreatePaymentRequestToolUI,
   GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
+import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
 import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
+import { GetVirtualCardToolUI } from '@/components/chat/GetVirtualCardToolUI';
 import { ListInvoicesToolUI } from '@/components/chat/ListInvoicesToolUI';
 import { ListReceiveMethodsToolUI } from '@/components/chat/ListReceiveMethodsToolUI';
+import { ListVirtualCardsToolUI } from '@/components/chat/ListVirtualCardsToolUI';
 import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
@@ -125,6 +128,9 @@ export default function RootLayout() {
               <SchedulePaymentWizardToolUI />
               <ResolveSendToolUI />
               <CreateFinancialPlanToolUI />
+              <CreateVirtualCardToolUI />
+              <ListVirtualCardsToolUI />
+              <GetVirtualCardToolUI />
               <RootNavigator />
             </AssistantRuntimeProvider>
           </OnboardingGateProvider>

@@ -63,6 +63,12 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Allow Finora to tilt virtual cards with device motion."
+        }
       ]
     ],
     "experiments": {
