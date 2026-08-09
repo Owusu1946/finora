@@ -24,6 +24,7 @@ import {
   type FundingSource,
 } from '@/lib/funding-methods';
 import { haptics } from '@/lib/haptics';
+import { playPaymentSuccessSound } from '@/lib/sounds';
 
 export type FundAccountSeed = {
   source?: FundingSource;
@@ -113,6 +114,7 @@ export function FundAccountWizard({
       setTransactionId(tx);
       setStep('credited');
       haptics.success();
+      void playPaymentSuccessSound();
       if (method) {
         onCreditedRef.current?.({
           amount: credited,

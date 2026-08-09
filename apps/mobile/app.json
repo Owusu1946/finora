@@ -13,7 +13,9 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Finora uses the camera to scan payment QR codes."
       },
-      "associatedDomains": ["applinks:pay.finora.app"]
+      "associatedDomains": [
+        "applinks:pay.finora.app"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +26,9 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
@@ -36,7 +40,10 @@
               "pathPrefix": "/r"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -74,6 +81,13 @@
         "expo-contacts",
         {
           "contactsPermission": "Allow Finora to pick a MoMo number from your phone contacts."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ]
     ],

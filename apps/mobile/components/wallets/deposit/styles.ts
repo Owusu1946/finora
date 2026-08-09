@@ -301,6 +301,12 @@ export const depositStyles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
+  successHero: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+  },
   successIcon: {
     width: 64,
     height: 64,
@@ -314,5 +320,12 @@ export const depositStyles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  successAmount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 34,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
   },
 });

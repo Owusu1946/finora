@@ -1,8 +1,10 @@
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { FinoraMarkLoader } from '@/components/ui/finora-mark-loader';
 import { Icon } from '@/components/ui/icon';
+import { SuccessCheckmark } from '@/components/ui/success-checkmark';
 import { haptics } from '@/lib/haptics';
 import type { MomoNetworkId } from '@/lib/momo-networks';
+import { playPaymentSuccessSound } from '@/lib/sounds';
 import { useEffect, useState } from 'react';
 import {
   Keyboard,
@@ -11,6 +13,7 @@ import {
   ScrollView,
   View,
 } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MomoIcon } from './icons';
@@ -126,7 +129,6 @@ export function MomoFlowScreen({
           colors={colors}
           amountNum={amountNum}
           onCompleted={() => {
-            haptics.success();
             onStepChange('momo_completed');
           }}
         />
@@ -318,27 +320,39 @@ function MomoCompletedStep({
   amountNum: number;
   onDone: () => void;
 }) {
+  useEffect(() => {
+    haptics.success();
+    void playPaymentSuccessSound();
+  }, []);
+
   return (
     <View style={styles.momoStatusBody}>
-      <View style={[styles.successIcon, { backgroundColor: colors.muted }]}>
-        <Icon
-          name='check'
-          size={28}
-          color={colors.foreground}
-        />
+      <View style={styles.successHero}>
+        <SuccessCheckmark size={80} />
+        <Animated.View entering={FadeInDown.delay(280).duration(320)}>
+          <Text style={[styles.successTitle, { color: colors.foreground }]}>
+            Deposit received
+          </Text>
+        </Animated.View>
+        <Animated.View entering={FadeInDown.delay(380).duration(320)}>
+          <Text style={[styles.successAmount, { color: colors.foreground }]}>
+            ₵{amountNum.toFixed(2)}
+          </Text>
+        </Animated.View>
+        <Animated.View entering={FadeInDown.delay(460).duration(320)}>
+          <Text style={[styles.awaitingMeta, { color: colors.mutedForeground }]}>
+            Added to your GHS wallet via {momoNetworkLabel}
+          </Text>
+        </Animated.View>
       </View>
-      <Text style={[styles.successTitle, { color: colors.foreground }]}>Deposit received</Text>
-      <Text style={[styles.awaitingAmount, { color: colors.foreground }]}>
-        ₵{amountNum.toFixed(2)}
-      </Text>
-      <Text style={[styles.awaitingMeta, { color: colors.mutedForeground }]}>
-        Added to your GHS wallet via {momoNetworkLabel}
-      </Text>
-      <PrimaryButton
-        label='Done'
-        colors={colors}
-        onPress={onDone}
-      />
+
+      <Animated.View entering={FadeInUp.delay(520).duration(280)}>
+        <PrimaryButton
+          label='Done'
+          colors={colors}
+          onPress={onDone}
+        />
+      </Animated.View>
     </View>
   );
 }
