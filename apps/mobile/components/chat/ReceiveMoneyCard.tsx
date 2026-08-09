@@ -1,10 +1,11 @@
-import { AppText as Text } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
+import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -26,12 +27,6 @@ type ReceiveMoneyCardProps = {
   methods: ReceiveMethod[];
   initialMethodId?: string;
 };
-
-function kindIcon(kind: ReceiveMethodKind): 'bank' | 'phone' | 'wallet' {
-  if (kind === 'virtual_account') return 'bank';
-  if (kind === 'mobile_money') return 'phone';
-  return 'wallet';
-}
 
 function formatDetails(method: ReceiveMethod): string {
   return [
@@ -141,10 +136,9 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 },
               ]}
             >
-              <Icon
-                name={kindIcon(method.kind)}
-                size={13}
-                color={selected ? colors.background : colors.foreground}
+              <CurrencyIcon
+                currency={method.currency}
+                size={18}
               />
               <Text
                 style={[
