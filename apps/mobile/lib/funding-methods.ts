@@ -10,23 +10,28 @@ export type FundingMethod = ReceiveMethod & {
 
 export const FUNDING_SOURCE_COPY: Record<
   FundingSource,
-  { label: string; blurb: string }
+  { label: string; blurb: string; eta?: string; fee?: string }
 > = {
   bank: {
     label: 'Bank transfer',
     blurb: 'Send from your bank to a Finora virtual account',
+    eta: 'Instant',
+    fee: 'Free',
   },
   mobile_money: {
     label: 'Mobile money',
     blurb: 'Pay into your MoMo collection number',
+    eta: 'Instant',
   },
   momo_pull: {
     label: 'Charge my MoMo',
     blurb: 'Approve a prompt on your phone — we pull the amount',
+    eta: 'Instant',
   },
   crypto: {
-    label: 'Crypto',
-    blurb: 'Send USDT on TRC-20 to your deposit address',
+    label: 'Stablecoin wallet',
+    blurb: 'Receive USDT or USDC on your chosen network',
+    eta: '1 - 2 mins',
   },
 };
 
@@ -98,12 +103,26 @@ export function listFundingMethods(): FundingMethod[] {
       kind: 'crypto',
       currency: 'USDT',
       title: 'USDT · TRC-20',
-      subtitle: 'TRC-20 only — other networks may lose funds',
+      subtitle: 'TRON only — other networks may lose funds',
       qrPayload: 'TXyzFinoraMockDepositAddress9hQ2',
       fields: [
-        { label: 'Network', value: 'TRC-20 (Tron)', copyable: false },
+        { label: 'Network', value: 'TRON (TRC-20)', copyable: false },
         { label: 'Asset', value: 'USDT', copyable: false },
         { label: 'Address', value: 'TXyzFinoraMockDepositAddress9hQ2' },
+      ],
+    },
+    {
+      id: 'crypto-usdc',
+      source: 'crypto',
+      kind: 'crypto',
+      currency: 'USDC',
+      title: 'USDC · BASE',
+      subtitle: 'BASE only — other networks may lose funds',
+      qrPayload: '0x6BeA76b3159d78A9bf74Be1Ba5d970eBF7fc0a9b',
+      fields: [
+        { label: 'Network', value: 'BASE', copyable: false },
+        { label: 'Asset', value: 'USDC', copyable: false },
+        { label: 'Address', value: '0x6BeA76b3159d78A9bf74Be1Ba5d970eBF7fc0a9b' },
       ],
     },
   ];

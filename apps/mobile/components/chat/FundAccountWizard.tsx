@@ -40,7 +40,14 @@ function initialStep(seed: FundAccountSeed): Step {
   if (!seed.source) return 'source';
   if (seed.source === 'momo_pull') return 'momo_pull';
   const pool = methodsForSource(seed.source);
-  if (pool.length > 1 && !seed.methodId && !seed.currency) return 'method';
+  if (
+    (seed.source === 'bank' || seed.source === 'crypto') &&
+    pool.length > 1 &&
+    !seed.methodId &&
+    !seed.currency
+  ) {
+    return 'method';
+  }
   return 'details';
 }
 
@@ -145,10 +152,15 @@ export function FundAccountWizard({
   };
 
   const stepMeta = (() => {
+    const multiMethod =
+      (source === 'bank' || source === 'crypto') &&
+      methodsForSource(source).length > 1 &&
+      !seed.currency &&
+      !seed.methodId;
     const order: Step[] =
       source === 'momo_pull'
         ? ['source', 'momo_pull', 'waiting', 'credited']
-        : source === 'bank' && bankMethods.length > 1 && !seed.currency
+        : multiMethod
           ? ['source', 'method', 'details', 'waiting', 'credited']
           : ['source', 'details', 'waiting', 'credited'];
     const idx = Math.max(1, order.indexOf(step) + 1);
@@ -189,7 +201,12 @@ export function FundAccountWizard({
                         methodId: seed.methodId,
                       }) ?? pool[0]!;
                     setMethod(preferred);
-                    if (s === 'bank' && pool.length > 1 && !seed.currency) {
+                    if (
+                      (s === 'bank' || s === 'crypto') &&
+                      pool.length > 1 &&
+                      !seed.currency &&
+                      !seed.methodId
+                    ) {
                       setStep('method');
                     } else {
                       setStep('details');
@@ -229,16 +246,20 @@ export function FundAccountWizard({
         </View>
       ) : null}
 
-      {step === 'method' && source === 'bank' ? (
+      {step === 'method' && (source === 'bank' || source === 'crypto') ? (
         <View style={styles.block}>
           <WizardStepHeader
             step={stepMeta.step}
             total={stepMeta.total}
-            title='Which currency?'
-            subtitle='Each virtual account credits its matching wallet'
+            title={source === 'crypto' ? 'Which stablecoin?' : 'Which currency?'}
+            subtitle={
+              source === 'crypto'
+                ? 'Pick USDT or USDC — network must match when you send'
+                : 'Each virtual account credits its matching wallet'
+            }
           />
           <View style={styles.chips}>
-            {bankMethods.map((m) => (
+            {(source === 'crypto' ? methodsForSource('crypto') : bankMethods).map((m) => (
               <WizardChip
                 key={m.id}
                 label={m.currency}
@@ -277,6 +298,12 @@ export function FundAccountWizard({
               size={140}
               color='#18181b'
               backgroundColor='#ffffff'
+              centerLogo={
+                <CurrencyIcon
+                  currency={method.currency}
+                  size={32}
+                />
+              }
             />
           </View>
           <View style={styles.fields}>
@@ -346,7 +373,15 @@ export function FundAccountWizard({
           </View>
           <NavBack
             colors={colors}
-            onBack={() => setStep(source === 'bank' && !seed.currency ? 'method' : 'source')}
+            onBack={() =>
+              setStep(
+                (source === 'bank' || source === 'crypto') &&
+                  !seed.currency &&
+                  !seed.methodId
+                  ? 'method'
+                  : 'source',
+              )
+            }
           />
         </View>
       ) : null}

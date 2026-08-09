@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText as Text } from '@/components/ui/text';
+import { FinoraLogo } from '@/components/ui/finora-mark';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
@@ -68,7 +69,7 @@ function EmptyState() {
       onPress={Keyboard.dismiss}
       style={styles.empty}
     >
-      <Text style={[styles.brand, { color: colors.mutedForeground }]}>Finora</Text>
+      <FinoraLogo size={48} />
       <Text style={[styles.welcome, { color: colors.foreground }]}>How can I help you today?</Text>
       <View style={styles.chips}>
         {suggestions.map((prompt) => (
@@ -188,14 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-  },
-  brand: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    marginBottom: 10,
+    gap: 10,
   },
   welcome: {
     fontFamily: 'DMSans_400Regular',

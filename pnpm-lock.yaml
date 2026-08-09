@@ -145,6 +145,9 @@ importers:
       expo-constants:
         specifier: ~18.0.13
         version: 18.0.13(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(supports-color@10.2.2)
+      expo-contacts:
+        specifier: ~15.0.11
+        version: 15.0.11(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(react@19.1.0)
       expo-document-picker:
         specifier: ~14.0.8
         version: 14.0.8(expo@54.0.36)
@@ -196,9 +199,6 @@ importers:
       react-native:
         specifier: 0.81.5
         version: 0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2)
-      react-native-country-flag:
-        specifier: 2.0.2
-        version: 2.0.2
       react-native-css:
         specifier: ^3.0.7
         version: 3.0.7(@expo/metro-config@54.0.17(expo@54.0.36)(supports-color@10.2.2))(lightningcss@1.30.1)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(react@19.1.0)(supports-color@10.2.2)
@@ -3509,6 +3509,13 @@ packages:
       expo: '*'
       react-native: '*'
 
+  expo-contacts@15.0.11:
+    resolution: {integrity: sha512-buKkoQuWJgVSEvR1Yloa5SvGC/ud7T2YeYDe0R7Aa0oz8pwQpjk3W7OoL3QrXIfYcuKTrIz6ffqC8lc3peaAyg==}
+    peerDependencies:
+      expo: '*'
+      react: 19.1.0
+      react-native: '*'
+
   expo-document-picker@14.0.8:
     resolution: {integrity: sha512-3tyQKpPqWWFlI8p9RiMX1+T1Zge5mEKeBuXWp1h8PEItFMUDSiOJbQ112sfdC6Hxt8wSxreV9bCRl/NgBdt+fA==}
     peerDependencies:
@@ -5010,9 +5017,6 @@ packages:
 
   react-is@19.2.8:
     resolution: {integrity: sha512-s5un28nYxKJw5gvUHyW5PCC28CvBqLu9r3cWgzHT4Vo/5fqqkFcdRYsGcKf50WMPpjjFZS5d76fn3YCo2njKwQ==}
-
-  react-native-country-flag@2.0.2:
-    resolution: {integrity: sha512-5LMWxS79ZQ0Q9ntYgDYzWp794+HcQGXQmzzZNBR1AT7z5HcJHtX7rlk8RHi7RVzfp5gW6plWSZ4dKjRpu/OafQ==}
 
   react-native-css@3.0.7:
     resolution: {integrity: sha512-xsU9T5MleHI/DDmY72A7ZikbkDfDNkMrAEichOJW2bBUMxPzAJPrFk9ys4cXYk4gLFaR11y23EccOJ+JT6Iusw==}
@@ -9538,6 +9542,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  expo-contacts@15.0.11(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(react@19.1.0):
+    dependencies:
+      expo: 54.0.36(@babel/core@7.29.7(supports-color@10.2.2))(@expo/metro-runtime@6.1.2)(expo-router@6.0.24)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(react@19.1.0)(supports-color@10.2.2)(typescript@5.9.3)
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2)
+
   expo-document-picker@14.0.8(expo@54.0.36):
     dependencies:
       expo: 54.0.36(@babel/core@7.29.7(supports-color@10.2.2))(@expo/metro-runtime@6.1.2)(expo-router@6.0.24)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(react@19.1.0)(supports-color@10.2.2)(typescript@5.9.3)
@@ -11325,8 +11335,6 @@ snapshots:
   react-is@18.3.1: {}
 
   react-is@19.2.8: {}
-
-  react-native-country-flag@2.0.2: {}
 
   react-native-css@3.0.7(@expo/metro-config@54.0.17(expo@54.0.36)(supports-color@10.2.2))(lightningcss@1.30.1)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@types/react@19.1.17)(react@19.1.0)(supports-color@10.2.2))(react@19.1.0)(supports-color@10.2.2):
     dependencies:

@@ -11,7 +11,6 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import Svg, {
-  Circle,
   Defs,
   G,
   LinearGradient as SvgLinearGradient,
@@ -34,6 +33,7 @@ const FLIP_EASING = Easing.bezier(0.22, 1, 0.36, 1);
 
 import { MastercardLogo, VisaLogo } from '@/components/cards/network-logos';
 import { formatPanGrouped, type VirtualCard } from '@/components/cards/types';
+import { FinoraMark } from '@/components/ui/finora-mark';
 import { Rounded } from '@/constants/theme';
 import { useCardTilt } from '@/hooks/use-card-tilt';
 import { haptics } from '@/lib/haptics';
@@ -56,50 +56,6 @@ type VirtualCardFaceProps = {
 };
 
 const CARD_RADIUS = 22;
-
-function FinoraMark({ compact }: { compact?: boolean }) {
-  const size = compact ? 22 : 30;
-  return (
-    <Svg
-      width={size}
-      height={size}
-      viewBox='0 0 34 34'
-    >
-      <Defs>
-        <SvgLinearGradient
-          id='finoraMetal'
-          x1='0'
-          y1='0'
-          x2='1'
-          y2='1'
-        >
-          <Stop
-            offset='0'
-            stopColor='#ffffff'
-          />
-          <Stop
-            offset='1'
-            stopColor='#9da3a0'
-          />
-        </SvgLinearGradient>
-      </Defs>
-      <Path
-        d='M11.4 5.8C7.7 7.3 5.2 10.9 5.2 15s2.5 7.7 6.2 9.2l2.7-4.1c-2.2-.8-3.7-2.8-3.7-5.1s1.5-4.3 3.7-5.1z'
-        fill='url(#finoraMetal)'
-      />
-      <Path
-        d='M22.6 28.2c3.7-1.5 6.2-5.1 6.2-9.2s-2.5-7.7-6.2-9.2l-2.7 4.1c2.2.8 3.7 2.8 3.7 5.1s-1.5 4.3-3.7 5.1z'
-        fill='url(#finoraMetal)'
-      />
-      <Circle
-        cx='17'
-        cy='17'
-        r='2.8'
-        fill='#f5f7f6'
-      />
-    </Svg>
-  );
-}
 
 function ContactlessMark({ compact }: { compact?: boolean }) {
   const size = compact ? 22 : 30;
@@ -586,7 +542,11 @@ export function VirtualCardFace({
 
             <View style={styles.topRow}>
               <View style={styles.brandBlock}>
-                <FinoraMark compact={compact} />
+                <FinoraMark
+                  variant='bare'
+                tone='dark'
+                  compact={compact}
+                />
                 <View>
                   <Text style={[styles.brand, compact && styles.brandCompact]}>FINORA</Text>
                   <Text style={[styles.product, compact && styles.productCompact]}>{card.label}</Text>

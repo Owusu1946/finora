@@ -69,6 +69,12 @@
         {
           "motionPermission": "Allow Finora to tilt virtual cards with device motion."
         }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow Finora to pick a MoMo number from your phone contacts."
+        }
       ]
     ],
     "experiments": {

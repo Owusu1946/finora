@@ -15,8 +15,11 @@ import {
   CancelCircleIcon,
   CheckmarkCircle02Icon,
   CheckIcon,
+  CircleDollarSignIcon,
+  Clock01Icon,
   Copy01Icon,
   CreditCardIcon,
+  UserIcon,
   Edit02Icon,
   Eraser01Icon,
   File01Icon,
@@ -79,6 +82,9 @@ export type IconName =
   | 'share'
   | 'shield'
   | 'info'
+  | 'clock'
+  | 'dollar'
+  | 'user'
   | 'save'
   | 'close-circle'
   | 'file'
@@ -132,6 +138,9 @@ export const HUGE_ICONS = {
   share: Share01Icon,
   shield: Shield01Icon,
   info: InformationCircleIcon,
+  clock: Clock01Icon,
+  dollar: CircleDollarSignIcon,
+  user: UserIcon,
   save: CheckmarkCircle02Icon,
   'close-circle': CancelCircleIcon,
   file: File01Icon,
