@@ -1,10 +1,11 @@
 import { useAui } from '@assistant-ui/react-native';
-import { DrawerToggleButton, useDrawerStatus } from '@react-navigation/drawer';
+import { useDrawerStatus } from '@react-navigation/drawer';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { useEffect, useRef } from 'react';
-import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
@@ -75,21 +76,32 @@ function ScanHeaderButton() {
 }
 
 function DrawerTrigger() {
+  const navigation = useNavigation();
   const { colors } = useTheme();
   const drawerStatus = useDrawerStatus();
 
   if (drawerStatus === 'open') return null;
 
   return (
-    <View
+    <Pressable
+      accessibilityLabel='Open menu'
+      hitSlop={8}
+      onPress={() => {
+        haptics.selection();
+        navigation.dispatch(DrawerActions.openDrawer());
+      }}
       style={[
         styles.headerAction,
         styles.drawerAction,
         { backgroundColor: colors.muted, borderColor: colors.border },
       ]}
     >
-      <DrawerToggleButton tintColor={colors.foreground} />
-    </View>
+      <Icon
+        name='menu'
+        size={26}
+        color={colors.foreground}
+      />
+    </Pressable>
   );
 }
 
@@ -139,6 +151,7 @@ function screenOptions(title: string) {
 
 export default function AppLayout() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
 
@@ -156,6 +169,7 @@ export default function AppLayout() {
         headerLeftContainerStyle: { paddingLeft: 16 },
         headerRightContainerStyle: { gap: 10, paddingRight: 16 },
         headerShadowVisible: false,
+        headerStatusBarHeight: insets.top + 8,
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
         headerTitleAlign: 'center',

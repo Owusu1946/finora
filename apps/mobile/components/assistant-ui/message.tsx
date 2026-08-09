@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import {
   AuiIf,
   ErrorPrimitive,
@@ -7,9 +6,11 @@ import {
   useAuiState,
   type TextMessagePartComponent,
 } from '@assistant-ui/react-native';
-import { memo, useEffect, useRef } from 'react';
-import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { ThinkingOrb } from '@mhaadi/thinking-orbs-native';
+import { memo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -22,60 +23,55 @@ import { EditComposer } from './edit-composer';
 import { AssistantMarkdownText } from './markdown-text';
 import { MessageActionBar } from './message-action-bar';
 import { MessageBranchPicker } from './message-branch-picker';
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningRoot,
-  ReasoningText,
-  ReasoningTrigger,
-} from './reasoning';
-import { ToolFallback, ToolGroupContent, ToolGroupRoot, ToolGroupTrigger } from './tool-group';
 
 const UserText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
   return <Text style={[styles.userText, { color: colors.foreground }]}>{text}</Text>;
 };
 
-function TypingDot({ delay }: { delay: number }) {
-  const { colors } = useTheme();
-  const opacity = useRef(new Animated.Value(0.3)).current;
+function TypingIndicator() {
+  const isRunning = useAuiState((s) => s.message.status?.type === 'running');
+  const parts = useAuiState((s) => s.message.parts);
+  const { colors, isDark } = useTheme();
+  if (!isRunning) return null;
 
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 400,
-          delay,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(opacity, {
-          toValue: 0.3,
-          duration: 400,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [opacity, delay]);
+  const activeTool = [...parts]
+    .reverse()
+    .find((part) => part.type === 'tool-call' && part.status.type === 'running');
+  const label =
+    activeTool?.type === 'tool-call' ? getToolStatusLabel(activeTool.toolName) : 'Working on that…';
 
   return (
-    <Animated.View style={[styles.dot, { opacity, backgroundColor: colors.mutedForeground }]} />
+    <View
+      style={styles.typing}
+      accessibilityLabel={label}
+      accessibilityLiveRegion='polite'
+    >
+      <ThinkingOrb
+        state='composing'
+        size={20}
+        speed={1.5}
+        theme={isDark ? 'dark' : 'light'}
+        accessibilityLabel={label}
+      />
+      <Text style={[styles.typingLabel, { color: colors.mutedForeground }]}>{label}</Text>
+    </View>
   );
 }
 
-function TypingIndicator() {
-  const isRunning = useAuiState((s) => s.message.status?.type === 'running');
-  if (!isRunning) return null;
-
-  return (
-    <View style={styles.typing}>
-      <TypingDot delay={0} />
-      <TypingDot delay={160} />
-      <TypingDot delay={320} />
-    </View>
-  );
+function getToolStatusLabel(toolName: string) {
+  const labels: Record<string, string> = {
+    get_balances: 'Loading wallet balances…',
+    list_invoices: 'Checking unpaid invoices…',
+    list_expenses: 'Loading business expenses…',
+    generate_financial_insights: 'Preparing financial report…',
+    list_calendar_dues: 'Checking upcoming dues…',
+    list_receive_methods: 'Loading receive methods…',
+    list_virtual_accounts: 'Loading virtual accounts…',
+    list_virtual_cards: 'Loading virtual cards…',
+  };
+  if (labels[toolName]) return labels[toolName];
+  return `${toolName.replace(/_/g, ' ').replace(/^./, (char) => char.toUpperCase())}…`;
 }
 
 function UserMessage() {
@@ -118,6 +114,7 @@ function AssistantMessage() {
     <MessagePrimitive.Root style={styles.assistantContainer}>
       <View style={styles.assistantContent}>
         <MessagePrimitive.GroupedParts
+          indicator='always'
           groupBy={groupPartByType({
             reasoning: ['group-chainOfThought', 'group-reasoning'],
             'tool-call': ['group-chainOfThought', 'group-tool'],
@@ -128,36 +125,16 @@ function AssistantMessage() {
             switch (part.type) {
               case 'group-chainOfThought':
                 return <View style={styles.chain}>{children}</View>;
-              case 'group-reasoning': {
-                const running = part.status.type === 'running';
-                return (
-                  <ReasoningRoot
-                    streaming={running}
-                    defaultOpen={running}
-                  >
-                    <ReasoningTrigger active={running} />
-                    <ReasoningContent aria-busy={running}>
-                      <ReasoningText>{children}</ReasoningText>
-                    </ReasoningContent>
-                  </ReasoningRoot>
-                );
-              }
+              case 'group-reasoning':
+                return null;
               case 'group-tool':
-                return (
-                  <ToolGroupRoot>
-                    <ToolGroupTrigger
-                      count={part.indices.length}
-                      active={part.status.type === 'running'}
-                    />
-                    <ToolGroupContent>{children}</ToolGroupContent>
-                  </ToolGroupRoot>
-                );
+                return children;
               case 'text':
                 return <AssistantMarkdownText {...part} />;
               case 'reasoning':
-                return <Reasoning {...part} />;
+                return null;
               case 'tool-call':
-                return part.toolUI ?? <ToolFallback {...part} />;
+                return part.toolUI;
               case 'indicator':
                 return <TypingIndicator />;
               default:
@@ -228,13 +205,13 @@ const styles = StyleSheet.create({
   typing: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 8,
     paddingVertical: 8,
   },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+  typingLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 20,
   },
   actionsRow: {
     flexDirection: 'row',
