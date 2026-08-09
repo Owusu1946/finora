@@ -8,6 +8,7 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, type Href } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -15,6 +16,9 @@ import 'react-native-reanimated';
 
 import '../global.css';
 
+import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
+import { useSplashGate } from '@/components/splash/useSplashGate';
+import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
@@ -62,6 +66,10 @@ export const unstable_settings = {
   anchor: '(app)',
 };
 
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // Already prevented / unavailable in some environments.
+});
+
 function RootNavigator() {
   const { authenticated } = useAuthGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
@@ -106,6 +114,9 @@ export default function RootLayout() {
     authenticated: boolean;
     onboardingCompleted: boolean;
   } | null>(null);
+  const bootReady = fontsLoaded && boot !== null;
+  const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
+    useSplashGate(bootReady);
   const runtime = useLocalRuntime(finoraChatAdapter as never);
 
   useEffect(() => {
@@ -124,50 +135,61 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!fontsLoaded || boot === null) return null;
-
+  // Keep a stable root so the splash overlay can mount + lay out before native hide.
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SettingsProvider>
-        <AuthGateProvider authenticated={boot.authenticated}>
-          <OnboardingGateProvider completed={boot.onboardingCompleted}>
-            <AssistantRuntimeProvider runtime={runtime}>
-              <PreparePaymentToolUI />
-              <FundAccountToolUI />
-              <ListReceiveMethodsToolUI />
-              <CreatePaymentRequestToolUI />
-              <GeneratePaymentLinkToolUI />
-              <GetBalancesToolUI />
-              <PrepareConversionToolUI />
-              <PrepareInternalTransferToolUI />
-              <ListInvoicesToolUI />
-              <ListCalendarDuesToolUI />
-              <ListSmsRequestsToolUI />
-              <ListEmployeesToolUI />
-              <ListSuppliersToolUI />
-              <ListBeneficiariesToolUI />
-              <ListPoliciesToolUI />
-              <ListAutomationsToolUI />
-              <ListExpensesToolUI />
-              <ListVirtualAccountsToolUI />
-              <TreasuryOverviewToolUI />
-              <FinancialReportToolUI />
-              <PreparePayrollToolUI />
-              <PrepareSupplierPaymentToolUI />
-              <PrepareEmployeePaymentToolUI />
-              <CreateEmployeeToolUI />
-              <PrepareRecurringToolUI />
-              <SchedulePaymentWizardToolUI />
-              <ResolveSendToolUI />
-              <CreateFinancialPlanToolUI />
-              <CreateVirtualCardToolUI />
-              <ListVirtualCardsToolUI />
-              <GetVirtualCardToolUI />
-              <RootNavigator />
-            </AssistantRuntimeProvider>
-          </OnboardingGateProvider>
-        </AuthGateProvider>
-      </SettingsProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: SPLASH_BACKGROUND }}>
+      {!bootReady || boot === null ? (
+        <SplashPlaceholder />
+      ) : (
+        <SettingsProvider>
+          <AuthGateProvider authenticated={boot.authenticated}>
+            <OnboardingGateProvider completed={boot.onboardingCompleted}>
+              <AssistantRuntimeProvider runtime={runtime}>
+                <PreparePaymentToolUI />
+                <FundAccountToolUI />
+                <ListReceiveMethodsToolUI />
+                <CreatePaymentRequestToolUI />
+                <GeneratePaymentLinkToolUI />
+                <GetBalancesToolUI />
+                <PrepareConversionToolUI />
+                <PrepareInternalTransferToolUI />
+                <ListInvoicesToolUI />
+                <ListCalendarDuesToolUI />
+                <ListSmsRequestsToolUI />
+                <ListEmployeesToolUI />
+                <ListSuppliersToolUI />
+                <ListBeneficiariesToolUI />
+                <ListPoliciesToolUI />
+                <ListAutomationsToolUI />
+                <ListExpensesToolUI />
+                <ListVirtualAccountsToolUI />
+                <TreasuryOverviewToolUI />
+                <FinancialReportToolUI />
+                <PreparePayrollToolUI />
+                <PrepareSupplierPaymentToolUI />
+                <PrepareEmployeePaymentToolUI />
+                <CreateEmployeeToolUI />
+                <PrepareRecurringToolUI />
+                <SchedulePaymentWizardToolUI />
+                <ResolveSendToolUI />
+                <CreateFinancialPlanToolUI />
+                <CreateVirtualCardToolUI />
+                <ListVirtualCardsToolUI />
+                <GetVirtualCardToolUI />
+                <RootNavigator />
+              </AssistantRuntimeProvider>
+            </OnboardingGateProvider>
+          </AuthGateProvider>
+        </SettingsProvider>
+      )}
+      {showOverlay ? (
+        <SplashOverlay
+          progress={progress}
+          opacity={overlayOpacity}
+          reducedMotion={reducedMotion}
+          onLayout={onOverlayLayout}
+        />
+      ) : null}
     </GestureHandlerRootView>
   );
 }

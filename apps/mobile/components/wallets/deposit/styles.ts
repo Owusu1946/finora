@@ -271,12 +271,17 @@ export const depositStyles = StyleSheet.create({
     paddingTop: 24,
     justifyContent: 'center',
   },
-  awaitingCard: {
+  awaitingHero: {
+    flex: 1,
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    borderRadius: Radius.lg,
+    justifyContent: 'center',
+    gap: 18,
+  },
+  awaitingTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   awaitingAmount: {
     fontFamily: 'DMSans_400Regular',
@@ -290,18 +295,11 @@ export const depositStyles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  waitingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 4,
-  },
-  waitingText: {
-    flex: 1,
+  awaitingExpiry: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
     fontWeight: '500',
+    textAlign: 'center',
   },
   successIcon: {
     width: 64,

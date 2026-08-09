@@ -1,9 +1,10 @@
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { FinoraMarkLoader } from '@/components/ui/finora-mark-loader';
 import { Icon } from '@/components/ui/icon';
 import { haptics } from '@/lib/haptics';
 import type { MomoNetworkId } from '@/lib/momo-networks';
+import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Keyboard,
   Platform,
   Pressable,
@@ -123,11 +124,7 @@ export function MomoFlowScreen({
       {step === 'momo_awaiting' ? (
         <MomoAwaitingStep
           colors={colors}
-          momoNetwork={momoNetwork}
-          momoNetworkLabel={momoNetworkLabel}
-          phone={phone}
           amountNum={amountNum}
-          momoFee={momoFee}
           onCompleted={() => {
             haptics.success();
             onStepChange('momo_completed');
@@ -257,47 +254,49 @@ function MomoForm({
   );
 }
 
+const MOMO_PROMPT_SECONDS = 90;
+
+function formatCountdown(totalSeconds: number) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 function MomoAwaitingStep({
   colors,
-  momoNetwork,
-  momoNetworkLabel,
-  phone,
   amountNum,
-  momoFee,
   onCompleted,
 }: {
   colors: DepositPalette;
-  momoNetwork: MomoNetworkId;
-  momoNetworkLabel: string;
-  phone: string;
   amountNum: number;
-  momoFee: number;
   onCompleted: () => void;
 }) {
+  const [secondsLeft, setSecondsLeft] = useState(MOMO_PROMPT_SECONDS);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSecondsLeft((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <View style={styles.momoStatusBody}>
-      <View style={[styles.awaitingCard, { backgroundColor: colors.muted }]}>
-        <MomoIcon
-          id={momoNetwork}
-          size={44}
-        />
+      <View style={styles.awaitingHero}>
+        <Text style={[styles.awaitingTitle, { color: colors.foreground }]}>
+          Awaiting approval
+        </Text>
+        <FinoraMarkLoader size={88} />
         <Text style={[styles.awaitingAmount, { color: colors.foreground }]}>
           ₵{amountNum.toFixed(2)}
         </Text>
-        <Text style={[styles.awaitingMeta, { color: colors.mutedForeground }]}>
-          {momoNetworkLabel} · {phone}
-        </Text>
-        <Text style={[styles.awaitingMeta, { color: colors.mutedForeground }]}>
-          Fee ₵{momoFee.toFixed(2)} (0.8%)
-        </Text>
       </View>
 
-      <View style={styles.waitingRow}>
-        <ActivityIndicator color={colors.foreground} />
-        <Text style={[styles.waitingText, { color: colors.mutedForeground }]}>
-          Approve the prompt on your phone to complete this deposit
-        </Text>
-      </View>
+      <Text style={[styles.awaitingExpiry, { color: colors.mutedForeground }]}>
+        {secondsLeft > 0
+          ? `Expires in ${formatCountdown(secondsLeft)}`
+          : 'Prompt expired'}
+      </Text>
 
       <PrimaryButton
         label='Completed'

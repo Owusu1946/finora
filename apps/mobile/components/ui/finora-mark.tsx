@@ -9,6 +9,13 @@ import { View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 
+import {
+  FINORA_MARK_LEFT_CRESCENT,
+  FINORA_MARK_NODE,
+  FINORA_MARK_RIGHT_CRESCENT,
+  FINORA_MARK_VIEWBOX,
+} from './finora-mark-paths';
+
 type Props = {
   size?: number;
   /**
@@ -99,7 +106,7 @@ function FinoraMarkSvg({ size, tone }: { size: number; tone: 'light' | 'dark' })
     <Svg
       width={size}
       height={size}
-      viewBox='0 0 34 34'
+      viewBox={`0 0 ${FINORA_MARK_VIEWBOX} ${FINORA_MARK_VIEWBOX}`}
       accessibilityRole='image'
       accessibilityLabel='Finora'
     >
@@ -124,17 +131,17 @@ function FinoraMarkSvg({ size, tone }: { size: number; tone: 'light' | 'dark' })
         </Defs>
       ) : null}
       <Path
-        d='M11.4 5.8C7.7 7.3 5.2 10.9 5.2 15s2.5 7.7 6.2 9.2l2.7-4.1c-2.2-.8-3.7-2.8-3.7-5.1s1.5-4.3 3.7-5.1z'
+        d={FINORA_MARK_LEFT_CRESCENT}
         fill={isDarkMark ? `url(#${gradId})` : '#18181b'}
       />
       <Path
-        d='M22.6 28.2c3.7-1.5 6.2-5.1 6.2-9.2s-2.5-7.7-6.2-9.2l-2.7 4.1c2.2.8 3.7 2.8 3.7 5.1s-1.5 4.3-3.7 5.1z'
+        d={FINORA_MARK_RIGHT_CRESCENT}
         fill={isDarkMark ? `url(#${gradId})` : '#18181b'}
       />
       <Circle
-        cx='17'
-        cy='17'
-        r='2.8'
+        cx={FINORA_MARK_NODE.cx}
+        cy={FINORA_MARK_NODE.cy}
+        r={FINORA_MARK_NODE.r}
         fill={isDarkMark ? '#f5f7f6' : '#18181b'}
       />
     </Svg>
