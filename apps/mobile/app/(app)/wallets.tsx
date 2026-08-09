@@ -36,13 +36,22 @@ export default function WalletsScreen() {
   const [cardCount, setCardCount] = useState<number | null>(null);
 
   useEffect(() => {
+    let disposed = false;
+    let newestRequest = 0;
+
     const refreshCards = () => {
-      void listVirtualCards().then((cards) =>
-        setCardCount(cards.filter((card) => card.status !== 'cancelled').length),
-      );
+      const request = ++newestRequest;
+      void listVirtualCards().then((cards) => {
+        if (disposed || request !== newestRequest) return;
+        setCardCount(cards.filter((card) => card.status !== 'cancelled').length);
+      });
     };
     refreshCards();
-    return subscribeVirtualCards(refreshCards);
+    const unsubscribe = subscribeVirtualCards(refreshCards);
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
   }, []);
 
   // Active modal handler

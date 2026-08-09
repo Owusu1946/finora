@@ -93,17 +93,19 @@ export function VirtualCardRequestFlow() {
   const [purpose, setPurpose] = useState<Purpose>('Subscriptions');
   const [limit, setLimit] = useState('500');
   const [busy, setBusy] = useState(false);
-  const canReview = Number(limit) > 0;
+  const limitValue = Number(limit);
+  const canReview = Number.isSafeInteger(limitValue) && limitValue > 0;
 
   const submit = async () => {
     if (busy) return;
-    const approved = await requestApproval();
-    if (!approved) return;
+    if (!Number.isSafeInteger(limitValue) || limitValue <= 0) return;
     setBusy(true);
     try {
+      const approved = await requestApproval();
+      if (!approved) return;
       await createVirtualCard({
         label: purpose,
-        spendLimit: Number(limit),
+        spendLimit: limitValue,
         currency,
       });
       haptics.success();

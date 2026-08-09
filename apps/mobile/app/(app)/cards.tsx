@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, FlatList, Pressable, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
 
@@ -32,16 +32,23 @@ export default function CardsScreen() {
     setLoading(true);
     const next = await listVirtualCards();
     setItems(next.filter((c) => c.status !== 'cancelled' || filter === 'all'));
-    await clearUnreadVirtualCards();
     setLoading(false);
   }, [filter]);
 
   useFocusEffect(
     useCallback(() => {
       void refresh();
-      return subscribeVirtualCards(() => {
+      if (AppState.currentState === 'active') void clearUnreadVirtualCards();
+      const unsubscribe = subscribeVirtualCards(() => {
         void refresh();
       });
+      const subscription = AppState.addEventListener('change', (state) => {
+        if (state === 'active') void clearUnreadVirtualCards();
+      });
+      return () => {
+        unsubscribe();
+        subscription.remove();
+      };
     }, [refresh]),
   );
 
