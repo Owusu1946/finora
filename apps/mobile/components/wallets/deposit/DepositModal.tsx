@@ -4,6 +4,8 @@ import { Modal, View } from 'react-native';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { useTheme } from '@/hooks/use-theme';
 
+import { useSettings } from '@/lib/settings-context';
+
 import { FinoraUserStep } from './FinoraUserStep';
 import {
   getSheetTitle,
@@ -22,6 +24,9 @@ import { useDepositState } from './useDepositState';
 
 export function DepositModal({ visible, selectedWallet, onClose, onCopy }: DepositModalProps) {
   const { colors } = useTheme();
+  const { settings } = useSettings();
+  const finoraTag = settings.finoraTag;
+  const finoraTagLabel = `@${finoraTag}`;
   const state = useDepositState({ visible, selectedWallet, onClose, onCopy });
 
   const {
@@ -121,10 +126,11 @@ export function DepositModal({ visible, selectedWallet, onClose, onCopy }: Depos
           {step === 'finora_user' ? (
             <FinoraUserStep
               colors={colors}
+              finoraTag={finoraTag}
               copied={copied}
-              onCopy={() => void handleCopyAddress('@kenneth', 'Finora tag')}
+              onCopy={() => void handleCopyAddress(finoraTagLabel, 'Finora tag')}
               onShare={() =>
-                void handleShare('Send me money on Finora: @kenneth', 'Finora tag')
+                void handleShare(`Send me money on Finora: ${finoraTagLabel}`, 'Finora tag')
               }
             />
           ) : null}

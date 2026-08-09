@@ -2,27 +2,25 @@ import { MockQrCode } from '@/components/chat/MockQrCode';
 import { FinoraMark } from '@/components/ui/finora-mark';
 import { ScrollView, View } from 'react-native';
 
-import {
-    CopyAddressRow,
-    InfoBanner,
-    PrimaryButton,
-} from './primitives';
+import { CopyAddressRow, InfoBanner, PrimaryButton } from './primitives';
 import { depositStyles as styles } from './styles';
 import type { DepositPalette } from './types';
 
-const FINORA_TAG = '@kenneth';
-
 export function FinoraUserStep({
   colors,
+  finoraTag,
   copied,
   onCopy,
   onShare,
 }: {
   colors: DepositPalette;
+  finoraTag: string;
   copied: boolean;
   onCopy: () => void;
   onShare: () => void;
 }) {
+  const tagLabel = `@${finoraTag}`;
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -30,14 +28,14 @@ export function FinoraUserStep({
     >
       <View style={[styles.qrFrame, { backgroundColor: colors.muted }]}>
         <MockQrCode
-          value='finora:user:@kenneth'
+          value={`finora:user:${tagLabel}`}
           size={200}
           centerLogo={<FinoraMark size={40} />}
         />
       </View>
       <CopyAddressRow
         label='Finora tag'
-        value={FINORA_TAG}
+        value={tagLabel}
         copied={copied}
         colors={colors}
         onCopy={onCopy}
