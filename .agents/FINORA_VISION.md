@@ -64,8 +64,8 @@ And then there is the Finora mobile app:
                            │
                      Chat Interface
                            │
-                    Finora Backend
-                           │
+ Finora Backend
+      │
                 ┌──────────┴──────────┐
                 │                     │
              AI Agent              WeWire
