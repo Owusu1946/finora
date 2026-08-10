@@ -2076,7 +2076,7 @@ export const finoraChatAdapter = {
             },
             {
               type: 'text',
-              text: 'SMS inbox isn’t connected. Open Integrations to connect SMS, then ask again.',
+              text: 'SMS isn’t connected. Open Integrations → Connect SMS (needs a device that can send SMS), then ask again.',
             },
           ],
         };

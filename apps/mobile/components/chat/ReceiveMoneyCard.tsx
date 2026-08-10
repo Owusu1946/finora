@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -9,6 +9,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { sendSms } from '@/lib/sms';
 
 export type ReceiveMethodKind = 'virtual_account' | 'mobile_money' | 'crypto';
 
@@ -69,6 +70,17 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
     } catch {
       // ignored
     }
+  };
+
+  const textDetails = async () => {
+    haptics.selection();
+    const result = await sendSms({ message: formatDetails(active) });
+    if (!result.ok) {
+      haptics.impact();
+      Alert.alert('SMS unavailable', result.error);
+      return;
+    }
+    if (result.result === 'sent') haptics.success();
   };
 
   const shareQr = async () => {
@@ -235,7 +247,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
       <View style={styles.actions}>
         <Pressable
-          onPress={shareDetails}
+          onPress={() => void textDetails()}
           style={({ pressed }) => [
             styles.primaryBtn,
             {
@@ -245,14 +257,31 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           ]}
         >
           <Icon
-            name='share'
+            name='phone'
             size={16}
             color={colors.background}
           />
-          <Text style={[styles.primaryLabel, { color: colors.background }]}>Share details</Text>
+          <Text style={[styles.primaryLabel, { color: colors.background }]}>Text SMS</Text>
         </Pressable>
 
         <View style={styles.secondaryRow}>
+          <Pressable
+            onPress={shareDetails}
+            style={({ pressed }) => [
+              styles.secondaryBtn,
+              {
+                borderColor: colors.border,
+                opacity: pressed ? 0.75 : 1,
+              },
+            ]}
+          >
+            <Icon
+              name='share'
+              size={15}
+              color={colors.foreground}
+            />
+            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share</Text>
+          </Pressable>
           <Pressable
             onPress={shareQr}
             style={({ pressed }) => [
@@ -286,7 +315,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
               color={colors.foreground}
             />
             <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>
-              {copiedKey === 'all' ? 'Copied' : 'Copy all'}
+              {copiedKey === 'all' ? 'Copied' : 'Copy'}
             </Text>
           </Pressable>
         </View>

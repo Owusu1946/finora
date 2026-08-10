@@ -1,7 +1,7 @@
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { createPaymentAppLink, createPaymentHttpsLink } from '@/lib/open-payment-link';
 import { registerPaymentRequest } from '@/lib/payment-request-registry';
+import { sendSms } from '@/lib/sms';
 
 export type PaymentRequestSeed = {
   amount?: number;
@@ -340,6 +341,17 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
     }
   };
 
+  const textSms = async () => {
+    haptics.selection();
+    const result = await sendSms({ message: shareMessage });
+    if (!result.ok) {
+      haptics.impact();
+      Alert.alert('SMS unavailable', result.error);
+      return;
+    }
+    if (result.result === 'sent') haptics.success();
+  };
+
   return (
     <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       <View style={styles.header}>
@@ -410,35 +422,51 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
 
       <View style={styles.actions}>
         <Pressable
-          onPress={share}
+          onPress={() => void textSms()}
           style={({ pressed }) => [
             styles.primaryBtn,
             { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
           ]}
         >
           <Icon
-            name='share'
+            name='phone'
             size={16}
             color={colors.background}
           />
-          <Text style={[styles.primaryLabel, { color: colors.background }]}>Share link</Text>
+          <Text style={[styles.primaryLabel, { color: colors.background }]}>Text SMS</Text>
         </Pressable>
-        <Pressable
-          onPress={() => void copy(shareMessage, 'all')}
-          style={({ pressed }) => [
-            styles.secondaryBtnFull,
-            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-          ]}
-        >
-          <Icon
-            name={copied === 'all' ? 'check' : 'copy'}
-            size={15}
-            color={colors.foreground}
-          />
-          <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>
-            {copied === 'all' ? 'Copied' : 'Copy message'}
-          </Text>
-        </Pressable>
+        <View style={styles.secondaryRow}>
+          <Pressable
+            onPress={share}
+            style={({ pressed }) => [
+              styles.secondaryBtnFull,
+              { borderColor: colors.border, opacity: pressed ? 0.75 : 1, flex: 1 },
+            ]}
+          >
+            <Icon
+              name='share'
+              size={15}
+              color={colors.foreground}
+            />
+            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => void copy(shareMessage, 'all')}
+            style={({ pressed }) => [
+              styles.secondaryBtnFull,
+              { borderColor: colors.border, opacity: pressed ? 0.75 : 1, flex: 1 },
+            ]}
+          >
+            <Icon
+              name={copied === 'all' ? 'check' : 'copy'}
+              size={15}
+              color={colors.foreground}
+            />
+            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>
+              {copied === 'all' ? 'Copied' : 'Copy'}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <Modal
@@ -657,6 +685,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actions: {
+    gap: 8,
+  },
+  secondaryRow: {
+    flexDirection: 'row',
     gap: 8,
   },
   primaryBtn: {
