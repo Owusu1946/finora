@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { isSmsAvailable } from '@/lib/sms';
+
 const KEY = 'finora.integrations.v1';
 
 export type IntegrationsState = {
@@ -110,14 +112,28 @@ export async function disconnectGoogleCalendar(): Promise<IntegrationsState> {
   });
 }
 
-export async function connectSmsInbox(phone = '+233 24 555 0192'): Promise<IntegrationsState> {
+export type ConnectSmsResult =
+  | { ok: true; state: IntegrationsState }
+  | { ok: false; error: string };
+
+/** Verifies the system SMS composer is available, then marks SMS as connected. */
+export async function connectSmsInbox(phone = 'This device'): Promise<ConnectSmsResult> {
+  const available = await isSmsAvailable();
+  if (!available) {
+    return {
+      ok: false,
+      error: 'SMS isn’t available on this device. Try a physical phone (simulators often can’t send SMS).',
+    };
+  }
+
   const current = await readState();
-  return writeState({
+  const state = await writeState({
     ...current,
     smsConnected: true,
     smsPhone: phone,
     smsConnectedAt: new Date().toISOString(),
   });
+  return { ok: true, state };
 }
 
 export async function disconnectSmsInbox(): Promise<IntegrationsState> {

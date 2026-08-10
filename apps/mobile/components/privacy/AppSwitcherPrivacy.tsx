@@ -41,7 +41,6 @@ export function AppSwitcherPrivacy() {
       transparent={false}
       statusBarTranslucent
       presentationStyle='fullScreen'
-      // Don't steal Android back while covered — leaving is handled by the OS.
       onRequestClose={() => {}}
     >
       <View

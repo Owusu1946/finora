@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GmailLogo } from '@/components/integrations/gmail-logo';
 import { GoogleCalendarLogo } from '@/components/integrations/google-calendar-logo';
@@ -162,6 +162,20 @@ export default function IntegrationsScreen() {
     haptics.success();
   };
 
+  const runConnectSms = async () => {
+    haptics.impact();
+    setBusyKey('sms');
+    const result = await connectSmsInbox();
+    setBusyKey(null);
+    if (!result.ok) {
+      haptics.impact();
+      Alert.alert('SMS unavailable', result.error);
+      return;
+    }
+    setState(result.state);
+    haptics.success();
+  };
+
   const runDisconnect = async (
     key: 'gmail' | 'calendar' | 'sms',
     action: () => Promise<IntegrationsState>,
@@ -281,7 +295,7 @@ export default function IntegrationsScreen() {
         icon={<IMessageLogo width={22} />}
         busy={busyKey === 'sms'}
         connectLabel='Connect SMS'
-        onConnect={() => void runConnect('sms', () => connectSmsInbox())}
+        onConnect={() => void runConnectSms()}
         onDisconnect={() => void runDisconnect('sms', () => disconnectSmsInbox())}
         connectedBody={
           <>
@@ -307,7 +321,8 @@ export default function IntegrationsScreen() {
               <Text style={[styles.btnLabel, { color: colors.background }]}>Ask in chat</Text>
             </Pressable>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              In chat, say “Show payment requests from my SMS inbox.” Still mock today.
+              SMS composer is ready on this device. Ask in chat for MoMo prompts, or tap Text SMS
+              on payment links to share them.
             </Text>
           </>
         }

@@ -1,6 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -10,6 +10,7 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
+import { sendSms } from '@/lib/sms';
 import {
   dismissSmsRequest,
   markSmsRequestPaid,
@@ -170,6 +171,32 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
               disabled={busy}
               onPress={async () => {
                 haptics.selection();
+                const reply = request.network?.toLowerCase().includes('momo')
+                  ? 'PAY'
+                  : `Re: ${request.body.slice(0, 80)}`;
+                const result = await sendSms({
+                  addresses: request.fromPhone,
+                  message: reply,
+                });
+                if (!result.ok) {
+                  haptics.impact();
+                  Alert.alert('SMS unavailable', result.error);
+                } else if (result.result === 'sent') {
+                  haptics.success();
+                }
+              }}
+              style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
+                { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Reply SMS</Text>
+            </Pressable>
+            <Pressable
+              disabled={busy}
+              onPress={async () => {
+                haptics.selection();
                 setBusy(true);
                 const updated = await dismissSmsRequest(request.id);
                 if (updated) setRequest(updated);
@@ -249,10 +276,12 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   btn: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '30%',
     minHeight: 44,
     borderRadius: Radius.composer,
     alignItems: 'center',

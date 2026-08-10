@@ -3,6 +3,10 @@
     "mcp-docs-server": {
       "command": "pnpm",
       "args": ["dlx", "@assistant-ui/mcp-docs-server"]
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
     }
   }
 }
