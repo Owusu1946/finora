@@ -1,6 +1,7 @@
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { AppState, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
 
@@ -126,11 +127,12 @@ export default function CardsScreen() {
         })}
       </View>
 
-      <FlatList
+      <LegendList
         showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        recycleItems
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
