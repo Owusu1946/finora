@@ -1,4 +1,3 @@
-import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -7,6 +6,7 @@ import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import { InvoiceListItem } from '@/components/invoices/InvoiceListItem';
+import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -57,10 +57,10 @@ export default function InvoicesScreen() {
     [router],
   );
   const renderInvoice = useCallback(
-    ({ item, index }: { item: Invoice; index: number }) => (
+    (item: Invoice, _index: number, isLast: boolean) => (
       <InvoiceListItem
         invoice={item}
-        isLast={index === filtered.length - 1}
+        isLast={isLast}
         onPress={handleInvoicePress}
       />
     ),
@@ -69,46 +69,50 @@ export default function InvoicesScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Invoices</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Supplier bills from Gmail and chat. Pay with the same passcode as sends.
-      </Text>
-
-      <View style={styles.filters}>
-        {FILTERS.map((item) => {
-          const active = filter === item.id;
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => {
-                haptics.selection();
-                setFilter(item.id);
-              }}
-              style={[styles.chip, { backgroundColor: active ? colors.foreground : colors.muted }]}
-            >
-              <Text
-                style={[
-                  styles.chipLabel,
-                  { color: active ? colors.background : colors.foreground },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <LegendList
-        showsVerticalScrollIndicator={false}
+      <CollapsibleList
+        title='Invoices'
         data={filtered}
+        intro={
+          <>
+            <Text style={[styles.title, { color: colors.foreground }]}>Invoices</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+              Supplier bills from Gmail and chat. Pay with the same passcode as sends.
+            </Text>
+          </>
+        }
+        controls={
+          <View style={styles.filters}>
+            {FILTERS.map((item) => {
+              const active = filter === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => {
+                    haptics.selection();
+                    setFilter(item.id);
+                  }}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: active ? colors.foreground : colors.muted },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.background : colors.foreground },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        }
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        contentInsetAdjustmentBehavior='automatic'
-        recycleItems
         onRefresh={refresh}
         refreshing={loading}
-        ListEmptyComponent={
+        empty={
           <Text style={[styles.empty, { color: colors.mutedForeground }]}>
             No invoices here. Try “Find unpaid invoices” in chat after connecting Gmail.
           </Text>
@@ -154,8 +158,6 @@ export default function InvoicesScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
   },
   title: {
     fontFamily: 'DMSans_400Regular',
@@ -169,13 +171,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
-    marginBottom: 14,
+    paddingBottom: 14,
   },
   filters: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 8,
+    paddingBottom: 8,
   },
   chip: {
     paddingHorizontal: 12,
@@ -187,11 +189,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  list: {
-    paddingBottom: 32,
-  },
   empty: {
-    marginTop: 32,
+    paddingTop: 32,
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,

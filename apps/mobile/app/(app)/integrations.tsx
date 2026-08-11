@@ -1,11 +1,12 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GmailLogo } from '@/components/integrations/gmail-logo';
 import { GoogleCalendarLogo } from '@/components/integrations/google-calendar-logo';
 import { IMessageLogo } from '@/components/integrations/imessage-logo';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -142,7 +143,7 @@ export default function IntegrationsScreen() {
   if (!state) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <ActivityIndicator
+        <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
         />

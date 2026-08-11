@@ -1,11 +1,12 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRef } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { FundingSource } from '@/lib/funding-methods';
 
 import { FundAccountWizard, type FundAccountSeed } from '@/components/chat/FundAccountWizard';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
@@ -27,7 +28,7 @@ function PreparingCard() {
     <View
       style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
-      <ActivityIndicator color={colors.mutedForeground} />
+      <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
 }

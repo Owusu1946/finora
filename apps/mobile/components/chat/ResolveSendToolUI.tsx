@@ -1,7 +1,7 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
@@ -11,6 +11,7 @@ import { SendMoneyWizard, type SendMoneySeed } from '@/components/chat/SendMoney
 import { WizardStepHeader } from '@/components/chat/WizardChrome';
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -196,7 +197,7 @@ function ResolveSendFlow({
       <View
         style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
       >
-        <ActivityIndicator color={colors.mutedForeground} />
+        <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
   }
@@ -346,7 +347,7 @@ export const ResolveSendToolUI = makeAssistantToolUI<ResolveSendArgs, ResolveSen
             { borderColor: colors.border, backgroundColor: colors.composer },
           ]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
         </View>
       );
     }

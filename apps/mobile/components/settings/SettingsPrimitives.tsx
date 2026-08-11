@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 import type { IconName } from '@/components/ui/icon-mappings';
 
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -35,7 +35,7 @@ export function SettingsScreen({
       <View
         style={[styles.screenRoot, styles.screenCenter, { backgroundColor: colors.background }]}
       >
-        <ActivityIndicator color={colors.mutedForeground} />
+        <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
   }

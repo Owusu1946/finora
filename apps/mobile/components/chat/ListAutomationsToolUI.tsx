@@ -1,8 +1,9 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Automation } from '@/lib/automations-storage';
 
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -21,7 +22,7 @@ export const ListAutomationsToolUI = makeAssistantToolUI<Record<string, never>, 
         <View
           style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
           <Text style={[styles.muted, { color: colors.mutedForeground }]}>
             Loading automations…
           </Text>

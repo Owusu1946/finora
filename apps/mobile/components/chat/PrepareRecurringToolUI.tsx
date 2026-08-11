@@ -1,9 +1,10 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { RecurringFrequency } from '@/components/recurring/types';
 
 import { RecurringPaymentCard, type RecurringDraft } from '@/components/chat/RecurringPaymentCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -56,7 +57,7 @@ export const PrepareRecurringToolUI = makeAssistantToolUI<
             { borderColor: colors.border, backgroundColor: colors.composer },
           ]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
         </View>
       );
     }

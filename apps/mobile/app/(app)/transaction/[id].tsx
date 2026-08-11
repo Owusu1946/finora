@@ -1,11 +1,12 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Transaction } from '@/components/activity/types';
 
 import { TransactionDetail } from '@/components/activity/TransactionDetail';
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getTransaction } from '@/lib/transactions-storage';
@@ -35,7 +36,7 @@ export default function TransactionDetailScreen() {
     <SwipeBackView>
       {loading ? (
         <View style={[styles.root, { backgroundColor: colors.background }]}>
-          <ActivityIndicator
+          <LoadingIcon
             style={{ marginTop: 40 }}
             color={colors.mutedForeground}
           />

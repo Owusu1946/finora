@@ -1,12 +1,13 @@
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -505,7 +506,7 @@ export function FundAccountWizard({
             }
           />
           <View style={styles.waitingBox}>
-            <ActivityIndicator color={colors.foreground} />
+            <LoadingIcon color={colors.foreground} />
             <Text style={[styles.waitingText, { color: colors.mutedForeground }]}>
               {source === 'momo_pull' ? 'Collection pending…' : 'Listening for an inbound credit…'}
             </Text>

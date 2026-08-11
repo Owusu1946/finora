@@ -1,4 +1,3 @@
-import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,6 +6,7 @@ import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
 import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
 import { ActivityListItem } from '@/components/activity/ActivityListItem';
+import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listTransactions } from '@/lib/transactions-storage';
@@ -20,77 +20,66 @@ export default function ActivityScreen() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const next = await listTransactions();
-    setTxs(next);
+    setTxs(await listTransactions());
     setLoading(false);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useFocusEffect(useCallback(() => void refresh(), [refresh]));
 
-  const filtered = useMemo(() => {
-    if (filter === 'all') return txs;
-    return txs.filter((t) => t.direction === filter);
-  }, [filter, txs]);
+  const filtered = useMemo(
+    () => (filter === 'all' ? txs : txs.filter((transaction) => transaction.direction === filter)),
+    [filter, txs],
+  );
 
   const handleTransactionPress = useCallback(
-    (tx: Transaction) => {
-      router.push(`/transaction/${tx.id}` as Href);
-    },
+    (transaction: Transaction) => router.push(`/transaction/${transaction.id}` as Href),
     [router],
-  );
-  const renderTransaction = useCallback(
-    ({ item, index }: { item: Transaction; index: number }) => (
-      <ActivityListItem
-        tx={item}
-        isLast={index === filtered.length - 1}
-        onPress={handleTransactionPress}
-      />
-    ),
-    [filtered.length, handleTransactionPress],
   );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Every send, receive, and conversion — tap a row for status, WeWire id, and rail.
-      </Text>
-
-      <ActivityFilterTabs
-        filter={filter}
-        onSelectFilter={setFilter}
-      />
-
-      <LegendList
-        showsVerticalScrollIndicator={false}
+      <CollapsibleList
+        title='Activity'
         data={filtered}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        contentInsetAdjustmentBehavior='automatic'
-        recycleItems
+        intro={
+          <>
+            <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+              Every send, receive, and conversion — tap a row for status, WeWire id, and rail.
+            </Text>
+          </>
+        }
+        controls={
+          <ActivityFilterTabs
+            filter={filter}
+            onSelectFilter={setFilter}
+          />
+        }
+        empty={
+          !loading ? (
+            <Text style={[styles.empty, { color: colors.mutedForeground }]}>
+              No transactions yet.
+            </Text>
+          ) : null
+        }
+        renderItem={(transaction, _index, isLast) => (
+          <ActivityListItem
+            tx={transaction}
+            isLast={isLast}
+            onPress={handleTransactionPress}
+          />
+        )}
+        keyExtractor={(transaction) => transaction.id}
+        getItemType={() => 'transaction'}
         onRefresh={refresh}
         refreshing={loading}
-        ListEmptyComponent={
-          <Text style={[styles.empty, { color: colors.mutedForeground }]}>
-            No transactions yet.
-          </Text>
-        }
-        renderItem={renderTransaction}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
+  root: { flex: 1 },
   title: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 25,
@@ -98,19 +87,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   subtitle: {
-    marginTop: 6,
+    paddingTop: 6,
+    paddingBottom: 14,
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
-    marginBottom: 14,
-  },
-  list: {
-    paddingBottom: 32,
-    paddingTop: 4,
   },
   empty: {
-    marginTop: 32,
+    paddingTop: 32,
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,

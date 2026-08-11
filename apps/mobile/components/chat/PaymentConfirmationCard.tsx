@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -176,7 +177,7 @@ export function PaymentConfirmationCard({
               ]}
             >
               {sending ? (
-                <ActivityIndicator
+                <LoadingIcon
                   size='small'
                   color={colors.foreground}
                 />
@@ -310,7 +311,7 @@ export function PaymentConfirmationCard({
                       color={colors.background}
                     />
                   ) : active ? (
-                    <ActivityIndicator
+                    <LoadingIcon
                       size='small'
                       color={colors.foreground}
                     />

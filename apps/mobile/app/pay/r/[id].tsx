@@ -1,8 +1,9 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthGate } from '@/lib/auth-gate';
@@ -44,7 +45,7 @@ export default function PayRequestDeepLinkScreen() {
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.background }]}>
-      <ActivityIndicator color={colors.mutedForeground} />
+      <LoadingIcon color={colors.mutedForeground} />
       <Text style={[styles.label, { color: colors.mutedForeground }]}>Opening payment…</Text>
     </View>
   );

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { ApprovalRequest } from '@/components/approvals/types';
 
@@ -11,6 +11,7 @@ import {
 } from '@/components/chat/PaymentConfirmationCard';
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getApproval, resolveApproval } from '@/lib/approvals-storage';
@@ -127,7 +128,7 @@ export default function ApprovalDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.mutedForeground} />
+        <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
   }

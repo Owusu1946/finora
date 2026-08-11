@@ -1,13 +1,14 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -146,7 +147,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
             ]}
           >
             {phase === 'sending' ? (
-              <ActivityIndicator
+              <LoadingIcon
                 size='small'
                 color={colors.foreground}
               />
@@ -246,7 +247,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                         color={colors.background}
                       />
                     ) : active ? (
-                      <ActivityIndicator
+                      <LoadingIcon
                         size='small'
                         color={colors.foreground}
                       />

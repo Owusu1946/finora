@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   PaymentRequestCard,
@@ -7,6 +7,7 @@ import {
   type PaymentRequestResult,
   type PaymentRequestSeed,
 } from '@/components/chat/PaymentRequestCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -38,7 +39,7 @@ function PaymentRequestToolRender({
       <View
         style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
       >
-        <ActivityIndicator color={colors.mutedForeground} />
+        <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
   }
