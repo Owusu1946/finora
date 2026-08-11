@@ -17,6 +17,7 @@ import {
   CheckIcon,
   CircleDollarSignIcon,
   Clock01Icon,
+  ClipboardIcon,
   Copy01Icon,
   CreditCardIcon,
   UserIcon,
@@ -52,6 +53,7 @@ export type IconName =
   | 'stop'
   | 'add'
   | 'remove'
+  | 'clipboard'
   | 'copy'
   | 'check'
   | 'reload'
@@ -108,6 +110,7 @@ export const HUGE_ICONS = {
   stop: StopIcon,
   add: Add01Icon,
   remove: Cancel01Icon,
+  clipboard: ClipboardIcon,
   copy: Copy01Icon,
   check: CheckIcon,
   reload: RefreshIcon,

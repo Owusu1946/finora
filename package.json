@@ -5,13 +5,21 @@
   "scripts": {
     "android": "turbo run android --filter=@finora/mobile",
     "build": "turbo run build",
+    "build:api": "turbo run build --filter=@finora/api",
+    "build:mcp": "turbo run build --filter=@finora/mcp",
+    "build:web": "turbo run build --filter=@finora/web",
     "check": "oxlint && oxfmt --write",
     "check-types": "turbo run check-types",
+    "deploy:api": "turbo run deploy --filter=@finora/api",
+    "deploy:mcp": "turbo run deploy --filter=@finora/mcp",
     "dev": "turbo run dev",
-    "dev:mobile": "turbo run start --filter=@finora/mobile",
-    "dev:web": "turbo run web --filter=@finora/mobile",
+    "dev:api": "turbo run dev --filter=@finora/api",
+    "dev:mcp": "turbo run dev --filter=@finora/mcp",
+    "dev:mobile": "turbo run dev --filter=@finora/mobile",
+    "dev:web": "turbo run dev --filter=@finora/web",
     "ios": "turbo run ios --filter=@finora/mobile",
-    "postinstall": "node scripts/link-mobile-deps.mjs"
+    "postinstall": "node scripts/link-mobile-deps.mjs",
+    "preview:web": "turbo run start --filter=@finora/web"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
