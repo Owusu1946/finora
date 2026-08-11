@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState, useMemo } from 'react';
-import { Pressable, StyleSheet, View, ScrollView } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -69,6 +69,7 @@ export default function WalletsScreen() {
     if (filter === 'all') return wallets;
     return wallets.filter((w) => w.type === filter);
   }, [wallets, filter]);
+  const walletSections = useMemo(() => [{ data: filteredWallets }], [filteredWallets]);
 
   const showToast = (msg: string) => {
     haptics.selection();
@@ -143,75 +144,80 @@ export default function WalletsScreen() {
         </View>
       )}
 
-      <ScrollView
+      <Animated.SectionList
         showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior='automatic'
         contentContainerStyle={styles.scrollContent}
-      >
-        {/* 1. Header Section */}
-        <WalletHeader
-          accountLabel={accountLabel}
-          totalNetWorthUSD={totalNetWorthUSD}
-          hideBalances={hideBalances}
-          onToggleHideBalances={() => setHideBalances((prev) => !prev)}
-          onOpenSend={() => setActiveModal('send')}
-          onOpenDeposit={() => {
-            setSelectedWallet(wallets[0]);
-            setActiveModal('deposit');
-          }}
-          onOpenConvert={() => setActiveModal('convert')}
-        />
-
-        {cardCount === 0 ? (
-          <Pressable
-            onPress={() => {
-              haptics.selection();
-              router.push('/virtual-card' as Href);
-            }}
-            style={({ pressed }) => [
-              styles.cardEntry,
-              {
-                backgroundColor: colors.muted,
-                borderColor: colors.border,
-                opacity: pressed ? 0.78 : 1,
-              },
-            ]}
-          >
-            <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
-              <Icon
-                name='wallet'
-                size={17}
-                color={colors.background}
-              />
-            </View>
-            <View style={styles.cardEntryCopy}>
-              <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>
-                Virtual card
-              </Text>
-              <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
-                Create a card for online spending
-              </Text>
-            </View>
-            <Icon
-              name='chevron-right'
-              size={18}
-              color={colors.mutedForeground}
+        sections={walletSections}
+        keyExtractor={(item) => item.id}
+        stickySectionHeadersEnabled
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <WalletHeader
+              accountLabel={accountLabel}
+              totalNetWorthUSD={totalNetWorthUSD}
+              hideBalances={hideBalances}
+              onToggleHideBalances={() => setHideBalances((prev) => !prev)}
+              onOpenSend={() => setActiveModal('send')}
+              onOpenDeposit={() => {
+                setSelectedWallet(wallets[0]);
+                setActiveModal('deposit');
+              }}
+              onOpenConvert={() => setActiveModal('convert')}
             />
-          </Pressable>
-        ) : null}
 
-        {/* 2. Filter Tabs Bar */}
-        <WalletFilterTabs
-          filter={filter}
-          onSelectFilter={setFilter}
-          onOpenAddWallet={() => setActiveModal('new_wallet')}
-        />
-
-        {/* 3. Wallet List */}
-        <View style={styles.walletListContainer}>
-          {filteredWallets.map((wallet, index) => (
+            {cardCount === 0 ? (
+              <Pressable
+                onPress={() => {
+                  haptics.selection();
+                  router.push('/virtual-card' as Href);
+                }}
+                style={({ pressed }) => [
+                  styles.cardEntry,
+                  {
+                    backgroundColor: colors.muted,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.78 : 1,
+                  },
+                ]}
+              >
+                <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
+                  <Icon
+                    name='wallet'
+                    size={17}
+                    color={colors.background}
+                  />
+                </View>
+                <View style={styles.cardEntryCopy}>
+                  <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>
+                    Virtual card
+                  </Text>
+                  <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
+                    Create a card for online spending
+                  </Text>
+                </View>
+                <Icon
+                  name='chevron-right'
+                  size={18}
+                  color={colors.mutedForeground}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+        }
+        renderSectionHeader={() => (
+          <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
+            <WalletFilterTabs
+              filter={filter}
+              onSelectFilter={setFilter}
+              onOpenAddWallet={() => setActiveModal('new_wallet')}
+            />
+          </View>
+        )}
+        renderItem={({ item, index }) => (
+          <View style={styles.walletRow}>
             <WalletListItem
-              key={wallet.id}
-              wallet={wallet}
+              wallet={item}
               hideBalances={hideBalances}
               isLast={index === filteredWallets.length - 1}
               onSelect={(w) => {
@@ -219,9 +225,9 @@ export default function WalletsScreen() {
                 setActiveModal('deposit');
               }}
             />
-          ))}
-        </View>
-      </ScrollView>
+          </View>
+        )}
+      />
 
       {/* Modals */}
       <DepositModal
@@ -275,16 +281,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40,
-    gap: 24,
     maxWidth: Spacing.threadMaxWidth,
     alignSelf: 'center',
     width: '100%',
   },
-  walletListContainer: {
-    flexDirection: 'column',
+  listHeader: {
+    gap: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  stickyTabs: {
+    paddingHorizontal: 20,
+    paddingVertical: 2,
+  },
+  walletRow: {
+    paddingHorizontal: 20,
   },
   cardEntry: {
     borderWidth: StyleSheet.hairlineWidth,

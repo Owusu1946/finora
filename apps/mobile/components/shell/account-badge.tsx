@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
@@ -63,6 +63,42 @@ export function HeaderTitleWithAccount({ title }: HeaderTitleProps) {
       >
         {title}
       </Text>
+      <AccountBadge />
+    </View>
+  );
+}
+
+export function CollapsibleHeaderTitle({
+  title,
+  scrollY,
+}: HeaderTitleProps & { scrollY: Animated.Value }) {
+  const { colors } = useTheme();
+  const titleOpacity = scrollY.interpolate({
+    inputRange: [28, 72],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  const titleTranslateY = scrollY.interpolate({
+    inputRange: [28, 72],
+    outputRange: [5, 0],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <View style={styles.headerTitle}>
+      <Animated.Text
+        numberOfLines={1}
+        style={[
+          styles.title,
+          {
+            color: colors.foreground,
+            opacity: titleOpacity,
+            transform: [{ translateY: titleTranslateY }],
+          },
+        ]}
+      >
+        {title}
+      </Animated.Text>
       <AccountBadge />
     </View>
   );

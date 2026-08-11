@@ -1,18 +1,21 @@
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { useFocusEffect, useNavigation, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 
 import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
 import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
 import { ActivityListItem } from '@/components/activity/ActivityListItem';
+import { CollapsibleHeaderTitle } from '@/components/shell/account-badge';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listTransactions } from '@/lib/transactions-storage';
 
 export default function ActivityScreen() {
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const router = useRouter();
+  const scrollY = useRef(new Animated.Value(0)).current;
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,10 +33,22 @@ export default function ActivityScreen() {
     }, [refresh]),
   );
 
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <CollapsibleHeaderTitle
+          title='Activity'
+          scrollY={scrollY}
+        />
+      ),
+    });
+  }, [navigation, scrollY]);
+
   const filtered = useMemo(() => {
     if (filter === 'all') return txs;
     return txs.filter((t) => t.direction === filter);
   }, [filter, txs]);
+  const sections = useMemo(() => [{ data: filtered }], [filtered]);
 
   const handleTransactionPress = useCallback(
     (tx: Transaction) => {
@@ -43,38 +58,51 @@ export default function ActivityScreen() {
   );
   const renderTransaction = useCallback(
     ({ item, index }: { item: Transaction; index: number }) => (
-      <ActivityListItem
-        tx={item}
-        isLast={index === filtered.length - 1}
-        onPress={handleTransactionPress}
-      />
+      <View style={styles.row}>
+        <ActivityListItem
+          tx={item}
+          isLast={index === filtered.length - 1}
+          onPress={handleTransactionPress}
+        />
+      </View>
     ),
     [filtered.length, handleTransactionPress],
   );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Every send, receive, and conversion — tap a row for status, WeWire id, and rail.
-      </Text>
-
-      <ActivityFilterTabs
-        filter={filter}
-        onSelectFilter={setFilter}
-      />
-
-      <FlatList
+      <Animated.SectionList
         showsVerticalScrollIndicator={false}
-        data={filtered}
+        sections={sections}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         contentInsetAdjustmentBehavior='automatic'
+        stickySectionHeadersEnabled
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        scrollEventThrottle={16}
         initialNumToRender={10}
         maxToRenderPerBatch={8}
         windowSize={9}
         onRefresh={refresh}
         refreshing={loading}
+        ListHeaderComponent={
+          <View style={styles.intro}>
+            <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+              Every send, receive, and conversion — tap a row for status, WeWire id, and rail.
+            </Text>
+          </View>
+        }
+        renderSectionHeader={() => (
+          <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
+            <ActivityFilterTabs
+              filter={filter}
+              onSelectFilter={setFilter}
+            />
+          </View>
+        )}
         ListEmptyComponent={
           <Text style={[styles.empty, { color: colors.mutedForeground }]}>
             No transactions yet.
@@ -89,6 +117,8 @@ export default function ActivityScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  intro: {
     paddingHorizontal: 20,
     paddingTop: 16,
   },
@@ -104,11 +134,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
-    marginBottom: 14,
+    paddingBottom: 14,
+  },
+  stickyTabs: {
+    paddingHorizontal: 20,
+    paddingTop: 2,
   },
   list: {
     paddingBottom: 32,
-    paddingTop: 4,
+  },
+  row: {
+    paddingHorizontal: 20,
   },
   empty: {
     marginTop: 32,
