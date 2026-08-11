@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { useTheme } from '@/hooks/use-theme';
@@ -66,8 +67,9 @@ export function CollapsibleList<Item>({
   onRefresh?: () => void;
   refreshing?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [collapsed, setCollapsed] = useState(false);
   const didScroll = useRef(false);
@@ -124,6 +126,7 @@ export function CollapsibleList<Item>({
 
   return (
     <LegendList
+      key={isDark ? 'collapsible-list-dark' : 'collapsible-list-light'}
       data={rows}
       renderItem={renderRow}
       keyExtractor={(row, index) =>
@@ -146,7 +149,8 @@ export function CollapsibleList<Item>({
       }}
       onRefresh={onRefresh}
       refreshing={refreshing}
-      progressViewOffset={headerHeight}
+      // Keep the native refresh spinner below the status-bar/notch area.
+      progressViewOffset={headerHeight + insets.top + 8}
     />
   );
 }

@@ -22,7 +22,7 @@ const FILTERS: { id: VirtualCardFilter; label: string }[] = [
 ];
 
 export default function CardsScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<VirtualCardFilter>('all');
   const [items, setItems] = useState<VirtualCard[]>([]);
@@ -106,7 +106,10 @@ export default function CardsScreen() {
           </View>
         }
         controls={
-          <View style={styles.filters}>
+          <View
+            key={`cards-filters-${isDark ? 'dark' : 'light'}`}
+            style={[styles.filters, { backgroundColor: colors.background }]}
+          >
             {FILTERS.map((item) => {
               const active = filter === item.id;
               return (
