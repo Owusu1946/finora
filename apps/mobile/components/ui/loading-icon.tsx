@@ -22,6 +22,7 @@ export function LoadingIcon({
         duration: 900,
         easing: Easing.linear,
         useNativeDriver: true,
+        isInteraction: false,
       }),
     );
     animation.start();
@@ -35,6 +36,7 @@ export function LoadingIcon({
 
   return (
     <Animated.View
+      accessible
       accessibilityLabel='Loading'
       accessibilityRole='progressbar'
       style={[
