@@ -1,7 +1,8 @@
 import { useAui } from '@assistant-ui/react-native';
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
@@ -49,33 +50,39 @@ export default function AutomationsScreen() {
   }
 
   return (
-    <ScrollView
+    <LegendList
+      data={items}
+      keyExtractor={(item) => item.id}
+      recycleItems
       showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
-    >
-      <Text style={[styles.title, { color: colors.foreground }]}>Automations</Text>
-      <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-        Rules can prepare actions only — money still needs your approval.
-      </Text>
-      <Pressable
-        onPress={() => {
-          haptics.selection();
-          router.push('/');
-          aui.composer.setText('Show my automations');
-          aui.composer.send();
-        }}
-        style={({ pressed }) => [
-          styles.btn,
-          { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-        ]}
-      >
-        <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
-      </Pressable>
-      {items.map((a) => (
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Automations</Text>
+          <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+            Rules can prepare actions only — money still needs your approval.
+          </Text>
+          <Pressable
+            onPress={() => {
+              haptics.selection();
+              router.push('/');
+              aui.composer.setText('Show my automations');
+              aui.composer.send();
+            }}
+            style={({ pressed }) => [
+              styles.btn,
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
+          </Pressable>
+        </View>
+      }
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+      renderItem={({ item: a }) => (
         <View
-          key={a.id}
           style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <Text style={[styles.name, { color: colors.foreground }]}>{a.name}</Text>
@@ -98,14 +105,16 @@ export default function AutomationsScreen() {
             </Text>
           </Pressable>
         </View>
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40, gap: 10 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+  header: { gap: 10, paddingBottom: 10 },
+  itemSeparator: { height: 10 },
   title: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '600', letterSpacing: -0.4 },
   sub: {
     marginTop: -4,

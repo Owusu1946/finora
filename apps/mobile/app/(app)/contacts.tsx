@@ -1,6 +1,7 @@
+import { LegendList } from '@legendapp/list/react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Contact, ContactFilter } from '@/components/contacts/types';
 
@@ -101,15 +102,13 @@ export default function ContactsScreen() {
           color={colors.mutedForeground}
         />
       ) : (
-        <FlatList
+        <LegendList
           showsVerticalScrollIndicator={false}
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           contentInsetAdjustmentBehavior='automatic'
-          initialNumToRender={10}
-          maxToRenderPerBatch={8}
-          windowSize={9}
+          recycleItems
           onRefresh={refresh}
           refreshing={loading}
           ListEmptyComponent={

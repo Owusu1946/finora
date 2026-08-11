@@ -1,6 +1,7 @@
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
@@ -98,15 +99,13 @@ export default function InvoicesScreen() {
         })}
       </View>
 
-      <FlatList
+      <LegendList
         showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         contentInsetAdjustmentBehavior='automatic'
-        initialNumToRender={10}
-        maxToRenderPerBatch={8}
-        windowSize={9}
+        recycleItems
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={
