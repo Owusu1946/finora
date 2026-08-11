@@ -1,6 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useCallback, useState } from 'react';
 import {
@@ -25,7 +26,7 @@ import { sendChatPrompt } from '@/lib/send-chat-prompt';
 const AMOUNTS = [25, 50, 100, 250, 500];
 const CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'USDT'];
 
-type Phase = 'scan' | 'amount';
+type Phase = 'scan' | 'payload' | 'amount';
 
 export default function ScanScreen() {
   const { colors } = useTheme();
@@ -89,6 +90,20 @@ export default function ScanScreen() {
     applyPayload(paste.trim());
   };
 
+  const openPayloadEntry = () => {
+    haptics.selection();
+    setError(null);
+    setLocked(false);
+    setPhase('payload');
+  };
+
+  const openScanner = () => {
+    haptics.selection();
+    setError(null);
+    setLocked(false);
+    setPhase('scan');
+  };
+
   const onContinueAmount = () => {
     if (!parsed || amount == null || amount <= 0) return;
     haptics.selection();
@@ -102,9 +117,9 @@ export default function ScanScreen() {
       <>
         <WizardStepHeader
           step={1}
-          total={1}
-          title='Scan to pay'
-          subtitle='Camera scanning needs a phone. Paste a QR payload below to demo on web.'
+          total={2}
+          title='Enter payment payload'
+          subtitle='Paste the payload from a Finora receive QR or payment request.'
         />
         {phase === 'amount' && parsed ? (
           <AmountStep
@@ -132,6 +147,31 @@ export default function ScanScreen() {
         )}
       </>
     );
+  } else if (phase === 'payload') {
+    content = (
+      <>
+        <WizardStepHeader
+          step={1}
+          total={2}
+          title='Enter payment payload'
+          subtitle='Paste the payload from a Finora receive QR or payment request.'
+        />
+        <PasteBlock
+          paste={paste}
+          setPaste={setPaste}
+          onSubmit={onPasteSubmit}
+          error={error}
+        />
+        {permission?.granted ? (
+          <Pressable
+            onPress={openScanner}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Back to camera</Text>
+          </Pressable>
+        ) : null}
+      </>
+    );
   } else if (!permission) {
     return <View style={[styles.screen, { backgroundColor: colors.background }]} />;
   } else if (!permission.granted) {
@@ -152,12 +192,12 @@ export default function ScanScreen() {
         >
           <Text style={[styles.primaryBtnText, { color: colors.background }]}>Allow camera</Text>
         </Pressable>
-        <PasteBlock
-          paste={paste}
-          setPaste={setPaste}
-          onSubmit={onPasteSubmit}
-          error={error}
-        />
+        <Pressable
+          onPress={openPayloadEntry}
+          style={styles.linkBtn}
+        >
+          <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Enter payload instead</Text>
+        </Pressable>
       </>
     );
   } else if (phase === 'amount' && parsed) {
@@ -209,12 +249,19 @@ export default function ScanScreen() {
           </View>
         </View>
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
-        <PasteBlock
-          paste={paste}
-          setPaste={setPaste}
-          onSubmit={onPasteSubmit}
-          error={null}
-        />
+        <Pressable
+          onPress={openPayloadEntry}
+          style={styles.payloadLink}
+        >
+          <Text style={[styles.payloadLinkText, { color: colors.foreground }]}>
+            Or enter payload
+          </Text>
+          <Icon
+            name='chevron-right'
+            size={18}
+            color={colors.mutedForeground}
+          />
+        </Pressable>
       </>
     );
   }
@@ -353,27 +400,56 @@ function PasteBlock({
   error: string | null;
 }) {
   const { colors } = useTheme();
+
+  const pasteFromClipboard = async () => {
+    const text = await Clipboard.getStringAsync();
+    if (!text) {
+      haptics.error();
+      return;
+    }
+    haptics.selection();
+    setPaste(text);
+  };
+
   return (
     <View style={styles.pasteBlock}>
-      <Text style={[styles.pasteLabel, { color: colors.mutedForeground }]}>Or paste a payload</Text>
-      <TextInput
-        value={paste}
-        onChangeText={setPaste}
-        onSubmitEditing={onSubmit}
-        autoCapitalize='none'
-        autoCorrect={false}
-        returnKeyType='go'
-        placeholder='finora:momo:ghs:0550123456'
-        placeholderTextColor={colors.mutedForeground}
-        style={[
-          styles.input,
-          {
-            color: colors.foreground,
-            borderColor: colors.border,
-            backgroundColor: colors.composer,
-          },
-        ]}
-      />
+      <Text style={[styles.pasteLabel, { color: colors.mutedForeground }]}>Payment payload</Text>
+      <View style={styles.payloadInputWrap}>
+        <TextInput
+          value={paste}
+          onChangeText={setPaste}
+          onSubmitEditing={onSubmit}
+          autoCapitalize='none'
+          autoCorrect={false}
+          returnKeyType='go'
+          placeholder='finora:momo:ghs:0550123456'
+          placeholderTextColor={colors.mutedForeground}
+          style={[
+            styles.input,
+            styles.payloadInput,
+            {
+              color: colors.foreground,
+              borderColor: colors.border,
+              backgroundColor: colors.composer,
+            },
+          ]}
+        />
+        <Pressable
+          accessibilityLabel='Paste from clipboard'
+          hitSlop={8}
+          onPress={() => void pasteFromClipboard()}
+          style={({ pressed }) => [
+            styles.clipboardBtn,
+            { backgroundColor: colors.muted, opacity: pressed ? 0.65 : 1 },
+          ]}
+        >
+          <Icon
+            name='clipboard'
+            size={19}
+            color={colors.foreground}
+          />
+        </Pressable>
+      </View>
       {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
       <Pressable
         onPress={() => {
@@ -468,9 +544,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
   },
+  payloadLink: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingVertical: 10,
+  },
+  payloadLinkText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   pasteBlock: {
     gap: 8,
     marginTop: 4,
+  },
+  payloadInputWrap: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  payloadInput: {
+    paddingRight: 52,
+  },
+  clipboardBtn: {
+    position: 'absolute',
+    right: 6,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pasteLabel: {
     fontFamily: 'DMSans_400Regular',
