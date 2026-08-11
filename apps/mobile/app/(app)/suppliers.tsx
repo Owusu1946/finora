@@ -1,7 +1,8 @@
 import { useAui } from '@assistant-ui/react-native';
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { AppText as Text } from '@/components/ui/text';
@@ -50,39 +51,42 @@ export default function SuppliersScreen() {
   }
 
   return (
-    <ScrollView
+    <LegendList
+      data={suppliers}
+      keyExtractor={(supplier) => supplier.id}
+      recycleItems
       showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
-    >
-      <Text style={[styles.title, { color: colors.foreground }]}>Suppliers</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Saved vendor beneficiaries. Pay from chat — each payout still needs your passcode.
-      </Text>
-
-      <Pressable
-        onPress={() => {
-          haptics.selection();
-          router.push('/');
-          aui.composer.setText('Show suppliers');
-          aui.composer.send();
-        }}
-        style={({ pressed }) => [
-          styles.btn,
-          {
-            backgroundColor: colors.foreground,
-            opacity: pressed ? 0.85 : 1,
-            marginBottom: 6,
-          },
-        ]}
-      >
-        <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
-      </Pressable>
-
-      {suppliers.map((supplier) => (
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Suppliers</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            Saved vendor beneficiaries. Pay from chat — each payout still needs your passcode.
+          </Text>
+          <Pressable
+            onPress={() => {
+              haptics.selection();
+              router.push('/');
+              aui.composer.setText('Show suppliers');
+              aui.composer.send();
+            }}
+            style={({ pressed }) => [
+              styles.btn,
+              {
+                backgroundColor: colors.foreground,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
+          </Pressable>
+        </View>
+      }
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+      renderItem={({ item: supplier }) => (
         <View
-          key={supplier.id}
           style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <View style={styles.row}>
@@ -119,8 +123,8 @@ export default function SuppliersScreen() {
             <Text style={[styles.btnLabel, { color: colors.foreground }]}>Pay in chat</Text>
           </Pressable>
         </View>
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 }
 
@@ -132,7 +136,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40,
+  },
+  header: {
     gap: 10,
+    paddingBottom: 10,
+  },
+  itemSeparator: {
+    height: 10,
   },
   title: {
     fontFamily: 'DMSans_400Regular',
