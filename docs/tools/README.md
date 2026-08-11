@@ -3,12 +3,13 @@
 Source of truth for tool **names / surfaces / risk**: [`packages/shared/src/registry.ts`](../../packages/shared/src/registry.ts).  
 Product architecture: [`.agents/FINORA_VISION.md`](../../.agents/FINORA_VISION.md).
 
-| Doc                        | What it covers                                          |
-| -------------------------- | ------------------------------------------------------- |
-| [This page](./README.md)   | Tools vs APIs (read this first)                         |
-| [catalog.md](./catalog.md) | Full registry by category — what each capability is for |
-| [mcp.md](./mcp.md)         | What **external AI agents** actually get via MCP        |
-| [mobile.md](./mobile.md)   | What the **Expo chat** mock adapter uses today          |
+| Doc                                          | What it covers                                          |
+| -------------------------------------------- | ------------------------------------------------------- |
+| [This page](./README.md)                     | Tools vs APIs (read this first)                         |
+| [catalog.md](./catalog.md)                   | Full registry by category — what each capability is for |
+| [mcp.md](./mcp.md)                           | What **external AI agents** actually get via MCP        |
+| [mobile.md](./mobile.md)                     | What the **Expo chat** mock adapter uses today          |
+| [WeWire coverage](../wewire-api-coverage.md) | WeWire endpoint priorities and live-integration gaps    |
 
 ---
 
