@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
-import { Geist, Geist_Mono } from 'next/font/google';
+import { DM_Sans, Geist_Mono } from 'next/font/google';
 
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const dmSans = DM_Sans({
+  variable: '--font-dm-sans',
   subsets: ['latin'],
 });
 
@@ -19,7 +19,8 @@ export const metadata: Metadata = {
     default: 'Finora',
     template: '%s · Finora',
   },
-  description: 'Financial operating system for AI — conversational finance for people and agents.',
+  description:
+    'Finora is a conversational financial operating system for people and AI agents. Prepare, approve, and track financial actions in one place.',
   metadataBase: new URL('https://finora.app'),
 };
 
@@ -30,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+      <body className={`${dmSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
     </html>
   );
 }

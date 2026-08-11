@@ -1,9 +1,7 @@
-import { FinoraHero } from '@/components/hero/finora-hero';
+import { LandingPage } from '@/components/landing/landing-page';
+
+export const revalidate = 86400;
 
 export default function Home() {
-  return (
-    <main>
-      <FinoraHero />
-    </main>
-  );
+  return <LandingPage />;
 }
