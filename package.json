@@ -23,7 +23,7 @@
     "@types/node": "^22.20.1",
     "oxfmt": "^0.61.0",
     "oxlint": "^1.77.0",
-    "turbo": "^2.10.8",
+    "turbo": "^2.10.9",
     "typescript": "^6.0.3"
   },
   "engines": {
