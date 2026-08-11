@@ -1,7 +1,8 @@
+import { LegendList } from '@legendapp/list/react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState, useMemo } from 'react';
-import { Pressable, StyleSheet, View, ScrollView } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -143,85 +144,84 @@ export default function WalletsScreen() {
         </View>
       )}
 
-      <ScrollView
+      <LegendList
+        data={filteredWallets}
+        keyExtractor={(wallet) => wallet.id}
+        recycleItems
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-      >
-        {/* 1. Header Section */}
-        <WalletHeader
-          accountLabel={accountLabel}
-          totalNetWorthUSD={totalNetWorthUSD}
-          hideBalances={hideBalances}
-          onToggleHideBalances={() => setHideBalances((prev) => !prev)}
-          onOpenSend={() => setActiveModal('send')}
-          onOpenDeposit={() => {
-            setSelectedWallet(wallets[0]);
-            setActiveModal('deposit');
-          }}
-          onOpenConvert={() => setActiveModal('convert')}
-        />
-
-        {cardCount === 0 ? (
-          <Pressable
-            onPress={() => {
-              haptics.selection();
-              router.push('/virtual-card' as Href);
-            }}
-            style={({ pressed }) => [
-              styles.cardEntry,
-              {
-                backgroundColor: colors.muted,
-                borderColor: colors.border,
-                opacity: pressed ? 0.78 : 1,
-              },
-            ]}
-          >
-            <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
-              <Icon
-                name='wallet'
-                size={17}
-                color={colors.background}
-              />
-            </View>
-            <View style={styles.cardEntryCopy}>
-              <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>
-                Virtual card
-              </Text>
-              <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
-                Create a card for online spending
-              </Text>
-            </View>
-            <Icon
-              name='chevron-right'
-              size={18}
-              color={colors.mutedForeground}
-            />
-          </Pressable>
-        ) : null}
-
-        {/* 2. Filter Tabs Bar */}
-        <WalletFilterTabs
-          filter={filter}
-          onSelectFilter={setFilter}
-          onOpenAddWallet={() => setActiveModal('new_wallet')}
-        />
-
-        {/* 3. Wallet List */}
-        <View style={styles.walletListContainer}>
-          {filteredWallets.map((wallet, index) => (
-            <WalletListItem
-              key={wallet.id}
-              wallet={wallet}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <WalletHeader
+              accountLabel={accountLabel}
+              totalNetWorthUSD={totalNetWorthUSD}
               hideBalances={hideBalances}
-              isLast={index === filteredWallets.length - 1}
-              onSelect={(w) => {
-                setSelectedWallet(w);
+              onToggleHideBalances={() => setHideBalances((prev) => !prev)}
+              onOpenSend={() => setActiveModal('send')}
+              onOpenDeposit={() => {
+                setSelectedWallet(wallets[0]);
                 setActiveModal('deposit');
               }}
+              onOpenConvert={() => setActiveModal('convert')}
             />
-          ))}
-        </View>
-      </ScrollView>
+
+            {cardCount === 0 ? (
+              <Pressable
+                onPress={() => {
+                  haptics.selection();
+                  router.push('/virtual-card' as Href);
+                }}
+                style={({ pressed }) => [
+                  styles.cardEntry,
+                  {
+                    backgroundColor: colors.muted,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.78 : 1,
+                  },
+                ]}
+              >
+                <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
+                  <Icon
+                    name='wallet'
+                    size={17}
+                    color={colors.background}
+                  />
+                </View>
+                <View style={styles.cardEntryCopy}>
+                  <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>
+                    Virtual card
+                  </Text>
+                  <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
+                    Create a card for online spending
+                  </Text>
+                </View>
+                <Icon
+                  name='chevron-right'
+                  size={18}
+                  color={colors.mutedForeground}
+                />
+              </Pressable>
+            ) : null}
+
+            <WalletFilterTabs
+              filter={filter}
+              onSelectFilter={setFilter}
+              onOpenAddWallet={() => setActiveModal('new_wallet')}
+            />
+          </View>
+        }
+        renderItem={({ item: wallet, index }) => (
+          <WalletListItem
+            wallet={wallet}
+            hideBalances={hideBalances}
+            isLast={index === filteredWallets.length - 1}
+            onSelect={(w) => {
+              setSelectedWallet(w);
+              setActiveModal('deposit');
+            }}
+          />
+        )}
+      />
 
       {/* Modals */}
       <DepositModal
@@ -278,13 +278,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40,
-    gap: 24,
     maxWidth: Spacing.threadMaxWidth,
     alignSelf: 'center',
     width: '100%',
   },
-  walletListContainer: {
-    flexDirection: 'column',
+  listHeader: {
+    gap: 24,
+    paddingBottom: 24,
   },
   cardEntry: {
     borderWidth: StyleSheet.hairlineWidth,
