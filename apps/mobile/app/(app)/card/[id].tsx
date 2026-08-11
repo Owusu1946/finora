@@ -1,11 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
 import { VirtualCardManagePanel } from '@/components/cards/VirtualCardManagePanel';
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -40,7 +41,7 @@ export default function CardDetailScreen() {
     <SwipeBackView>
       {loading ? (
         <View style={[styles.centered, { backgroundColor: colors.background }]}>
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
         </View>
       ) : !card ? (
         <View style={[styles.centered, { backgroundColor: colors.background }]}>

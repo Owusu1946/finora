@@ -1,9 +1,10 @@
-import { LegendList } from '@legendapp/list/react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -15,7 +16,7 @@ import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from '@/components/wallets
 import { WalletFilterTabs, FilterCategory } from '@/components/wallets/WalletFilterTabs';
 import { WalletHeader } from '@/components/wallets/WalletHeader';
 import { WalletListItem } from '@/components/wallets/WalletListItem';
-import { Spacing, Radius } from '@/constants/theme';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, getAccountLabel } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -23,6 +24,7 @@ import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-sto
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
+  const headerHeight = useHeaderHeight();
   const router = useRouter();
   const accountType = getAccountType();
   const accountLabel = getAccountLabel(accountType);
@@ -134,7 +136,9 @@ export default function WalletsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Sleek Floating Toast */}
       {toastMessage && (
-        <View style={[styles.toast, { backgroundColor: colors.foreground }]}>
+        <View
+          style={[styles.toast, { backgroundColor: colors.foreground, top: headerHeight + 12 }]}
+        >
           <Icon
             name='check'
             size={13}
@@ -144,27 +148,26 @@ export default function WalletsScreen() {
         </View>
       )}
 
-      <LegendList
+      <CollapsibleList
+        title='Wallets'
         data={filteredWallets}
-        keyExtractor={(wallet) => wallet.id}
-        recycleItems
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={
+        intro={
           <View style={styles.listHeader}>
-            <WalletHeader
-              accountLabel={accountLabel}
-              totalNetWorthUSD={totalNetWorthUSD}
-              hideBalances={hideBalances}
-              onToggleHideBalances={() => setHideBalances((prev) => !prev)}
-              onOpenSend={() => setActiveModal('send')}
-              onOpenDeposit={() => {
-                setSelectedWallet(wallets[0]);
-                setActiveModal('deposit');
-              }}
-              onOpenConvert={() => setActiveModal('convert')}
-            />
-
+            <View style={styles.walletSummary}>
+              <Text style={[styles.title, { color: colors.foreground }]}>Wallets</Text>
+              <WalletHeader
+                accountLabel={accountLabel}
+                totalNetWorthUSD={totalNetWorthUSD}
+                hideBalances={hideBalances}
+                onToggleHideBalances={() => setHideBalances((prev) => !prev)}
+                onOpenSend={() => setActiveModal('send')}
+                onOpenDeposit={() => {
+                  setSelectedWallet(wallets[0]);
+                  setActiveModal('deposit');
+                }}
+                onOpenConvert={() => setActiveModal('convert')}
+              />
+            </View>
             {cardCount === 0 ? (
               <Pressable
                 onPress={() => {
@@ -202,25 +205,28 @@ export default function WalletsScreen() {
                 />
               </Pressable>
             ) : null}
-
-            <WalletFilterTabs
-              filter={filter}
-              onSelectFilter={setFilter}
-              onOpenAddWallet={() => setActiveModal('new_wallet')}
-            />
           </View>
         }
-        renderItem={({ item: wallet, index }) => (
+        controls={
+          <WalletFilterTabs
+            filter={filter}
+            onSelectFilter={setFilter}
+            onOpenAddWallet={() => setActiveModal('new_wallet')}
+          />
+        }
+        renderItem={(wallet, _index, isLast) => (
           <WalletListItem
             wallet={wallet}
             hideBalances={hideBalances}
-            isLast={index === filteredWallets.length - 1}
-            onSelect={(w) => {
-              setSelectedWallet(w);
+            isLast={isLast}
+            onSelect={(selected) => {
+              setSelectedWallet(selected);
               setActiveModal('deposit');
             }}
           />
         )}
+        keyExtractor={(wallet) => wallet.id}
+        getItemType={() => 'wallet'}
       />
 
       {/* Modals */}
@@ -259,7 +265,6 @@ const styles = StyleSheet.create({
   },
   toast: {
     position: 'absolute',
-    top: 12,
     alignSelf: 'center',
     zIndex: 99,
     flexDirection: 'row',
@@ -274,17 +279,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-    maxWidth: Spacing.threadMaxWidth,
-    alignSelf: 'center',
-    width: '100%',
-  },
   listHeader: {
     gap: 24,
     paddingBottom: 24,
+  },
+  walletSummary: {
+    gap: 12,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
+    fontWeight: '600',
+    letterSpacing: -0.4,
   },
   cardEntry: {
     borderWidth: StyleSheet.hairlineWidth,

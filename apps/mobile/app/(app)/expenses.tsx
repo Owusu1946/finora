@@ -2,9 +2,10 @@ import { useAui } from '@assistant-ui/react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -40,7 +41,7 @@ export default function ExpensesScreen() {
   if (!items) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <ActivityIndicator
+        <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
         />

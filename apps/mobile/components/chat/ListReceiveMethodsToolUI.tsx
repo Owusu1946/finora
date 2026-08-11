@@ -1,7 +1,8 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ReceiveMoneyCard, type ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -20,7 +21,7 @@ function PreparingCard() {
     <View
       style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
-      <ActivityIndicator color={colors.mutedForeground} />
+      <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
 }

@@ -1,10 +1,11 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -106,7 +107,7 @@ function PayrollConfirmCard({
         <View style={styles.header}>
           <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             {phase === 'sending' ? (
-              <ActivityIndicator
+              <LoadingIcon
                 size='small'
                 color={colors.foreground}
               />
@@ -197,7 +198,7 @@ export const PreparePayrollToolUI = makeAssistantToolUI<PreparePayrollArgs, Prep
             { borderColor: colors.border, backgroundColor: colors.composer },
           ]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
           <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
             Preparing payroll…
           </Text>

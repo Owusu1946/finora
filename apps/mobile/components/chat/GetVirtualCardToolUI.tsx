@@ -1,11 +1,12 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
 import { formatCardAmount } from '@/components/cards/types';
 import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -26,7 +27,7 @@ function PreparingCard() {
     <View
       style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
-      <ActivityIndicator color={colors.mutedForeground} />
+      <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
 }

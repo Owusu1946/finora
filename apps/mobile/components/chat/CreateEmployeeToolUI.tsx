@@ -1,10 +1,11 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Employee } from '@/lib/employees-storage';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -65,7 +66,7 @@ export const CreateEmployeeToolUI = makeAssistantToolUI<CreateEmployeeArgs, Crea
             { borderColor: colors.border, backgroundColor: colors.composer },
           ]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
           <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
             Adding employee…
           </Text>

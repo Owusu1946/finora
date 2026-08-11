@@ -1,11 +1,12 @@
-import { LegendList } from '@legendapp/list/react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Contact, ContactFilter } from '@/components/contacts/types';
 
 import { ContactListItem } from '@/components/contacts/ContactListItem';
+import { CollapsibleList } from '@/components/navigation/collapsible-list';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listContacts } from '@/lib/contacts-storage';
@@ -48,11 +49,11 @@ export default function ContactsScreen() {
     router.push('/(app)');
   }, [router]);
   const renderContact = useCallback(
-    ({ item, index }: { item: Contact; index: number }) => (
+    (item: Contact, index: number, isLast: boolean) => (
       <ContactListItem
         contact={item}
         index={index}
-        isLast={index === filtered.length - 1}
+        isLast={isLast}
         onPress={handleContactPress}
       />
     ),
@@ -61,64 +62,65 @@ export default function ContactsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.foreground }]}>Contacts</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Recipients you’ve paid — save more from chat after sending.
-      </Text>
-
-      <View style={styles.filters}>
-        {FILTERS.map((item) => {
-          const active = filter === item.id;
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => {
-                haptics.selection();
-                setFilter(item.id);
-              }}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: active ? colors.foreground : colors.muted,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.chipLabel,
-                  { color: active ? colors.background : colors.foreground },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {loading ? (
-        <ActivityIndicator
-          style={{ marginTop: 24 }}
-          color={colors.mutedForeground}
-        />
-      ) : (
-        <LegendList
-          showsVerticalScrollIndicator={false}
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          contentInsetAdjustmentBehavior='automatic'
-          recycleItems
-          onRefresh={refresh}
-          refreshing={loading}
-          ListEmptyComponent={
+      <CollapsibleList
+        title='Contacts'
+        data={filtered}
+        intro={
+          <>
+            <Text style={[styles.title, { color: colors.foreground }]}>Contacts</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+              Recipients you’ve paid — save more from chat after sending.
+            </Text>
+          </>
+        }
+        controls={
+          <View style={styles.filters}>
+            {FILTERS.map((item) => {
+              const active = filter === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => {
+                    haptics.selection();
+                    setFilter(item.id);
+                  }}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: active ? colors.foreground : colors.muted,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.background : colors.foreground },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        }
+        keyExtractor={(item) => item.id}
+        onRefresh={refresh}
+        refreshing={loading}
+        empty={
+          loading ? (
+            <LoadingIcon
+              style={{ marginTop: 24 }}
+              color={colors.mutedForeground}
+            />
+          ) : (
             <Text style={[styles.empty, { color: colors.mutedForeground }]}>
               No contacts yet. Send money in chat, then tap Save contact.
             </Text>
-          }
-          renderItem={renderContact}
-        />
-      )}
+          )
+        }
+        renderItem={renderContact}
+      />
     </View>
   );
 }
@@ -126,8 +128,6 @@ export default function ContactsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
   },
   title: {
     fontFamily: 'DMSans_400Regular',
@@ -141,12 +141,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     lineHeight: 20,
-    marginBottom: 14,
+    paddingBottom: 14,
   },
   filters: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 8,
+    paddingBottom: 8,
   },
   chip: {
     paddingHorizontal: 12,
@@ -158,11 +158,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  list: {
-    paddingBottom: 32,
-  },
   empty: {
-    marginTop: 32,
+    paddingTop: 32,
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,

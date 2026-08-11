@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react';
 import { Keyboard, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
+import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
@@ -149,6 +149,13 @@ function screenOptions(title: string) {
   };
 }
 
+function bodyTitleScreenOptions(title: string) {
+  return {
+    title,
+    headerTitle: () => <AccountBadge />,
+  };
+}
+
 export default function AppLayout() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -166,12 +173,13 @@ export default function AppLayout() {
       screenOptions={{
         headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
-        headerLeftContainerStyle: { paddingLeft: 16 },
-        headerRightContainerStyle: { gap: 10, paddingRight: 16 },
+        headerLeftContainerStyle: { paddingLeft: 16, paddingBottom: 8 },
+        headerRightContainerStyle: { gap: 10, paddingRight: 16, paddingBottom: 8 },
+        headerTitleContainerStyle: { paddingBottom: 8 },
         headerShadowVisible: false,
         headerStatusBarHeight: insets.top + 8,
         headerTintColor: colors.foreground,
-        headerStyle: { backgroundColor: colors.background },
+        headerStyle: { backgroundColor: 'transparent' },
         headerTitleAlign: 'center',
         drawerType: 'back',
         overlayColor: 'rgba(0, 0, 0, 0.26)',
@@ -200,11 +208,15 @@ export default function AppLayout() {
       />
       <Drawer.Screen
         name='wallets'
-        options={screenOptions('Wallets')}
+        options={{
+          ...screenOptions('Wallets'),
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent' },
+        }}
       />
       <Drawer.Screen
         name='cards'
-        options={screenOptions('Cards')}
+        options={bodyTitleScreenOptions('Cards')}
       />
       <Drawer.Screen
         name='virtual-card'
@@ -217,7 +229,11 @@ export default function AppLayout() {
       />
       <Drawer.Screen
         name='activity'
-        options={screenOptions('Activity')}
+        options={{
+          ...bodyTitleScreenOptions('Activity'),
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent' },
+        }}
       />
       <Drawer.Screen
         name='card/[id]'
@@ -230,51 +246,51 @@ export default function AppLayout() {
       />
       <Drawer.Screen
         name='approvals'
-        options={screenOptions('Approvals')}
+        options={bodyTitleScreenOptions('Approvals')}
       />
       <Drawer.Screen
         name='invoices'
-        options={screenOptions('Invoices')}
+        options={bodyTitleScreenOptions('Invoices')}
       />
       <Drawer.Screen
         name='recurring'
-        options={screenOptions('Recurring')}
+        options={bodyTitleScreenOptions('Recurring')}
       />
       <Drawer.Screen
         name='payroll'
-        options={screenOptions('Payroll')}
+        options={bodyTitleScreenOptions('Payroll')}
       />
       <Drawer.Screen
         name='suppliers'
-        options={screenOptions('Suppliers')}
+        options={bodyTitleScreenOptions('Suppliers')}
       />
       <Drawer.Screen
         name='beneficiaries'
-        options={screenOptions('Beneficiaries')}
+        options={bodyTitleScreenOptions('Beneficiaries')}
       />
       <Drawer.Screen
         name='expenses'
-        options={screenOptions('Expenses')}
+        options={bodyTitleScreenOptions('Expenses')}
       />
       <Drawer.Screen
         name='treasury'
-        options={screenOptions('Treasury')}
+        options={bodyTitleScreenOptions('Treasury')}
       />
       <Drawer.Screen
         name='automations'
-        options={screenOptions('Automations')}
+        options={bodyTitleScreenOptions('Automations')}
       />
       <Drawer.Screen
         name='policies'
-        options={screenOptions('Policies')}
+        options={bodyTitleScreenOptions('Policies')}
       />
       <Drawer.Screen
         name='contacts'
-        options={screenOptions('Contacts')}
+        options={bodyTitleScreenOptions('Contacts')}
       />
       <Drawer.Screen
         name='integrations'
-        options={screenOptions('Integrations')}
+        options={bodyTitleScreenOptions('Integrations')}
       />
       <Drawer.Screen
         name='settings'

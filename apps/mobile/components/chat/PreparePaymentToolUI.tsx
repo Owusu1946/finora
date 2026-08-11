@@ -1,13 +1,14 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 import type { PurposeCode, SettlementMethod } from '@/lib/send-corridors';
 
 import { SendMoneyWizard, type SendMoneySeed } from '@/components/chat/SendMoneyWizard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up';
@@ -41,7 +42,7 @@ function PreparingCard() {
     <View
       style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
-      <ActivityIndicator color={colors.mutedForeground} />
+      <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
 }

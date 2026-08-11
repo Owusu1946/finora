@@ -1,6 +1,6 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ConversionCard,
@@ -8,6 +8,7 @@ import {
   type ConversionStatus,
 } from '@/components/chat/ConversionCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp, conversionDoneFollowUp } from '@/lib/agent-follow-up';
@@ -46,7 +47,7 @@ function PreparingCard() {
     <View
       style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
-      <ActivityIndicator color={colors.mutedForeground} />
+      <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
 }
