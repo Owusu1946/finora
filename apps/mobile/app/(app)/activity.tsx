@@ -1,6 +1,7 @@
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
@@ -64,15 +65,13 @@ export default function ActivityScreen() {
         onSelectFilter={setFilter}
       />
 
-      <FlatList
+      <LegendList
         showsVerticalScrollIndicator={false}
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         contentInsetAdjustmentBehavior='automatic'
-        initialNumToRender={10}
-        maxToRenderPerBatch={8}
-        windowSize={9}
+        recycleItems
         onRefresh={refresh}
         refreshing={loading}
         ListEmptyComponent={

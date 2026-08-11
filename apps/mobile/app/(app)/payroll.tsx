@@ -1,7 +1,8 @@
 import { useAui } from '@assistant-ui/react-native';
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { AppText as Text } from '@/components/ui/text';
@@ -63,54 +64,65 @@ export default function PayrollScreen() {
   const lastRun = runs[0];
 
   return (
-    <ScrollView
+    <LegendList
+      data={employees}
+      keyExtractor={(employee) => employee.id}
+      recycleItems
       showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
-    >
-      <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-        Team roster for {defaultPayrollPeriod()}. WeWire settles each salary as its own payout after
-        approval.
-      </Text>
-
-      <View
-        style={[styles.summary, { borderColor: colors.border, backgroundColor: colors.composer }]}
-      >
-        <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Next run total</Text>
-        <Text style={[styles.summaryAmount, { color: colors.foreground }]}>
-          {formatPaymentAmount(total, currency)}
-        </Text>
-        <Text style={[styles.summaryMeta, { color: colors.mutedForeground }]}>
-          {employees.length} active employee{employees.length === 1 ? '' : 's'}
-          {lastRun
-            ? ` · Last run ${new Date(lastRun.createdAt).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-              })}`
-            : ''}
-        </Text>
-        <Pressable
-          onPress={() => {
-            haptics.selection();
-            router.push('/');
-            aui.composer.setText('Run payroll');
-            aui.composer.send();
-          }}
-          style={({ pressed }) => [
-            styles.btn,
-            { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <Text style={[styles.btnLabel, { color: colors.background }]}>Run payroll in chat</Text>
-        </Pressable>
-      </View>
-
-      <Text style={[styles.section, { color: colors.mutedForeground }]}>Team</Text>
-      {employees.map((employee) => (
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            Team roster for {defaultPayrollPeriod()}. WeWire settles each salary as its own payout
+            after approval.
+          </Text>
+          <View
+            style={[
+              styles.summary,
+              { borderColor: colors.border, backgroundColor: colors.composer },
+            ]}
+          >
+            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>
+              Next run total
+            </Text>
+            <Text style={[styles.summaryAmount, { color: colors.foreground }]}>
+              {formatPaymentAmount(total, currency)}
+            </Text>
+            <Text style={[styles.summaryMeta, { color: colors.mutedForeground }]}>
+              {employees.length} active employee{employees.length === 1 ? '' : 's'}
+              {lastRun
+                ? ` · Last run ${new Date(lastRun.createdAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })}`
+                : ''}
+            </Text>
+            <Pressable
+              onPress={() => {
+                haptics.selection();
+                router.push('/');
+                aui.composer.setText('Run payroll');
+                aui.composer.send();
+              }}
+              style={({ pressed }) => [
+                styles.btn,
+                { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Text style={[styles.btnLabel, { color: colors.background }]}>
+                Run payroll in chat
+              </Text>
+            </Pressable>
+          </View>
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Team</Text>
+        </View>
+      }
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+      renderItem={({ item: employee }) => (
         <View
-          key={employee.id}
           style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <View style={styles.rowText}>
@@ -123,8 +135,8 @@ export default function PayrollScreen() {
             {formatPaymentAmount(employee.salary, employee.currency)}
           </Text>
         </View>
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 }
 
@@ -136,7 +148,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 40,
+  },
+  header: {
     gap: 10,
+    paddingBottom: 10,
+  },
+  itemSeparator: {
+    height: 10,
   },
   title: {
     fontFamily: 'DMSans_400Regular',

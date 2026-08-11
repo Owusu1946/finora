@@ -1,7 +1,8 @@
 import { useAui } from '@assistant-ui/react-native';
+import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { AppText as Text } from '@/components/ui/text';
@@ -48,33 +49,39 @@ export default function ExpensesScreen() {
   }
 
   return (
-    <ScrollView
+    <LegendList
+      data={items}
+      keyExtractor={(item) => item.id}
+      recycleItems
       showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
-    >
-      <Text style={[styles.title, { color: colors.foreground }]}>Expenses</Text>
-      <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-        Card and vendor spend this month · {formatPaymentAmount(total, 'USD')}
-      </Text>
-      <Pressable
-        onPress={() => {
-          haptics.selection();
-          router.push('/');
-          aui.composer.setText('Show business expenses this month');
-          aui.composer.send();
-        }}
-        style={({ pressed }) => [
-          styles.btn,
-          { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-        ]}
-      >
-        <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
-      </Pressable>
-      {items.map((e) => (
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Expenses</Text>
+          <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+            Card and vendor spend this month · {formatPaymentAmount(total, 'USD')}
+          </Text>
+          <Pressable
+            onPress={() => {
+              haptics.selection();
+              router.push('/');
+              aui.composer.setText('Show business expenses this month');
+              aui.composer.send();
+            }}
+            style={({ pressed }) => [
+              styles.btn,
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
+          </Pressable>
+        </View>
+      }
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+      renderItem={({ item: e }) => (
         <View
-          key={e.id}
           style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <View style={styles.flex}>
@@ -88,14 +95,16 @@ export default function ExpensesScreen() {
             {formatPaymentAmount(e.amount, e.currency)}
           </Text>
         </View>
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40, gap: 10 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+  header: { gap: 10, paddingBottom: 10 },
+  itemSeparator: { height: 10 },
   title: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '600', letterSpacing: -0.4 },
   sub: {
     marginTop: -4,
