@@ -104,6 +104,7 @@ export function CollapsibleList<Item>({
     <LegendList
       key={isDark ? 'collapsible-list-dark' : 'collapsible-list-light'}
       data={rows}
+      extraData={controls}
       renderItem={renderRow}
       keyExtractor={(row, index) =>
         row.kind === 'item' ? keyExtractor(row.item) : `${row.kind}-${index}`

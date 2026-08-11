@@ -28,6 +28,8 @@ export function ActivityFilterTabs({ filter, onSelectFilter }: ActivityFilterTab
         return (
           <Pressable
             key={t.key}
+            accessibilityRole='tab'
+            accessibilityState={{ selected: active }}
             onPress={() => {
               haptics.selection();
               onSelectFilter(t.key);
@@ -59,13 +61,13 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   tab: {
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   label: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
   },
   labelActive: {
