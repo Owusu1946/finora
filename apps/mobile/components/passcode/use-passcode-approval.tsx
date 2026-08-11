@@ -7,12 +7,7 @@ import {
 } from '@/components/passcode/PasscodeModal';
 import { checkForgetPasswordOtp, requestPasswordReset } from '@/lib/auth-mock';
 import { haptics } from '@/lib/haptics';
-import {
-  clearPasscode,
-  hasPasscode,
-  setPasscode,
-  verifyPasscode,
-} from '@/lib/passcode-storage';
+import { clearPasscode, hasPasscode, setPasscode, verifyPasscode } from '@/lib/passcode-storage';
 import { getCachedSettings } from '@/lib/settings-storage';
 
 type GatePhase = 'closed' | 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp';

@@ -14,7 +14,10 @@ function clamp(n: number, min: number, max: number) {
  * Device-tilt shared values for metal/gloss card lighting.
  * Uses DeviceMotion orientation (beta/gamma). Falls back to idle on web/unavailable.
  */
-export function useCardTilt(enabled = true, onFlipGesture?: () => void): {
+export function useCardTilt(
+  enabled = true,
+  onFlipGesture?: () => void,
+): {
   tiltX: SharedValue<number>;
   tiltY: SharedValue<number>;
 } {

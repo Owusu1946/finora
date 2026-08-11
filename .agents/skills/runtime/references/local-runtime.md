@@ -5,23 +5,23 @@ In-browser chat with custom model adapter.
 ## Basic Usage
 
 ```tsx
-import { useLocalRuntime, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useLocalRuntime, AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 function App() {
   const runtime = useLocalRuntime({
     model: {
       async run({ messages, abortSignal }) {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages }),
           signal: abortSignal,
         });
 
         const data = await response.json();
         return {
-          content: [{ type: "text", text: data.text }],
+          content: [{ type: 'text', text: data.text }],
         };
       },
     },
@@ -43,15 +43,15 @@ Use a generator and emit `ChatModelRunResult` chunks (append-only content parts)
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({ messages }),
         signal: abortSignal,
       });
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let buffer = "";
+      let buffer = '';
 
       while (reader) {
         const { done, value } = await reader.read();
@@ -60,18 +60,18 @@ const runtime = useLocalRuntime({
         buffer += decoder.decode(value, { stream: true });
 
         // Split on newlines for this plain-text example (not Data Stream)
-        const parts = buffer.split("\n");
-        buffer = parts.pop() ?? "";
+        const parts = buffer.split('\n');
+        buffer = parts.pop() ?? '';
 
         for (const textChunk of parts.filter(Boolean)) {
           yield {
-            content: [{ type: "text", text: textChunk }],
+            content: [{ type: 'text', text: textChunk }],
           };
         }
       }
 
       if (buffer) {
-        yield { content: [{ type: "text", text: buffer }] };
+        yield { content: [{ type: 'text', text: buffer }] };
       }
     },
   },
@@ -104,15 +104,15 @@ interface ChatModelAdapter {
 interface ChatModelRunOptions {
   messages: readonly ThreadMessage[];
   abortSignal: AbortSignal;
-  runConfig: RunConfig;     // per-run configuration
-  context: ModelContext;    // tools, system prompt, callSettings, config
+  runConfig: RunConfig; // per-run configuration
+  context: ModelContext; // tools, system prompt, callSettings, config
 }
 
 // Returned once (final) or yielded repeatedly (streaming).
 // All fields are optional; yield partial content to stream.
 interface ChatModelRunResult {
   content?: MessagePart[];
-  status?: MessageStatus;   // object form, e.g. { type: "complete" }
+  status?: MessageStatus; // object form, e.g. { type: "complete" }
   metadata?: Record<string, unknown>;
 }
 ```
@@ -120,7 +120,7 @@ interface ChatModelRunResult {
 ## With OpenAI Direct
 
 ```tsx
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -131,13 +131,13 @@ const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: 'gpt-4o',
         messages: messages.map((m) => ({
           role: m.role,
           content: m.content
-            .filter((p): p is { type: "text"; text: string } => p.type === "text")
+            .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
             .map((p) => p.text)
-            .join(""),
+            .join(''),
         })),
         stream: true,
       });
@@ -146,7 +146,7 @@ const runtime = useLocalRuntime({
         if (abortSignal.aborted) break;
         const delta = chunk.choices[0]?.delta?.content;
         if (delta) {
-          yield { content: [{ type: "text", text: delta }] };
+          yield { content: [{ type: 'text', text: delta }] };
         }
       }
     },
@@ -162,34 +162,34 @@ Emit tool calls as message parts (`type: "tool-call"`) and include `argsText` pl
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const toolCallId = "1";
+      const toolCallId = '1';
 
       yield {
         content: [
           {
-            type: "tool-call",
+            type: 'tool-call',
             toolCallId,
-            toolName: "get_weather",
-            args: { city: "NYC" },
+            toolName: 'get_weather',
+            args: { city: 'NYC' },
             argsText: '{"city":"NYC"}',
           },
         ],
       };
 
-      const result = await getWeather({ city: "NYC" });
+      const result = await getWeather({ city: 'NYC' });
 
       // Send result on the same tool-call part
       yield {
         content: [
           {
-            type: "tool-call",
+            type: 'tool-call',
             toolCallId,
-            toolName: "get_weather",
-            args: { city: "NYC" },
+            toolName: 'get_weather',
+            args: { city: 'NYC' },
             argsText: '{"city":"NYC"}',
             result,
           },
-          { type: "text", text: `The weather in NYC is ${result.temp}°C` },
+          { type: 'text', text: `The weather in NYC is ${result.temp}°C` },
         ],
       };
     },
@@ -207,25 +207,25 @@ const runtime = useLocalRuntime({
       const attachments = lastMessage.attachments || [];
 
       for (const attachment of attachments) {
-        if (attachment.type === "image") {
+        if (attachment.type === 'image') {
         }
       }
 
-      return { content: [{ type: "text", text: "Processed" }] };
+      return { content: [{ type: 'text', text: 'Processed' }] };
     },
   },
   adapters: {
     attachments: {
-      accept: "image/*",
+      accept: 'image/*',
       // add() returns a PendingAttachment
       async add({ file }) {
         return {
           id: crypto.randomUUID(),
-          type: "image",
+          type: 'image',
           name: file.name,
           contentType: file.type,
           file,
-          status: { type: "requires-action", reason: "composer-send" },
+          status: { type: 'requires-action', reason: 'composer-send' },
         };
       },
       // send() returns a CompleteAttachment with content parts
@@ -233,8 +233,8 @@ const runtime = useLocalRuntime({
         const dataUrl = await readAsDataURL(attachment.file);
         return {
           ...attachment,
-          status: { type: "complete" },
-          content: [{ type: "image", image: dataUrl }],
+          status: { type: 'complete' },
+          content: [{ type: 'image', image: dataUrl }],
         };
       },
       async remove() {},
@@ -267,8 +267,8 @@ const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
+        const response = await fetch('/api/chat', {
+          method: 'POST',
           body: JSON.stringify({ messages }),
           signal: abortSignal,
         });
@@ -279,7 +279,7 @@ const runtime = useLocalRuntime({
 
         // ... process response
       } catch (error) {
-        if (error.name === "AbortError") {
+        if (error.name === 'AbortError') {
           // User cancelled - normal, don't throw
           return;
         }

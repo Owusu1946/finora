@@ -19,7 +19,7 @@ npx assistant-ui add assistant-modal
 
 ```tsx
 // app/page.tsx
-import { AssistantModal } from "@/components/assistant-ui/assistant-modal";
+import { AssistantModal } from '@/components/assistant-ui/assistant-modal';
 
 export default function Page() {
   return <AssistantModal />;
@@ -31,7 +31,7 @@ Must be a descendant of `AssistantRuntimeProvider` so it shares the same runtime
 The generated component composes these primitives from `@assistant-ui/react`:
 
 ```tsx
-import { AssistantModalPrimitive } from "@assistant-ui/react";
+import { AssistantModalPrimitive } from '@assistant-ui/react';
 
 <AssistantModalPrimitive.Root>
   <AssistantModalPrimitive.Anchor>
@@ -42,7 +42,7 @@ import { AssistantModalPrimitive } from "@assistant-ui/react";
   <AssistantModalPrimitive.Content sideOffset={16}>
     <Thread />
   </AssistantModalPrimitive.Content>
-</AssistantModalPrimitive.Root>
+</AssistantModalPrimitive.Root>;
 ```
 
 `AssistantModalPrimitive.Content` accepts `sideOffset` (number) and `className`. The trigger swaps a `BotIcon` for a `ChevronDownIcon` based on `data-state="open" | "closed"`.
@@ -57,11 +57,11 @@ npx assistant-ui add assistant-sidebar
 
 ```tsx
 // app/page.tsx
-import { AssistantSidebar } from "@/components/assistant-ui/assistant-sidebar";
+import { AssistantSidebar } from '@/components/assistant-ui/assistant-sidebar';
 
 export default function Home() {
   return (
-    <div className="h-full">
+    <div className='h-full'>
       <AssistantSidebar>{/* your main app content */}</AssistantSidebar>
     </div>
   );
@@ -71,22 +71,24 @@ export default function Home() {
 `AssistantSidebar` is `FC<PropsWithChildren>`; `children` fill the left panel. It depends on the shadcn `resizable` component (`components/ui/resizable`), which `add` installs automatically. Edit the generated file to tune panel sizes:
 
 ```tsx
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { Thread } from "@/components/assistant-ui/thread";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { Thread } from '@/components/assistant-ui/thread';
 
-<ResizablePanelGroup direction="horizontal">
-  <ResizablePanel defaultSize={60} minSize={30}>
+<ResizablePanelGroup direction='horizontal'>
+  <ResizablePanel
+    defaultSize={60}
+    minSize={30}
+  >
     {children}
   </ResizablePanel>
   <ResizableHandle withHandle />
-  <ResizablePanel defaultSize={40} minSize={20}>
+  <ResizablePanel
+    defaultSize={40}
+    minSize={20}
+  >
     <Thread />
   </ResizablePanel>
-</ResizablePanelGroup>
+</ResizablePanelGroup>;
 ```
 
 Wrap the whole thing in `AssistantRuntimeProvider` as usual.
@@ -100,18 +102,18 @@ npx assistant-ui add model-selector
 ```
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ModelSelector } from "@/components/assistant-ui/model-selector";
+import { useState } from 'react';
+import { ModelSelector } from '@/components/assistant-ui/model-selector';
 
 const models = [
-  { id: "gpt-5.4", name: "GPT-5.4", description: "Most capable" },
-  { id: "gpt-5.4-nano", name: "GPT-5.4 nano", description: "Fast and cheap" },
+  { id: 'gpt-5.4', name: 'GPT-5.4', description: 'Most capable' },
+  { id: 'gpt-5.4-nano', name: 'GPT-5.4 nano', description: 'Fast and cheap' },
 ];
 
 function Toolbar() {
-  const [modelId, setModelId] = useState("gpt-5.4-nano");
+  const [modelId, setModelId] = useState('gpt-5.4-nano');
   return (
     <ModelSelector
       models={models}
@@ -131,8 +133,8 @@ Render it inside `AssistantRuntimeProvider`. Each `ModelOption` is `{ id, name, 
 The component subscribes the selected model into the model context via `useAui().modelContext().register`. The `register` callback returns its own unsubscribe function, so returning it from `useEffect` cleans up on change:
 
 ```tsx
-import { useEffect } from "react";
-import { useAui } from "@assistant-ui/react";
+import { useEffect } from 'react';
+import { useAui } from '@assistant-ui/react';
 
 const api = useAui();
 
@@ -150,13 +152,13 @@ The `config` object rides along in the request body. With the AI SDK route the r
 
 ```ts
 // app/api/chat/route.ts
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
 
 export async function POST(req: Request) {
   const { messages, config } = await req.json();
   const result = streamText({
-    model: openai(config?.modelName ?? "gpt-5.4-nano"),
+    model: openai(config?.modelName ?? 'gpt-5.4-nano'),
     messages: convertToModelMessages(messages),
   });
   return result.toUIMessageStreamResponse();
@@ -172,12 +174,16 @@ import {
   ModelSelectorRoot,
   ModelSelectorTrigger,
   ModelSelectorContent,
-} from "@/components/assistant-ui/model-selector";
+} from '@/components/assistant-ui/model-selector';
 
-<ModelSelectorRoot models={models} value={modelId} onValueChange={setModelId}>
-  <ModelSelectorTrigger variant="ghost" />
+<ModelSelectorRoot
+  models={models}
+  value={modelId}
+  onValueChange={setModelId}
+>
+  <ModelSelectorTrigger variant='ghost' />
   <ModelSelectorContent />
-</ModelSelectorRoot>
+</ModelSelectorRoot>;
 ```
 
 Note: `ModelSelectorRoot` is presentational only. The runtime registration lives in the all-in-one `ModelSelector`, so a bare `Root` does not switch the server model on its own.
@@ -193,27 +199,24 @@ npx assistant-ui add attachment
 Wire them into your `thread.tsx`. In the composer:
 
 ```tsx
-import {
-  ComposerAttachments,
-  ComposerAddAttachment,
-} from "@/components/assistant-ui/attachment";
+import { ComposerAttachments, ComposerAddAttachment } from '@/components/assistant-ui/attachment';
 
 <ComposerPrimitive.Root>
   <ComposerAttachments />
   <ComposerAddAttachment />
   <ComposerPrimitive.Input />
-</ComposerPrimitive.Root>
+</ComposerPrimitive.Root>;
 ```
 
 In a user message, render the sent attachments above the text:
 
 ```tsx
-import { UserMessageAttachments } from "@/components/assistant-ui/attachment";
+import { UserMessageAttachments } from '@/components/assistant-ui/attachment';
 
 <MessagePrimitive.Root>
   <UserMessageAttachments />
   <MessagePrimitive.Parts />
-</MessagePrimitive.Root>
+</MessagePrimitive.Root>;
 ```
 
 - `ComposerAttachments`: tiles for pending attachments in the composer, each with a remove button.
@@ -231,7 +234,7 @@ import {
   CompositeAttachmentAdapter,
   SimpleImageAttachmentAdapter,
   SimpleTextAttachmentAdapter,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 
 const runtime = useChatRuntime({
   adapters: {

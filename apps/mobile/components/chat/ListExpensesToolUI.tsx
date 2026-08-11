@@ -1,11 +1,12 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { BusinessExpense } from '@/lib/expenses-storage';
+
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { BusinessExpense } from '@/lib/expenses-storage';
 
 type Result = { expenses?: BusinessExpense[]; total?: number; currency?: string };
 

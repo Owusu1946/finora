@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -9,6 +8,7 @@ import {
   SettingsSection,
   SettingsSegmented,
 } from '@/components/settings/SettingsPrimitives';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, setAccountType } from '@/lib/account';
 import { useAuthGate } from '@/lib/auth-gate';

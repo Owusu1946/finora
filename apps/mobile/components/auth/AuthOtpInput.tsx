@@ -1,7 +1,7 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useRef, type ElementRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 

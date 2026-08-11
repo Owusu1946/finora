@@ -7,10 +7,10 @@ Register system instructions that guide assistant behavior from any component in
 `useAssistantInstructions` accepts a plain string. Instructions register into the model context on mount, update when the string changes, and unregister on unmount.
 
 ```tsx
-import { useAssistantInstructions } from "@assistant-ui/react";
+import { useAssistantInstructions } from '@assistant-ui/react';
 
 function SupportChat() {
-  useAssistantInstructions("You are a customer support assistant. Be concise and cite docs.");
+  useAssistantInstructions('You are a customer support assistant. Be concise and cite docs.');
   return <Thread />;
 }
 ```
@@ -21,7 +21,7 @@ Pass an object to control registration. `disabled: true` skips registering witho
 
 ```tsx
 useAssistantInstructions({
-  instruction: "You are a helpful form assistant.",
+  instruction: 'You are a helpful form assistant.',
   disabled: false,
 });
 ```
@@ -33,7 +33,7 @@ Toggle instructions with `disabled` instead of wrapping the hook in a condition 
 ```tsx
 function ModeAwareChat({ adminMode }: { adminMode: boolean }) {
   useAssistantInstructions({
-    instruction: "You may run destructive operations when the user confirms.",
+    instruction: 'You may run destructive operations when the user confirms.',
     disabled: !adminMode,
   });
   return <Thread />;
@@ -72,7 +72,7 @@ function Assistant({ userName }: { userName: string }) {
 `useAssistantInstructions` re-registers whenever its value changes. For values that should be read fresh on every run without re-registration, use `useAssistantContext`, whose `getContext` callback is evaluated each time the model context is read and returns the system string directly.
 
 ```tsx
-import { useAssistantContext } from "@assistant-ui/react";
+import { useAssistantContext } from '@assistant-ui/react';
 
 function CartContext({ cart }: { cart: Cart }) {
   useAssistantContext({
@@ -90,7 +90,7 @@ Instructions are additive. When several components register instructions, the sy
 function App() {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <GlobalInstructions />  {/* "You are a helpful assistant." */}
+      <GlobalInstructions /> {/* "You are a helpful assistant." */}
       <CheckoutInstructions /> {/* "When checking out, confirm the address." */}
       <Thread />
     </AssistantRuntimeProvider>
@@ -103,19 +103,19 @@ function App() {
 Instructions pair with `makeAssistantTool` (browser tools) and `makeAssistantVisible` (component context) to describe how the assistant should use them.
 
 ```tsx
-import { makeAssistantTool, useAssistantInstructions, tool } from "@assistant-ui/react";
-import { z } from "zod";
+import { makeAssistantTool, useAssistantInstructions, tool } from '@assistant-ui/react';
+import { z } from 'zod';
 
 const SubmitFormTool = makeAssistantTool({
   ...tool({
     parameters: z.object({ email: z.string() }),
     execute: async ({ email }) => submitForm(email),
   }),
-  toolName: "submitForm",
+  toolName: 'submitForm',
 });
 
 function FormCopilot() {
-  useAssistantInstructions("Help the user fill the form, then call submitForm.");
+  useAssistantInstructions('Help the user fill the form, then call submitForm.');
   return (
     <>
       <SubmitFormTool />
@@ -130,13 +130,13 @@ function FormCopilot() {
 `useAssistantInstructions` is a thin wrapper over the model context API. Register `system` directly via `useAui` when you need to combine instructions, tools, and cleanup yourself.
 
 ```tsx
-import { useAui } from "@assistant-ui/react";
+import { useAui } from '@assistant-ui/react';
 
 function Provider() {
   const aui = useAui();
   useEffect(() => {
     return aui.modelContext().register({
-      getModelContext: () => ({ system: "You are a search assistant." }),
+      getModelContext: () => ({ system: 'You are a search assistant.' }),
     });
   }, [aui]);
   return null;

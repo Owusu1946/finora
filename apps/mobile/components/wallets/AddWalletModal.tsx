@@ -1,10 +1,10 @@
-import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CurrencyIcon, SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

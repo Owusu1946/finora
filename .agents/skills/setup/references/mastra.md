@@ -13,10 +13,10 @@ Wire Mastra agents into assistant-ui. There is no `@assistant-ui/react-mastra` p
 
 ## Two Deployment Modes
 
-| Mode | Where the agent runs | Backend wiring | Frontend transport |
-|------|----------------------|----------------|--------------------|
-| Full-stack | Next.js API route in the same app | `agent.stream()` + `toAISdkStream` + `createUIMessageStream` | default (`AssistantChatTransport` to `/api/chat`) |
-| Separate server | Standalone Mastra server | `chatRoute({ path })` from `@mastra/ai-sdk` | `AssistantChatTransport` pointed at the Mastra URL |
+| Mode            | Where the agent runs              | Backend wiring                                               | Frontend transport                                 |
+| --------------- | --------------------------------- | ------------------------------------------------------------ | -------------------------------------------------- |
+| Full-stack      | Next.js API route in the same app | `agent.stream()` + `toAISdkStream` + `createUIMessageStream` | default (`AssistantChatTransport` to `/api/chat`)  |
+| Separate server | Standalone Mastra server          | `chatRoute({ path })` from `@mastra/ai-sdk`                  | `AssistantChatTransport` pointed at the Mastra URL |
 
 Both modes use `useChatRuntime` from `@assistant-ui/react-ai-sdk`. Mastra never exposes a dedicated assistant-ui package; the integration rides the AI SDK v6 runtime. Do not reach for `@mastra/client-js` for the chat stream; the browser talks to the Mastra HTTP route directly through `AssistantChatTransport`.
 
@@ -34,7 +34,7 @@ Mark Mastra as a server external package so its native deps are not bundled:
 // next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["@mastra/*"],
+  serverExternalPackages: ['@mastra/*'],
 };
 export default nextConfig;
 ```
@@ -43,14 +43,14 @@ Define the agent:
 
 ```ts
 // mastra/agents/chefAgent.ts
-import { Agent } from "@mastra/core/agent";
+import { Agent } from '@mastra/core/agent';
 
 export const chefAgent = new Agent({
-  name: "chef-agent",
+  name: 'chef-agent',
   instructions:
-    "You are Michel, a practical and experienced home chef. " +
-    "You help people cook with whatever ingredients they have available.",
-  model: "openai/gpt-5.4-mini",
+    'You are Michel, a practical and experienced home chef. ' +
+    'You help people cook with whatever ingredients they have available.',
+  model: 'openai/gpt-5.4-mini',
 });
 ```
 
@@ -58,8 +58,8 @@ Register it on a `Mastra` instance:
 
 ```ts
 // mastra/index.ts
-import { Mastra } from "@mastra/core";
-import { chefAgent } from "./agents/chefAgent";
+import { Mastra } from '@mastra/core';
+import { chefAgent } from './agents/chefAgent';
 
 export const mastra = new Mastra({
   agents: { chefAgent },
@@ -70,21 +70,21 @@ The route resolves the agent, calls `agent.stream(messages)`, then adapts the Ma
 
 ```ts
 // app/api/chat/route.ts
-import { createUIMessageStream, createUIMessageStreamResponse } from "ai";
-import { toAISdkStream } from "@mastra/ai-sdk";
-import { mastra } from "@/mastra";
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
+import { toAISdkStream } from '@mastra/ai-sdk';
+import { mastra } from '@/mastra';
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
-  const agent = mastra.getAgent("chefAgent");
+  const agent = mastra.getAgent('chefAgent');
   const stream = await agent.stream(messages);
 
   const uiMessageStream = createUIMessageStream({
     originalMessages: messages,
     execute: async ({ writer }) => {
-      for await (const part of toAISdkStream(stream, { from: "agent" })) {
+      for await (const part of toAISdkStream(stream, { from: 'agent' })) {
         await writer.write(part);
       }
     },
@@ -108,18 +108,18 @@ npm install @mastra/ai-sdk
 
 ```ts
 // src/mastra/index.ts
-import { Mastra } from "@mastra/core";
-import { chatRoute } from "@mastra/ai-sdk";
-import { chefAgent } from "./agents/chefAgent";
+import { Mastra } from '@mastra/core';
+import { chatRoute } from '@mastra/ai-sdk';
+import { chefAgent } from './agents/chefAgent';
 
 export const mastra = new Mastra({
   agents: { chefAgent },
   server: {
     cors: {
-      origin: process.env.FRONTEND_ORIGIN ?? "http://localhost:3000",
+      origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:3000',
       credentials: true,
     },
-    apiRoutes: [chatRoute({ path: "/chat/:agentId" })],
+    apiRoutes: [chatRoute({ path: '/chat/:agentId' })],
   },
 });
 ```
@@ -134,11 +134,11 @@ Full-stack apps use the default transport (the route is local at `/api/chat`):
 
 ```tsx
 // app/assistant.tsx
-"use client";
+'use client';
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
-import { Thread } from "@/components/assistant-ui/thread";
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
+import { Thread } from '@/components/assistant-ui/thread';
 
 export const Assistant = () => {
   const runtime = useChatRuntime();
@@ -155,11 +155,11 @@ Separate-server apps point `AssistantChatTransport` at the Mastra URL:
 
 ```tsx
 // app/assistant.tsx
-"use client";
+'use client';
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { AssistantChatTransport, useChatRuntime } from "@assistant-ui/react-ai-sdk";
-import { Thread } from "@/components/assistant-ui/thread";
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { AssistantChatTransport, useChatRuntime } from '@assistant-ui/react-ai-sdk';
+import { Thread } from '@/components/assistant-ui/thread';
 
 export const Assistant = () => {
   const runtime = useChatRuntime({

@@ -52,12 +52,7 @@ export function LiquidGlassRing({
   }, [cx, cy, r]);
 
   const opacity = useDerivedValue(() => {
-    return interpolate(
-      progress.value,
-      [1.2, 1.65, 2.35, 2.85],
-      [0, 1, 1, 0],
-      Extrapolation.CLAMP,
-    );
+    return interpolate(progress.value, [1.2, 1.65, 2.35, 2.85], [0, 1, 1, 0], Extrapolation.CLAMP);
   });
 
   const discOpacity = useDerivedValue(() => {

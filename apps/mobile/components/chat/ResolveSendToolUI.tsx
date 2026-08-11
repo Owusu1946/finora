@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,6 +11,7 @@ import { SendMoneyWizard, type SendMoneySeed } from '@/components/chat/SendMoney
 import { WizardStepHeader } from '@/components/chat/WizardChrome';
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up';

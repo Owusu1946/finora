@@ -1,6 +1,6 @@
 ---
 name: primitives
-description: "Builds and customizes assistant-ui chat UI from composable, unstyled @assistant-ui/react primitives that follow Radix-style part composition. Use when assembling or styling a custom Thread, Composer, message rendering, action bar, or branch picker from building blocks: ThreadPrimitive (.Root, .Viewport, .Messages, .Empty, .ScrollToBottom), ComposerPrimitive (.Input, .Send, .Cancel, .Attachments), MessagePrimitive (.Parts/.Content, .Error), ActionBarPrimitive (.Copy, .Edit, .Reload, .Speak, feedback, .ExportMarkdown), BranchPickerPrimitive, AttachmentPrimitive, ThreadListPrimitive, ThreadListItemPrimitive. Covers MessagePrimitive.Parts children render functions for text, image, reasoning, and tool-call parts; conditional rendering with AuiIf (deprecated .If); and gotchas like wrapping in AssistantRuntimeProvider and adding className since primitives ship unstyled. For prebuilt drop-in UI and scaffolding use setup; for multi-thread sidebar behavior use thread-list."
+description: 'Builds and customizes assistant-ui chat UI from composable, unstyled @assistant-ui/react primitives that follow Radix-style part composition. Use when assembling or styling a custom Thread, Composer, message rendering, action bar, or branch picker from building blocks: ThreadPrimitive (.Root, .Viewport, .Messages, .Empty, .ScrollToBottom), ComposerPrimitive (.Input, .Send, .Cancel, .Attachments), MessagePrimitive (.Parts/.Content, .Error), ActionBarPrimitive (.Copy, .Edit, .Reload, .Speak, feedback, .ExportMarkdown), BranchPickerPrimitive, AttachmentPrimitive, ThreadListPrimitive, ThreadListItemPrimitive. Covers MessagePrimitive.Parts children render functions for text, image, reasoning, and tool-call parts; conditional rendering with AuiIf (deprecated .If); and gotchas like wrapping in AssistantRuntimeProvider and adding className since primitives ship unstyled. For prebuilt drop-in UI and scaffolding use setup; for multi-thread sidebar behavior use thread-list.'
 license: MIT
 ---
 
@@ -32,46 +32,40 @@ import {
   AttachmentPrimitive,
   ThreadListPrimitive,
   ThreadListItemPrimitive,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 ```
 
 ## Primitive Parts
 
-| Primitive | Key Parts |
-|-----------|-----------|
-| `ThreadPrimitive` | `.Root`, `.Viewport`, `.Messages`, `.Empty`, `.ScrollToBottom` |
-| `ComposerPrimitive` | `.Root`, `.Input`, `.Send`, `.Cancel`, `.Attachments` |
-| `MessagePrimitive` | `.Root`, `.Parts`/`.Content`, `.If`, `.Error` |
-| `ActionBarPrimitive` | `.Copy`, `.Edit`, `.Reload`, `.Speak`, `.FeedbackPositive`, `.FeedbackNegative`, `.ExportMarkdown` |
-| `BranchPickerPrimitive` | `.Previous`, `.Next`, `.Number`, `.Count` |
+| Primitive               | Key Parts                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| `ThreadPrimitive`       | `.Root`, `.Viewport`, `.Messages`, `.Empty`, `.ScrollToBottom`                                     |
+| `ComposerPrimitive`     | `.Root`, `.Input`, `.Send`, `.Cancel`, `.Attachments`                                              |
+| `MessagePrimitive`      | `.Root`, `.Parts`/`.Content`, `.If`, `.Error`                                                      |
+| `ActionBarPrimitive`    | `.Copy`, `.Edit`, `.Reload`, `.Speak`, `.FeedbackPositive`, `.FeedbackNegative`, `.ExportMarkdown` |
+| `BranchPickerPrimitive` | `.Previous`, `.Next`, `.Number`, `.Count`                                                          |
 
 ## Custom Thread Example
 
 ```tsx
 function CustomThread() {
   return (
-    <ThreadPrimitive.Root className="flex flex-col h-full">
+    <ThreadPrimitive.Root className='flex flex-col h-full'>
       <ThreadPrimitive.Empty>
-        <div className="flex-1 flex items-center justify-center">
-          Start a conversation
-        </div>
+        <div className='flex-1 flex items-center justify-center'>Start a conversation</div>
       </ThreadPrimitive.Empty>
 
-      <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto p-4">
+      <ThreadPrimitive.Viewport className='flex-1 overflow-y-auto p-4'>
         <ThreadPrimitive.Messages>
           {({ message }) =>
-            message.role === "user" ? (
-              <CustomUserMessage />
-            ) : (
-              <CustomAssistantMessage />
-            )
+            message.role === 'user' ? <CustomUserMessage /> : <CustomAssistantMessage />
           }
         </ThreadPrimitive.Messages>
       </ThreadPrimitive.Viewport>
 
-      <ComposerPrimitive.Root className="border-t p-4 flex gap-2">
-        <ComposerPrimitive.Input className="flex-1 rounded-lg border px-4 py-2" />
-        <ComposerPrimitive.Send className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+      <ComposerPrimitive.Root className='border-t p-4 flex gap-2'>
+        <ComposerPrimitive.Input className='flex-1 rounded-lg border px-4 py-2' />
+        <ComposerPrimitive.Send className='bg-blue-500 text-white px-4 py-2 rounded-lg'>
           Send
         </ComposerPrimitive.Send>
       </ComposerPrimitive.Root>
@@ -112,18 +106,23 @@ As of 0.14, primitives that render lists (`ThreadPrimitive.Messages`, `MessagePr
 <MessagePrimitive.Parts>
   {({ part }) => {
     switch (part.type) {
-      case "text":
+      case 'text':
         return <p>{part.text}</p>;
-      case "image":
-        return <img src={part.image} alt="" />;
-      case "reasoning":
+      case 'image':
+        return (
+          <img
+            src={part.image}
+            alt=''
+          />
+        );
+      case 'reasoning':
         return (
           <details>
             <summary>Thinking</summary>
             {part.text}
           </details>
         );
-      case "tool-call":
+      case 'tool-call':
         return part.toolUI ?? <div>Tool: {part.toolName}</div>;
       default:
         return null; // registered tool/data UIs still render
@@ -138,9 +137,11 @@ Returning `null` from the render function lets registered tool and data UIs rend
 
 ```tsx
 <AuiIf condition={({ message }) => message.branchCount > 1}>
-  <BranchPickerPrimitive.Root className="flex items-center gap-1">
+  <BranchPickerPrimitive.Root className='flex items-center gap-1'>
     <BranchPickerPrimitive.Previous>←</BranchPickerPrimitive.Previous>
-    <span><BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count /></span>
+    <span>
+      <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+    </span>
     <BranchPickerPrimitive.Next>→</BranchPickerPrimitive.Next>
   </BranchPickerPrimitive.Root>
 </AuiIf>
@@ -149,9 +150,11 @@ Returning `null` from the render function lets registered tool and data UIs rend
 ## Common Gotchas
 
 **Primitives not rendering**
+
 - Wrap in `AssistantRuntimeProvider`
 - Ensure parent primitive provides context
 
 **Styles not applying**
+
 - Primitives are unstyled by default
 - Add `className` and style with your app's Tailwind/CSS system

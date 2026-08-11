@@ -1,25 +1,22 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { useEffect, useState } from 'react';
+import { Keyboard, Platform, Pressable, ScrollView, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import type { MomoNetworkId } from '@/lib/momo-networks';
+
 import { FinoraMarkLoader } from '@/components/ui/finora-mark-loader';
 import { Icon } from '@/components/ui/icon';
 import { SuccessCheckmark } from '@/components/ui/success-checkmark';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { haptics } from '@/lib/haptics';
-import type { MomoNetworkId } from '@/lib/momo-networks';
 import { playPaymentSuccessSound } from '@/lib/sounds';
-import { useEffect, useState } from 'react';
-import {
-  Keyboard,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-} from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import type { DepositPalette, DepositStep } from './types';
 
 import { MomoIcon } from './icons';
 import { PrimaryButton } from './primitives';
 import { depositStyles as styles } from './styles';
-import type { DepositPalette, DepositStep } from './types';
 
 export function MomoFlowScreen({
   step,
@@ -185,9 +182,7 @@ function MomoForm({
             id={momoNetwork}
             size={28}
           />
-          <Text style={[styles.selectValue, { color: colors.foreground }]}>
-            {momoNetworkLabel}
-          </Text>
+          <Text style={[styles.selectValue, { color: colors.foreground }]}>{momoNetworkLabel}</Text>
         </View>
         <Icon
           name='chevron-down'
@@ -285,9 +280,7 @@ function MomoAwaitingStep({
   return (
     <View style={styles.momoStatusBody}>
       <View style={styles.awaitingHero}>
-        <Text style={[styles.awaitingTitle, { color: colors.foreground }]}>
-          Awaiting approval
-        </Text>
+        <Text style={[styles.awaitingTitle, { color: colors.foreground }]}>Awaiting approval</Text>
         <FinoraMarkLoader size={88} />
         <Text style={[styles.awaitingAmount, { color: colors.foreground }]}>
           ₵{amountNum.toFixed(2)}
@@ -295,9 +288,7 @@ function MomoAwaitingStep({
       </View>
 
       <Text style={[styles.awaitingExpiry, { color: colors.mutedForeground }]}>
-        {secondsLeft > 0
-          ? `Expires in ${formatCountdown(secondsLeft)}`
-          : 'Prompt expired'}
+        {secondsLeft > 0 ? `Expires in ${formatCountdown(secondsLeft)}` : 'Prompt expired'}
       </Text>
 
       <PrimaryButton
@@ -330,9 +321,7 @@ function MomoCompletedStep({
       <View style={styles.successHero}>
         <SuccessCheckmark size={80} />
         <Animated.View entering={FadeInDown.delay(280).duration(320)}>
-          <Text style={[styles.successTitle, { color: colors.foreground }]}>
-            Deposit received
-          </Text>
+          <Text style={[styles.successTitle, { color: colors.foreground }]}>Deposit received</Text>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(380).duration(320)}>
           <Text style={[styles.successAmount, { color: colors.foreground }]}>

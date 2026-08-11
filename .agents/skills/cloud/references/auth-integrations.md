@@ -26,8 +26,8 @@ Two paths exist for auth. With AssistantCloud, the cloud handles the JWT exchang
 better-auth owns the session, user table, and cookie. Its catch-all handler must be wired so sign-in, sign-out, and session refresh have somewhere to land.
 
 ```ts title="app/api/auth/[...all]/route.ts"
-import { auth } from "@/auth";
-import { toNextJsHandler } from "better-auth/next-js";
+import { auth } from '@/auth';
+import { toNextJsHandler } from 'better-auth/next-js';
 
 export const { GET, POST } = toNextJsHandler(auth);
 ```
@@ -37,19 +37,19 @@ export const { GET, POST } = toNextJsHandler(auth);
 Resolve the session server-side with `auth.api.getSession`. It takes the request headers (which carry the session cookie) and returns `null` for unauthenticated callers. Return 401 before calling the model so unauthenticated traffic does not burn provider credits.
 
 ```ts title="app/api/chat/route.ts"
-import { auth } from "@/auth";
-import { headers } from "next/headers";
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
-import type { UIMessage } from "ai";
+import { auth } from '@/auth';
+import { headers } from 'next/headers';
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
+import type { UIMessage } from 'ai';
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return new Response("Unauthorized", { status: 401 });
+  if (!session) return new Response('Unauthorized', { status: 401 });
 
   const { messages }: { messages: UIMessage[] } = await req.json();
   const result = streamText({
-    model: openai("gpt-5.4-nano"),
+    model: openai('gpt-5.4-nano'),
     messages: await convertToModelMessages(messages),
   });
   return result.toUIMessageStreamResponse();
@@ -63,11 +63,11 @@ export async function POST(req: Request) {
 With custom thread persistence, every thread endpoint filters by `session.user.id`. The `id` field comes from the user row better-auth manages, so no callback configuration is needed.
 
 ```ts title="app/api/threads/route.ts"
-import { auth } from "@/auth";
-import { headers } from "next/headers";
-import { db } from "@/db";
-import { threads } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { auth } from '@/auth';
+import { headers } from 'next/headers';
+import { db } from '@/db';
+import { threads } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -90,7 +90,7 @@ If better-auth's user schema and your threads table share a database, a foreign 
 Create the client once and import it from a shared module so all hooks share state.
 
 ```ts title="lib/auth-client.ts"
-import { createAuthClient } from "better-auth/react";
+import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient();
 ```
@@ -100,11 +100,11 @@ export const authClient = createAuthClient();
 `useSession` from the React client tracks the live session. The first render may run before the session resolves, so drop a small effect inside `<AssistantRuntimeProvider>` that reloads the thread list once the user is signed in.
 
 ```tsx title="app/components/ReloadOnAuth.tsx"
-"use client";
+'use client';
 
-import { useAui } from "@assistant-ui/react";
-import { authClient } from "@/lib/auth-client";
-import { useEffect } from "react";
+import { useAui } from '@assistant-ui/react';
+import { authClient } from '@/lib/auth-client';
+import { useEffect } from 'react';
 
 export function ReloadOnAuth() {
   const aui = useAui();
@@ -123,18 +123,18 @@ Mount it anywhere inside your `<AssistantRuntimeProvider>` subtree (typically ne
 Clerk's `auth()` from `@clerk/nextjs/server` runs in any Next.js server context (server components, route handlers, server actions) and returns `userId` directly. Return 401 before calling the model. This does not reproduce `clerkMiddleware`; the guide assumes `<ClerkProvider>` and `clerkMiddleware()` are already in place.
 
 ```ts title="app/api/chat/route.ts"
-import { auth } from "@clerk/nextjs/server";
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
-import type { UIMessage } from "ai";
+import { auth } from '@clerk/nextjs/server';
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
+import type { UIMessage } from 'ai';
 
 export async function POST(req: Request) {
   const { userId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  if (!userId) return new Response('Unauthorized', { status: 401 });
 
   const { messages }: { messages: UIMessage[] } = await req.json();
   const result = streamText({
-    model: openai("gpt-5.4-nano"),
+    model: openai('gpt-5.4-nano'),
     messages: await convertToModelMessages(messages),
   });
   return result.toUIMessageStreamResponse();
@@ -146,10 +146,10 @@ export async function POST(req: Request) {
 With custom thread persistence, every thread-list endpoint filters by `userId`. Without scoping, any signed-in user can list everyone's threads.
 
 ```ts title="app/api/threads/route.ts"
-import { auth } from "@clerk/nextjs/server";
-import { db } from "@/db";
-import { threads } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { auth } from '@clerk/nextjs/server';
+import { db } from '@/db';
+import { threads } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   const { userId } = await auth();
@@ -170,7 +170,7 @@ export async function GET() {
 For organization-scoped threads (Clerk Orgs), pull `orgId` from `auth()` and add it to the where clause. The `orgId` plus `userId` combination is a stable workspace key.
 
 ```ts
-import { and, eq } from "drizzle-orm";
+import { and, eq } from 'drizzle-orm';
 
 const { userId, orgId } = await auth();
 if (!userId) return new Response(null, { status: 401 });
@@ -179,9 +179,7 @@ const rows = await db
   .select()
   .from(threads)
   .where(
-    orgId
-      ? and(eq(threads.orgId, orgId), eq(threads.userId, userId))
-      : eq(threads.userId, userId),
+    orgId ? and(eq(threads.orgId, orgId), eq(threads.userId, userId)) : eq(threads.userId, userId),
   );
 ```
 
@@ -192,11 +190,11 @@ Surface Clerk's `<OrganizationSwitcher>` (from `@clerk/nextjs`) and re-fetch thr
 The first render of `<MyProvider>` may run before Clerk resolves the user on the client. `useUser` from `@clerk/nextjs` exposes that state; reload once the user is loaded and signed in.
 
 ```tsx title="app/components/ReloadOnAuth.tsx"
-"use client";
+'use client';
 
-import { useAui } from "@assistant-ui/react";
-import { useUser } from "@clerk/nextjs";
-import { useEffect } from "react";
+import { useAui } from '@assistant-ui/react';
+import { useUser } from '@clerk/nextjs';
+import { useEffect } from 'react';
 
 export function ReloadOnAuth() {
   const aui = useAui();
@@ -215,12 +213,12 @@ Mount it inside your `<AssistantRuntimeProvider>` subtree. Because `reload()` di
 When you want Cloud-managed threads but custom workspace logic (for example, to derive the workspace from better-auth's `session.user.id` or from Clerk's `orgId`), use the backend token endpoint instead of a direct provider integration. Resolve the user server-side, compute a `workspaceId`, mint a token with the server-side client from `assistant-cloud`, and return it.
 
 ```ts title="app/api/assistant-ui-token/route.ts"
-import { AssistantCloud } from "assistant-cloud";
-import { auth } from "@clerk/nextjs/server"; // or auth.api.getSession for better-auth
+import { AssistantCloud } from 'assistant-cloud';
+import { auth } from '@clerk/nextjs/server'; // or auth.api.getSession for better-auth
 
 export const POST = async (req: Request) => {
   const { userId, orgId } = await auth();
-  if (!userId) return new Response("Unauthorized", { status: 401 });
+  if (!userId) return new Response('Unauthorized', { status: 401 });
 
   const workspaceId = orgId ? `${orgId}_${userId}` : userId;
 
@@ -238,13 +236,12 @@ export const POST = async (req: Request) => {
 The frontend client (from `@assistant-ui/react`) fetches that endpoint and returns the body as its `authToken`.
 
 ```tsx title="app/chat/page.tsx"
-import { AssistantCloud } from "@assistant-ui/react";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
+import { AssistantCloud } from '@assistant-ui/react';
+import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
 
 const cloud = new AssistantCloud({
   baseUrl: process.env.NEXT_PUBLIC_ASSISTANT_BASE_URL!,
-  authToken: () =>
-    fetch("/api/assistant-ui-token", { method: "POST" }).then((r) => r.text()),
+  authToken: () => fetch('/api/assistant-ui-token', { method: 'POST' }).then((r) => r.text()),
 });
 
 const runtime = useChatRuntime({ cloud });

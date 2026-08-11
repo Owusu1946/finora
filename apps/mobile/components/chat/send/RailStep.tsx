@@ -1,10 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
-import {
-  SETTLEMENT_METHOD_LABELS,
-  type SettlementMethod,
-} from '@/lib/send-corridors';
+import { SETTLEMENT_METHOD_LABELS, type SettlementMethod } from '@/lib/send-corridors';
 
 export function RailStep({
   step,
@@ -28,9 +25,7 @@ export function RailStep({
         total={total}
         title='How should it arrive?'
         subtitle={
-          countryName
-            ? `Payment rails available for ${countryName}`
-            : 'Choose the settlement rail'
+          countryName ? `Payment rails available for ${countryName}` : 'Choose the settlement rail'
         }
       />
       <View style={styles.chips}>

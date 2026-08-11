@@ -83,13 +83,13 @@ The important distinction is:
 
 **The MCP server is the platform.**
 
-| Component             | Role                                         |
-| --------------------- | -------------------------------------------- |
-| **Finora Backend**    | The core product (`apps/api`, Hono on CF Workers) |
-| **Finora MCP Server** | Interface for external AI agents (`apps/mcp`) |
-| **Expo Mobile App**   | Interface for humans (`apps/mobile`)         |
-| **WhatsApp / Slack / …** | Future interfaces                         |
-| **Web dashboard**     | Future interface                             |
+| Component                | Role                                              |
+| ------------------------ | ------------------------------------------------- |
+| **Finora Backend**       | The core product (`apps/api`, Hono on CF Workers) |
+| **Finora MCP Server**    | Interface for external AI agents (`apps/mcp`)     |
+| **Expo Mobile App**      | Interface for humans (`apps/mobile`)              |
+| **WhatsApp / Slack / …** | Future interfaces                                 |
+| **Web dashboard**        | Future interface                                  |
 
 They all use the same APIs, policies, and financial accounts.
 
@@ -137,26 +137,26 @@ The AI is the interface.
 
 Finora provides:
 
-* Financial accounts
-* Wallets
-* Fiat
-* Stablecoins
-* Transfers
-* Mobile Money
-* Bank payments
-* FX
-* Virtual accounts
-* Cards
-* Beneficiaries
-* Suppliers
-* Invoices
-* Payroll
-* Automations
-* Financial memory
-* Financial intelligence
-* Approval policies
-* Audit trails
-* MCP
+- Financial accounts
+- Wallets
+- Fiat
+- Stablecoins
+- Transfers
+- Mobile Money
+- Bank payments
+- FX
+- Virtual accounts
+- Cards
+- Beneficiaries
+- Suppliers
+- Invoices
+- Payroll
+- Automations
+- Financial memory
+- Financial intelligence
+- Approval policies
+- Audit trails
+- MCP
 
 ---
 
@@ -170,21 +170,21 @@ Finora becomes their personal financial assistant.
 
 They can:
 
-* Send money
-* Receive money
-* Manage wallets
-* Send crypto
-* Receive crypto
-* Convert currencies
-* View transactions
-* Create virtual accounts
-* Manage cards
-* Track spending
-* Set savings goals
-* Automate payments
-* Connect Gmail
-* Ask financial questions
-* Receive financial insights
+- Send money
+- Receive money
+- Manage wallets
+- Send crypto
+- Receive crypto
+- Convert currencies
+- View transactions
+- Create virtual accounts
+- Manage cards
+- Track spending
+- Set savings goals
+- Automate payments
+- Connect Gmail
+- Ask financial questions
+- Receive financial insights
 
 ### Business
 
@@ -192,20 +192,20 @@ Finora becomes an AI financial operator for the business.
 
 It can manage:
 
-* Business wallets
-* Virtual accounts
-* Suppliers
-* Beneficiaries
-* Invoices
-* Payroll
-* Recurring payments
-* Treasury
-* FX
-* Business expenses
-* Employee payments
-* Financial reporting
-* Automations
-* Approval policies
+- Business wallets
+- Virtual accounts
+- Suppliers
+- Beneficiaries
+- Invoices
+- Payroll
+- Recurring payments
+- Treasury
+- FX
+- Business expenses
+- Employee payments
+- Financial reporting
+- Automations
+- Approval policies
 
 There is **no account switcher in the chat UI**.
 
@@ -259,22 +259,22 @@ The model **never becomes the financial authority.**
 
 The model can:
 
-* understand
-* reason
-* select tools
-* build plans
-* ask questions
-* explain results
+- understand
+- reason
+- select tools
+- build plans
+- ask questions
+- explain results
 
 But the backend controls:
 
-* balances
-* permissions
-* transaction limits
-* policies
-* recipient validation
-* approval requirements
-* execution
+- balances
+- permissions
+- transaction limits
+- policies
+- recipient validation
+- approval requirements
+- execution
 
 The flow is:
 
@@ -362,22 +362,22 @@ prepare_payment()
 
 can internally handle:
 
-* recipient resolution
-* account validation
-* balance checking
-* fee calculation
-* rail selection
-* policy checking
+- recipient resolution
+- account validation
+- balance checking
+- fee calculation
+- rail selection
+- policy checking
 
 This makes the agent more reliable and reduces unnecessary tool-call complexity.
 
 ### Three tool surfaces
 
-| Surface      | Who uses it                         | Character |
-| ------------ | ----------------------------------- | --------- |
-| **platform** | Rich HTTP API (`apps/api`)          | Full operation set: prepare/execute, policy CRUD, webhooks, capability discovery, plans |
-| **mcp**      | External AI agents (`apps/mcp`)     | Curated high-level subset (~20–23 tools: `prepare_*`, plans, transactions, lists, discovery). Execute / PIN / biometrics stay on platform + mobile after the human Approvals inbox |
-| **mobile**   | Expo chat / local tool UIs          | In-app experience, approval UX, biometrics |
+| Surface      | Who uses it                     | Character                                                                                                                                                                          |
+| ------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **platform** | Rich HTTP API (`apps/api`)      | Full operation set: prepare/execute, policy CRUD, webhooks, capability discovery, plans                                                                                            |
+| **mcp**      | External AI agents (`apps/mcp`) | Curated high-level subset (~20–23 tools: `prepare_*`, plans, transactions, lists, discovery). Execute / PIN / biometrics stay on platform + mobile after the human Approvals inbox |
+| **mobile**   | Expo chat / local tool UIs      | In-app experience, approval UX, biometrics                                                                                                                                         |
 
 Prefer `prepare_*` → approval → `execute_approved_*` everywhere (payroll, invoices, suppliers, conversions) — never a direct AI execute.
 
@@ -551,16 +551,16 @@ Finora already knows who Ama is.
 
 It can also remember:
 
-* preferred currency
-* preferred payment methods
-* recurring recipients
-* financial goals
-* savings habits
-* suppliers
-* business patterns
-* recurring bills
-* spending patterns
-* user preferences
+- preferred currency
+- preferred payment methods
+- recurring recipients
+- financial goals
+- savings habits
+- suppliers
+- business patterns
+- recurring bills
+- spending patterns
+- user preferences
 
 The experience becomes more personalized over time.
 
@@ -655,18 +655,18 @@ Long-running jobs
 
 Inngest can handle:
 
-* Memory extraction
-* Embedding generation
-* Gmail synchronization
-* Invoice scanning
-* Scheduled payments
-* Recurring payments
-* Financial analysis
-* Notifications
-* Spending analysis
-* Proactive insights
-* Automation execution
-* Retryable workflows
+- Memory extraction
+- Embedding generation
+- Gmail synchronization
+- Invoice scanning
+- Scheduled payments
+- Recurring payments
+- Financial analysis
+- Notifications
+- Spending analysis
+- Proactive insights
+- Automation execution
+- Retryable workflows
 
 For example:
 
@@ -694,12 +694,12 @@ Users can connect Gmail.
 
 Finora can then:
 
-* Find invoices
-* Extract invoice information
-* Detect payment deadlines
-* Identify suppliers
-* Prepare invoice payments
-* Remind users about unpaid invoices
+- Find invoices
+- Extract invoice information
+- Detect payment deadlines
+- Identify suppliers
+- Prepare invoice payments
+- Remind users about unpaid invoices
 
 Example:
 
@@ -725,14 +725,14 @@ Finora prepares the card and renders it inside the app.
 
 Card management can include:
 
-* Create
-* Freeze
-* Unfreeze
-* Limits
-* Merchant restrictions
-* Transaction history
-* Delete
-* Secure card-detail access
+- Create
+- Freeze
+- Unfreeze
+- Limits
+- Merchant restrictions
+- Transaction history
+- Delete
+- Secure card-detail access
 
 ---
 
@@ -752,20 +752,20 @@ Or:
 
 The agent can:
 
-* Validate an address
-* Compare networks
-* Estimate fees
-* Prepare the transfer
-* Request approval
-* Execute
+- Validate an address
+- Compare networks
+- Estimate fees
+- Prepare the transfer
+- Request approval
+- Execute
 
 And users can have receive flows as well:
 
-* Crypto addresses
-* Receive QR codes
-* Payment requests
-* Wallet balances
-* Stablecoin transfers
+- Crypto addresses
+- Receive QR codes
+- Payment requests
+- Wallet balances
+- Stablecoin transfers
 
 ---
 
@@ -775,11 +775,11 @@ This is particularly important to our positioning.
 
 Finora can sit above payment methods such as:
 
-* Bank transfers
-* Mobile Money
-* Stablecoins
-* Fiat
-* Cross-border payment rails supported by WeWire
+- Bank transfers
+- Mobile Money
+- Stablecoins
+- Fiat
+- Cross-border payment rails supported by WeWire
 
 So someone could say:
 
@@ -876,16 +876,16 @@ The AI never stores credentials or directly moves money. It simply calls tools e
 
 The same backend can eventually power:
 
-* WhatsApp
-* SMS
-* Telegram
-* Slack
-* Microsoft Teams
-* Voice assistants
-* Enterprise software
-* Accounting platforms
-* ERP systems
-* Developer applications
+- WhatsApp
+- SMS
+- Telegram
+- Slack
+- Microsoft Teams
+- Voice assistants
+- Enterprise software
+- Accounting platforms
+- ERP systems
+- Developer applications
 
 For example, WhatsApp:
 
@@ -1047,37 +1047,37 @@ We should separate responsibilities.
 
 Source of truth:
 
-* Users
-* Accounts
-* Transactions
-* Wallets
-* Approvals
-* KYC
-* Beneficiaries
-* Invoices
-* Suppliers
-* Payroll
-* Policies
-* Memories
-* Audit logs
+- Users
+- Accounts
+- Transactions
+- Wallets
+- Approvals
+- KYC
+- Beneficiaries
+- Invoices
+- Suppliers
+- Payroll
+- Policies
+- Memories
+- Audit logs
 
 ### Redis
 
 Fast temporary data:
 
-* Caching
-* Sessions
-* Rate limiting
-* Temporary state
+- Caching
+- Sessions
+- Rate limiting
+- Temporary state
 
 ### KV
 
 Lightweight key-value state:
 
-* Preferences
-* Feature flags
-* Lightweight application state
-* Recent context
+- Preferences
+- Feature flags
+- Lightweight application state
+- Recent context
 
 ### pgvector
 
@@ -1093,11 +1093,11 @@ The mobile app should feel extremely fast.
 
 We can cache locally:
 
-* Chat history
-* Recent transactions
-* Preferences
-* UI state
-* Cached financial information
+- Chat history
+- Recent transactions
+- Preferences
+- UI state
+- Cached financial information
 
 But money-moving operations always go through the backend.
 
@@ -1121,67 +1121,67 @@ The device should never be the authority for whether money was actually transfer
 
 ### Mobile
 
-* Expo (SDK 54)
-* React Native
-* Expo Router
-* TypeScript
-* NativeWind v5
-* `@assistant-ui/react-native`
-* Reanimated
-* FlashList
-* Local storage/cache
+- Expo (SDK 54)
+- React Native
+- Expo Router
+- TypeScript
+- NativeWind v5
+- `@assistant-ui/react-native`
+- Reanimated
+- FlashList
+- Local storage/cache
 
 ### Backend
 
-* Bun
-* Hono
-* TypeScript
-* Drizzle
-* PostgreSQL/Neon
-* Redis/Upstash
-* Inngest
+- Bun
+- Hono
+- TypeScript
+- Drizzle
+- PostgreSQL/Neon
+- Redis/Upstash
+- Inngest
 
 ### Infrastructure
 
-* Cloudflare Workers
-* Cloudflare R2 where needed
-* Queues/background infrastructure
-* CDN
+- Cloudflare Workers
+- Cloudflare R2 where needed
+- Queues/background infrastructure
+- CDN
 
 ### AI
 
-* Model-agnostic AI orchestration layer
-* Streaming
-* Tool calling
-* MCP
-* Persistent memory
+- Model-agnostic AI orchestration layer
+- Streaming
+- Tool calling
+- MCP
+- Persistent memory
 
 ### Financial infrastructure
 
-* WeWire APIs
+- WeWire APIs
 
 ---
 
 ## 31. Monorepo layout
 
-| Path              | Purpose                                       |
-| ----------------- | --------------------------------------------- |
-| `apps/mobile`     | Expo React Native app (conversation UI)       |
-| `apps/api`        | Finora backend (Hono on Cloudflare Workers)   |
-| `apps/mcp`        | Finora MCP server (Cloudflare Workers)        |
-| `packages/shared` | Shared Zod schemas, types, tool registry      |
-| `packages/wewire` | WeWire API client (server-only)               |
+| Path              | Purpose                                     |
+| ----------------- | ------------------------------------------- |
+| `apps/mobile`     | Expo React Native app (conversation UI)     |
+| `apps/api`        | Finora backend (Hono on Cloudflare Workers) |
+| `apps/mcp`        | Finora MCP server (Cloudflare Workers)      |
+| `packages/shared` | Shared Zod schemas, types, tool registry    |
+| `packages/wewire` | WeWire API client (server-only)             |
 
 ---
 
 ## 32. Architecture rules
 
-* Mobile and MCP **never call WeWire directly**. All money movement goes through `apps/api`.
-* The AI never stores credentials or directly moves money.
-* All financial operations flow through Policy Engine → Approval Engine → Audit Logs → WeWire APIs.
-* Three tool surfaces (`mobile` | `platform` | `mcp`) live in [`packages/shared/src/registry.ts`](../packages/shared/src/registry.ts).
-* Prefer `prepare_*` → approval → `execute_approved_*` everywhere — never a direct AI execute.
-* **The AI is never the source of truth.** Balances, recipients, and transaction status always come from backend tools / WeWire — not from model memory.
+- Mobile and MCP **never call WeWire directly**. All money movement goes through `apps/api`.
+- The AI never stores credentials or directly moves money.
+- All financial operations flow through Policy Engine → Approval Engine → Audit Logs → WeWire APIs.
+- Three tool surfaces (`mobile` | `platform` | `mcp`) live in [`packages/shared/src/registry.ts`](../packages/shared/src/registry.ts).
+- Prefer `prepare_*` → approval → `execute_approved_*` everywhere — never a direct AI execute.
+- **The AI is never the source of truth.** Balances, recipients, and transaction status always come from backend tools / WeWire — not from model memory.
 
 ---
 
@@ -1342,11 +1342,11 @@ The model interprets reality.
 
 There are already:
 
-* Banking apps
-* Payment apps
-* AI chatbots
-* AI assistants
-* Agent frameworks
+- Banking apps
+- Payment apps
+- AI chatbots
+- AI assistants
+- Agent frameworks
 
 Finora sits at the intersection.
 
@@ -1438,11 +1438,11 @@ Then:
 
 **Today's Financial Plan**
 
-* Payroll — GHS 48,500
-* Supplier A — GHS 3,400
-* Supplier B — GHS 900
-* AWS — $42
-* FX conversion — 5,000 USDT
+- Payroll — GHS 48,500
+- Supplier A — GHS 3,400
+- Supplier B — GHS 900
+- AWS — $42
+- FX conversion — 5,000 USDT
 
 Finora explains:
 

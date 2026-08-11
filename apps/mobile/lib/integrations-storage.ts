@@ -122,7 +122,8 @@ export async function connectSmsInbox(phone = 'This device'): Promise<ConnectSms
   if (!available) {
     return {
       ok: false,
-      error: 'SMS isn’t available on this device. Try a physical phone (simulators often can’t send SMS).',
+      error:
+        'SMS isn’t available on this device. Try a physical phone (simulators often can’t send SMS).',
     };
   }
 

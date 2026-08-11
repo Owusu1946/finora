@@ -13,9 +13,7 @@ export function registerPaymentRequest(request: RegisteredPaymentRequest) {
   byId.set(request.preparationId, request);
 }
 
-export function getPaymentRequest(
-  preparationId: string,
-): RegisteredPaymentRequest | null {
+export function getPaymentRequest(preparationId: string): RegisteredPaymentRequest | null {
   return byId.get(preparationId) ?? null;
 }
 

@@ -158,14 +158,7 @@ export const SEND_CORRIDORS: CorridorCountry[] = [
     currency: 'CAD',
     rails: ['SWIFT'],
     fields: {
-      SWIFT: [
-        'swiftBic',
-        'accountNumber',
-        'accountName',
-        'addressLine1',
-        'city',
-        'postalCode',
-      ],
+      SWIFT: ['swiftBic', 'accountNumber', 'accountName', 'addressLine1', 'city', 'postalCode'],
     },
   },
   {
@@ -185,14 +178,7 @@ export const SEND_CORRIDORS: CorridorCountry[] = [
     currency: 'ZAR',
     rails: ['SWIFT', 'LOCAL_BANK'],
     fields: {
-      SWIFT: [
-        'swiftBic',
-        'accountNumber',
-        'accountName',
-        'addressLine1',
-        'city',
-        'postalCode',
-      ],
+      SWIFT: ['swiftBic', 'accountNumber', 'accountName', 'addressLine1', 'city', 'postalCode'],
       LOCAL_BANK: ['bankCode', 'accountNumber', 'accountName'],
     },
   },
@@ -203,14 +189,7 @@ export const SEND_CORRIDORS: CorridorCountry[] = [
     currency: 'INR',
     rails: ['SWIFT'],
     fields: {
-      SWIFT: [
-        'swiftBic',
-        'accountNumber',
-        'accountName',
-        'addressLine1',
-        'city',
-        'postalCode',
-      ],
+      SWIFT: ['swiftBic', 'accountNumber', 'accountName', 'addressLine1', 'city', 'postalCode'],
     },
   },
   {
@@ -220,14 +199,7 @@ export const SEND_CORRIDORS: CorridorCountry[] = [
     currency: 'JPY',
     rails: ['SWIFT'],
     fields: {
-      SWIFT: [
-        'swiftBic',
-        'accountNumber',
-        'accountName',
-        'addressLine1',
-        'city',
-        'postalCode',
-      ],
+      SWIFT: ['swiftBic', 'accountNumber', 'accountName', 'addressLine1', 'city', 'postalCode'],
     },
   },
   {
@@ -237,14 +209,7 @@ export const SEND_CORRIDORS: CorridorCountry[] = [
     currency: 'CNH',
     rails: ['SWIFT'],
     fields: {
-      SWIFT: [
-        'swiftBic',
-        'accountNumber',
-        'accountName',
-        'addressLine1',
-        'city',
-        'postalCode',
-      ],
+      SWIFT: ['swiftBic', 'accountNumber', 'accountName', 'addressLine1', 'city', 'postalCode'],
     },
   },
   {
@@ -319,10 +284,7 @@ export function railsForCountry(countryCode: string): SettlementMethod[] {
   return getCorridor(countryCode)?.rails ?? [];
 }
 
-export function fieldsForRail(
-  countryCode: string,
-  method: SettlementMethod,
-): CorridorFieldKey[] {
+export function fieldsForRail(countryCode: string, method: SettlementMethod): CorridorFieldKey[] {
   if (method === 'CRYPTO') return CRYPTO_CORRIDOR.fields;
   return getCorridor(countryCode)?.fields[method] ?? [];
 }
@@ -346,11 +308,7 @@ const MOCK_USD_RATES: Record<string, number> = {
   USDC: 1,
 };
 
-export function previewFxQuote(opts: {
-  from: string;
-  to: string;
-  amount: number;
-}) {
+export function previewFxQuote(opts: { from: string; to: string; amount: number }) {
   const fromUsd = MOCK_USD_RATES[opts.from] ?? 1;
   const toUsd = MOCK_USD_RATES[opts.to] ?? 1;
   const rate = toUsd / fromUsd;

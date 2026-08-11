@@ -1,9 +1,9 @@
-import { AppText as Text } from '@/components/ui/text';
 import { StyleSheet, View } from 'react-native';
 
 import type { TransactionTimelineStep } from '@/components/activity/types';
 
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 
 function formatStepTime(iso?: string): string {

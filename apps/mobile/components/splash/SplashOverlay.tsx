@@ -15,12 +15,7 @@ type SplashOverlayProps = {
 };
 
 /** Full-screen cream cover with restrained Skia mark reveal. */
-export function SplashOverlay({
-  progress,
-  opacity,
-  reducedMotion,
-  onLayout,
-}: SplashOverlayProps) {
+export function SplashOverlay({ progress, opacity, reducedMotion, onLayout }: SplashOverlayProps) {
   const fadeStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
   }));

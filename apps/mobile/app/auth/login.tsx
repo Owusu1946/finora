@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -8,6 +7,7 @@ import { AuthDivider } from '@/components/auth/AuthDivider';
 import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { signInEmail, signInGoogle } from '@/lib/auth-mock';
 import { haptics } from '@/lib/haptics';

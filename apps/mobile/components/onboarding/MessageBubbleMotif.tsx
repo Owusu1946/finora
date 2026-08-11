@@ -18,13 +18,7 @@ type MessageBubbleMotifProps = {
 };
 
 /** Chat-bubble outline that draws in on Beat 1 (Speak). */
-export function MessageBubbleMotif({
-  progress,
-  cx,
-  cy,
-  colors,
-  isDark,
-}: MessageBubbleMotifProps) {
+export function MessageBubbleMotif({ progress, cx, cy, colors, isDark }: MessageBubbleMotifProps) {
   const w = 150;
   const h = 88;
   const x = cx - w / 2;
@@ -42,12 +36,7 @@ export function MessageBubbleMotif({
   }, [x, y, w, h]);
 
   const opacity = useDerivedValue(() => {
-    return interpolate(
-      progress.value,
-      [0.35, 0.85, 1.15, 1.55],
-      [0, 1, 1, 0],
-      Extrapolation.CLAMP,
-    );
+    return interpolate(progress.value, [0.35, 0.85, 1.15, 1.55], [0, 1, 1, 0], Extrapolation.CLAMP);
   });
 
   const trimEnd = useDerivedValue(() => {
@@ -55,12 +44,7 @@ export function MessageBubbleMotif({
   });
 
   const fillOpacity = useDerivedValue(() => {
-    return interpolate(
-      progress.value,
-      [0.7, 1, 1.2, 1.5],
-      [0, 0.14, 0.14, 0],
-      Extrapolation.CLAMP,
-    );
+    return interpolate(progress.value, [0.7, 1, 1.2, 1.5], [0, 0.14, 0.14, 0], Extrapolation.CLAMP);
   });
 
   // Secondary “reply” capsule

@@ -28,17 +28,17 @@ npm install langsmith
 Destructure the wrapped exports from `wrapAISDK(ai)` and use them in your route.
 
 ```ts
-import * as ai from "ai";
-import { wrapAISDK } from "langsmith/experimental/vercel";
-import { openai } from "@ai-sdk/openai";
-import type { UIMessage } from "ai";
+import * as ai from 'ai';
+import { wrapAISDK } from 'langsmith/experimental/vercel';
+import { openai } from '@ai-sdk/openai';
+import type { UIMessage } from 'ai';
 
 const { streamText } = wrapAISDK(ai);
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
   const result = streamText({
-    model: openai("gpt-5.4-nano"),
+    model: openai('gpt-5.4-nano'),
     messages: await ai.convertToModelMessages(messages),
   });
   return result.toUIMessageStreamResponse();
@@ -52,14 +52,14 @@ Note: `convertToModelMessages` is not part of the wrapper, so import it from `ai
 Pass a `langsmith` provider option to tag traces with user, session, or run identifiers. Build the value with `createLangSmithProviderOptions`.
 
 ```ts
-import { createLangSmithProviderOptions } from "langsmith/experimental/vercel";
+import { createLangSmithProviderOptions } from 'langsmith/experimental/vercel';
 
 const result = streamText({
-  model: openai("gpt-5.4-nano"),
+  model: openai('gpt-5.4-nano'),
   messages: await ai.convertToModelMessages(messages),
   providerOptions: {
     langsmith: createLangSmithProviderOptions({
-      name: "chat-completion",
+      name: 'chat-completion',
       metadata: { userId, threadId },
     }),
   },
@@ -73,7 +73,7 @@ const result = streamText({
 Serverless functions exit before LangSmith flushes batched traces. Before returning, force the flush with the `Client` from `langsmith`; without it you lose traces on Vercel, AWS Lambda, and similar platforms.
 
 ```ts
-import { Client } from "langsmith";
+import { Client } from 'langsmith';
 
 const client = new Client();
 await client.awaitPendingTraceBatches();

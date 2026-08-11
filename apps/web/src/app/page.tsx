@@ -1,4 +1,4 @@
-import { FinoraHero } from "@/components/hero/finora-hero";
+import { FinoraHero } from '@/components/hero/finora-hero';
 
 export default function Home() {
   return (

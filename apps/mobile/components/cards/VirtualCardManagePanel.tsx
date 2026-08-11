@@ -1,24 +1,21 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
-import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import {
   formatCardAmount,
   formatPanGrouped,
   remainingLimit,
   type VirtualCard,
 } from '@/components/cards/types';
+import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import {
-  setVirtualCardStatus,
-  updateVirtualCard,
-} from '@/lib/virtual-cards-storage';
+import { setVirtualCardStatus, updateVirtualCard } from '@/lib/virtual-cards-storage';
 
 const REVEAL_MS = 30_000;
 
@@ -278,7 +275,9 @@ export function VirtualCardManagePanel({
       </View>
 
       {editingLimit ? (
-        <View style={[styles.editBox, { borderColor: colors.border, backgroundColor: colors.card }]}>
+        <View
+          style={[styles.editBox, { borderColor: colors.border, backgroundColor: colors.card }]}
+        >
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Edit limit</Text>
           <TextInput
             value={limitDraft}
@@ -340,15 +339,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SecretRow({
-  label,
-  value,
-  onCopy,
-}: {
-  label: string;
-  value: string;
-  onCopy: () => void;
-}) {
+function SecretRow({ label, value, onCopy }: { label: string; value: string; onCopy: () => void }) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -381,7 +372,11 @@ function ActionButton({
 }) {
   const { colors } = useTheme();
   const bg =
-    tone === 'primary' ? colors.primary : tone === 'danger' ? colors.destructiveSurface : colors.muted;
+    tone === 'primary'
+      ? colors.primary
+      : tone === 'danger'
+        ? colors.destructiveSurface
+        : colors.muted;
   const fg =
     tone === 'primary'
       ? colors.primaryForeground

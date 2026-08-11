@@ -29,11 +29,7 @@ type FinoraMarkLoaderProps = {
 /**
  * Reusable Finora mark wait state — same draw motion as splash, looping.
  */
-export function FinoraMarkLoader({
-  size = 72,
-  color,
-  looping = true,
-}: FinoraMarkLoaderProps) {
+export function FinoraMarkLoader({ size = 72, color, looping = true }: FinoraMarkLoaderProps) {
   const { colors, isDark } = useTheme();
   const markColor = color ?? colors.foreground;
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -63,10 +59,7 @@ export function FinoraMarkLoader({
     progress.value = withRepeat(
       withSequence(
         withTiming(1, { duration: REVEAL_MS, easing: Easing.out(Easing.cubic) }),
-        withDelay(
-          HOLD_MS,
-          withTiming(0, { duration: RESET_MS, easing: Easing.in(Easing.cubic) }),
-        ),
+        withDelay(HOLD_MS, withTiming(0, { duration: RESET_MS, easing: Easing.in(Easing.cubic) })),
       ),
       -1,
       false,

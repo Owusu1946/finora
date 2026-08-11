@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import Constants from 'expo-constants';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -12,6 +11,7 @@ import {
   SettingsSection,
 } from '@/components/settings/SettingsPrimitives';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountFullLabel, getAccountType } from '@/lib/account';
 import { useAuthGate } from '@/lib/auth-gate';

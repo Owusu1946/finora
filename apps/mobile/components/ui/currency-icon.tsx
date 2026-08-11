@@ -1,8 +1,9 @@
-import { AppText as Text } from '@/components/ui/text';
 import { Image } from 'expo-image';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+
+import { AppText as Text } from '@/components/ui/text';
 
 export type SupportedCurrency =
   | 'USD'

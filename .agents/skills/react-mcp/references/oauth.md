@@ -64,16 +64,16 @@ Render `McpOAuthCallback` at the redirect path. It reads `code` and `state` from
 
 ```tsx
 // app/mcp/callback/page.tsx
-"use client";
-import { McpOAuthCallback } from "@assistant-ui/react-mcp";
-import { useRouter } from "next/navigation";
-import { Providers } from "../../providers";
+'use client';
+import { McpOAuthCallback } from '@assistant-ui/react-mcp';
+import { useRouter } from 'next/navigation';
+import { Providers } from '../../providers';
 
 export default function Callback() {
   const router = useRouter();
   return (
     <Providers>
-      <McpOAuthCallback onComplete={() => router.replace("/mcp")} />
+      <McpOAuthCallback onComplete={() => router.replace('/mcp')} />
     </Providers>
   );
 }
@@ -86,11 +86,8 @@ export default function Callback() {
 `McpServerPrimitive` action buttons render only when the server's state matches, so no manual gating is needed: `ConnectButton` when connectable, `OAuthLink` when authorization is required, `DisconnectButton` when connected.
 
 ```tsx
-"use client";
-import {
-  McpManagerPrimitive,
-  McpServerPrimitive,
-} from "@assistant-ui/react-mcp";
+'use client';
+import { McpManagerPrimitive, McpServerPrimitive } from '@assistant-ui/react-mcp';
 
 const ServerCard = () => (
   <McpServerPrimitive.Root>
@@ -109,16 +106,10 @@ export default function McpPage() {
   return (
     <McpManagerPrimitive.Root>
       <h2>Connectors</h2>
-      <McpManagerPrimitive.Connectors>
-        {() => <ServerCard />}
-      </McpManagerPrimitive.Connectors>
+      <McpManagerPrimitive.Connectors>{() => <ServerCard />}</McpManagerPrimitive.Connectors>
       <h2>Your servers</h2>
-      <McpManagerPrimitive.CustomServers>
-        {() => <ServerCard />}
-      </McpManagerPrimitive.CustomServers>
-      <McpManagerPrimitive.AddCustomTrigger>
-        Add custom server
-      </McpManagerPrimitive.AddCustomTrigger>
+      <McpManagerPrimitive.CustomServers>{() => <ServerCard />}</McpManagerPrimitive.CustomServers>
+      <McpManagerPrimitive.AddCustomTrigger>Add custom server</McpManagerPrimitive.AddCustomTrigger>
     </McpManagerPrimitive.Root>
   );
 }
@@ -133,7 +124,7 @@ export default function McpPage() {
 Read state with `useAuiState` from `@assistant-ui/store`. The `mcpServer.*` selectors require an `McpServerByIdProvider` in scope, which the manager iteration primitives supply automatically.
 
 ```ts
-import { useAuiState } from "@assistant-ui/store";
+import { useAuiState } from '@assistant-ui/store';
 
 const isHydrated = useAuiState((s) => s.mcp.isHydrated);
 const connectionState = useAuiState((s) => s.mcpServer.connectionState);

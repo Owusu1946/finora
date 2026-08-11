@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
+
+import QRCodeLib from 'qrcode';
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import QRCodeLib from 'qrcode';
 import Svg, { Circle, G, Rect } from 'react-native-svg';
 
 type Props = {
@@ -36,19 +37,11 @@ function isFinderCell(row: number, col: number, matrixSize: number) {
   return false;
 }
 
-function isLogoCell(
-  row: number,
-  col: number,
-  matrixSize: number,
-  logoCells: number,
-) {
+function isLogoCell(row: number, col: number, matrixSize: number, logoCells: number) {
   const center = (matrixSize - 1) / 2;
   const half = logoCells / 2;
   return (
-    row >= center - half &&
-    row <= center + half &&
-    col >= center - half &&
-    col <= center + half
+    row >= center - half && row <= center + half && col >= center - half && col <= center + half
   );
 }
 

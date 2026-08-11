@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
+import type { SupportedCurrency } from '@/components/ui/currency-icon';
+
 import {
   MOCK_TRANSACTIONS,
   buildTransactionTimeline,
@@ -8,7 +10,6 @@ import {
   type Transaction,
   type TransactionStatus,
 } from '@/components/activity/types';
-import type { SupportedCurrency } from '@/components/ui/currency-icon';
 
 const KEY = 'finora.transactions.v1';
 
@@ -53,8 +54,7 @@ export async function getTransaction(id: string): Promise<Transaction | null> {
 export async function upsertTransaction(tx: Transaction): Promise<Transaction> {
   const txs = await listTransactions();
   const idx = txs.findIndex((t) => t.id === tx.id);
-  const next =
-    idx >= 0 ? txs.map((t, i) => (i === idx ? tx : t)) : [tx, ...txs];
+  const next = idx >= 0 ? txs.map((t, i) => (i === idx ? tx : t)) : [tx, ...txs];
   await setItem(KEY, JSON.stringify(next));
   return tx;
 }

@@ -4,22 +4,22 @@ Individual message display.
 
 ## Parts
 
-| Part | Description |
-|------|-------------|
-| `.Root` | Message container |
-| `.Parts` | Message body with parts (canonical) |
-| `.Content` | Message body with parts |
-| `.If` | Conditional rendering (deprecated; prefer `AuiIf`) |
-| `.Error` | Render fallback when message has an error |
-| `.PartByIndex` | Render a single part by index |
-| `.Attachments` | Render message attachments |
-| `.AttachmentByIndex` | Render one attachment by index |
+| Part                 | Description                                        |
+| -------------------- | -------------------------------------------------- |
+| `.Root`              | Message container                                  |
+| `.Parts`             | Message body with parts (canonical)                |
+| `.Content`           | Message body with parts                            |
+| `.If`                | Conditional rendering (deprecated; prefer `AuiIf`) |
+| `.Error`             | Render fallback when message has an error          |
+| `.PartByIndex`       | Render a single part by index                      |
+| `.Attachments`       | Render message attachments                         |
+| `.AttachmentByIndex` | Render one attachment by index                     |
 
 ## Basic Structure
 
 ```tsx
 <MessagePrimitive.Root>
-  <Avatar src="/user-avatar.png" />
+  <Avatar src='/user-avatar.png' />
   <MessagePrimitive.Parts />
 </MessagePrimitive.Root>
 ```
@@ -30,8 +30,8 @@ Container for a single message.
 
 ```tsx
 <MessagePrimitive.Root
-  className="flex gap-2 mb-4"
-  data-role="user"  // or "assistant"
+  className='flex gap-2 mb-4'
+  data-role='user' // or "assistant"
 >
   {children}
 </MessagePrimitive.Root>
@@ -91,14 +91,14 @@ Renders message content parts (text, images, tool calls, etc.). `MessagePrimitiv
 
 ### Part Types
 
-| Type | Description | Properties |
-|------|-------------|------------|
-| `Text` | Plain text | `text` |
-| `Image` | Image attachment | `image` (URL) |
-| `ToolCall` | Tool invocation | `toolName`, `args`, `argsText`, `result?`, `isError?`, `artifact?` |
-| `Reasoning` | Chain-of-thought | `text` |
-| `Source` | Citation/reference | `url`, `title` |
-| `File` | File attachment | `filename?`, `data`, `mimeType` |
+| Type        | Description        | Properties                                                         |
+| ----------- | ------------------ | ------------------------------------------------------------------ |
+| `Text`      | Plain text         | `text`                                                             |
+| `Image`     | Image attachment   | `image` (URL)                                                      |
+| `ToolCall`  | Tool invocation    | `toolName`, `args`, `argsText`, `result?`, `isError?`, `artifact?` |
+| `Reasoning` | Chain-of-thought   | `text`                                                             |
+| `Source`    | Citation/reference | `url`, `title`                                                     |
+| `File`      | File attachment    | `filename?`, `data`, `mimeType`                                    |
 
 ## MessagePrimitive.If / AuiIf
 
@@ -134,13 +134,13 @@ When you need custom conditions (for example branch metadata), use `AuiIf`:
 ```tsx
 function CustomUserMessage() {
   return (
-    <MessagePrimitive.Root className="flex justify-end mb-4">
+    <MessagePrimitive.Root className='flex justify-end mb-4'>
       <Avatar
-        fallback="U"
-        className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center ml-2"
+        fallback='U'
+        className='w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center ml-2'
       />
-      <div className="max-w-[80%]">
-        <div className="bg-blue-500 text-white rounded-2xl rounded-tr-sm px-4 py-2">
+      <div className='max-w-[80%]'>
+        <div className='bg-blue-500 text-white rounded-2xl rounded-tr-sm px-4 py-2'>
           <MessagePrimitive.Parts />
         </div>
       </div>
@@ -150,27 +150,27 @@ function CustomUserMessage() {
 
 function CustomAssistantMessage() {
   return (
-    <MessagePrimitive.Root className="flex mb-4">
+    <MessagePrimitive.Root className='flex mb-4'>
       <Avatar
-        src="/ai-avatar.png"
-        fallback="AI"
-        className="w-8 h-8 rounded-full mr-2 shrink-0"
+        src='/ai-avatar.png'
+        fallback='AI'
+        className='w-8 h-8 rounded-full mr-2 shrink-0'
       />
 
-      <div className="max-w-[80%]">
-        <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2">
+      <div className='max-w-[80%]'>
+        <div className='bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-2'>
           <MessagePrimitive.Parts />
         </div>
       </div>
 
-      <ActionBarPrimitive.Root className="flex gap-2 mt-1 opacity-0 hover:opacity-100 transition-opacity">
-        <ActionBarPrimitive.Copy className="text-xs text-gray-500 hover:text-gray-700">
+      <ActionBarPrimitive.Root className='flex gap-2 mt-1 opacity-0 hover:opacity-100 transition-opacity'>
+        <ActionBarPrimitive.Copy className='text-xs text-gray-500 hover:text-gray-700'>
           Copy
         </ActionBarPrimitive.Copy>
-        <ActionBarPrimitive.Reload className="text-xs text-gray-500 hover:text-gray-700">
+        <ActionBarPrimitive.Reload className='text-xs text-gray-500 hover:text-gray-700'>
           Regenerate
         </ActionBarPrimitive.Reload>
-        <ActionBarPrimitive.Speak className="text-xs text-gray-500 hover:text-gray-700">
+        <ActionBarPrimitive.Speak className='text-xs text-gray-500 hover:text-gray-700'>
           🔊
         </ActionBarPrimitive.Speak>
       </ActionBarPrimitive.Root>

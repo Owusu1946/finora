@@ -1,10 +1,4 @@
-import {
-  Canvas,
-  Circle,
-  Group,
-  Path,
-  Skia,
-} from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 import {
   Extrapolation,
@@ -74,7 +68,13 @@ export function FinoraMarkMotion({
     const s = nodeScale.value;
     const cx = FINORA_MARK_NODE.cx;
     const cy = FINORA_MARK_NODE.cy;
-    return [{ translateX: cx }, { translateY: cy }, { scale: s }, { translateX: -cx }, { translateY: -cy }];
+    return [
+      { translateX: cx },
+      { translateY: cy },
+      { scale: s },
+      { translateX: -cx },
+      { translateY: -cy },
+    ];
   });
 
   if (!leftPath || !rightPath) {

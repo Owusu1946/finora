@@ -10,6 +10,7 @@ import {
 import { useColorScheme as useSystemColorScheme } from 'react-native';
 
 import { Colors, type Palette } from '@/constants/theme';
+
 import {
   DEFAULT_SETTINGS,
   getSettings,

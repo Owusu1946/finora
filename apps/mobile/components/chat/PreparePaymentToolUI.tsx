@@ -218,7 +218,7 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
       return <PreparingCard />;
     }
 
-    const seed: SendMoneySeed = { ...(args ?? {}) };
+    const seed: SendMoneySeed = { ...args };
     const preparationId = result?.preparationId ?? `prep_${Date.now()}`;
 
     return (

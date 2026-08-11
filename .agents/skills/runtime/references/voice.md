@@ -21,11 +21,11 @@ Connect a realtime voice backend (ElevenLabs, LiveKit, OpenAI Realtime, etc.) to
 Pass an adapter via `adapters.voice`. When provided, `capabilities.voice` is automatically set to `true`.
 
 ```ts
-import { useChatRuntime } from "@assistant-ui/react";
+import { useChatRuntime } from '@assistant-ui/react';
 
 const runtime = useChatRuntime({
   adapters: {
-    voice: new MyVoiceAdapter({ /* ... */ }),
+    voice: new MyVoiceAdapter({/* ... */}),
   },
 });
 ```
@@ -38,8 +38,8 @@ import {
   useVoiceControls,
   useVoiceVolume,
   createVoiceSession,
-} from "@assistant-ui/react";
-import type { RealtimeVoiceAdapter } from "@assistant-ui/react";
+} from '@assistant-ui/react';
+import type { RealtimeVoiceAdapter } from '@assistant-ui/react';
 ```
 
 ## useVoiceState
@@ -50,8 +50,8 @@ Returns the current session state, or `undefined` when no session is active.
 const voiceState = useVoiceState();
 
 voiceState?.status.type; // "starting" | "running" | "ended"
-voiceState?.isMuted;     // boolean
-voiceState?.mode;        // "listening" | "speaking"
+voiceState?.isMuted; // boolean
+voiceState?.mode; // "listening" | "speaking"
 ```
 
 ```tsx
@@ -59,9 +59,9 @@ function VoiceStatus() {
   const voiceState = useVoiceState();
   if (!voiceState) return <span>Idle</span>;
 
-  if (voiceState.status.type === "starting") return <span>Connecting…</span>;
-  if (voiceState.status.type === "ended") return <span>Ended</span>;
-  return <span>{voiceState.mode === "speaking" ? "Assistant speaking" : "Listening"}</span>;
+  if (voiceState.status.type === 'starting') return <span>Connecting…</span>;
+  if (voiceState.status.type === 'ended') return <span>Ended</span>;
+  return <span>{voiceState.mode === 'speaking' ? 'Assistant speaking' : 'Listening'}</span>;
 }
 ```
 
@@ -84,7 +84,12 @@ Real time audio level on its own subscription, a number from `0` to `1`. Kept se
 ```tsx
 function VolumeBar() {
   const volume = useVoiceVolume(); // 0 to 1
-  return <div style={{ width: `${volume * 100}%` }} className="volume-fill" />;
+  return (
+    <div
+      style={{ width: `${volume * 100}%` }}
+      className='volume-fill'
+    />
+  );
 }
 ```
 
@@ -95,8 +100,8 @@ function VoiceControls() {
   const voiceState = useVoiceState();
   const { connect, disconnect, mute, unmute } = useVoiceControls();
 
-  const isRunning = voiceState?.status.type === "running";
-  const isStarting = voiceState?.status.type === "starting";
+  const isRunning = voiceState?.status.type === 'running';
+  const isStarting = voiceState?.status.type === 'starting';
   const isMuted = voiceState?.isMuted ?? false;
 
   if (!isRunning && !isStarting) {
@@ -109,7 +114,10 @@ function VoiceControls() {
 
   return (
     <>
-      <button onClick={() => (isMuted ? unmute() : mute())} disabled={!isRunning}>
+      <button
+        onClick={() => (isMuted ? unmute() : mute())}
+        disabled={!isRunning}
+      >
         {isMuted ? <MicOffIcon /> : <MicIcon />}
       </button>
       <button onClick={() => disconnect()}>
@@ -128,11 +136,21 @@ An adapter's `connect` returns a `RealtimeVoiceAdapter.Session`. Each `on*` meth
 class MyVoiceAdapter implements RealtimeVoiceAdapter {
   connect(options: { abortSignal?: AbortSignal }): RealtimeVoiceAdapter.Session {
     return {
-      get status() { /* RealtimeVoiceAdapter.Status */ },
-      get isMuted() { /* boolean */ },
-      disconnect: () => { /* ... */ },
-      mute: () => { /* ... */ },
-      unmute: () => { /* ... */ },
+      get status() {
+        /* RealtimeVoiceAdapter.Status */
+      },
+      get isMuted() {
+        /* boolean */
+      },
+      disconnect: () => {
+        /* ... */
+      },
+      mute: () => {
+        /* ... */
+      },
+      unmute: () => {
+        /* ... */
+      },
       onStatusChange: (callback) => {
         // { type: "starting" } -> { type: "running" } -> { type: "ended", reason }
         return () => {}; // unsubscribe
@@ -186,12 +204,12 @@ export class MyVoiceAdapter implements RealtimeVoiceAdapter {
     return createVoiceSession(options, async (helpers) => {
       const client = await MyVoiceClient.connect();
 
-      client.on("open", () => helpers.setStatus({ type: "running" }));
-      client.on("close", () => helpers.end("finished"));
-      client.on("error", (err) => helpers.end("error", err));
-      client.on("transcript", (item) => helpers.emitTranscript(item));
-      client.on("mode", (mode) => helpers.emitMode(mode));
-      client.on("volume", (v) => helpers.emitVolume(v));
+      client.on('open', () => helpers.setStatus({ type: 'running' }));
+      client.on('close', () => helpers.end('finished'));
+      client.on('error', (err) => helpers.end('error', err));
+      client.on('transcript', (item) => helpers.emitTranscript(item));
+      client.on('mode', (mode) => helpers.emitMode(mode));
+      client.on('volume', (v) => helpers.emitVolume(v));
 
       return {
         disconnect: () => client.close(),
@@ -210,16 +228,16 @@ Note: `helpers.isDisposed()` reports whether the session has ended or its `abort
 ```ts
 // RealtimeVoiceAdapter.Status
 type Status =
-  | { type: "starting" }
-  | { type: "running" }
-  | { type: "ended"; reason: "finished" | "cancelled" | "error"; error?: unknown };
+  | { type: 'starting' }
+  | { type: 'running' }
+  | { type: 'ended'; reason: 'finished' | 'cancelled' | 'error'; error?: unknown };
 
 // RealtimeVoiceAdapter.Mode
-type Mode = "listening" | "speaking";
+type Mode = 'listening' | 'speaking';
 
 // RealtimeVoiceAdapter.TranscriptItem
 interface TranscriptItem {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   text: string;
   isFinal: boolean;
 }
@@ -243,7 +261,7 @@ npm install @elevenlabs/client
 Wire the ElevenLabs conversation callbacks to the session helpers inside the adapter: `onConnect` -> `setStatus({ type: "running" })`, `onDisconnect` -> `end("finished")`, `onError` -> `end("error", error)`, `onModeChange` -> `emitMode("speaking" | "listening")`, and `onMessage` -> `emitTranscript({ role, text, isFinal: true })`.
 
 ```ts
-import { ElevenLabsVoiceAdapter } from "@/lib/elevenlabs-voice-adapter";
+import { ElevenLabsVoiceAdapter } from '@/lib/elevenlabs-voice-adapter';
 
 const runtime = useChatRuntime({
   adapters: {
@@ -263,14 +281,14 @@ npm install livekit-client livekit-server-sdk
 Mint the access token server side and pass an async `token` resolver to the adapter.
 
 ```ts
-import { LiveKitVoiceAdapter } from "@/lib/livekit-voice-adapter";
+import { LiveKitVoiceAdapter } from '@/lib/livekit-voice-adapter';
 
 const runtime = useChatRuntime({
   adapters: {
     voice: new LiveKitVoiceAdapter({
       url: process.env.NEXT_PUBLIC_LIVEKIT_URL!,
       token: async () => {
-        const res = await fetch("/api/livekit-token", { method: "POST" });
+        const res = await fetch('/api/livekit-token', { method: 'POST' });
         const { token } = await res.json();
         return token;
       },

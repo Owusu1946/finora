@@ -30,7 +30,7 @@ Construct a `ResumableStreamContext` once per process and reuse it across reques
 import {
   createInMemoryResumableStreamStore,
   createResumableStreamContext,
-} from "assistant-stream/resumable";
+} from 'assistant-stream/resumable';
 
 const store = createInMemoryResumableStreamStore();
 export const resumableContext = createResumableStreamContext({ store });
@@ -49,22 +49,22 @@ Wrap the response body in `ctx.run(streamId, makeStream)`. The first caller for 
 
 ```ts
 // /app/api/chat/route.ts
-import { streamText } from "ai";
-import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
-import { resumableContext } from "@/lib/resumable-context";
+import { streamText } from 'ai';
+import { RESUMABLE_STREAM_ID_HEADER } from 'assistant-stream/resumable';
+import { resumableContext } from '@/lib/resumable-context';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
   const streamId = crypto.randomUUID();
 
-  const result = streamText({ /* model, messages, tools, ... */ });
+  const result = streamText({/* model, messages, tools, ... */});
   const sourceBody = result.toUIMessageStreamResponse().body!;
 
   const stream = await resumableContext.run(streamId, () => sourceBody);
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
+      'Content-Type': 'text/event-stream',
       [RESUMABLE_STREAM_ID_HEADER]: streamId,
     },
   });
@@ -79,24 +79,21 @@ A separate GET endpoint replays persisted bytes for reconnecting clients. `ctx.r
 
 ```ts
 // /app/api/chat/resume/[streamId]/route.ts
-import { RESUMABLE_STREAM_ID_HEADER } from "assistant-stream/resumable";
-import { resumableContext } from "@/lib/resumable-context";
+import { RESUMABLE_STREAM_ID_HEADER } from 'assistant-stream/resumable';
+import { resumableContext } from '@/lib/resumable-context';
 
-export async function GET(
-  _req: Request,
-  ctx: { params: Promise<{ streamId: string }> },
-) {
+export async function GET(_req: Request, ctx: { params: Promise<{ streamId: string }> }) {
   const { streamId } = await ctx.params;
   const stream = await resumableContext.resume(streamId);
   if (!stream) {
-    return new Response(JSON.stringify({ error: "stream not found" }), {
+    return new Response(JSON.stringify({ error: 'stream not found' }), {
       status: 404,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
+      'Content-Type': 'text/event-stream',
       [RESUMABLE_STREAM_ID_HEADER]: streamId,
     },
   });
@@ -105,13 +102,13 @@ export async function GET(
 
 ## Context API
 
-| Method | Behavior |
-| --- | --- |
-| `ctx.run(streamId, makeStream)` | First caller is the producer (runs `makeStream`); reconnects become consumers. |
-| `ctx.resume(streamId)` | Returns a replay stream, or `null` if the stream is missing. |
-| `ctx.requireResume(streamId)` | Like `resume`, but throws `ResumableStreamError` with code `"missing"` when absent. |
-| `ctx.status(streamId)` | Returns `"streaming" \| "done" \| "error" \| "missing"`. |
-| `ctx.delete(streamId)` | Removes all persisted state and terminates active readers. |
+| Method                          | Behavior                                                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `ctx.run(streamId, makeStream)` | First caller is the producer (runs `makeStream`); reconnects become consumers.      |
+| `ctx.resume(streamId)`          | Returns a replay stream, or `null` if the stream is missing.                        |
+| `ctx.requireResume(streamId)`   | Like `resume`, but throws `ResumableStreamError` with code `"missing"` when absent. |
+| `ctx.status(streamId)`          | Returns `"streaming" \| "done" \| "error" \| "missing"`.                            |
+| `ctx.delete(streamId)`          | Removes all persisted state and terminates active readers.                          |
 
 `ResumableStreamError` is exported from `assistant-stream/resumable` with codes `"missing" | "exists" | "finalized" | "invalid-id"`. Catch it in the resume route to distinguish "stream gone" from other failures.
 
@@ -121,16 +118,16 @@ export async function GET(
 
 ```tsx
 // /app/page.tsx
-"use client";
+'use client';
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
 import {
   AssistantChatTransport,
   createResumableSessionStorage,
   useChatRuntime,
-} from "@assistant-ui/react-ai-sdk";
-import { useMemo } from "react";
-import { Thread } from "@/components/assistant-ui/thread";
+} from '@assistant-ui/react-ai-sdk';
+import { useMemo } from 'react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 const storage = createResumableSessionStorage();
 
@@ -138,7 +135,7 @@ export default function Page() {
   const transport = useMemo(
     () =>
       new AssistantChatTransport({
-        api: "/api/chat",
+        api: '/api/chat',
         resumable: {
           storage,
           resumeApi: (streamId) => `/api/chat/resume/${streamId}`,
@@ -168,8 +165,8 @@ If you produce streams via `createAssistantStream` rather than the AI SDK, two h
 import {
   createResumableAssistantStreamResponse,
   createResumeAssistantStreamResponse,
-} from "assistant-stream/resumable";
-import { resumableContext } from "@/lib/resumable-context";
+} from 'assistant-stream/resumable';
+import { resumableContext } from '@/lib/resumable-context';
 
 // POST handler
 return createResumableAssistantStreamResponse({
@@ -208,19 +205,15 @@ For production, use the optional Redis adapters via `assistant-stream/resumable/
 import {
   createResumableStreamContext,
   type ResumableStreamStore,
-} from "assistant-stream/resumable";
+} from 'assistant-stream/resumable';
 
 async function createStore(): Promise<ResumableStreamStore> {
   if (!process.env.REDIS_URL) {
-    const { createInMemoryResumableStreamStore } = await import(
-      "assistant-stream/resumable"
-    );
+    const { createInMemoryResumableStreamStore } = await import('assistant-stream/resumable');
     return createInMemoryResumableStreamStore();
   }
-  const { createClient } = await import("redis");
-  const { createRedisResumableStreamStore } = await import(
-    "assistant-stream/resumable/redis"
-  );
+  const { createClient } = await import('redis');
+  const { createRedisResumableStreamStore } = await import('assistant-stream/resumable/redis');
   const client = createClient({ url: process.env.REDIS_URL });
   await client.connect();
   return createRedisResumableStreamStore(client);
@@ -238,24 +231,13 @@ The ioredis sub-path exposes `createIoredisResumableStreamStore` with the same s
 For Postgres, Cloudflare Durable Objects, Upstash REST, or any backend you operate, implement `ResumableStreamStore` directly. It is six async methods over an opaque `streamId` and a monotonic byte log.
 
 ```ts
-import type { ResumableStreamStore } from "assistant-stream/resumable";
+import type { ResumableStreamStore } from 'assistant-stream/resumable';
 
 export interface ResumableStreamStore {
-  acquire(
-    streamId: string,
-    options?: ResumableStreamAcquireOptions,
-  ): Promise<ResumableStreamRole>;
+  acquire(streamId: string, options?: ResumableStreamAcquireOptions): Promise<ResumableStreamRole>;
   append(streamId: string, chunk: Uint8Array): Promise<void>;
-  finalize(
-    streamId: string,
-    status: "done" | "error",
-    error?: string,
-  ): Promise<void>;
-  read(
-    streamId: string,
-    cursor: string,
-    signal: AbortSignal,
-  ): AsyncIterable<ResumableStreamEntry>;
+  finalize(streamId: string, status: 'done' | 'error', error?: string): Promise<void>;
+  read(streamId: string, cursor: string, signal: AbortSignal): AsyncIterable<ResumableStreamEntry>;
   status(streamId: string): Promise<ResumableStreamStatus>;
   delete(streamId: string): Promise<void>;
 }
@@ -274,8 +256,8 @@ Cursors are opaque strings the store assigns and the context echoes back; they m
 
 ```ts
 // /lib/resumable-context.ts
-import { createResumableStreamContext } from "assistant-stream/resumable";
-import { createMapResumableStreamStore } from "@/lib/map-resumable-store";
+import { createResumableStreamContext } from 'assistant-stream/resumable';
+import { createMapResumableStreamStore } from '@/lib/map-resumable-store';
 
 export const resumableContext = createResumableStreamContext({
   store: createMapResumableStreamStore(),

@@ -20,7 +20,7 @@ Organize adjacent message parts into custom groups, and build chain-of-thought U
 ## Imports
 
 ```ts
-import { MessagePrimitive, groupPartByType } from "@assistant-ui/react";
+import { MessagePrimitive, groupPartByType } from '@assistant-ui/react';
 ```
 
 Group-related types from `@assistant-ui/react`: `GroupPart`, `MessagePartGroup`, `ReasoningMessagePartComponent`, `SourceMessagePartComponent`.
@@ -32,16 +32,16 @@ Renders parts through a `groupBy` function that maps each part to a group-key pa
 ```tsx
 <MessagePrimitive.GroupedParts
   groupBy={groupPartByType({
-    "tool-call": ["group-tool"],
+    'tool-call': ['group-tool'],
   })}
 >
   {({ part, children }) => {
     switch (part.type) {
-      case "group-tool":
-        return <div className="group">{children}</div>;
-      case "tool-call":
+      case 'group-tool':
+        return <div className='group'>{children}</div>;
+      case 'tool-call':
         return part.toolUI ?? <ToolFallback {...part} />;
-      case "text":
+      case 'text':
         return <MarkdownText />;
       default:
         return null;
@@ -50,10 +50,10 @@ Renders parts through a `groupBy` function that maps each part to a group-key pa
 </MessagePrimitive.GroupedParts>
 ```
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `groupBy` | `(part) => readonly \`group-${string}\`[]` | Maps a part to a group-key path. Return `[]` to leave it ungrouped. |
-| `children` | `({ part, children }) => ReactNode` | Render function for group nodes and leaf parts. |
+| Prop       | Type                                       | Description                                                         |
+| ---------- | ------------------------------------------ | ------------------------------------------------------------------- |
+| `groupBy`  | `(part) => readonly \`group-${string}\`[]` | Maps a part to a group-key path. Return `[]` to leave it ungrouped. |
+| `children` | `({ part, children }) => ReactNode`        | Render function for group nodes and leaf parts.                     |
 
 Render `children` only for group cases. Leaf cases (`text`, `tool-call`, `reasoning`, etc.) render the part itself; rendering `children` from a leaf case throws.
 
@@ -63,8 +63,8 @@ Builds a `groupBy` from a `part.type` to group-key-path map. Part types not list
 
 ```ts
 groupPartByType({
-  reasoning: ["group-chainOfThought", "group-reasoning"],
-  "tool-call": ["group-chainOfThought", "group-tool"],
+  reasoning: ['group-chainOfThought', 'group-reasoning'],
+  'tool-call': ['group-chainOfThought', 'group-tool'],
 });
 ```
 
@@ -91,38 +91,38 @@ Use `part.indices.length` for a count and `part.status.type` for streaming state
 Group consecutive reasoning tokens and tool calls into a collapsible thinking accordion. This is the canonical chain-of-thought API; render reasoning and tool groups with the Reasoning and tool-group UI components.
 
 ```tsx
-import { MessagePrimitive, groupPartByType } from "@assistant-ui/react";
-import { MarkdownText } from "@/components/assistant-ui/markdown-text";
+import { MessagePrimitive, groupPartByType } from '@assistant-ui/react';
+import { MarkdownText } from '@/components/assistant-ui/markdown-text';
 import {
   Reasoning,
   ReasoningContent,
   ReasoningRoot,
   ReasoningText,
   ReasoningTrigger,
-} from "@/components/assistant-ui/reasoning";
-import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+} from '@/components/assistant-ui/reasoning';
+import { ToolFallback } from '@/components/assistant-ui/tool-fallback';
 import {
   ToolGroupContent,
   ToolGroupRoot,
   ToolGroupTrigger,
-} from "@/components/assistant-ui/tool-group";
-import type { FC } from "react";
+} from '@/components/assistant-ui/tool-group';
+import type { FC } from 'react';
 
 const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root>
       <MessagePrimitive.GroupedParts
         groupBy={groupPartByType({
-          reasoning: ["group-chainOfThought", "group-reasoning"],
-          "tool-call": ["group-chainOfThought", "group-tool"],
+          reasoning: ['group-chainOfThought', 'group-reasoning'],
+          'tool-call': ['group-chainOfThought', 'group-tool'],
         })}
       >
         {({ part, children }) => {
           switch (part.type) {
-            case "group-chainOfThought":
-              return <div className="my-2">{children}</div>;
-            case "group-reasoning": {
-              const running = part.status.type === "running";
+            case 'group-chainOfThought':
+              return <div className='my-2'>{children}</div>;
+            case 'group-reasoning': {
+              const running = part.status.type === 'running';
               return (
                 <ReasoningRoot defaultOpen={running}>
                   <ReasoningTrigger active={running} />
@@ -132,21 +132,21 @@ const AssistantMessage: FC = () => {
                 </ReasoningRoot>
               );
             }
-            case "group-tool":
+            case 'group-tool':
               return (
                 <ToolGroupRoot>
                   <ToolGroupTrigger
                     count={part.indices.length}
-                    active={part.status.type === "running"}
+                    active={part.status.type === 'running'}
                   />
                   <ToolGroupContent>{children}</ToolGroupContent>
                 </ToolGroupRoot>
               );
-            case "text":
+            case 'text':
               return <MarkdownText />;
-            case "reasoning":
+            case 'reasoning':
               return <Reasoning {...part} />;
-            case "tool-call":
+            case 'tool-call':
               return part.toolUI ?? <ToolFallback {...part} />;
             default:
               return null;
@@ -165,13 +165,11 @@ Note: LangGraph does not emit reasoning in the AI SDK reasoning stream format. T
 The `reasoning` registry component (`https://r.assistant-ui.com/reasoning.json`) provides a collapsible thinking accordion. Exports from `@/components/assistant-ui/reasoning`: `Reasoning`, `ReasoningRoot`, `ReasoningTrigger`, `ReasoningContent`, `ReasoningText`, `ReasoningFade`, `reasoningVariants`. `ReasoningGroup` is deprecated.
 
 ```tsx
-<MessagePrimitive.GroupedParts
-  groupBy={groupPartByType({ reasoning: ["group-reasoning"] })}
->
+<MessagePrimitive.GroupedParts groupBy={groupPartByType({ reasoning: ['group-reasoning'] })}>
   {({ part, children }) => {
     switch (part.type) {
-      case "group-reasoning": {
-        const running = part.status.type === "running";
+      case 'group-reasoning': {
+        const running = part.status.type === 'running';
         return (
           <ReasoningRoot defaultOpen={running}>
             <ReasoningTrigger active={running} />
@@ -181,11 +179,11 @@ The `reasoning` registry component (`https://r.assistant-ui.com/reasoning.json`)
           </ReasoningRoot>
         );
       }
-      case "text":
+      case 'text':
         return <MarkdownText />;
-      case "reasoning":
+      case 'reasoning':
         return <Reasoning {...part} />;
-      case "tool-call":
+      case 'tool-call':
         return part.toolUI ?? <ToolFallback {...part} />;
       default:
         return null;
@@ -196,35 +194,35 @@ The `reasoning` registry component (`https://r.assistant-ui.com/reasoning.json`)
 
 Wire `part.status.type === "running"` into `defaultOpen` so the accordion opens automatically while reasoning streams and stays closed once done. The `group-reasoning` case must render `{children}`; the leaf `reasoning` case must not.
 
-| Component | Notable props |
-|-----------|---------------|
-| `ReasoningRoot` | `defaultOpen?`, `open?`, `onOpenChange?`, `variant?` (`"outline"` default, `"ghost"`, `"muted"`) |
-| `ReasoningTrigger` | `active?` (shimmer while streaming), `duration?` (appends `(Ns)`) |
-| `ReasoningContent` | wraps `CollapsibleContent`; includes `ReasoningFade` |
-| `ReasoningText` | scrollable text container (`max-h-64`) |
-| `Reasoning` | leaf `ReasoningMessagePartComponent`, renders the part via markdown |
+| Component          | Notable props                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| `ReasoningRoot`    | `defaultOpen?`, `open?`, `onOpenChange?`, `variant?` (`"outline"` default, `"ghost"`, `"muted"`) |
+| `ReasoningTrigger` | `active?` (shimmer while streaming), `duration?` (appends `(Ns)`)                                |
+| `ReasoningContent` | wraps `CollapsibleContent`; includes `ReasoningFade`                                             |
+| `ReasoningText`    | scrollable text container (`max-h-64`)                                                           |
+| `Reasoning`        | leaf `ReasoningMessagePartComponent`, renders the part via markdown                              |
 
 ## Sources UI
 
 The `sources` registry component (`https://r.assistant-ui.com/sources.json`) renders URL and document citations. `Sources` is a `SourceMessagePartComponent`; render it from a leaf `source` case.
 
 ```tsx
-import { Sources } from "@/components/assistant-ui/sources";
+import { Sources } from '@/components/assistant-ui/sources';
 
 <MessagePrimitive.Parts>
   {({ part }) => {
-    if (part.type === "source") return <Sources {...part} />;
+    if (part.type === 'source') return <Sources {...part} />;
     return null;
   }}
-</MessagePrimitive.Parts>
+</MessagePrimitive.Parts>;
 ```
 
 `Sources` branches on `part.sourceType`: `"url"` renders a linked badge with favicon and title (falling back to the domain), `"document"` renders a non-linked badge with a file icon and `part.title`. Compound sub-components `Sources.Root` (`Source`), `Sources.Icon` (`SourceIcon`), `Sources.Title` (`SourceTitle`) allow custom composition.
 
 ```tsx
-<Sources.Root href="https://example.com">
+<Sources.Root href='https://example.com'>
   <Sources.Icon
-    url="https://example.com"
+    url='https://example.com'
     faviconUrl={(domain) => `https://my-proxy.example.com/${domain}.ico`}
   />
   <Sources.Title>Example</Sources.Title>
@@ -245,17 +243,20 @@ To group sources by their `parentId` (for example all citations under one tool r
   }}
 >
   {({ part, children }) => {
-    if (part.type.startsWith("group-parent-")) {
-      const id = part.type.replace("group-parent-", "");
+    if (part.type.startsWith('group-parent-')) {
+      const id = part.type.replace('group-parent-', '');
       return (
-        <ParentGroup id={id} count={part.indices.length}>
+        <ParentGroup
+          id={id}
+          count={part.indices.length}
+        >
           {children}
         </ParentGroup>
       );
     }
-    if (part.type === "text") return <MarkdownText />;
-    if (part.type === "source") return <Sources {...part} />;
-    if (part.type === "tool-call") return part.toolUI ?? <ToolFallback {...part} />;
+    if (part.type === 'text') return <MarkdownText />;
+    if (part.type === 'source') return <Sources {...part} />;
+    if (part.type === 'tool-call') return part.toolUI ?? <ToolFallback {...part} />;
     return null;
   }}
 </MessagePrimitive.GroupedParts>
@@ -276,25 +277,25 @@ groupBy={(part) => {
 
 ```ts
 const toolkit = {
-  ask_user: { type: "human", render: AskUI },           // standalone (forced)
-  search_web: { type: "frontend", render: SearchUI },   // inline trace (default)
-  checkout: { type: "frontend", render: CheckoutUI, display: "standalone" },
+  ask_user: { type: 'human', render: AskUI }, // standalone (forced)
+  search_web: { type: 'frontend', render: SearchUI }, // inline trace (default)
+  checkout: { type: 'frontend', render: CheckoutUI, display: 'standalone' },
 } satisfies Toolkit;
 ```
 
 ```tsx
 <MessagePrimitive.GroupedParts
   groupBy={groupPartByType({
-    reasoning: ["group-chainOfThought", "group-reasoning"],
-    "tool-call": ["group-chainOfThought", "group-tool"],
-    "standalone-tool-call": [],
+    reasoning: ['group-chainOfThought', 'group-reasoning'],
+    'tool-call': ['group-chainOfThought', 'group-tool'],
+    'standalone-tool-call': [],
   })}
 >
   {({ part, children }) => {
     switch (part.type) {
-      case "group-chainOfThought":
-        return <div className="chain-of-thought">{children}</div>;
-      case "tool-call":
+      case 'group-chainOfThought':
+        return <div className='chain-of-thought'>{children}</div>;
+      case 'tool-call':
         return part.toolUI ?? <ToolFallback {...part} />;
       default:
         return null;
@@ -327,7 +328,7 @@ type MessagePartGroup = {
       groups.set(key, indices);
     });
     return Array.from(groups.entries()).map(([key, indices]) => ({
-      groupKey: key.startsWith("__ungrouped_") ? undefined : key,
+      groupKey: key.startsWith('__ungrouped_') ? undefined : key,
       indices,
     }));
   }}
@@ -336,7 +337,7 @@ type MessagePartGroup = {
     tools: { Fallback: ToolFallback },
     Group: ({ groupKey, children }) => {
       if (!groupKey) return <>{children}</>;
-      return <div className="rounded-lg border p-3">{children}</div>;
+      return <div className='rounded-lg border p-3'>{children}</div>;
     },
   }}
 />
@@ -349,16 +350,16 @@ The `components` map supports `Empty`, `Text`, `Reasoning`, `Source`, `Image`, `
 `ChainOfThoughtPrimitive` and the `components.ChainOfThought` prop on `MessagePrimitive.Parts` are older chain-of-thought APIs. They still function but should not be used in new code; reach for `GroupedParts` instead. The collapsed state can be read with `AuiIf`:
 
 ```tsx
-import { AuiIf, ChainOfThoughtPrimitive } from "@assistant-ui/react";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { AuiIf, ChainOfThoughtPrimitive } from '@assistant-ui/react';
+import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 
 const ChainOfThoughtAccordionTrigger = () => (
-  <ChainOfThoughtPrimitive.AccordionTrigger className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm">
+  <ChainOfThoughtPrimitive.AccordionTrigger className='flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm'>
     <AuiIf condition={(s) => s.chainOfThought.collapsed}>
-      <ChevronRightIcon className="size-4" />
+      <ChevronRightIcon className='size-4' />
     </AuiIf>
     <AuiIf condition={(s) => !s.chainOfThought.collapsed}>
-      <ChevronDownIcon className="size-4" />
+      <ChevronDownIcon className='size-4' />
     </AuiIf>
     Thinking
   </ChainOfThoughtPrimitive.AccordionTrigger>

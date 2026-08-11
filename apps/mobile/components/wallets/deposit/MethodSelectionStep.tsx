@@ -1,13 +1,15 @@
-import { AppText as Text } from '@/components/ui/text';
+import { Pressable, View } from 'react-native';
+
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { FinoraMark } from '@/components/ui/finora-mark';
 import { AirtelTigoLogo, MtnLogo, TelecelLogo } from '@/components/ui/momo-logos';
+import { AppText as Text } from '@/components/ui/text';
 import { haptics } from '@/lib/haptics';
-import { Pressable, View } from 'react-native';
+
+import type { DepositMethodId, DepositPalette, DepositStep } from './types';
 
 import { IconStack, MetaRow } from './primitives';
 import { depositStyles as styles } from './styles';
-import type { DepositMethodId, DepositPalette, DepositStep } from './types';
 
 type MethodOption = {
   id: DepositMethodId;

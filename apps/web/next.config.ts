@@ -1,9 +1,10 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
+
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const appDir = path.dirname(fileURLToPath(import.meta.url));
-const monorepoRoot = path.join(appDir, "../..");
+const monorepoRoot = path.join(appDir, '../..');
 
 const nextConfig: NextConfig = {
   reactCompiler: true,

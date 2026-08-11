@@ -1,12 +1,16 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { ApprovalPolicy } from '@/lib/policies-storage';
+
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { ApprovalPolicy } from '@/lib/policies-storage';
 
-type Result = { policies?: ApprovalPolicy[]; simulation?: { requiresApproval: boolean; matched: string[] } };
+type Result = {
+  policies?: ApprovalPolicy[];
+  simulation?: { requiresApproval: boolean; matched: string[] };
+};
 
 export const ListPoliciesToolUI = makeAssistantToolUI<
   { amountUsd?: number; isNewRecipient?: boolean },

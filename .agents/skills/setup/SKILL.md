@@ -1,6 +1,6 @@
 ---
 name: setup
-description: "Installs and configures assistant-ui in a project via the CLI, and picks the right runtime for a backend. Use for first-time install, scaffold, or config: `npx assistant-ui@latest create my-app` (templates default, minimal, cloud, cloud-clerk, langgraph, mcp), `npx assistant-ui@latest init [--yes] [--overwrite]` in an existing Next.js app, or `npx assistant-ui@latest add` registry components (markdown-text, thread-list). Also use to choose a runtime hook for a backend: useChatRuntime (AI SDK), useLangGraphRuntime, useAgUiRuntime, useA2ARuntime, useLocalRuntime (custom streaming API), or useExternalStoreRuntime (Redux/Zustand). Covers Vite/TanStack Start setup, shadcn styling, the playground --preset flag, and avoiding the deprecated @assistant-ui/styles and @assistant-ui/react-ui packages. For upgrading an existing install or post-upgrade breakage use update; for building UI from raw parts use primitives."
+description: 'Installs and configures assistant-ui in a project via the CLI, and picks the right runtime for a backend. Use for first-time install, scaffold, or config: `npx assistant-ui@latest create my-app` (templates default, minimal, cloud, cloud-clerk, langgraph, mcp), `npx assistant-ui@latest init [--yes] [--overwrite]` in an existing Next.js app, or `npx assistant-ui@latest add` registry components (markdown-text, thread-list). Also use to choose a runtime hook for a backend: useChatRuntime (AI SDK), useLangGraphRuntime, useAgUiRuntime, useA2ARuntime, useLocalRuntime (custom streaming API), or useExternalStoreRuntime (Redux/Zustand). Covers Vite/TanStack Start setup, shadcn styling, the playground --preset flag, and avoiding the deprecated @assistant-ui/styles and @assistant-ui/react-ui packages. For upgrading an existing install or post-upgrade breakage use update; for building UI from raw parts use primitives.'
 license: MIT
 ---
 
@@ -30,16 +30,17 @@ npx assistant-ui@latest create my-app --preset "https://www.assistant-ui.com/pla
 
 Templates:
 
-| Template | Description |
-|-------|-------|
-| `default` | Default template with Vercel AI SDK |
-| `minimal` | Bare-bones starting point |
-| `cloud` | Cloud-backed persistence starter |
+| Template      | Description                          |
+| ------------- | ------------------------------------ |
+| `default`     | Default template with Vercel AI SDK  |
+| `minimal`     | Bare-bones starting point            |
+| `cloud`       | Cloud-backed persistence starter     |
 | `cloud-clerk` | Cloud-backed starter with Clerk auth |
-| `langgraph` | LangGraph starter template |
-| `mcp` | MCP starter template |
+| `langgraph`   | LangGraph starter template           |
+| `mcp`         | MCP starter template                 |
 
 When `-t` is omitted:
+
 - Interactive shell (TTY): an interactive template picker is shown.
 - Non-interactive shell (CI/agent): template defaults to `default`.
 
@@ -78,23 +79,23 @@ When using CLI templates (`npx assistant-ui@latest create`), **never modify gene
 
 For runtimes other than AI SDK or frameworks other than Next.js, consult the reference files:
 
-| Setup | Runtime Hook | Reference |
-|-------|-------------|-----------|
-| AI SDK advanced (tools, cloud, options) | `useChatRuntime` | [references/ai-sdk.md](./references/ai-sdk.md) |
-| Styling and UI customization (shadcn pattern) | — | [references/styling.md](./references/styling.md) |
-| LangGraph agents | `useLangGraphRuntime` | [references/langgraph.md](./references/langgraph.md) |
-| AG-UI protocol | `useAgUiRuntime` | [references/ag-ui.md](./references/ag-ui.md) |
-| A2A protocol | `useA2ARuntime` | [references/a2a.md](./references/a2a.md) |
-| Custom streaming API | `useLocalRuntime` | [references/custom-backend.md](./references/custom-backend.md) |
-| Existing state (Redux/Zustand) | `useExternalStoreRuntime` | [references/custom-backend.md](./references/custom-backend.md) |
-| Vite / TanStack Start | — | [references/tanstack.md](./references/tanstack.md) |
-| LangChain agents | `useStreamRuntime` | [references/langchain.md](./references/langchain.md) |
-| Google ADK agents | `useAdkRuntime` | [references/google-adk.md](./references/google-adk.md) |
-| Mastra agents | `useChatRuntime` | [references/mastra.md](./references/mastra.md) |
-| Cloudflare Agents | `useAISDKRuntime` | [references/cloudflare-agents.md](./references/cloudflare-agents.md) |
-| Legacy AI SDK v4/v5 | `useVercelUseChatRuntime` / `useDataStreamRuntime` | [references/ai-sdk-legacy.md](./references/ai-sdk-legacy.md) |
-| Registry UI components (modal, sidebar, model selector) | registry | [references/registry-components.md](./references/registry-components.md) |
-| DevTools inspector | dev only | [references/devtools.md](./references/devtools.md) |
+| Setup                                                   | Runtime Hook                                       | Reference                                                                |
+| ------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| AI SDK advanced (tools, cloud, options)                 | `useChatRuntime`                                   | [references/ai-sdk.md](./references/ai-sdk.md)                           |
+| Styling and UI customization (shadcn pattern)           | —                                                  | [references/styling.md](./references/styling.md)                         |
+| LangGraph agents                                        | `useLangGraphRuntime`                              | [references/langgraph.md](./references/langgraph.md)                     |
+| AG-UI protocol                                          | `useAgUiRuntime`                                   | [references/ag-ui.md](./references/ag-ui.md)                             |
+| A2A protocol                                            | `useA2ARuntime`                                    | [references/a2a.md](./references/a2a.md)                                 |
+| Custom streaming API                                    | `useLocalRuntime`                                  | [references/custom-backend.md](./references/custom-backend.md)           |
+| Existing state (Redux/Zustand)                          | `useExternalStoreRuntime`                          | [references/custom-backend.md](./references/custom-backend.md)           |
+| Vite / TanStack Start                                   | —                                                  | [references/tanstack.md](./references/tanstack.md)                       |
+| LangChain agents                                        | `useStreamRuntime`                                 | [references/langchain.md](./references/langchain.md)                     |
+| Google ADK agents                                       | `useAdkRuntime`                                    | [references/google-adk.md](./references/google-adk.md)                   |
+| Mastra agents                                           | `useChatRuntime`                                   | [references/mastra.md](./references/mastra.md)                           |
+| Cloudflare Agents                                       | `useAISDKRuntime`                                  | [references/cloudflare-agents.md](./references/cloudflare-agents.md)     |
+| Legacy AI SDK v4/v5                                     | `useVercelUseChatRuntime` / `useDataStreamRuntime` | [references/ai-sdk-legacy.md](./references/ai-sdk-legacy.md)             |
+| Registry UI components (modal, sidebar, model selector) | registry                                           | [references/registry-components.md](./references/registry-components.md) |
+| DevTools inspector                                      | dev only                                           | [references/devtools.md](./references/devtools.md)                       |
 
 ---
 

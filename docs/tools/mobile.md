@@ -23,39 +23,39 @@ Receive / payment-request cards encode real QRs ([`MockQrCode.tsx`](../../apps/m
 
 ## Tools the chat UI actually handles
 
-| toolName                    | UI                                                  | Trigger examples (mock)                              |
-| --------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
-| `get_balances`              | Balances card                                       | “What’s my balance?”                                 |
-| `fund_account`              | Add-money wizard (bank / MoMo / crypto / MoMo pull) | “Fund my account”, “Deposit”, “Top up”, “Add money”  |
-| `list_receive_methods`      | Receive card (QR, share, copy)                      | “How do I receive?”, “Payment details”               |
-| `create_payment_request`    | Ask-to-pay wizard → link + QR                       | “Create a payment link”, “Request 50 GHS”            |
-| `generate_payment_link`     | Same UX as payment request (registry alias)         | (tool name from platform/mobile)                     |
-| `prepare_payment`           | International send wizard → confirm + passcode      | “Send €200 to Germany”, “Send 50 GHS to …”, scan QR  |
-| `resolve_send`              | Contact picker → international send wizard          | “Send to Ama” (disambiguate)                         |
-| `prepare_internal_transfer` | Finora wallet confirmation + passcode               | “Send 50 cedis to @okenneth”                         |
-| `prepare_conversion`        | FX card + passcode                                  | “Convert 100 USD to GHS”                             |
-| `list_invoices`             | Invoice list                                        | “Show my invoices”                                   |
-| `list_calendar_dues`        | Calendar money events                               | “What’s due on my calendar this week?”               |
-| `list_sms_requests`         | SMS payment requests                                | “Show payment requests from my SMS inbox”            |
-| `list_employees`            | Team roster (business)                              | “Show my team”                                       |
-| `create_employee`           | Employee added card (business)                      | “Add employee Ama Boateng designer 2500 USD”         |
-| `prepare_payroll`           | Payroll confirm + passcode (business)               | “Run payroll”, “Pay the team”                        |
-| `list_suppliers`            | Supplier directory (business)                       | “Show suppliers”                                     |
-| `prepare_supplier_payment`  | Supplier pay confirm + passcode (business)           | “Pay TechFlow 780 GBP”                               |
-| `prepare_employee_payment`  | One-off employee pay (business)                     | “Pay Ama 500 USD bonus”                              |
-| `list_beneficiaries`        | Payout beneficiaries (business)                     | “Show beneficiaries”                                 |
-| `list_policies`             | Approval policies (+ simulate) (business)           | “Show approval policies”                             |
-| `list_automations`          | Automation rules (business)                         | “Show my automations”                                |
-| `list_expenses`             | Business expenses (business)                        | “Show business expenses this month”                  |
-| `get_treasury_overview`     | Treasury / cash + outflows (business)               | “Show treasury overview”                             |
-| `list_virtual_accounts`     | VA receive details                                  | “Show virtual accounts”                              |
-| `generate_financial_insights` | Business financial summary card                   | “Financial report” / “Cash flow”                     |
-| `prepare_recurring`         | Recurring card                                      | (legacy path)                                        |
-| `schedule_payment_wizard`   | Multi-step schedule UI                              | “Set up rent monthly”                                |
-| `create_financial_plan`     | Plan card (approve all)                             | “Pay everything due today”                           |
-| `create_virtual_card`       | Issue wizard → passcode → card face                 | “Create a virtual card for Netflix with a $50 limit” |
-| `list_virtual_cards`        | Stack of compact card faces                         | “Show my cards”                                      |
-| `get_virtual_card`          | Detail + manage (reveal / freeze / limit)           | “Freeze my Netflix card”                             |
+| toolName                      | UI                                                  | Trigger examples (mock)                              |
+| ----------------------------- | --------------------------------------------------- | ---------------------------------------------------- |
+| `get_balances`                | Balances card                                       | “What’s my balance?”                                 |
+| `fund_account`                | Add-money wizard (bank / MoMo / crypto / MoMo pull) | “Fund my account”, “Deposit”, “Top up”, “Add money”  |
+| `list_receive_methods`        | Receive card (QR, share, copy)                      | “How do I receive?”, “Payment details”               |
+| `create_payment_request`      | Ask-to-pay wizard → link + QR                       | “Create a payment link”, “Request 50 GHS”            |
+| `generate_payment_link`       | Same UX as payment request (registry alias)         | (tool name from platform/mobile)                     |
+| `prepare_payment`             | International send wizard → confirm + passcode      | “Send €200 to Germany”, “Send 50 GHS to …”, scan QR  |
+| `resolve_send`                | Contact picker → international send wizard          | “Send to Ama” (disambiguate)                         |
+| `prepare_internal_transfer`   | Finora wallet confirmation + passcode               | “Send 50 cedis to @okenneth”                         |
+| `prepare_conversion`          | FX card + passcode                                  | “Convert 100 USD to GHS”                             |
+| `list_invoices`               | Invoice list                                        | “Show my invoices”                                   |
+| `list_calendar_dues`          | Calendar money events                               | “What’s due on my calendar this week?”               |
+| `list_sms_requests`           | SMS payment requests                                | “Show payment requests from my SMS inbox”            |
+| `list_employees`              | Team roster (business)                              | “Show my team”                                       |
+| `create_employee`             | Employee added card (business)                      | “Add employee Ama Boateng designer 2500 USD”         |
+| `prepare_payroll`             | Payroll confirm + passcode (business)               | “Run payroll”, “Pay the team”                        |
+| `list_suppliers`              | Supplier directory (business)                       | “Show suppliers”                                     |
+| `prepare_supplier_payment`    | Supplier pay confirm + passcode (business)          | “Pay TechFlow 780 GBP”                               |
+| `prepare_employee_payment`    | One-off employee pay (business)                     | “Pay Ama 500 USD bonus”                              |
+| `list_beneficiaries`          | Payout beneficiaries (business)                     | “Show beneficiaries”                                 |
+| `list_policies`               | Approval policies (+ simulate) (business)           | “Show approval policies”                             |
+| `list_automations`            | Automation rules (business)                         | “Show my automations”                                |
+| `list_expenses`               | Business expenses (business)                        | “Show business expenses this month”                  |
+| `get_treasury_overview`       | Treasury / cash + outflows (business)               | “Show treasury overview”                             |
+| `list_virtual_accounts`       | VA receive details                                  | “Show virtual accounts”                              |
+| `generate_financial_insights` | Business financial summary card                     | “Financial report” / “Cash flow”                     |
+| `prepare_recurring`           | Recurring card                                      | (legacy path)                                        |
+| `schedule_payment_wizard`     | Multi-step schedule UI                              | “Set up rent monthly”                                |
+| `create_financial_plan`       | Plan card (approve all)                             | “Pay everything due today”                           |
+| `create_virtual_card`         | Issue wizard → passcode → card face                 | “Create a virtual card for Netflix with a $50 limit” |
+| `list_virtual_cards`          | Stack of compact card faces                         | “Show my cards”                                      |
+| `get_virtual_card`            | Detail + manage (reveal / freeze / limit)           | “Freeze my Netflix card”                             |
 
 ### Virtual cards
 
@@ -111,17 +111,17 @@ Register UIs in [`apps/mobile/app/_layout.tsx`](../../apps/mobile/app/_layout.ts
 
 ## Related product surfaces (not chat tool calls)
 
-| Surface                                     | Role                                                                   |
-| ------------------------------------------- | ---------------------------------------------------------------------- |
-| **Scan to pay**                             | Camera / paste QR → amount if needed → chat `prepare_payment`          |
-| **Approvals inbox**                         | Human confirms MCP- or chat-prepared payments **and** multi-item plans |
-| **Activity / transaction detail**           | Timeline after settle                                                  |
-| **Integrations**                            | Connect Gmail, Google Calendar, SMS inbox (mock)                       |
-| **Contacts / Recurring / Invoices screens** | CRUD UIs for platform capabilities                                     |
-| **Payroll / Suppliers / Beneficiaries / Expenses** | Business-only Pay screens + chat tools (mock)                    |
-| **Treasury**                                | Business cash position + upcoming outflows                             |
-| **Automations / Policies**                  | Business rules + approval policy toggles (mock)                        |
-| **Cards**                                   | Virtual card list + detail (mock issue / freeze / reveal)              |
+| Surface                                            | Role                                                                   |
+| -------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Scan to pay**                                    | Camera / paste QR → amount if needed → chat `prepare_payment`          |
+| **Approvals inbox**                                | Human confirms MCP- or chat-prepared payments **and** multi-item plans |
+| **Activity / transaction detail**                  | Timeline after settle                                                  |
+| **Integrations**                                   | Connect Gmail, Google Calendar, SMS inbox (mock)                       |
+| **Contacts / Recurring / Invoices screens**        | CRUD UIs for platform capabilities                                     |
+| **Payroll / Suppliers / Beneficiaries / Expenses** | Business-only Pay screens + chat tools (mock)                          |
+| **Treasury**                                       | Business cash position + upcoming outflows                             |
+| **Automations / Policies**                         | Business rules + approval policy toggles (mock)                        |
+| **Cards**                                          | Virtual card list + detail (mock issue / freeze / reveal)              |
 
 `mark_notification_read` belongs here as an **app action** when a notifications UI exists — not as something the mock chat agent calls.
 

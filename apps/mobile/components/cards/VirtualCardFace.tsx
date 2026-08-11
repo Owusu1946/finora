@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import {
   Canvas,
   LinearGradient as SkiaLinearGradient,
@@ -7,14 +6,6 @@ import {
 } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import Svg, {
-  Defs,
-  G,
-  LinearGradient as SvgLinearGradient,
-  Path,
-  Rect,
-  Stop,
-} from 'react-native-svg';
 import Animated, {
   Easing,
   interpolate,
@@ -24,6 +15,16 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
+import Svg, {
+  Defs,
+  G,
+  LinearGradient as SvgLinearGradient,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg';
+
+import { AppText as Text } from '@/components/ui/text';
 
 const FLIP_MS = 580;
 const FLIP_EASING = Easing.bezier(0.22, 1, 0.36, 1);
@@ -145,25 +146,11 @@ function EMVChip({ compact }: { compact?: boolean }) {
   );
 }
 
-function NetworkMark({
-  network,
-  compact,
-}: {
-  network: VirtualCard['network'];
-  compact?: boolean;
-}) {
+function NetworkMark({ network, compact }: { network: VirtualCard['network']; compact?: boolean }) {
   if (network === 'visa') {
-    return (
-      <VisaLogo
-        width={compact ? 42 : 54}
-      />
-    );
+    return <VisaLogo width={compact ? 42 : 54} />;
   }
-  return (
-    <MastercardLogo
-      width={compact ? 34 : 44}
-    />
-  );
+  return <MastercardLogo width={compact ? 34 : 44} />;
 }
 
 /**
@@ -466,11 +453,7 @@ export function VirtualCardFace({
 
   const content = (
     <Animated.View
-      style={[
-        styles.shadowWrap,
-        compact ? styles.shadowCompact : styles.shadowHero,
-        animatedStyle,
-      ]}
+      style={[styles.shadowWrap, compact ? styles.shadowCompact : styles.shadowHero, animatedStyle]}
     >
       <View
         onLayout={onLayout}
@@ -506,12 +489,14 @@ export function VirtualCardFace({
               <View style={styles.brandBlock}>
                 <FinoraMark
                   variant='bare'
-                tone='dark'
+                  tone='dark'
                   compact={compact}
                 />
                 <View>
                   <Text style={[styles.brand, compact && styles.brandCompact]}>FINORA</Text>
-                  <Text style={[styles.product, compact && styles.productCompact]}>{card.label}</Text>
+                  <Text style={[styles.product, compact && styles.productCompact]}>
+                    {card.label}
+                  </Text>
                 </View>
               </View>
               <ContactlessMark compact={compact} />

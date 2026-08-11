@@ -5,6 +5,7 @@ CRUD operations for managing multiple chat threads.
 ## Overview
 
 Thread list management allows users to:
+
 - Create new conversations
 - Switch between threads
 - Rename, archive, and delete threads
@@ -13,7 +14,7 @@ Thread list management allows users to:
 ## Accessing Thread List API
 
 ```tsx
-import { useAui, useAuiState } from "@assistant-ui/react";
+import { useAui, useAuiState } from '@assistant-ui/react';
 
 function ThreadManager() {
   const api = useAui();
@@ -22,12 +23,10 @@ function ThreadManager() {
   const threads = api.threads();
 
   // Get current state
-  const { threadIds, mainThreadId } = useAuiState(
-    (s) => ({
-      threadIds: s.threads.threadIds,
-      mainThreadId: s.threads.mainThreadId,
-    })
-  );
+  const { threadIds, mainThreadId } = useAuiState((s) => ({
+    threadIds: s.threads.threadIds,
+    mainThreadId: s.threads.mainThreadId,
+  }));
 }
 ```
 
@@ -59,7 +58,7 @@ await item.switchTo();
 
 ```tsx
 const item = api.threads().item({ id: threadId });
-await item.rename("New Chat Title");
+await item.rename('New Chat Title');
 ```
 
 ### Archive Thread
@@ -103,9 +102,9 @@ await item.generateTitle();
 
 ```typescript
 interface ThreadListState {
-  mainThreadId: string;           // Current thread
-  newThreadId: string | null;     // Pending new thread
-  threadIds: readonly string[];   // Regular thread IDs
+  mainThreadId: string; // Current thread
+  newThreadId: string | null; // Pending new thread
+  threadIds: readonly string[]; // Regular thread IDs
   archivedThreadIds: readonly string[];
   isLoading: boolean;
   threadItems: readonly ThreadListItemState[];
@@ -116,22 +115,22 @@ interface ThreadListItemState {
   title?: string;
   remoteId?: string;
   externalId?: string;
-  status: "archived" | "regular" | "new" | "deleted";
+  status: 'archived' | 'regular' | 'new' | 'deleted';
 }
 ```
 
 ## Subscribing to Changes
 
 ```tsx
-import { useAuiState, useAuiEvent } from "@assistant-ui/react";
+import { useAuiState, useAuiEvent } from '@assistant-ui/react';
 
 function ThreadWatcher() {
   // Reactive state
   const threads = useAuiState((s) => s.threads.threadIds);
 
   // Events
-  useAuiEvent("thread.initialize", () => {
-    console.log("New thread created");
+  useAuiEvent('thread.initialize', () => {
+    console.log('New thread created');
   });
 
   return <div>{threads.length} threads</div>;
@@ -145,7 +144,7 @@ const api = useAui();
 const threads = api.threads();
 
 // By ID
-const item1 = threads.item({ id: "thread-123" });
+const item1 = threads.item({ id: 'thread-123' });
 
 // By index (regular threads)
 const item2 = threads.item({ index: 0 });
@@ -167,7 +166,7 @@ async function archiveThreadsByTitlePrefix(prefix: string) {
   for (const threadId of threadIds) {
     const item = api.threads().item({ id: threadId });
     const state = item.getState();
-    const title = (state.title || "").toLowerCase();
+    const title = (state.title || '').toLowerCase();
 
     if (title.startsWith(prefix.toLowerCase())) {
       await item.archive();
@@ -216,7 +215,7 @@ async function safeDelete(threadId: string) {
   try {
     await item.delete();
   } catch (error) {
-    if (error.message.includes("not found")) {
+    if (error.message.includes('not found')) {
       // Thread already deleted
       return;
     }
@@ -230,7 +229,7 @@ async function safeDelete(threadId: string) {
 Thread list can be sorted by title or by ID for custom ordering:
 
 ```tsx
-function SortedThreadList({ sortBy }: { sortBy: "title" | "id" }) {
+function SortedThreadList({ sortBy }: { sortBy: 'title' | 'id' }) {
   const { threads } = useAuiState((s) => ({ threads: s.threads.threadIds }));
   const api = useAui();
 
@@ -238,8 +237,8 @@ function SortedThreadList({ sortBy }: { sortBy: "title" | "id" }) {
     const itemA = api.threads().item({ id: a }).getState();
     const itemB = api.threads().item({ id: b }).getState();
 
-    if (sortBy === "title") {
-      return (itemA.title || "").localeCompare(itemB.title || "");
+    if (sortBy === 'title') {
+      return (itemA.title || '').localeCompare(itemB.title || '');
     }
     return b.localeCompare(a);
   });
@@ -247,7 +246,10 @@ function SortedThreadList({ sortBy }: { sortBy: "title" | "id" }) {
   return (
     <div>
       {sorted.map((id) => (
-        <ThreadListItem key={id} id={id} />
+        <ThreadListItem
+          key={id}
+          id={id}
+        />
       ))}
     </div>
   );
@@ -267,17 +269,17 @@ function KeyboardNav() {
   const currentIndex = threads.indexOf(mainThreadId);
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "ArrowUp" && currentIndex > 0) {
+    if (e.key === 'ArrowUp' && currentIndex > 0) {
       api.threads().switchToThread(threads[currentIndex - 1]);
     }
-    if (e.key === "ArrowDown" && currentIndex < threads.length - 1) {
+    if (e.key === 'ArrowDown' && currentIndex < threads.length - 1) {
       api.threads().switchToThread(threads[currentIndex + 1]);
     }
   };
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, threads]);
 
   return null;

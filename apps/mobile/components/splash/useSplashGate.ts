@@ -117,15 +117,7 @@ export function useSplashGate(bootReady: boolean) {
       cancelAnimation(progress);
       cancelAnimation(overlayOpacity);
     };
-  }, [
-    bootReady,
-    motionReady,
-    overlayLaidOut,
-    dismissed,
-    reducedMotion,
-    progress,
-    overlayOpacity,
-  ]);
+  }, [bootReady, motionReady, overlayLaidOut, dismissed, reducedMotion, progress, overlayOpacity]);
 
   return {
     showOverlay: !dismissed,

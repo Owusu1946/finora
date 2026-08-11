@@ -1,14 +1,10 @@
-import { AppText as Text } from '@/components/ui/text';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  PURPOSE_CODE_LABELS,
-  PURPOSE_CODES,
-  type PurposeCode,
-} from '@/lib/send-corridors';
+import { PURPOSE_CODE_LABELS, PURPOSE_CODES, type PurposeCode } from '@/lib/send-corridors';
 
 export function PurposeCodeStep({
   step,

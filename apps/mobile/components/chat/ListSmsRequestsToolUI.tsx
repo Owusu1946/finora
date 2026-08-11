@@ -1,11 +1,12 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { SmsPaymentRequest } from '@/lib/sms-requests-storage';
+
 import { SmsRequestCard } from '@/components/chat/SmsRequestCard';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { SmsPaymentRequest } from '@/lib/sms-requests-storage';
 
 type ListSmsRequestsArgs = {
   status?: 'new' | 'all';

@@ -21,13 +21,13 @@ import {
   AssistantStream,
   AssistantTransportEncoder,
   createAssistantStreamController,
-} from "assistant-stream";
+} from 'assistant-stream';
 
 export async function POST(req: Request) {
   const [stream, controller] = createAssistantStreamController();
 
-  controller.appendText("Hello ");
-  controller.appendText("world!");
+  controller.appendText('Hello ');
+  controller.appendText('world!');
   controller.close();
 
   return AssistantStream.toResponse(stream, new AssistantTransportEncoder());
@@ -37,12 +37,9 @@ export async function POST(req: Request) {
 ### Client
 
 ```ts
-import { AssistantStream, AssistantTransportDecoder } from "assistant-stream";
+import { AssistantStream, AssistantTransportDecoder } from 'assistant-stream';
 
-const stream = AssistantStream.fromResponse(
-  response,
-  new AssistantTransportDecoder()
-);
+const stream = AssistantStream.fromResponse(response, new AssistantTransportDecoder());
 
 for await (const chunk of stream) {
   console.log(chunk);
@@ -69,17 +66,17 @@ import {
   AssistantStream,
   AssistantTransportEncoder,
   createAssistantStreamController,
-} from "assistant-stream";
+} from 'assistant-stream';
 
 async function streamResponse(query: string) {
   const [stream, controller] = createAssistantStreamController();
   const toolCallId = `tool_${Date.now()}`;
 
-  controller.appendText("Based on my search, ");
+  controller.appendText('Based on my search, ');
 
   const tool = controller.addToolCallPart({
     toolCallId,
-    toolName: "search",
+    toolName: 'search',
   });
   tool.argsText.append(JSON.stringify({ query }));
   tool.argsText.close();
@@ -97,14 +94,14 @@ async function streamResponse(query: string) {
 ## Using with useLocalRuntime
 
 ```tsx
-import { useLocalRuntime } from "@assistant-ui/react";
-import { AssistantStream, AssistantTransportDecoder } from "assistant-stream";
+import { useLocalRuntime } from '@assistant-ui/react';
+import { AssistantStream, AssistantTransportDecoder } from 'assistant-stream';
 
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({ messages }),
         signal: abortSignal,
       });
@@ -118,29 +115,26 @@ const runtime = useLocalRuntime({
           }
         | undefined;
 
-      const stream = AssistantStream.fromResponse(
-        response,
-        new AssistantTransportDecoder()
-      );
+      const stream = AssistantStream.fromResponse(response, new AssistantTransportDecoder());
 
       for await (const chunk of stream) {
         // Convert AssistantStreamChunk into ChatModelRunResult content parts
-        if (chunk.type === "text-delta") {
-          yield { content: [{ type: "text", text: chunk.textDelta }] };
+        if (chunk.type === 'text-delta') {
+          yield { content: [{ type: 'text', text: chunk.textDelta }] };
         }
 
         // Track current tool-call to attach result to it
-        if (chunk.type === "part-start" && chunk.part.type === "tool-call") {
+        if (chunk.type === 'part-start' && chunk.part.type === 'tool-call') {
           currentTool = {
             toolCallId: chunk.part.toolCallId,
             toolName: chunk.part.toolName,
             args: {},
-            argsText: "{}",
+            argsText: '{}',
           };
           yield { content: [currentTool] };
         }
 
-        if (chunk.type === "result" && currentTool) {
+        if (chunk.type === 'result' && currentTool) {
           yield {
             content: [
               {

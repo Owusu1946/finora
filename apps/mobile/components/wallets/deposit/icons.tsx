@@ -1,12 +1,8 @@
-import {
-  BaseLogo,
-  EthereumLogo,
-  SolanaLogo,
-  TronLogo,
-} from '@/components/ui/chain-logos';
-import { AirtelTigoLogo, MtnLogo, TelecelLogo } from '@/components/ui/momo-logos';
 import type { CryptoNetworkId } from '@/lib/crypto-networks';
 import type { MomoNetworkId } from '@/lib/momo-networks';
+
+import { BaseLogo, EthereumLogo, SolanaLogo, TronLogo } from '@/components/ui/chain-logos';
+import { AirtelTigoLogo, MtnLogo, TelecelLogo } from '@/components/ui/momo-logos';
 
 export function ChainIcon({ id, size = 36 }: { id: CryptoNetworkId; size?: number }) {
   switch (id) {

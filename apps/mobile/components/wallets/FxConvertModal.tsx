@@ -1,4 +1,3 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 import { CurrencyIcon, type SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -259,96 +259,90 @@ export function FxConvertModal({
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-                <View style={styles.swapStack}>
-                  <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
-                    <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>Pay</Text>
-                    <View style={styles.legRow}>
-                      <TextInput
-                        value={convertAmount}
-                        onChangeText={(t) => setConvertAmount(t.replace(/[^0-9.]/g, ''))}
-                        placeholder='0'
-                        keyboardType='decimal-pad'
-                        placeholderTextColor={colors.mutedForeground}
-                        style={[styles.amountInput, { color: colors.foreground }]}
-                        inputAccessoryViewID={
-                          Platform.OS === 'ios' ? AMOUNT_ACCESSORY_ID : undefined
-                        }
-                      />
-                      <CurrencyPill
-                        currency={fromCurrency}
-                        onPress={() => openPicker('pay')}
-                        colors={colors}
-                      />
-                    </View>
-                    <View style={styles.availableRow}>
-                      <Text style={[styles.availableText, { color: colors.mutedForeground }]}>
-                        Available {fromCurrency} {formatBalance(fromWallet?.balance ?? 0)}
-                      </Text>
-                      <Pressable
-                        onPress={handleMax}
-                        style={[styles.maxBadge, { backgroundColor: colors.foreground }]}
-                      >
-                        <Text style={[styles.maxBadgeText, { color: colors.background }]}>Max</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-
-                  <View style={styles.flipWrap}>
-                    <Pressable
-                      onPress={handleFlip}
-                      style={({ pressed }) => [
-                        styles.flipBtn,
-                        {
-                          backgroundColor: colors.foreground,
-                          borderColor: colors.background,
-                          opacity: pressed ? 0.85 : 1,
-                        },
-                      ]}
-                    >
-                      <Icon
-                        name='swap-vert'
-                        size={22}
-                        color={colors.background}
-                      />
-                    </Pressable>
-                  </View>
-
-                  <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
-                    <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>
-                      Receive
-                    </Text>
-                    <View style={styles.legRow}>
-                      <Text
-                        style={[styles.amountInput, { color: colors.foreground }]}
-                        numberOfLines={1}
-                      >
-                        {amountNum > 0 ? formatBalance(receiveAmount) : '0'}
-                      </Text>
-                      <CurrencyPill
-                        currency={toCurrency}
-                        onPress={() => openPicker('receive')}
-                        colors={colors}
-                      />
-                    </View>
-                  </View>
+            <View style={styles.swapStack}>
+              <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
+                <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>Pay</Text>
+                <View style={styles.legRow}>
+                  <TextInput
+                    value={convertAmount}
+                    onChangeText={(t) => setConvertAmount(t.replace(/[^0-9.]/g, ''))}
+                    placeholder='0'
+                    keyboardType='decimal-pad'
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[styles.amountInput, { color: colors.foreground }]}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? AMOUNT_ACCESSORY_ID : undefined}
+                  />
+                  <CurrencyPill
+                    currency={fromCurrency}
+                    onPress={() => openPicker('pay')}
+                    colors={colors}
+                  />
                 </View>
-
-                {insufficient ? (
-                  <View style={[styles.warnRow, { backgroundColor: colors.destructiveSurface }]}>
-                    <Icon
-                      name='info'
-                      size={16}
-                      color={colors.destructive}
-                    />
-                    <Text style={[styles.warnText, { color: colors.destructive }]}>
-                      Insufficient {fromCurrency} balance. Required: {formatBalance(amountNum)}.
-                    </Text>
-                  </View>
-                ) : (
-                  <Text style={[styles.rateHint, { color: colors.mutedForeground }]}>
-                    {rateLabel}
+                <View style={styles.availableRow}>
+                  <Text style={[styles.availableText, { color: colors.mutedForeground }]}>
+                    Available {fromCurrency} {formatBalance(fromWallet?.balance ?? 0)}
                   </Text>
-                )}
+                  <Pressable
+                    onPress={handleMax}
+                    style={[styles.maxBadge, { backgroundColor: colors.foreground }]}
+                  >
+                    <Text style={[styles.maxBadgeText, { color: colors.background }]}>Max</Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              <View style={styles.flipWrap}>
+                <Pressable
+                  onPress={handleFlip}
+                  style={({ pressed }) => [
+                    styles.flipBtn,
+                    {
+                      backgroundColor: colors.foreground,
+                      borderColor: colors.background,
+                      opacity: pressed ? 0.85 : 1,
+                    },
+                  ]}
+                >
+                  <Icon
+                    name='swap-vert'
+                    size={22}
+                    color={colors.background}
+                  />
+                </Pressable>
+              </View>
+
+              <View style={[styles.legCard, { backgroundColor: colors.muted }]}>
+                <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>Receive</Text>
+                <View style={styles.legRow}>
+                  <Text
+                    style={[styles.amountInput, { color: colors.foreground }]}
+                    numberOfLines={1}
+                  >
+                    {amountNum > 0 ? formatBalance(receiveAmount) : '0'}
+                  </Text>
+                  <CurrencyPill
+                    currency={toCurrency}
+                    onPress={() => openPicker('receive')}
+                    colors={colors}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {insufficient ? (
+              <View style={[styles.warnRow, { backgroundColor: colors.destructiveSurface }]}>
+                <Icon
+                  name='info'
+                  size={16}
+                  color={colors.destructive}
+                />
+                <Text style={[styles.warnText, { color: colors.destructive }]}>
+                  Insufficient {fromCurrency} balance. Required: {formatBalance(amountNum)}.
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.rateHint, { color: colors.mutedForeground }]}>{rateLabel}</Text>
+            )}
 
             <Pressable
               onPress={handleExecuteConversion}

@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -8,14 +7,15 @@ import {
   type PaymentConfirmationStatus,
 } from '@/components/chat/PaymentConfirmationCard';
 import { AmountFundingStep } from '@/components/chat/send/AmountFundingStep';
+import { CountryStep } from '@/components/chat/send/CountryStep';
 import {
   DestinationFieldsStep,
   type DestinationFields,
 } from '@/components/chat/send/DestinationFieldsStep';
-import { CountryStep } from '@/components/chat/send/CountryStep';
 import { FxQuoteStep } from '@/components/chat/send/FxQuoteStep';
 import { PurposeCodeStep } from '@/components/chat/send/PurposeCodeStep';
 import { RailStep } from '@/components/chat/send/RailStep';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -58,14 +58,7 @@ export type SendMoneySeed = {
   blockchain?: string;
 };
 
-type Step =
-  | 'country'
-  | 'rail'
-  | 'destination'
-  | 'amount'
-  | 'purpose'
-  | 'fx'
-  | 'confirm';
+type Step = 'country' | 'rail' | 'destination' | 'amount' | 'purpose' | 'fx' | 'confirm';
 
 function kindFromMethod(method: SettlementMethod): PaymentConfirmation['destination']['kind'] {
   if (method === 'MOMO') return 'mobile_money';
@@ -123,7 +116,11 @@ function fieldsFromSeed(seed: SendMoneySeed): DestinationFields {
     recipientName: seed.recipientName,
     network: seed.network,
     phone: seed.settlementMethod === 'MOMO' ? seed.destinationValue : undefined,
-    accountNumber: seed.accountNumber ?? (seed.settlementMethod !== 'MOMO' && seed.settlementMethod !== 'CRYPTO' ? seed.destinationValue : undefined),
+    accountNumber:
+      seed.accountNumber ??
+      (seed.settlementMethod !== 'MOMO' && seed.settlementMethod !== 'CRYPTO'
+        ? seed.destinationValue
+        : undefined),
     bankCode: undefined,
     accountName: seed.accountName ?? seed.recipientName,
     iban: seed.iban,
@@ -131,8 +128,7 @@ function fieldsFromSeed(seed: SendMoneySeed): DestinationFields {
     sortCode: seed.sortCode,
     routingNumber: seed.routingNumber,
     accountCategory: seed.accountCategory,
-    cryptoAddress:
-      seed.settlementMethod === 'CRYPTO' ? seed.destinationValue : undefined,
+    cryptoAddress: seed.settlementMethod === 'CRYPTO' ? seed.destinationValue : undefined,
     blockchain: seed.blockchain,
     addressLine1: seed.addressLine1,
     city: seed.city,
@@ -184,22 +180,16 @@ export function SendMoneyWizard({
   const [step, setStep] = useState<Step>(() => initialStep(seed));
   const [countryQuery, setCountryQuery] = useState('');
   const [country, setCountry] = useState<string | null>(
-    seed.settlementMethod === 'CRYPTO'
-      ? 'CRYPTO'
-      : (seed.destinationCountry ?? null),
+    seed.settlementMethod === 'CRYPTO' ? 'CRYPTO' : (seed.destinationCountry ?? null),
   );
-  const [method, setMethod] = useState<SettlementMethod | null>(
-    seed.settlementMethod ?? null,
-  );
+  const [method, setMethod] = useState<SettlementMethod | null>(seed.settlementMethod ?? null);
   const [fields, setFields] = useState<DestinationFields>(() => fieldsFromSeed(seed));
   const [amount, setAmount] = useState<number | null>(seed.amount ?? null);
   const [customAmount, setCustomAmount] = useState('');
   const [fundingCurrency, setFundingCurrency] = useState(
     seed.fundingCurrency ?? seed.currency ?? 'USD',
   );
-  const [purposeCode, setPurposeCode] = useState<PurposeCode | null>(
-    seed.purposeCode ?? null,
-  );
+  const [purposeCode, setPurposeCode] = useState<PurposeCode | null>(seed.purposeCode ?? null);
 
   const corridor = country && country !== 'CRYPTO' ? getCorridor(country) : undefined;
   const payoutCurrency =
@@ -210,18 +200,12 @@ export function SendMoneyWizard({
       : (corridor?.currency ?? seed.currency ?? 'USD');
 
   const rails: SettlementMethod[] =
-    country === 'CRYPTO'
-      ? CRYPTO_CORRIDOR.rails
-      : country
-        ? railsForCountry(country)
-        : [];
+    country === 'CRYPTO' ? CRYPTO_CORRIDOR.rails : country ? railsForCountry(country) : [];
 
   const requiredFields =
     method && country ? fieldsForRail(country === 'CRYPTO' ? 'GH' : country, method) : [];
 
-  const needsFx =
-    amount != null &&
-    fundingCurrency.toUpperCase() !== payoutCurrency.toUpperCase();
+  const needsFx = amount != null && fundingCurrency.toUpperCase() !== payoutCurrency.toUpperCase();
 
   const fxQuote = useMemo(() => {
     if (!needsFx || amount == null) return null;
@@ -350,12 +334,7 @@ export function SendMoneyWizard({
   }
 
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.composer, borderColor: colors.border },
-      ]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       {step === 'country' ? (
         <CountryStep
           step={stepIndex}
@@ -403,11 +382,7 @@ export function SendMoneyWizard({
           step={stepIndex}
           total={stepTotal}
           method={method}
-          fields={
-            method === 'CRYPTO'
-              ? CRYPTO_CORRIDOR.fields
-              : requiredFields
-          }
+          fields={method === 'CRYPTO' ? CRYPTO_CORRIDOR.fields : requiredFields}
           values={fields}
           onChange={setFields}
           onBack={() => goBackFrom('destination')}

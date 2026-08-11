@@ -142,7 +142,9 @@ export async function listPayrollRuns(): Promise<PayrollRun[]> {
   }
 }
 
-export async function recordPayrollRun(run: Omit<PayrollRun, 'id' | 'createdAt'>): Promise<PayrollRun> {
+export async function recordPayrollRun(
+  run: Omit<PayrollRun, 'id' | 'createdAt'>,
+): Promise<PayrollRun> {
   const runs = await listPayrollRuns();
   const next: PayrollRun = {
     ...run,

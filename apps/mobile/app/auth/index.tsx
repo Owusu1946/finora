@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -6,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { signInGoogle } from '@/lib/auth-mock';
 import { haptics } from '@/lib/haptics';

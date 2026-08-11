@@ -1,6 +1,6 @@
 ---
 name: assistant-ui
-description: "Overview and router for assistant-ui, the React library for building AI chat interfaces from composable primitives. Use for high-level, cross-cutting, or architecture-overview questions: choosing packages, picking a runtime, or understanding the layered model (RuntimeCore, Runtime, context hooks, primitives) and message model. Covers the `@assistant-ui/react` core plus `@assistant-ui/react-ai-sdk`, `@assistant-ui/react-langgraph`, `assistant-stream`, and `assistant-cloud`; `AssistantRuntimeProvider`; the primitives `ThreadPrimitive`, `MessagePrimitive`, `ComposerPrimitive`; the hooks `useAui`, `useAuiState`, `useAuiEvent`; and runtime selection across `useChatRuntime`, `useExternalStoreRuntime`, `useLangGraphRuntime`, `useLocalRuntime`. For a specific area route to a focused sibling instead: setup, runtime, primitives, tools, streaming, cloud, thread-list, or update. Not for hands-on tasks already owned by those siblings."
+description: 'Overview and router for assistant-ui, the React library for building AI chat interfaces from composable primitives. Use for high-level, cross-cutting, or architecture-overview questions: choosing packages, picking a runtime, or understanding the layered model (RuntimeCore, Runtime, context hooks, primitives) and message model. Covers the `@assistant-ui/react` core plus `@assistant-ui/react-ai-sdk`, `@assistant-ui/react-langgraph`, `assistant-stream`, and `assistant-cloud`; `AssistantRuntimeProvider`; the primitives `ThreadPrimitive`, `MessagePrimitive`, `ComposerPrimitive`; the hooks `useAui`, `useAuiState`, `useAuiEvent`; and runtime selection across `useChatRuntime`, `useExternalStoreRuntime`, `useLangGraphRuntime`, `useLocalRuntime`. For a specific area route to a focused sibling instead: setup, runtime, primitives, tools, streaming, cloud, thread-list, or update. Not for hands-on tasks already owned by those siblings.'
 license: MIT
 ---
 
@@ -17,13 +17,13 @@ React library for building AI chat interfaces with composable primitives.
 
 ## When to Use
 
-| Use Case | Best For |
-|----------|----------|
-| Chat UI from scratch | Full control over UX |
-| Existing AI backend | Connects to any streaming backend |
+| Use Case             | Best For                           |
+| -------------------- | ---------------------------------- |
+| Chat UI from scratch | Full control over UX               |
+| Existing AI backend  | Connects to any streaming backend  |
 | Custom message types | Tools, images, files, custom parts |
-| Multi-thread apps | Built-in thread list management |
-| Production apps | Cloud persistence, auth, analytics |
+| Multi-thread apps    | Built-in thread list management    |
+| Production apps      | Cloud persistence, auth, analytics |
 
 ## Architecture
 
@@ -64,25 +64,25 @@ Using AI SDK?
 
 ## Core Packages
 
-| Package | Purpose |
-|---------|---------|
-| `@assistant-ui/react` | UI primitives & hooks |
-| `@assistant-ui/react-ai-sdk` | Vercel AI SDK v6 adapter |
-| `@assistant-ui/react-langgraph` | LangGraph adapter |
-| `@assistant-ui/react-markdown` | Markdown rendering |
-| `assistant-stream` | Streaming protocol |
-| `assistant-cloud` | Cloud persistence |
+| Package                         | Purpose                  |
+| ------------------------------- | ------------------------ |
+| `@assistant-ui/react`           | UI primitives & hooks    |
+| `@assistant-ui/react-ai-sdk`    | Vercel AI SDK v6 adapter |
+| `@assistant-ui/react-langgraph` | LangGraph adapter        |
+| `@assistant-ui/react-markdown`  | Markdown rendering       |
+| `assistant-stream`              | Streaming protocol       |
+| `assistant-cloud`               | Cloud persistence        |
 
 ## Quick Start
 
 ```tsx
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
-import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
+import { useChatRuntime, AssistantChatTransport } from '@assistant-ui/react-ai-sdk';
 
 function App() {
   const runtime = useChatRuntime({
-    transport: new AssistantChatTransport({ api: "/api/chat" }),
+    transport: new AssistantChatTransport({ api: '/api/chat' }),
   });
   return (
     <AssistantRuntimeProvider runtime={runtime}>
@@ -95,14 +95,14 @@ function App() {
 ## State Access
 
 ```tsx
-import { useAui, useAuiState } from "@assistant-ui/react";
+import { useAui, useAuiState } from '@assistant-ui/react';
 
 const api = useAui();
-api.thread().append({ role: "user", content: [{ type: "text", text: "Hi" }] });
+api.thread().append({ role: 'user', content: [{ type: 'text', text: 'Hi' }] });
 api.thread().cancelRun();
 
-const messages = useAuiState(s => s.thread.messages);
-const isRunning = useAuiState(s => s.thread.isRunning);
+const messages = useAuiState((s) => s.thread.messages);
+const isRunning = useAuiState((s) => s.thread.isRunning);
 ```
 
 ## Related Skills

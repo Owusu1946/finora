@@ -1,11 +1,12 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { TreasuryOverview } from '@/lib/treasury';
+
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { TreasuryOverview } from '@/lib/treasury';
 
 type Result = { overview?: TreasuryOverview };
 
@@ -67,7 +68,9 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
 
         {overview.upcomingOutflows.length > 0 ? (
           <View style={styles.section}>
-            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Upcoming outflows</Text>
+            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
+              Upcoming outflows
+            </Text>
             {overview.upcomingOutflows.slice(0, 5).map((item, i) => (
               <View
                 key={`${item.label}-${i}`}

@@ -23,9 +23,9 @@ npx assistant-ui add image
 Each command writes a `.tsx` file into `components/assistant-ui/`. The equivalent shadcn invocation is `npx shadcn@latest add https://r.assistant-ui.com/<name>.json`. After adding, import from your local path (or the `@assistant-ui/ui` alias):
 
 ```ts
-import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
-import { ToolGroup } from "@/components/assistant-ui/tool-group";
-import { Image } from "@/components/assistant-ui/image";
+import { ToolFallback } from '@/components/assistant-ui/tool-fallback';
+import { ToolGroup } from '@/components/assistant-ui/tool-group';
+import { Image } from '@/components/assistant-ui/image';
 ```
 
 ## ToolFallback
@@ -33,15 +33,15 @@ import { Image } from "@/components/assistant-ui/image";
 The default tool-call renderer: a collapsible card showing the tool name, status, arguments, and result. It implements `ToolCallMessagePartComponent`, so its props are the message part itself (`toolName`, `argsText`, `result`, `status`). Spread the part into it.
 
 ```tsx
-import { MessagePrimitive } from "@assistant-ui/react";
-import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+import { MessagePrimitive } from '@assistant-ui/react';
+import { ToolFallback } from '@/components/assistant-ui/tool-fallback';
 
 <MessagePrimitive.Parts>
   {({ part }) => {
-    if (part.type === "tool-call") return <ToolFallback {...part} />;
+    if (part.type === 'tool-call') return <ToolFallback {...part} />;
     return null;
   }}
-</MessagePrimitive.Parts>
+</MessagePrimitive.Parts>;
 ```
 
 Props (from `ToolCallMessagePartComponent`):
@@ -60,10 +60,12 @@ Status `type` drives the visuals: `"running"` shows a spinner and shimmer, `"com
 Prefer a tool's own UI when present, falling back to `ToolFallback` otherwise:
 
 ```tsx
-{({ part }) => {
-  if (part.type === "tool-call") return part.toolUI ?? <ToolFallback {...part} />;
-  return null;
-}}
+{
+  ({ part }) => {
+    if (part.type === 'tool-call') return part.toolUI ?? <ToolFallback {...part} />;
+    return null;
+  };
+}
 ```
 
 ## ToolFallback sub-components
@@ -72,7 +74,10 @@ Prefer a tool's own UI when present, falling back to `ToolFallback` otherwise:
 
 ```tsx
 <ToolFallback.Root>
-  <ToolFallback.Trigger toolName="get_weather" status={status} />
+  <ToolFallback.Trigger
+    toolName='get_weather'
+    status={status}
+  />
   <ToolFallback.Content>
     <ToolFallback.Error status={status} />
     <ToolFallback.Args argsText={argsText} />
@@ -81,14 +86,14 @@ Prefer a tool's own UI when present, falling back to `ToolFallback` otherwise:
 </ToolFallback.Root>
 ```
 
-| Part | Role |
-|------|------|
-| `ToolFallback.Root` | Collapsible container with scroll lock; accepts `open`, `onOpenChange`, `defaultOpen` |
-| `ToolFallback.Trigger` | Header with tool name, status icon, shimmer |
-| `ToolFallback.Content` | Animated collapsible wrapper |
-| `ToolFallback.Args` | Renders the tool arguments |
-| `ToolFallback.Result` | Renders the execution result |
-| `ToolFallback.Error` | Renders error or cancellation info |
+| Part                   | Role                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| `ToolFallback.Root`    | Collapsible container with scroll lock; accepts `open`, `onOpenChange`, `defaultOpen` |
+| `ToolFallback.Trigger` | Header with tool name, status icon, shimmer                                           |
+| `ToolFallback.Content` | Animated collapsible wrapper                                                          |
+| `ToolFallback.Args`    | Renders the tool arguments                                                            |
+| `ToolFallback.Result`  | Renders the execution result                                                          |
+| `ToolFallback.Error`   | Renders error or cancellation info                                                    |
 
 The same parts are available as named exports: `ToolFallbackRoot`, `ToolFallbackTrigger`, `ToolFallbackContent`, `ToolFallbackArgs`, `ToolFallbackResult`, `ToolFallbackError`.
 
@@ -98,8 +103,12 @@ Collapses a run of consecutive tool calls into one expandable card. `ToolGroupRo
 
 ```ts
 import {
-  ToolGroup, ToolGroupRoot, ToolGroupTrigger, ToolGroupContent, toolGroupVariants,
-} from "@/components/assistant-ui/tool-group";
+  ToolGroup,
+  ToolGroupRoot,
+  ToolGroupTrigger,
+  ToolGroupContent,
+  toolGroupVariants,
+} from '@/components/assistant-ui/tool-group';
 ```
 
 `ToolGroupRoot` props:
@@ -120,32 +129,34 @@ import {
 Use `MessagePrimitive.GroupedParts` with `groupPartByType` to fold every `"tool-call"` part into a synthetic `"group-tool"` part. The group exposes `indices` (the grouped part positions) and `status`; render its `children` inside `ToolGroupContent`, and fall back to `ToolFallback` for each `"tool-call"`.
 
 ```tsx
-import { MessagePrimitive, groupPartByType } from "@assistant-ui/react";
-import { ToolGroupRoot, ToolGroupTrigger, ToolGroupContent } from "@/components/assistant-ui/tool-group";
-import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+import { MessagePrimitive, groupPartByType } from '@assistant-ui/react';
+import {
+  ToolGroupRoot,
+  ToolGroupTrigger,
+  ToolGroupContent,
+} from '@/components/assistant-ui/tool-group';
+import { ToolFallback } from '@/components/assistant-ui/tool-fallback';
 
-<MessagePrimitive.GroupedParts
-  groupBy={groupPartByType({ "tool-call": ["group-tool"] })}
->
+<MessagePrimitive.GroupedParts groupBy={groupPartByType({ 'tool-call': ['group-tool'] })}>
   {({ part, children }) => {
     switch (part.type) {
-      case "group-tool":
+      case 'group-tool':
         return (
           <ToolGroupRoot>
             <ToolGroupTrigger
               count={part.indices.length}
-              active={part.status.type === "running"}
+              active={part.status.type === 'running'}
             />
             <ToolGroupContent>{children}</ToolGroupContent>
           </ToolGroupRoot>
         );
-      case "tool-call":
+      case 'tool-call':
         return part.toolUI ?? <ToolFallback {...part} />;
       default:
         return null;
     }
   }}
-</MessagePrimitive.GroupedParts>
+</MessagePrimitive.GroupedParts>;
 ```
 
 Note: a legacy `ToolGroup` wrapper with `startIndex`/`endIndex` props exists only for the deprecated `components.ToolGroup` prop on `MessagePrimitive.Parts`. New code should use `GroupedParts` with `group-tool`.
@@ -155,15 +166,15 @@ Note: a legacy `ToolGroup` wrapper with `startIndex`/`endIndex` props exists onl
 Renders an `ImageMessagePart`. It is an `ImageMessagePartComponent`, so spread the part into it. The component branches on `status`: `"running"` shows a spinner, `"incomplete"` with reason `"content-filter"` shows an error card (no `<img>`), and otherwise a zoomable image with an optional filename label.
 
 ```tsx
-import { MessagePrimitive } from "@assistant-ui/react";
-import { Image } from "@/components/assistant-ui/image";
+import { MessagePrimitive } from '@assistant-ui/react';
+import { Image } from '@/components/assistant-ui/image';
 
 <MessagePrimitive.Parts>
   {({ part }) => {
-    if (part.type === "image") return <Image {...part} />;
+    if (part.type === 'image') return <Image {...part} />;
     return null;
   }}
-</MessagePrimitive.Parts>
+</MessagePrimitive.Parts>;
 ```
 
 `Image.Root` (`ImageRootProps` = `ComponentProps<"div"> & VariantProps<typeof imageVariants>`) accepts:
@@ -179,12 +190,12 @@ Generate images in a backend route with the AI SDK, then render the resulting da
 
 ```ts
 // app/api/image/route.ts
-import { generateImage } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { generateImage } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
-  const result = await generateImage({ model: openai.image("gpt-image-1"), prompt });
+  const result = await generateImage({ model: openai.image('gpt-image-1'), prompt });
   return Response.json({
     image: `data:${result.image.mediaType};base64,${result.image.base64}`,
   });
@@ -192,15 +203,18 @@ export async function POST(req: Request) {
 ```
 
 ```tsx
-import { Image } from "@/components/assistant-ui/image";
-import type { ImageMessagePart } from "@assistant-ui/react";
+import { Image } from '@/components/assistant-ui/image';
+import type { ImageMessagePart } from '@assistant-ui/react';
 
-const imagePart: ImageMessagePart = { type: "image", image: result.image };
+const imagePart: ImageMessagePart = { type: 'image', image: result.image };
 
 <>
   <Image {...imagePart} />
-  <Image.Actions part={imagePart} onRegenerate={() => regenerate(prompt)} />
-</>
+  <Image.Actions
+    part={imagePart}
+    onRegenerate={() => regenerate(prompt)}
+  />
+</>;
 ```
 
 `Image.Actions` (`ImageActionsProps`) renders download, copy, and an optional regenerate button. It takes `part: ImageMessagePart`, an optional `onRegenerate?: () => void | Promise<void>` (the regenerate button only appears when supplied), and an optional `className`. A full Next.js example lives at `examples/with-image-generation` in the assistant-ui repository.

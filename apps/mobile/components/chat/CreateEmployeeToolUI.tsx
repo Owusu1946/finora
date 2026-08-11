@@ -2,12 +2,13 @@ import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { Employee } from '@/lib/employees-storage';
+
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import type { Employee } from '@/lib/employees-storage';
 
 type CreateEmployeeArgs = {
   name?: string;

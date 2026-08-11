@@ -11,12 +11,7 @@ export type SubCustomerOnboardingStatus =
   | 'APPROVED'
   | 'REJECTED'
   | 'REQUIRES_ACTION';
-export type SubCustomerPurpose =
-  | 'PAYMENTS'
-  | 'PAYROLL'
-  | 'TREASURY'
-  | 'MARKETPLACE'
-  | 'OTHER';
+export type SubCustomerPurpose = 'PAYMENTS' | 'PAYROLL' | 'TREASURY' | 'MARKETPLACE' | 'OTHER';
 
 export type WalletStatus = 'ACTIVE' | 'SUSPENDED' | 'CLOSED';
 export type BlockchainNetwork = 'TRON' | 'ETHEREUM' | 'SOLANA' | 'POLYGON' | 'BASE';
@@ -54,13 +49,7 @@ export type WalletTransactionStatus =
   | 'CANCELLED'
   | 'REQUIRES_APPROVAL';
 
-export type MobileMoneyNetwork =
-  | 'MTN'
-  | 'VODAFONE'
-  | 'AIRTEL'
-  | 'TELECEL'
-  | 'ORANGE'
-  | 'MPESA';
+export type MobileMoneyNetwork = 'MTN' | 'VODAFONE' | 'AIRTEL' | 'TELECEL' | 'ORANGE' | 'MPESA';
 
 export interface WewireWallet {
   id: string;

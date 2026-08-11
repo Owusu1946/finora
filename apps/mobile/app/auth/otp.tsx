@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -6,13 +5,14 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AUTH_OTP_LENGTH, AuthOtpInput } from '@/components/auth/AuthOtpInput';
 import { AuthShell } from '@/components/auth/AuthShell';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import {
-    MOCK_EMAIL_OTP,
-    checkForgetPasswordOtp,
-    requestPasswordReset,
-    sendEmailVerificationOtp,
-    verifyEmailOtp,
+  MOCK_EMAIL_OTP,
+  checkForgetPasswordOtp,
+  requestPasswordReset,
+  sendEmailVerificationOtp,
+  verifyEmailOtp,
 } from '@/lib/auth-mock';
 import { haptics } from '@/lib/haptics';
 import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';

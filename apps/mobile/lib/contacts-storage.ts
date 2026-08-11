@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { MOCK_CONTACTS, type Contact } from '@/components/contacts/types';
 import type { SupportedCurrency } from '@/components/ui/currency-icon';
+
+import { MOCK_CONTACTS, type Contact } from '@/components/contacts/types';
 const KEY = 'finora.contacts.v2';
 
 const memory = new Map<string, string>();
@@ -61,9 +62,7 @@ export async function listContacts(): Promise<Contact[]> {
 export async function findContactByIdentifier(identifier: string): Promise<Contact | null> {
   const contacts = await listContacts();
   const needle = identifier.replace(/\s+/g, '').toLowerCase();
-  return (
-    contacts.find((c) => c.identifier.replace(/\s+/g, '').toLowerCase() === needle) ?? null
-  );
+  return contacts.find((c) => c.identifier.replace(/\s+/g, '').toLowerCase() === needle) ?? null;
 }
 
 export async function saveContact(input: {

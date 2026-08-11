@@ -1,11 +1,8 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  MCP_TOOL_NAMES,
-  TOOL_INPUT_SCHEMAS,
-  type McpToolName,
-} from '@finora/shared';
-import { McpAgent } from 'agents/mcp';
 import type { ZodRawShape } from 'zod';
+
+import { MCP_TOOL_NAMES, TOOL_INPUT_SCHEMAS, type McpToolName } from '@finora/shared';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpAgent } from 'agents/mcp';
 
 import { TOOL_CATALOG } from './tools/catalog';
 
@@ -24,8 +21,12 @@ async function callFinoraApi(
   const base = env.FINORA_API_URL.replace(/\/$/, '');
   const response = await fetch(`${base}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    ...(body
+      ? {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      : {}),
   });
   const data: unknown = await response.json().catch(() => ({
     error: 'invalid_json',
@@ -76,9 +77,7 @@ export class FinoraMCP extends McpAgent<Env> {
       }
 
       const path =
-        typeof meta.path === 'function'
-          ? meta.path(args as Record<string, unknown>)
-          : meta.path;
+        typeof meta.path === 'function' ? meta.path(args as Record<string, unknown>) : meta.path;
 
       // Strip path-param fields from body where needed
       const bodyArgs = { ...(args as Record<string, unknown>) };

@@ -5,14 +5,11 @@ Type definitions for assistant-ui runtime system.
 ## Message Types
 
 ```typescript
-type ThreadMessage =
-  | ThreadUserMessage
-  | ThreadAssistantMessage
-  | ThreadSystemMessage;
+type ThreadMessage = ThreadUserMessage | ThreadAssistantMessage | ThreadSystemMessage;
 
 interface ThreadUserMessage {
   id: string;
-  role: "user";
+  role: 'user';
   content: MessagePart[];
   attachments?: Attachment[];
   createdAt: Date;
@@ -20,7 +17,7 @@ interface ThreadUserMessage {
 
 interface ThreadAssistantMessage {
   id: string;
-  role: "assistant";
+  role: 'assistant';
   content: MessagePart[];
   status: MessageStatus;
   createdAt: Date;
@@ -28,7 +25,7 @@ interface ThreadAssistantMessage {
 
 interface ThreadSystemMessage {
   id: string;
-  role: "system";
+  role: 'system';
   content: MessagePart[];
   createdAt: Date;
 }
@@ -40,12 +37,12 @@ interface ThreadSystemMessage {
 
 ```typescript
 type MessageStatus =
-  | { type: "running" }                                    // Generation in progress
-  | { type: "requires-action"; reason: "tool-calls" | "interrupt" }
-  | { type: "complete"; reason: "stop" | "unknown" }       // Finished
+  | { type: 'running' } // Generation in progress
+  | { type: 'requires-action'; reason: 'tool-calls' | 'interrupt' }
+  | { type: 'complete'; reason: 'stop' | 'unknown' } // Finished
   | {
-      type: "incomplete";                                  // Stopped early
-      reason: "cancelled" | "tool-calls" | "length" | "content-filter" | "other" | "error";
+      type: 'incomplete'; // Stopped early
+      reason: 'cancelled' | 'tool-calls' | 'length' | 'content-filter' | 'other' | 'error';
       error?: unknown;
     };
 ```
@@ -53,26 +50,20 @@ type MessageStatus =
 ## Message Parts
 
 ```typescript
-type MessagePart =
-  | TextPart
-  | ImagePart
-  | ToolCallPart
-  | ReasoningPart
-  | SourcePart
-  | FilePart;
+type MessagePart = TextPart | ImagePart | ToolCallPart | ReasoningPart | SourcePart | FilePart;
 
 interface TextPart {
-  type: "text";
+  type: 'text';
   text: string;
 }
 
 interface ImagePart {
-  type: "image";
+  type: 'image';
   image: string;
 }
 
 interface ToolCallPart {
-  type: "tool-call";
+  type: 'tool-call';
   toolCallId: string;
   toolName: string;
   args: unknown;
@@ -83,20 +74,20 @@ interface ToolCallPart {
 }
 
 interface ReasoningPart {
-  type: "reasoning";
+  type: 'reasoning';
   text: string;
 }
 
 interface SourcePart {
-  type: "source";
-  sourceType: "url";
+  type: 'source';
+  sourceType: 'url';
   id: string;
   url: string;
   title?: string;
 }
 
 interface FilePart {
-  type: "file";
+  type: 'file';
   filename?: string;
   data: string;
   mimeType: string;
@@ -108,18 +99,16 @@ interface FilePart {
 ```typescript
 interface Attachment {
   id: string;
-  type: "image" | "document" | "file";
+  type: 'image' | 'document' | 'file';
   name: string;
   contentType?: string;
   file?: File;
   content?: AttachmentContent[];
   // Pending attachments are "requires-action"; completed ones are "complete"
-  status: { type: "running" | "requires-action" | "complete" | "incomplete"; reason?: string };
+  status: { type: 'running' | 'requires-action' | 'complete' | 'incomplete'; reason?: string };
 }
 
-type AttachmentContent =
-  | { type: "text"; text: string }
-  | { type: "image"; image: string };
+type AttachmentContent = { type: 'text'; text: string } | { type: 'image'; image: string };
 ```
 
 ## Runtime State Types
@@ -133,11 +122,11 @@ interface ThreadState {
 }
 
 interface ThreadCapabilities {
-  cancel: boolean;      // Can cancel generation
-  edit: boolean;        // Can edit messages
-  reload: boolean;      // Can regenerate
-  copy: boolean;        // Can copy messages
-  speak: boolean;       // TTS support
+  cancel: boolean; // Can cancel generation
+  edit: boolean; // Can edit messages
+  reload: boolean; // Can regenerate
+  copy: boolean; // Can copy messages
+  speak: boolean; // TTS support
   attachments: boolean; // File uploads
 }
 ```
@@ -146,10 +135,10 @@ interface ThreadCapabilities {
 
 ```typescript
 interface ThreadListState {
-  threadIds: readonly string[];         // Active thread IDs
+  threadIds: readonly string[]; // Active thread IDs
   archivedThreadIds: readonly string[]; // Archived thread IDs
   newThreadId: string | null; // Pending new thread ID
-  mainThreadId: string;      // Current active thread
+  mainThreadId: string; // Current active thread
   isLoading: boolean;
   threadItems: readonly ThreadListItemState[];
 }
@@ -159,7 +148,7 @@ interface ThreadListItemState {
   remoteId?: string;
   externalId?: string;
   title?: string;
-  status: "archived" | "regular" | "new" | "deleted";
+  status: 'archived' | 'regular' | 'new' | 'deleted';
 }
 ```
 
@@ -168,13 +157,13 @@ interface ThreadListItemState {
 ```typescript
 interface ComposerState {
   text: string;
-  role: MessageRole;            // role of the message being composed
+  role: MessageRole; // role of the message being composed
   attachments: Attachment[];
   attachmentAccept: string;
   isEmpty: boolean;
-  isEditing: boolean;           // editing an existing message
+  isEditing: boolean; // editing an existing message
   canCancel: boolean;
-  dictation?: DictationState;   // present while dictation is active
+  dictation?: DictationState; // present while dictation is active
 }
 ```
 
@@ -182,10 +171,10 @@ interface ComposerState {
 
 ```typescript
 type ToolCallMessagePartStatus =
-  | { type: "running" }        // Tool executing
-  | { type: "complete" }       // Finished
-  | { type: "incomplete"; reason: "cancelled" | "length" | "content-filter" | "other" | "error" }
-  | { type: "requires-action"; reason: "interrupt" };  // Needs input
+  | { type: 'running' } // Tool executing
+  | { type: 'complete' } // Finished
+  | { type: 'incomplete'; reason: 'cancelled' | 'length' | 'content-filter' | 'other' | 'error' }
+  | { type: 'requires-action'; reason: 'interrupt' }; // Needs input
 
 // Props passed to a makeAssistantToolUI render component
 interface ToolCallMessagePartProps<TArgs = unknown, TResult = unknown> {
@@ -198,8 +187,8 @@ interface ToolCallMessagePartProps<TArgs = unknown, TResult = unknown> {
   artifact?: unknown;
   status: ToolCallMessagePartStatus;
 
-  addResult: (result: unknown) => void;   // renderer-supplied result
-  resume: (payload: unknown) => void;      // resume a context.human(...) tool
+  addResult: (result: unknown) => void; // renderer-supplied result
+  resume: (payload: unknown) => void; // resume a context.human(...) tool
   respondToApproval: (response: { approved: boolean; reason?: string }) => void;
 }
 ```
@@ -215,7 +204,7 @@ interface ChatModelRunResult {
 
 // Yield content parts progressively:
 async function* run({ messages }) {
-  yield { content: [{ type: "text", text: "Hello " }] };
-  yield { content: [{ type: "text", text: "world!" }] };
+  yield { content: [{ type: 'text', text: 'Hello ' }] };
+  yield { content: [{ type: 'text', text: 'world!' }] };
 }
 ```

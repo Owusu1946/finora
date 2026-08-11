@@ -1,8 +1,8 @@
-import { AppText as Text } from '@/components/ui/text';
 import React from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 

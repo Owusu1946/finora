@@ -1,10 +1,10 @@
-import { AppText as Text } from '@/components/ui/text';
 import type { ReasoningMessagePartComponent } from '@assistant-ui/react-native';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

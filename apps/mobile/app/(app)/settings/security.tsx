@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Platform, StyleSheet } from 'react-native';
@@ -10,6 +9,7 @@ import {
   SettingsSection,
   SettingsSwitchRow,
 } from '@/components/settings/SettingsPrimitives';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { hasPasscode } from '@/lib/passcode-storage';

@@ -75,8 +75,24 @@ export const SEND_CORRIDORS: CorridorCountry[] = [
     currency: 'USD',
     rails: ['ACH', 'WIRE'],
     fields: {
-      ACH: ['routingNumber', 'accountNumber', 'accountCategory', 'accountName', 'addressLine1', 'city', 'postalCode'],
-      WIRE: ['routingNumber', 'accountNumber', 'accountCategory', 'accountName', 'addressLine1', 'city', 'postalCode'],
+      ACH: [
+        'routingNumber',
+        'accountNumber',
+        'accountCategory',
+        'accountName',
+        'addressLine1',
+        'city',
+        'postalCode',
+      ],
+      WIRE: [
+        'routingNumber',
+        'accountNumber',
+        'accountCategory',
+        'accountName',
+        'addressLine1',
+        'city',
+        'postalCode',
+      ],
     },
   },
   {
@@ -250,10 +266,7 @@ export function railsForCountry(countryCode: string): SettlementMethod[] {
   return getCorridor(countryCode)?.rails ?? [];
 }
 
-export function fieldsForRail(
-  countryCode: string,
-  method: SettlementMethod,
-): CorridorFieldKey[] {
+export function fieldsForRail(countryCode: string, method: SettlementMethod): CorridorFieldKey[] {
   if (method === 'CRYPTO') return CRYPTO_CORRIDOR.fields;
   return getCorridor(countryCode)?.fields[method] ?? [];
 }
@@ -280,11 +293,13 @@ const MOCK_USD_RATES: Record<string, number> = {
   USDC: 1,
 };
 
-export function previewFxQuote(opts: {
+export function previewFxQuote(opts: { from: Currency; to: Currency; amount: number }): {
   from: Currency;
   to: Currency;
-  amount: number;
-}): { from: Currency; to: Currency; rate: number; fee: number; convertedAmount: number } {
+  rate: number;
+  fee: number;
+  convertedAmount: number;
+} {
   const fromUsd = MOCK_USD_RATES[opts.from] ?? 1;
   const toUsd = MOCK_USD_RATES[opts.to] ?? 1;
   const rate = toUsd / fromUsd;

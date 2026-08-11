@@ -13,10 +13,10 @@ type ThreadListRuntime = {
   getState(): ThreadListState;
   subscribe(callback: () => void): Unsubscribe;
 
-  main: ThreadRuntime;              // Current active thread
+  main: ThreadRuntime; // Current active thread
   getById(threadId: string): ThreadRuntime;
 
-  mainItem: ThreadListItemRuntime;  // Current thread item
+  mainItem: ThreadListItemRuntime; // Current thread item
   getItemById(threadId: string): ThreadListItemRuntime;
   getItemByIndex(idx: number): ThreadListItemRuntime;
   getArchivedItemByIndex(idx: number): ThreadListItemRuntime;
@@ -33,12 +33,12 @@ For app-level state via `useAuiState((s) => s.threads)`, use the client `Threads
 
 ```typescript
 type ThreadListState = {
-  mainThreadId: string;              // Current thread ID
-  newThreadId: string | undefined;     // Pending new thread ID
-  threadIds: readonly string[];        // Regular thread IDs
+  mainThreadId: string; // Current thread ID
+  newThreadId: string | undefined; // Pending new thread ID
+  threadIds: readonly string[]; // Regular thread IDs
   archivedThreadIds: readonly string[];
   isLoading: boolean;
-  threadItems: Record<string, Omit<ThreadListItemState, "isMain" | "threadId">>;
+  threadItems: Record<string, Omit<ThreadListItemState, 'isMain' | 'threadId'>>;
 };
 ```
 
@@ -64,14 +64,12 @@ type ThreadListItemRuntime = {
 ## Accessing Thread List
 
 ```tsx
-import { useAui, useAuiState } from "@assistant-ui/react";
+import { useAui, useAuiState } from '@assistant-ui/react';
 
 function ThreadListComponent() {
   const api = useAui();
 
-  const { threadIds, archivedThreadIds, isLoading } = useAuiState(
-    (s) => s.threads
-  );
+  const { threadIds, archivedThreadIds, isLoading } = useAuiState((s) => s.threads);
 
   const handleSwitch = (threadId: string) => {
     api.threads().switchToThread(threadId);
@@ -85,7 +83,10 @@ function ThreadListComponent() {
     <div>
       <button onClick={handleNew}>New Chat</button>
       {threadIds.map((threadId) => (
-        <button key={threadId} onClick={() => handleSwitch(threadId)}>
+        <button
+          key={threadId}
+          onClick={() => handleSwitch(threadId)}
+        >
           {threadId}
         </button>
       ))}
@@ -102,7 +103,7 @@ function ThreadItem({ threadId }: { threadId: string }) {
   const item = api.threads().item({ id: threadId });
 
   const handleRename = async () => {
-    await item.rename("New Title");
+    await item.rename('New Title');
   };
 
   const handleArchive = async () => {
@@ -127,35 +128,32 @@ function ThreadItem({ threadId }: { threadId: string }) {
 ## Using ThreadList Primitives
 
 ```tsx
-import {
-  ThreadListPrimitive,
-  ThreadListItemPrimitive,
-} from "@assistant-ui/react";
+import { ThreadListPrimitive, ThreadListItemPrimitive } from '@assistant-ui/react';
 
 function ThreadList() {
   return (
-    <ThreadListPrimitive.Root className="w-64 border-r p-2">
-      <ThreadListPrimitive.New className="w-full p-2 mb-2 bg-blue-500 text-white rounded">
+    <ThreadListPrimitive.Root className='w-64 border-r p-2'>
+      <ThreadListPrimitive.New className='w-full p-2 mb-2 bg-blue-500 text-white rounded'>
         + New Chat
       </ThreadListPrimitive.New>
 
-      <div className="space-y-1">
+      <div className='space-y-1'>
         <ThreadListPrimitive.Items>
           {() => (
-          <ThreadListItemPrimitive.Root className="flex items-center p-2 hover:bg-gray-100 rounded group">
-            <ThreadListItemPrimitive.Trigger className="flex-1 text-left truncate">
-              <ThreadListItemPrimitive.Title />
-            </ThreadListItemPrimitive.Trigger>
+            <ThreadListItemPrimitive.Root className='flex items-center p-2 hover:bg-gray-100 rounded group'>
+              <ThreadListItemPrimitive.Trigger className='flex-1 text-left truncate'>
+                <ThreadListItemPrimitive.Title />
+              </ThreadListItemPrimitive.Trigger>
 
-            <div className="hidden group-hover:flex gap-1">
-              <ThreadListItemPrimitive.Archive className="p-1 text-gray-500 hover:text-gray-700">
-                📁
-              </ThreadListItemPrimitive.Archive>
-              <ThreadListItemPrimitive.Delete className="p-1 text-red-500 hover:text-red-700">
-                🗑️
-              </ThreadListItemPrimitive.Delete>
-            </div>
-          </ThreadListItemPrimitive.Root>
+              <div className='hidden group-hover:flex gap-1'>
+                <ThreadListItemPrimitive.Archive className='p-1 text-gray-500 hover:text-gray-700'>
+                  📁
+                </ThreadListItemPrimitive.Archive>
+                <ThreadListItemPrimitive.Delete className='p-1 text-red-500 hover:text-red-700'>
+                  🗑️
+                </ThreadListItemPrimitive.Delete>
+              </div>
+            </ThreadListItemPrimitive.Root>
           )}
         </ThreadListPrimitive.Items>
       </div>
@@ -175,17 +173,17 @@ function SidebarWithThreadList() {
   const api = useAui();
 
   return (
-    <aside className="w-64 bg-gray-50 h-full">
-      <div className="p-4">
+    <aside className='w-64 bg-gray-50 h-full'>
+      <div className='p-4'>
         <button
           onClick={() => api.threads().switchToNewThread()}
-          className="w-full p-2 bg-blue-500 text-white rounded"
+          className='w-full p-2 bg-blue-500 text-white rounded'
         >
           New Chat
         </button>
       </div>
 
-      <nav className="p-2">
+      <nav className='p-2'>
         {threadIds.map((threadId) => {
           const isActive = threadId === mainThreadId;
           return (
@@ -193,7 +191,7 @@ function SidebarWithThreadList() {
               key={threadId}
               onClick={() => api.threads().switchToThread(threadId)}
               className={`w-full p-2 text-left rounded ${
-                isActive ? "bg-blue-100" : "hover:bg-gray-100"
+                isActive ? 'bg-blue-100' : 'hover:bg-gray-100'
               }`}
             >
               {threadId.slice(0, 8)}...
@@ -215,9 +213,9 @@ import {
   AssistantRuntimeProvider,
   useRemoteThreadListRuntime,
   useLocalRuntime,
-} from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
-import { ThreadList } from "@/components/assistant-ui/thread-list";
+} from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
+import { ThreadList } from '@/components/assistant-ui/thread-list';
 
 const adapter: RemoteThreadListAdapter = {
   async list() {
@@ -225,7 +223,7 @@ const adapter: RemoteThreadListAdapter = {
     return {
       threads: threads.map((t) => ({
         remoteId: t.id,
-        status: t.archived ? "archived" : "regular",
+        status: t.archived ? 'archived' : 'regular',
         title: t.title,
       })),
     };
@@ -260,7 +258,7 @@ const adapter: RemoteThreadListAdapter = {
     const thread = await api.getThread(threadId);
     return {
       remoteId: thread.id,
-      status: thread.archived ? "archived" : "regular",
+      status: thread.archived ? 'archived' : 'regular',
       title: thread.title,
     };
   },

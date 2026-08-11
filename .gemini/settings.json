@@ -2,10 +2,7 @@
   "mcpServers": {
     "mcp-docs-server": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@assistant-ui/mcp-docs-server"
-      ]
+      "args": ["-y", "@assistant-ui/mcp-docs-server"]
     }
   }
 }

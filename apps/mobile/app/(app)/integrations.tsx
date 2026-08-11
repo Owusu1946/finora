@@ -321,8 +321,8 @@ export default function IntegrationsScreen() {
               <Text style={[styles.btnLabel, { color: colors.background }]}>Ask in chat</Text>
             </Pressable>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-              SMS composer is ready on this device. Ask in chat for MoMo prompts, or tap Text SMS
-              on payment links to share them.
+              SMS composer is ready on this device. Ask in chat for MoMo prompts, or tap Text SMS on
+              payment links to share them.
             </Text>
           </>
         }

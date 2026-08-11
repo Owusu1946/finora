@@ -1,10 +1,11 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { Beneficiary } from '@/lib/beneficiaries-storage';
+
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { Beneficiary } from '@/lib/beneficiaries-storage';
 
 type Result = { beneficiaries?: Beneficiary[] };
 

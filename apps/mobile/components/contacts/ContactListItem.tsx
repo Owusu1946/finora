@@ -1,8 +1,8 @@
-import { AppText as Text } from '@/components/ui/text';
 import { memo } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 

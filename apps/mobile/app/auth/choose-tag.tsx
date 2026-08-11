@@ -1,4 +1,3 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -6,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthGate } from '@/lib/auth-gate';
@@ -114,7 +114,8 @@ export default function ChooseTagScreen() {
             styles.field,
             {
               backgroundColor: colors.composer,
-              borderColor: submitError || hint.tone === 'error' ? colors.destructive : colors.border,
+              borderColor:
+                submitError || hint.tone === 'error' ? colors.destructive : colors.border,
             },
           ]}
         >

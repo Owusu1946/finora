@@ -1,4 +1,5 @@
 import type { Contact } from '@/components/contacts/types';
+
 import { listContacts } from '@/lib/contacts-storage';
 
 /** Match contacts by first name, last name, or full name substring. */
@@ -106,4 +107,3 @@ export function contactToSendSeed(contact: Contact): {
     settlementMethod,
   };
 }
-

@@ -55,17 +55,11 @@ export async function updateInvoice(
   const idx = items.findIndex((i) => i.id === id);
   if (idx < 0) return null;
   const next: Invoice = { ...items[idx]!, ...patch };
-  await setItem(
-    KEY,
-    JSON.stringify(items.map((i, n) => (n === idx ? next : i))),
-  );
+  await setItem(KEY, JSON.stringify(items.map((i, n) => (n === idx ? next : i))));
   return next;
 }
 
-export async function markInvoicePaid(
-  id: string,
-  transactionId: string,
-): Promise<Invoice | null> {
+export async function markInvoicePaid(id: string, transactionId: string): Promise<Invoice | null> {
   return updateInvoice(id, {
     status: 'paid' satisfies InvoiceStatus,
     paidAt: new Date().toISOString(),

@@ -1,42 +1,41 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View } from 'react-native';
 
-import type { AppLanguage, ThemePreference } from "@/lib/settings-storage";
+import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 
 import {
   SettingsScreen,
   SettingsSection,
   SettingsSegmented,
   SettingsSwitchRow,
-} from "@/components/settings/SettingsPrimitives";
-import { AppText as Text } from "@/components/ui/text";
-import { useTheme } from "@/hooks/use-theme";
-import { useSettings } from "@/lib/settings-context";
+} from '@/components/settings/SettingsPrimitives';
+import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
+import { useSettings } from '@/lib/settings-context';
 
 export default function AppearanceSettingsScreen() {
   const { colors } = useTheme();
-  const { settings, loading, update, setTheme, setLanguage, setLargerText } =
-    useSettings();
+  const { settings, loading, update, setTheme, setLanguage, setLargerText } = useSettings();
 
   return (
     <SettingsScreen loading={loading}>
       <SettingsSection
-        title="Theme"
-        footer="System follows your device appearance."
+        title='Theme'
+        footer='System follows your device appearance.'
       >
         <View style={styles.segmentPad}>
           <SettingsSegmented
             value={settings.theme}
             onChange={(id) => void setTheme(id as ThemePreference)}
             options={[
-              { id: "system", label: "System" },
-              { id: "light", label: "Light" },
-              { id: "dark", label: "Dark" },
+              { id: 'system', label: 'System' },
+              { id: 'light', label: 'Light' },
+              { id: 'dark', label: 'Dark' },
             ]}
           />
         </View>
       </SettingsSection>
 
-      <SettingsSection title="Language">
+      <SettingsSection title='Language'>
         <View style={styles.segmentPad}>
           <Text style={[styles.hint, { color: colors.mutedForeground }]}>
             Applies to Finora copy. Chat replies follow the model language.
@@ -45,18 +44,18 @@ export default function AppearanceSettingsScreen() {
             value={settings.language}
             onChange={(id) => void setLanguage(id as AppLanguage)}
             options={[
-              { id: "en", label: "English" },
-              { id: "fr", label: "Français" },
+              { id: 'en', label: 'English' },
+              { id: 'fr', label: 'Français' },
             ]}
           />
         </View>
       </SettingsSection>
 
-      <SettingsSection title="Accessibility">
+      <SettingsSection title='Accessibility'>
         <SettingsSwitchRow
-          label="Larger text"
-          detail="Increase text across Finora"
-          icon="eye"
+          label='Larger text'
+          detail='Increase text across Finora'
+          icon='eye'
           value={settings.largerText}
           onValueChange={(value) => void setLargerText(value)}
           isLast
@@ -65,9 +64,9 @@ export default function AppearanceSettingsScreen() {
 
       <SettingsSection>
         <SettingsSwitchRow
-          label="Haptics"
-          detail="Vibration feedback on taps and confirms"
-          icon="activity"
+          label='Haptics'
+          detail='Vibration feedback on taps and confirms'
+          icon='activity'
           value={settings.hapticsEnabled}
           onValueChange={(v) => void update({ hapticsEnabled: v })}
           isLast
@@ -84,9 +83,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hint: {
-    fontFamily: "DMSans_400Regular",
+    fontFamily: 'DMSans_400Regular',
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
     lineHeight: 18,
   },
 });

@@ -40,13 +40,13 @@ npm install @langfuse/tracing @langfuse/otel @opentelemetry/sdk-node
 Create `instrumentation.ts` at the project root. Export the processor so route handlers can flush it later (see [Serverless: forceFlush](#serverless-forceflush)).
 
 ```ts
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { LangfuseSpanProcessor } from "@langfuse/otel";
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { LangfuseSpanProcessor } from '@langfuse/otel';
 
 export const langfuseSpanProcessor = new LangfuseSpanProcessor();
 
 export async function register() {
-  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
 
   const sdk = new NodeSDK({
     spanProcessors: [langfuseSpanProcessor],
@@ -76,15 +76,15 @@ export default nextConfig;
 Enable telemetry by setting `experimental_telemetry` directly on `streamText`. The same flag works on `generateText`.
 
 ```ts
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
-import type { UIMessage } from "ai";
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
+import type { UIMessage } from 'ai';
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
-    model: openai("gpt-4o"),
+    model: openai('gpt-4o'),
     messages: convertToModelMessages(messages),
     experimental_telemetry: { isEnabled: true },
   });
@@ -98,21 +98,21 @@ export async function POST(req: Request) {
 Wrap the call in `propagateAttributes` from `@langfuse/tracing` to attach a trace name, user, and session so Langfuse can group and filter runs.
 
 ```ts
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
-import type { UIMessage } from "ai";
-import { propagateAttributes } from "@langfuse/tracing";
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
+import type { UIMessage } from 'ai';
+import { propagateAttributes } from '@langfuse/tracing';
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
-  const userId = "<resolve from your session>";
-  const sessionId = "<resolve from your thread state>";
+  const userId = '<resolve from your session>';
+  const sessionId = '<resolve from your thread state>';
 
   const result = await propagateAttributes(
-    { traceName: "chat-completion", userId, sessionId },
+    { traceName: 'chat-completion', userId, sessionId },
     async () =>
       streamText({
-        model: openai("gpt-4o"),
+        model: openai('gpt-4o'),
         messages: convertToModelMessages(messages),
         experimental_telemetry: { isEnabled: true },
       }),
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
 On serverless platforms the function can exit before OTel flushes its buffer, dropping traces. Import the processor exported from `instrumentation.ts` and flush it before responding, or hand the flush to the runtime's `waitUntil`.
 
 ```ts
-import { langfuseSpanProcessor } from "@/instrumentation";
+import { langfuseSpanProcessor } from '@/instrumentation';
 
 await langfuseSpanProcessor.forceFlush();
 ```

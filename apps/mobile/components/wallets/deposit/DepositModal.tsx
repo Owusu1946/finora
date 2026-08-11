@@ -3,23 +3,18 @@ import { Modal, View } from 'react-native';
 
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { useTheme } from '@/hooks/use-theme';
-
 import { useSettings } from '@/lib/settings-context';
 
+import type { DepositModalProps } from './types';
+
 import { FinoraUserStep } from './FinoraUserStep';
-import {
-  getSheetTitle,
-  isMomoFlowStep,
-  isPickerStep,
-  shouldShowBack,
-} from './helpers';
+import { getSheetTitle, isMomoFlowStep, isPickerStep, shouldShowBack } from './helpers';
 import { MethodSelectionStep } from './MethodSelectionStep';
 import { MomoFlowScreen } from './MomoFlowScreen';
 import { getPickerCloseStep, NetworkPickerSheet } from './NetworkPickerSheet';
 import { DepositSheetHeader } from './primitives';
 import { StablecoinStep } from './StablecoinStep';
 import { depositStyles as styles } from './styles';
-import type { DepositModalProps } from './types';
 import { useDepositState } from './useDepositState';
 
 export function DepositModal({ visible, selectedWallet, onClose, onCopy }: DepositModalProps) {

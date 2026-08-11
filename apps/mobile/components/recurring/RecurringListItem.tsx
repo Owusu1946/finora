@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { memo } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 
@@ -6,6 +5,7 @@ import type { RecurringPayment } from '@/components/recurring/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 

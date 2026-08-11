@@ -8,11 +8,10 @@
     "check": "oxlint && oxfmt --write",
     "check-types": "turbo run check-types",
     "dev": "turbo run dev",
+    "dev:mobile": "turbo run start --filter=@finora/mobile",
+    "dev:web": "turbo run web --filter=@finora/mobile",
     "ios": "turbo run ios --filter=@finora/mobile",
-    "landing": "turbo run dev --filter=@finora/web",
-    "mobile": "turbo run start --filter=@finora/mobile",
-    "postinstall": "node scripts/link-mobile-deps.mjs",
-    "web": "turbo run web --filter=@finora/mobile"
+    "postinstall": "node scripts/link-mobile-deps.mjs"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -20,11 +19,11 @@
   },
   "devDependencies": {
     "@finora/config": "workspace:*",
-    "@types/node": "^22.20.1",
-    "oxfmt": "^0.61.0",
+    "@types/node": "^26.2.0",
+    "oxfmt": "^0.62.0",
     "oxlint": "^1.77.0",
-    "turbo": "^2.10.8",
-    "typescript": "^6.0.3"
+    "turbo": "^2.10.9",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=20"
