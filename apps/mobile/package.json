@@ -19,6 +19,7 @@
     "@finora/shared": "workspace:*",
     "@hugeicons/core-free-icons": "^4.2.3",
     "@hugeicons/react-native": "^1.0.15",
+    "@legendapp/list": "^3.3.5",
     "@mhaadi/thinking-orbs-native": "^0.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.18.16",
