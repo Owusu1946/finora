@@ -80,9 +80,14 @@ export default function PayrollScreen() {
             after approval.
           </Text>
           <View
-            style={[styles.summary, { borderColor: colors.border, backgroundColor: colors.composer }]}
+            style={[
+              styles.summary,
+              { borderColor: colors.border, backgroundColor: colors.composer },
+            ]}
           >
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Next run total</Text>
+            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>
+              Next run total
+            </Text>
             <Text style={[styles.summaryAmount, { color: colors.foreground }]}>
               {formatPaymentAmount(total, currency)}
             </Text>
@@ -107,7 +112,9 @@ export default function PayrollScreen() {
                 { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text style={[styles.btnLabel, { color: colors.background }]}>Run payroll in chat</Text>
+              <Text style={[styles.btnLabel, { color: colors.background }]}>
+                Run payroll in chat
+              </Text>
             </Pressable>
           </View>
           <Text style={[styles.section, { color: colors.mutedForeground }]}>Team</Text>
