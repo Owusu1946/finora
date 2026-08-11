@@ -40,7 +40,7 @@ function Controls() {
 Subscribe to state changes with a selector.
 
 ```tsx
-import { useAuiState } from "@assistant-ui/react";
+import { useAuiState } from '@assistant-ui/react';
 
 function MessageCount() {
   // Re-renders when messages change
@@ -74,22 +74,22 @@ function ThreadInfo() {
 Listen to runtime events.
 
 ```tsx
-import { useAuiEvent } from "@assistant-ui/react";
+import { useAuiEvent } from '@assistant-ui/react';
 
 function Analytics() {
-  useAuiEvent("composer.send", (event) => {
-    analytics.track("message_sent", {
+  useAuiEvent('composer.send', (event) => {
+    analytics.track('message_sent', {
       threadId: event.threadId,
       messageId: event.messageId, // optional, may be undefined
     });
   });
 
-  useAuiEvent("thread.runStart", () => {
-    console.log("Generation started");
+  useAuiEvent('thread.runStart', () => {
+    console.log('Generation started');
   });
 
-  useAuiEvent("thread.runEnd", () => {
-    console.log("Generation completed");
+  useAuiEvent('thread.runEnd', () => {
+    console.log('Generation completed');
   });
 
   return null;
@@ -97,6 +97,7 @@ function Analytics() {
 ```
 
 Available events:
+
 - `composer.send` - Message submitted from composer
 - `composer.attachmentAdd` - Attachment added in composer
 - `thread.runStart` - Generation started
@@ -133,7 +134,7 @@ interface AssistantState {
     remoteId?: string;
     externalId?: string;
     title?: string;
-    status: "archived" | "regular" | "new" | "deleted";
+    status: 'archived' | 'regular' | 'new' | 'deleted';
   };
 }
 ```
@@ -149,11 +150,11 @@ import {
   useThreadRuntime,
   useMessageRuntime,
   useComposerRuntime,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 
 const assistantRuntime = useAssistantRuntime();
 const threadRuntime = useThreadRuntime();
-const messageRuntime = useMessageRuntime();  // Needs message context
+const messageRuntime = useMessageRuntime(); // Needs message context
 const composerRuntime = useComposerRuntime();
 
 // State subscriptions
@@ -163,13 +164,13 @@ import {
   useComposer,
   useMessage,
   useThreadList,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 
-const thread = useThread();           // { messages, isRunning, ... }
+const thread = useThread(); // { messages, isRunning, ... }
 const messages = useThreadMessages(); // ThreadMessage[]
-const composer = useComposer();       // { text, attachments, ... }
-const message = useMessage();         // Current message (needs context)
-const threadList = useThreadList();   // Thread list state
+const composer = useComposer(); // { text, attachments, ... }
+const message = useMessage(); // Current message (needs context)
+const threadList = useThreadList(); // Thread list state
 ```
 
 ## Context Requirements
@@ -178,21 +179,21 @@ Some hooks require being inside specific contexts:
 
 ```tsx
 // These work anywhere inside AssistantRuntimeProvider
-useAui()
-useAuiState()
-useAuiEvent()
-useAssistantRuntime()
-useThreadRuntime()
-useThread()
-useThreadMessages()
-useComposer()
+useAui();
+useAuiState();
+useAuiEvent();
+useAssistantRuntime();
+useThreadRuntime();
+useThread();
+useThreadMessages();
+useComposer();
 
 // These require message context (inside ThreadPrimitive.Messages)
-useMessageRuntime()
-useMessage()
+useMessageRuntime();
+useMessage();
 
 // These require message part context
-useMessagePartRuntime()
+useMessagePartRuntime();
 ```
 
 ## Performance Tips
@@ -217,10 +218,7 @@ function MessageList() {
   const messages = useAuiState((s) => s.thread.messages);
 
   // Memoize expensive computations
-  const userMessages = useMemo(
-    () => messages.filter((m) => m.role === "user"),
-    [messages]
-  );
+  const userMessages = useMemo(() => messages.filter((m) => m.role === 'user'), [messages]);
 
   return <div>{userMessages.length} user messages</div>;
 }
@@ -275,7 +273,7 @@ useEffect(() => {
   // Subscribe to changes
   const unsubscribe = runtime.subscribe(() => {
     const state = runtime.getState();
-    console.log("State changed:", state);
+    console.log('State changed:', state);
   });
 
   return unsubscribe;

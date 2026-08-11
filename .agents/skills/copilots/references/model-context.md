@@ -17,7 +17,7 @@ Provide instructions, tools, and lazy app state to the assistant. Multiple provi
 `getContext` is a callback evaluated fresh each time the model context is read (at send-time), so frequently-changing app state never triggers a re-registration.
 
 ```tsx
-import { useAssistantContext } from "@assistant-ui/react";
+import { useAssistantContext } from '@assistant-ui/react';
 
 function PageContext() {
   useAssistantContext({
@@ -41,10 +41,10 @@ interface AssistantContextConfig {
 Takes a static string (or config). Re-registers when the value changes, so prefer it for stable, explicit instructions.
 
 ```tsx
-import { useAssistantInstructions } from "@assistant-ui/react";
+import { useAssistantInstructions } from '@assistant-ui/react';
 
 function Setup() {
-  useAssistantInstructions("You are a helpful assistant...");
+  useAssistantInstructions('You are a helpful assistant...');
   return null;
 }
 ```
@@ -54,9 +54,9 @@ function Setup() {
 `useAui().modelContext().register(provider)` returns an unsubscribe function. Register inside `useEffect` and return the result so the provider is cleaned up on unmount.
 
 ```tsx
-import { useAui, tool } from "@assistant-ui/react";
-import { useEffect } from "react";
-import { z } from "zod";
+import { useAui, tool } from '@assistant-ui/react';
+import { useEffect } from 'react';
+import { z } from 'zod';
 
 // Define tool outside the component (no runtime dependencies)
 const myTool = tool({
@@ -72,7 +72,7 @@ function MyComponent() {
   useEffect(() => {
     return aui.modelContext().register({
       getModelContext: () => ({
-        system: "You are a helpful search assistant...",
+        system: 'You are a helpful search assistant...',
         tools: { myTool },
       }),
     });
@@ -92,7 +92,7 @@ function SmartHistory({ userProfile }) {
       getModelContext: () => ({
         system: `User spending patterns:
 - Average transaction: ${userProfile.avgTransaction}
-- Common merchants: ${userProfile.frequentMerchants.join(", ")}`,
+- Common merchants: ${userProfile.frequentMerchants.join(', ')}`,
       }),
     });
   }, [aui, userProfile]);
@@ -127,7 +127,7 @@ useEffect(() => {
 A standalone registry instance (not tied to React) that manages tools, instructions, and nested providers. Useful outside a component tree (for example, building context in an iframe to expose to a parent assistant).
 
 ```ts
-import { ModelContextRegistry } from "@assistant-ui/react";
+import { ModelContextRegistry } from '@assistant-ui/react';
 
 const registry = new ModelContextRegistry();
 ```
@@ -142,20 +142,18 @@ interface ModelContextRegistry {
   addInstruction?: (
     config: string | AssistantInstructionsConfig,
   ) => ModelContextRegistryInstructionHandle;
-  addProvider?: (
-    provider: ModelContextProvider,
-  ) => ModelContextRegistryProviderHandle;
+  addProvider?: (provider: ModelContextProvider) => ModelContextRegistryProviderHandle;
 }
 ```
 
 ### addTool
 
 ```ts
-import { z } from "zod";
+import { z } from 'zod';
 
 const handle = registry.addTool({
-  toolName: "searchProducts",
-  description: "Search for products in the catalog",
+  toolName: 'searchProducts',
+  description: 'Search for products in the catalog',
   parameters: z.object({
     query: z.string(),
     category: z.string().optional(),
@@ -170,7 +168,7 @@ const handle = registry.addTool({
 ### addInstruction
 
 ```ts
-const instruction = registry.addInstruction("You are a helpful assistant.");
+const instruction = registry.addInstruction('You are a helpful assistant.');
 ```
 
 ### addProvider
@@ -179,7 +177,7 @@ Compose another provider (or registry's `getModelContext`/`subscribe`) into this
 
 ```ts
 const providerHandle = registry.addProvider({
-  getModelContext: () => ({ system: "Be concise." }),
+  getModelContext: () => ({ system: 'Be concise.' }),
 });
 ```
 
@@ -189,8 +187,8 @@ const providerHandle = registry.addProvider({
 
 ```ts
 const toolHandle = registry.addTool({
-  toolName: "convertCurrency",
-  description: "Convert between currencies",
+  toolName: 'convertCurrency',
+  description: 'Convert between currencies',
   parameters: z.object({ amount: z.number(), from: z.string(), to: z.string() }),
   execute: async ({ amount, from, to }) => {
     const rate = await fetchExchangeRate(from, to);
@@ -199,8 +197,8 @@ const toolHandle = registry.addTool({
 });
 
 toolHandle.update({
-  toolName: "convertCurrency",
-  description: "Convert between currencies with live rates",
+  toolName: 'convertCurrency',
+  description: 'Convert between currencies with live rates',
   parameters: z.object({ amount: z.number(), from: z.string(), to: z.string() }),
   execute: async ({ amount, from, to }) => {
     const rate = await fetchExchangeRate(from, to);
@@ -214,8 +212,8 @@ toolHandle.remove();
 Instruction handles work the same way:
 
 ```ts
-const instruction = registry.addInstruction("You are a helpful assistant.");
-instruction.update("You have access to a product catalog search tool.");
+const instruction = registry.addInstruction('You are a helpful assistant.');
+instruction.update('You have access to a product catalog search tool.');
 instruction.remove();
 ```
 

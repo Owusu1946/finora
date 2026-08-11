@@ -17,39 +17,39 @@ For backends that return streaming responses. Emit `ChatModelRunResult` chunks (
 Plain-text streaming only. For AI SDK Data Stream responses, use `toUIMessageStreamResponse()` + `useChatRuntime` or decode with `DataStreamDecoder`.
 
 ```tsx
-import { useLocalRuntime, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useLocalRuntime, AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 function Chat() {
   const runtime = useLocalRuntime({
     model: {
       async *run({ messages, abortSignal }) {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages }),
           signal: abortSignal,
         });
 
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
-        let buffer = "";
+        let buffer = '';
 
         while (reader) {
           const { done, value } = await reader.read();
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split("\n");
-          buffer = parts.pop() ?? "";
+          const parts = buffer.split('\n');
+          buffer = parts.pop() ?? '';
 
           for (const textChunk of parts.filter(Boolean)) {
-            yield { content: [{ type: "text", text: textChunk }] };
+            yield { content: [{ type: 'text', text: textChunk }] };
           }
         }
 
         if (buffer) {
-          yield { content: [{ type: "text", text: buffer }] };
+          yield { content: [{ type: 'text', text: buffer }] };
         }
       },
     },
@@ -71,30 +71,30 @@ Simple SSE `data:` lines only (not AI SDK Data Stream prefixes like `0:`/`b:`/`c
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({ messages }),
         signal: abortSignal,
       });
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let buffer = "";
+      let buffer = '';
 
       while (reader) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          if (line === "data: [DONE]") return;
+          if (!line.startsWith('data: ')) continue;
+          if (line === 'data: [DONE]') return;
 
           const data = JSON.parse(line.slice(6));
-          yield { content: [{ type: "text", text: data.content }] };
+          yield { content: [{ type: 'text', text: data.content }] };
         }
       }
     },
@@ -108,8 +108,8 @@ const runtime = useLocalRuntime({
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({ messages }),
         signal: abortSignal,
       });
@@ -120,11 +120,11 @@ const runtime = useLocalRuntime({
       >();
 
       for await (const event of parseResponse(response)) {
-        if (event.type === "text") {
-          yield { content: [{ type: "text", text: event.content }] };
+        if (event.type === 'text') {
+          yield { content: [{ type: 'text', text: event.content }] };
         }
 
-        if (event.type === "tool_use") {
+        if (event.type === 'tool_use') {
           const toolCall = {
             toolCallId: event.id,
             toolName: event.name,
@@ -132,19 +132,19 @@ const runtime = useLocalRuntime({
             argsText: JSON.stringify(event.input ?? {}),
           };
           toolCalls.set(event.id, toolCall);
-          yield { content: [{ type: "tool-call", ...toolCall }] };
+          yield { content: [{ type: 'tool-call', ...toolCall }] };
         }
 
-        if (event.type === "tool_result") {
+        if (event.type === 'tool_result') {
           const toolCall = toolCalls.get(event.tool_use_id);
           yield {
             content: [
               {
-                type: "tool-call",
+                type: 'tool-call',
                 toolCallId: event.tool_use_id,
-                toolName: toolCall?.toolName ?? "tool",
+                toolName: toolCall?.toolName ?? 'tool',
                 args: toolCall?.args ?? {},
-                argsText: toolCall?.argsText ?? "{}",
+                argsText: toolCall?.argsText ?? '{}',
                 result: event.content,
               },
             ],
@@ -163,8 +163,8 @@ For apps with existing state management (Redux, Zustand, etc.).
 ### Basic Setup
 
 ```tsx
-import { useExternalStoreRuntime, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useExternalStoreRuntime, AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 function Chat() {
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
@@ -176,7 +176,7 @@ function Chat() {
     onNew: async (message) => {
       const userMessage: ThreadMessage = {
         id: crypto.randomUUID(),
-        role: "user",
+        role: 'user',
         content: message.content,
         createdAt: new Date(),
       };
@@ -187,9 +187,9 @@ function Chat() {
 
       const assistantMessage: ThreadMessage = {
         id: crypto.randomUUID(),
-        role: "assistant",
-        content: [{ type: "text", text: response.text }],
-        status: { type: "complete" },
+        role: 'assistant',
+        content: [{ type: 'text', text: response.text }],
+        status: { type: 'complete' },
         createdAt: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
@@ -208,7 +208,7 @@ function Chat() {
 ### With Redux
 
 ```tsx
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from 'react-redux';
 
 function Chat() {
   const dispatch = useDispatch();
@@ -219,12 +219,12 @@ function Chat() {
     messages,
     isRunning,
     onNew: async (message) => {
-      dispatch(addMessage({ role: "user", content: message.content }));
+      dispatch(addMessage({ role: 'user', content: message.content }));
       dispatch(setRunning(true));
 
       const response = await chatAPI(messages);
 
-      dispatch(addMessage({ role: "assistant", content: response }));
+      dispatch(addMessage({ role: 'assistant', content: response }));
       dispatch(setRunning(false));
     },
     onReload: async (parentId) => {
@@ -243,7 +243,7 @@ function Chat() {
 ### With Zustand
 
 ```tsx
-import { create } from "zustand";
+import { create } from 'zustand';
 
 const useChatStore = create((set) => ({
   messages: [],
@@ -261,7 +261,7 @@ function Chat() {
     onNew: async (message) => {
       addMessage({
         id: crypto.randomUUID(),
-        role: "user",
+        role: 'user',
         content: message.content,
         createdAt: new Date(),
       });
@@ -271,9 +271,9 @@ function Chat() {
 
       addMessage({
         id: crypto.randomUUID(),
-        role: "assistant",
-        content: [{ type: "text", text: response }],
-        status: { type: "complete" },
+        role: 'assistant',
+        content: [{ type: 'text', text: response }],
+        status: { type: 'complete' },
         createdAt: new Date(),
       });
       setRunning(false);
@@ -293,7 +293,7 @@ function Chat() {
 ```tsx
 interface MyMessage {
   uuid: string;
-  sender: "human" | "ai";
+  sender: 'human' | 'ai';
   text: string;
   timestamp: number;
 }
@@ -303,20 +303,20 @@ const runtime = useExternalStoreRuntime<MyMessage>({
   isRunning,
   convertMessage: (msg): ThreadMessage => ({
     id: msg.uuid,
-    role: msg.sender === "human" ? "user" : "assistant",
-    content: [{ type: "text", text: msg.text }],
-    status: { type: "complete" },
+    role: msg.sender === 'human' ? 'user' : 'assistant',
+    content: [{ type: 'text', text: msg.text }],
+    status: { type: 'complete' },
     createdAt: new Date(msg.timestamp),
   }),
   onNew: async (appendMessage) => {
     const text = appendMessage.content
-      .filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map((p) => p.text)
-      .join("");
+      .join('');
 
     const myMessage: MyMessage = {
       uuid: crypto.randomUUID(),
-      sender: "human",
+      sender: 'human',
       text,
       timestamp: Date.now(),
     };
@@ -339,19 +339,19 @@ const runtime = useExternalStoreRuntime({
     const assistantId = crypto.randomUUID();
     addMessage({
       id: assistantId,
-      role: "assistant",
-      content: [{ type: "text", text: "" }],
-      status: { type: "running" },
+      role: 'assistant',
+      content: [{ type: 'text', text: '' }],
+      status: { type: 'running' },
       createdAt: new Date(),
     });
 
-    const response = await fetch("/api/chat", {
-      method: "POST",
+    const response = await fetch('/api/chat', {
+      method: 'POST',
       body: JSON.stringify({ messages }),
     });
 
     const reader = response.body?.getReader();
-    let fullText = "";
+    let fullText = '';
 
     while (reader) {
       const { done, value } = await reader.read();
@@ -360,11 +360,11 @@ const runtime = useExternalStoreRuntime({
       fullText += new TextDecoder().decode(value);
 
       updateMessage(assistantId, {
-        content: [{ type: "text", text: fullText }],
+        content: [{ type: 'text', text: fullText }],
       });
     }
 
-    updateMessage(assistantId, { status: { type: "complete" } });
+    updateMessage(assistantId, { status: { type: 'complete' } });
     setIsRunning(false);
   },
 });

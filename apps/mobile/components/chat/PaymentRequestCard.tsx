@@ -1,4 +1,3 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, Share, StyleSheet, View } from 'react-native';
@@ -8,6 +7,7 @@ import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

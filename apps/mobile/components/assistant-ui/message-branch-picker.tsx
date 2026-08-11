@@ -1,8 +1,8 @@
-import { AppText as Text } from '@/components/ui/text';
 import { BranchPickerPrimitive, useAuiState } from '@assistant-ui/react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 
 export function MessageBranchPicker({

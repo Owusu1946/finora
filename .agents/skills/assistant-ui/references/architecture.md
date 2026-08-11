@@ -57,13 +57,13 @@ React hooks for accessing runtime:
 
 ```tsx
 // Modern API (recommended)
-import { useAui, useAuiState, useAuiEvent } from "@assistant-ui/react";
+import { useAui, useAuiState, useAuiEvent } from '@assistant-ui/react';
 
 const api = useAui();
 
-const messages = useAuiState(s => s.thread.messages);
+const messages = useAuiState((s) => s.thread.messages);
 
-useAuiEvent("composer.send", (e) => console.log(e));
+useAuiEvent('composer.send', (e) => console.log(e));
 ```
 
 ### Layer 4: Primitives (UI)
@@ -76,7 +76,7 @@ import {
   ComposerPrimitive,
   MessagePrimitive,
   ActionBarPrimitive,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 ```
 
 ## Data Flow
@@ -106,14 +106,11 @@ Primitives re-render with new state
 ## Message Model
 
 ```typescript
-type ThreadMessage =
-  | ThreadUserMessage
-  | ThreadAssistantMessage
-  | ThreadSystemMessage;
+type ThreadMessage = ThreadUserMessage | ThreadAssistantMessage | ThreadSystemMessage;
 
 interface ThreadUserMessage {
   id: string;
-  role: "user";
+  role: 'user';
   content: MessagePart[];
   attachments?: Attachment[];
   createdAt: Date;
@@ -121,7 +118,7 @@ interface ThreadUserMessage {
 
 interface ThreadAssistantMessage {
   id: string;
-  role: "assistant";
+  role: 'assistant';
   content: MessagePart[];
   // status is an object, not a string. Check status.type.
   status: MessageStatus; // { type: "running" | "complete" | "incomplete" | "requires-action"; reason?: string }
@@ -129,10 +126,10 @@ interface ThreadAssistantMessage {
 }
 
 type MessagePart =
-  | { type: "text"; text: string }
-  | { type: "image"; image: string }
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: string }
   | {
-      type: "tool-call";
+      type: 'tool-call';
       toolCallId: string;
       toolName: string;
       args: unknown;
@@ -141,16 +138,16 @@ type MessagePart =
       isError?: boolean;
       artifact?: unknown;
     }
-  | { type: "reasoning"; text: string }
+  | { type: 'reasoning'; text: string }
   | {
-      type: "source";
-      sourceType: "url";
+      type: 'source';
+      sourceType: 'url';
       id: string;
       url: string;
       title?: string;
     }
   | {
-      type: "file";
+      type: 'file';
       filename?: string;
       data: string;
       mimeType: string;

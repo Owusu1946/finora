@@ -5,6 +5,7 @@ Thread and message persistence with assistant-cloud.
 ## Overview
 
 Cloud persistence saves threads and messages to the assistant-ui cloud backend, enabling:
+
 - Chat history across sessions
 - Multi-device sync
 - Thread management (archive, delete)
@@ -13,11 +14,11 @@ Cloud persistence saves threads and messages to the assistant-ui cloud backend, 
 ## Basic Setup
 
 ```tsx
-import { AssistantCloud } from "assistant-cloud";
-import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
-import { ThreadList } from "@/components/assistant-ui/thread-list";
+import { AssistantCloud } from 'assistant-cloud';
+import { useChatRuntime, AssistantChatTransport } from '@assistant-ui/react-ai-sdk';
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
+import { ThreadList } from '@/components/assistant-ui/thread-list';
 
 const cloud = new AssistantCloud({
   baseUrl: process.env.NEXT_PUBLIC_ASSISTANT_BASE_URL,
@@ -27,9 +28,9 @@ const cloud = new AssistantCloud({
 function Chat() {
   const runtime = useChatRuntime({
     transport: new AssistantChatTransport({
-      api: "/api/chat",
+      api: '/api/chat',
     }),
-    cloud,  // Enable persistence
+    cloud, // Enable persistence
   });
 
   return (
@@ -47,7 +48,7 @@ function Chat() {
 
 ```tsx
 const threads = await cloud.threads.list({
-  status: "active",     // "active" | "archived" | "all"
+  status: 'active', // "active" | "archived" | "all"
   limit: 50,
   offset: 0,
 });
@@ -74,11 +75,12 @@ const thread = await cloud.threads.get(threadId);
 
 ```tsx
 const { thread_id } = await cloud.threads.create({
-  title: "My New Chat",
-  external_id: "custom-id-123",  // Optional external reference
-  metadata: {                     // Optional custom data
-    source: "web",
-    category: "support",
+  title: 'My New Chat',
+  external_id: 'custom-id-123', // Optional external reference
+  metadata: {
+    // Optional custom data
+    source: 'web',
+    category: 'support',
   },
 });
 ```
@@ -87,9 +89,9 @@ const { thread_id } = await cloud.threads.create({
 
 ```tsx
 await cloud.threads.update(threadId, {
-  title: "Updated Title",
+  title: 'Updated Title',
   is_archived: true,
-  metadata: { priority: "high" },
+  metadata: { priority: 'high' },
 });
 ```
 
@@ -105,7 +107,7 @@ await cloud.threads.delete(threadId);
 
 ```tsx
 const messages = await cloud.threads.messages(threadId).list({
-  format: "aui/v0",
+  format: 'aui/v0',
 });
 
 // messages: Array<{
@@ -122,11 +124,11 @@ const messages = await cloud.threads.messages(threadId).list({
 
 ```tsx
 await cloud.threads.messages(threadId).create({
-  parent_id: null,  // Or parent message ID for branching
-  format: "aui/v0",
+  parent_id: null, // Or parent message ID for branching
+  format: 'aui/v0',
   content: {
-    role: "user",
-    content: [{ type: "text", text: "Hello" }],
+    role: 'user',
+    content: [{ type: 'text', text: 'Hello' }],
   },
 });
 ```
@@ -137,17 +139,17 @@ assistant-ui uses `"aui/v0"` format:
 
 ```typescript
 interface AUIv0Message {
-  role: "user" | "assistant" | "system";
+  role: 'user' | 'assistant' | 'system';
   content: MessagePart[];
-  status?: "running" | "complete" | "incomplete" | "requires-action";
+  status?: 'running' | 'complete' | 'incomplete' | 'requires-action';
   attachments?: Attachment[];
 }
 
 type MessagePart =
-  | { type: "text"; text: string }
-  | { type: "image"; image: string }
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: string }
   | {
-      type: "tool-call";
+      type: 'tool-call';
       toolCallId: string;
       toolName: string;
       args: unknown;
@@ -156,10 +158,10 @@ type MessagePart =
       isError?: boolean;
       artifact?: unknown;
     }
-  | { type: "reasoning"; text: string }
+  | { type: 'reasoning'; text: string }
   | {
-      type: "source";
-      sourceType: "url";
+      type: 'source';
+      sourceType: 'url';
       id: string;
       url: string;
       title?: string;
@@ -176,7 +178,7 @@ The simplest persistence is passing `cloud` to the runtime (see Basic Setup abov
 To back those adapters with assistant-cloud rather than your own database, use `CloudMessagePersistence` or `createFormattedPersistence` from `assistant-cloud`:
 
 ```tsx
-import { CloudMessagePersistence, createFormattedPersistence } from "assistant-cloud";
+import { CloudMessagePersistence, createFormattedPersistence } from 'assistant-cloud';
 ```
 
 For a database-backed example, see the custom thread persistence guide at
@@ -209,11 +211,11 @@ Link threads to your system:
 
 ```tsx
 await cloud.threads.create({
-  external_id: "your-system-id-123",
+  external_id: 'your-system-id-123',
 });
 
 const threads = await cloud.threads.list();
-const thread = threads.find(t => t.external_id === "your-system-id-123");
+const thread = threads.find((t) => t.external_id === 'your-system-id-123');
 ```
 
 ## Metadata
@@ -224,9 +226,9 @@ Store custom data with threads:
 await cloud.threads.create({
   metadata: {
     userId: user.id,
-    category: "sales",
+    category: 'sales',
     priority: 1,
-    tags: ["important", "follow-up"],
+    tags: ['important', 'follow-up'],
   },
 });
 

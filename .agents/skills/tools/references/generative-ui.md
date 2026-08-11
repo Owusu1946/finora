@@ -29,7 +29,7 @@ import {
   type GenerativeUINode,
   type GenerativeUIMessagePart,
   type GenerativeUIComponentRegistry,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 ```
 
 ## The spec format
@@ -51,7 +51,7 @@ export type GenerativeUISpec = {
 };
 
 export type GenerativeUIMessagePart = {
-  readonly type: "generative-ui";
+  readonly type: 'generative-ui';
   readonly spec: GenerativeUISpec;
   readonly id?: string;
   readonly parentId?: string;
@@ -72,9 +72,7 @@ A native `generative-ui` part as emitted from ExternalStore or a manual message 
     "root": {
       "component": "Card",
       "props": { "title": "Welcome" },
-      "children": [
-        { "component": "Button", "props": { "label": "Get started" } }
-      ]
+      "children": [{ "component": "Button", "props": { "label": "Get started" } }]
     }
   }
 }
@@ -85,29 +83,26 @@ A native `generative-ui` part as emitted from ExternalStore or a manual message 
 The allowlist is a plain record from spec name to React component. Its type is `GenerativeUIComponentRegistry`, which is `Record<string, ComponentType<any>>`. Define each component to accept only the primitive, display oriented props the agent is allowed to pass.
 
 ```tsx
-import type { ComponentType, PropsWithChildren } from "react";
+import type { ComponentType, PropsWithChildren } from 'react';
 
-const Card: ComponentType<
-  PropsWithChildren<{ title?: string; description?: string }>
-> = ({ title, description, children }) => (
-  <div className="bg-card rounded-xl border p-4 shadow-sm">
-    {title ? <div className="text-base font-semibold">{title}</div> : null}
-    {description ? (
-      <div className="text-muted-foreground mt-1 text-sm">{description}</div>
-    ) : null}
-    {children ? <div className="mt-3">{children}</div> : null}
+const Card: ComponentType<PropsWithChildren<{ title?: string; description?: string }>> = ({
+  title,
+  description,
+  children,
+}) => (
+  <div className='bg-card rounded-xl border p-4 shadow-sm'>
+    {title ? <div className='text-base font-semibold'>{title}</div> : null}
+    {description ? <div className='text-muted-foreground mt-1 text-sm'>{description}</div> : null}
+    {children ? <div className='mt-3'>{children}</div> : null}
   </div>
 );
 
-const Button: ComponentType<PropsWithChildren<{ label?: string }>> = ({
-  label,
-  children,
-}) => (
+const Button: ComponentType<PropsWithChildren<{ label?: string }>> = ({ label, children }) => (
   <button
-    type="button"
-    className="bg-primary text-primary-foreground mt-2 inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium"
+    type='button'
+    className='bg-primary text-primary-foreground mt-2 inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium'
   >
-    {children ?? label ?? "Click"}
+    {children ?? label ?? 'Click'}
   </button>
 );
 
@@ -122,9 +117,7 @@ The primitive accepts the allowlist via `components`, an optional `Fallback`, an
 type Props = {
   components: GenerativeUIComponentRegistry;
   spec?: GenerativeUISpec | undefined;
-  Fallback?:
-    | ComponentType<{ component: string; props?: unknown }>
-    | undefined;
+  Fallback?: ComponentType<{ component: string; props?: unknown }> | undefined;
 };
 ```
 
@@ -179,7 +172,7 @@ The default message is `Component "<name>" is not in the generative-ui allowlist
 
 ```tsx
 const UnknownComponentFallback = ({ component }: { component: string }) => (
-  <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
+  <span className='bg-muted rounded px-1.5 py-0.5 font-mono text-xs'>
     unknown component: {component}
   </span>
 );
@@ -197,11 +190,11 @@ With `useChatRuntime`, the AI SDK maps a tool result to a `tool-call` part rathe
 `parseRenderGuiResult` validates the tool result against the spec schema and returns the `GenerativeUISpec`, or `undefined` if it does not match.
 
 ```ts
-import type { GenerativeUISpec } from "@assistant-ui/react";
+import type { GenerativeUISpec } from '@assistant-ui/react';
 
-export const parseRenderGuiResult = (
-  result: unknown,
-): GenerativeUISpec | undefined => { /* zod safeParse of { spec } */ };
+export const parseRenderGuiResult = (result: unknown): GenerativeUISpec | undefined => {
+  /* zod safeParse of { spec } */
+};
 ```
 
 Wire it in the `tool-call` case. When the spec parses, render through the primitive with the explicit `spec` prop.
@@ -237,8 +230,8 @@ groupBy={(part) => {
 Define the tool with the AI SDK `tool` helper and return the spec from `execute`. The input and result both carry `{ spec }`, validated by a zod schema.
 
 ```ts
-import { streamText, tool, zodSchema } from "ai";
-import { z } from "zod";
+import { streamText, tool, zodSchema } from 'ai';
+import { z } from 'zod';
 
 const generativeUINodeSchema: z.ZodType<unknown> = z.lazy(() =>
   z.union([
@@ -254,10 +247,7 @@ const generativeUINodeSchema: z.ZodType<unknown> = z.lazy(() =>
 
 const renderGuiToolInputSchema = z.object({
   spec: z.object({
-    root: z.union([
-      generativeUINodeSchema,
-      z.array(generativeUINodeSchema).min(1),
-    ]),
+    root: z.union([generativeUINodeSchema, z.array(generativeUINodeSchema).min(1)]),
   }),
 });
 
@@ -267,8 +257,8 @@ const result = streamText({
   tools: {
     render_gui: tool({
       description:
-        "Compose inline UI from the allowlisted component library. " +
-        "Pass a JSON spec with a root node tree.",
+        'Compose inline UI from the allowlisted component library. ' +
+        'Pass a JSON spec with a root node tree.',
       inputSchema: zodSchema(renderGuiToolInputSchema),
       execute: async (input) => ({ spec: input.spec }),
     }),

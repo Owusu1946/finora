@@ -30,7 +30,7 @@ import {
   AssistantRuntimeProvider,
   useAssistantInteractable,
   useInteractableState,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 ```
 
 ## Register the scope
@@ -44,7 +44,10 @@ function MyRuntimeProvider({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <AssistantRuntimeProvider aui={aui} runtime={runtime}>
+    <AssistantRuntimeProvider
+      aui={aui}
+      runtime={runtime}
+    >
       {children}
     </AssistantRuntimeProvider>
   );
@@ -66,8 +69,8 @@ The interactable component can live anywhere inside the provider, including outs
 function App() {
   return (
     <MyRuntimeProvider>
-      <div className="flex">
-        <Thread className="flex-1" />
+      <div className='flex'>
+        <Thread className='flex-1' />
         <TaskBoard />
       </div>
     </MyRuntimeProvider>
@@ -80,18 +83,16 @@ function App() {
 Registers an interactable and returns its instance `id`. Define `stateSchema` and `initialState` outside the component (or memoize them); new object identities on every render trigger re-registration and reset state.
 
 ```tsx
-import { z } from "zod";
+import { z } from 'zod';
 
 const taskBoardSchema = z.object({
-  tasks: z.array(
-    z.object({ id: z.string(), title: z.string(), done: z.boolean() }),
-  ),
+  tasks: z.array(z.object({ id: z.string(), title: z.string(), done: z.boolean() })),
 });
 
 const taskBoardInitialState = { tasks: [] };
 
 function TaskBoard() {
-  const id = useAssistantInteractable("taskBoard", {
+  const id = useAssistantInteractable('taskBoard', {
     description: "A task board showing the user's tasks",
     stateSchema: taskBoardSchema,
     initialState: taskBoardInitialState,
@@ -105,11 +106,11 @@ Config fields:
 
 ```ts
 interface InteractableConfig {
-  description: string;                  // Shown to the AI
-  stateSchema: StandardSchemaV1;        // Zod schema or JSON Schema
+  description: string; // Shown to the AI
+  stateSchema: StandardSchemaV1; // Zod schema or JSON Schema
   initialState: unknown;
-  id?: string;                          // Auto-generated if omitted
-  selected?: boolean;                   // Mark as focused at registration time
+  id?: string; // Auto-generated if omitted
+  selected?: boolean; // Mark as focused at registration time
 }
 ```
 
@@ -121,7 +122,7 @@ Reads and writes the state of a registered interactable. The setter behaves like
 
 ```tsx
 function TaskBoard() {
-  const id = useAssistantInteractable("taskBoard", {
+  const id = useAssistantInteractable('taskBoard', {
     description: "A task board showing the user's tasks",
     stateSchema: taskBoardSchema,
     initialState: taskBoardInitialState,
@@ -135,13 +136,11 @@ function TaskBoard() {
         <li key={task.id}>
           <label>
             <input
-              type="checkbox"
+              type='checkbox'
               checked={task.done}
               onChange={() =>
                 setState((prev) => ({
-                  tasks: prev.tasks.map((t) =>
-                    t.id === task.id ? { ...t, done: !t.done } : t,
-                  ),
+                  tasks: prev.tasks.map((t) => (t.id === task.id ? { ...t, done: !t.done } : t)),
                 }))
               }
             />
@@ -157,8 +156,10 @@ function TaskBoard() {
 The second tuple element exposes the full control surface:
 
 ```ts
-const [state, { setState, setSelected, isPending, error, flush }] =
-  useInteractableState(id, fallback);
+const [state, { setState, setSelected, isPending, error, flush }] = useInteractableState(
+  id,
+  fallback,
+);
 ```
 
 - `setState(value | (prev) => next)`: update state; the new value is also sent to the model context for the next turn.
@@ -181,7 +182,7 @@ The tool uses a partial version of `stateSchema`: every field becomes optional, 
 ```ts
 // Current state: { title: "My Note", content: "Hello", color: "yellow" }
 // AI calls:
-update_note({ color: "blue" });
+update_note({ color: 'blue' });
 // Result: { title: "My Note", content: "Hello", color: "blue" }
 ```
 
@@ -195,19 +196,19 @@ Reuse the same `name` with distinct `id`s. Each instance gets its own tool.
 const noteSchema = z.object({
   title: z.string(),
   content: z.string(),
-  color: z.enum(["yellow", "blue", "green", "pink"]),
+  color: z.enum(['yellow', 'blue', 'green', 'pink']),
 });
 
 const noteInitialState = {
-  title: "New Note",
-  content: "",
-  color: "yellow" as const,
+  title: 'New Note',
+  content: '',
+  color: 'yellow' as const,
 };
 
 function NoteCard({ noteId }: { noteId: string }) {
-  useAssistantInteractable("note", {
+  useAssistantInteractable('note', {
     id: noteId,
-    description: "A sticky note",
+    description: 'A sticky note',
     stateSchema: noteSchema,
     initialState: noteInitialState,
   });
@@ -219,8 +220,8 @@ function NoteCard({ noteId }: { noteId: string }) {
 function Notes() {
   return (
     <>
-      <NoteCard noteId="note-1" /> {/* update_note_note-1 */}
-      <NoteCard noteId="note-2" /> {/* update_note_note-2 */}
+      <NoteCard noteId='note-1' /> {/* update_note_note-1 */}
+      <NoteCard noteId='note-2' /> {/* update_note_note-2 */}
     </>
   );
 }
@@ -236,11 +237,7 @@ Marking an interactable selected tells the model to prioritize it; the AI sees `
 function NoteCard({ noteId }: { noteId: string }) {
   const [state, { setSelected }] = useInteractableState(noteId, noteInitialState);
 
-  return (
-    <div onClick={() => setSelected(true)}>
-      {state.title}
-    </div>
-  );
+  return <div onClick={() => setSelected(true)}>{state.title}</div>;
 }
 ```
 
@@ -252,8 +249,8 @@ State updates progressively as the AI streams tool arguments, so fields appear o
 
 ```tsx
 function TaskBoard() {
-  const id = useAssistantInteractable("taskBoard", {
-    description: "A task board",
+  const id = useAssistantInteractable('taskBoard', {
+    description: 'A task board',
     stateSchema: taskBoardSchema,
     initialState: taskBoardInitialState,
   });
@@ -278,11 +275,11 @@ function PersistenceSetup() {
   useEffect(() => {
     aui.interactables().setPersistenceAdapter({
       save: async (state) => {
-        localStorage.setItem("interactables", JSON.stringify(state));
+        localStorage.setItem('interactables', JSON.stringify(state));
       },
     });
 
-    const saved = localStorage.getItem("interactables");
+    const saved = localStorage.getItem('interactables');
     if (saved) {
       aui.interactables().importState(JSON.parse(saved));
     }

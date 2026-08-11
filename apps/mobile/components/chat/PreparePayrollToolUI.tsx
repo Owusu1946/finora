@@ -9,11 +9,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import {
-  defaultPayrollPeriod,
-  recordPayrollRun,
-  type Employee,
-} from '@/lib/employees-storage';
+import { defaultPayrollPeriod, recordPayrollRun, type Employee } from '@/lib/employees-storage';
 import { haptics } from '@/lib/haptics';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
@@ -124,7 +120,11 @@ function PayrollConfirmCard({
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
-              {phase === 'sent' ? 'Payroll paid' : phase === 'sending' ? 'Running payroll…' : 'Payroll ready'}
+              {phase === 'sent'
+                ? 'Payroll paid'
+                : phase === 'sending'
+                  ? 'Running payroll…'
+                  : 'Payroll ready'}
             </Text>
             <Text style={[styles.title, { color: colors.foreground }]}>{period}</Text>
           </View>

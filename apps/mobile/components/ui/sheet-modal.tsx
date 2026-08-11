@@ -42,7 +42,6 @@ type SheetModalProps = {
   dimOpacity?: number;
 };
 
-
 export function SheetModal({
   visible,
   onClose,
@@ -142,8 +141,7 @@ export function SheetModal({
       dragY.value = Math.max(0, e.translationY);
     })
     .onEnd((e) => {
-      const shouldDismiss =
-        e.translationY > DISMISS_DISTANCE || e.velocityY > DISMISS_VELOCITY;
+      const shouldDismiss = e.translationY > DISMISS_DISTANCE || e.velocityY > DISMISS_VELOCITY;
       if (shouldDismiss) {
         // Animate on the UI thread from the current drag position so we never
         // snap up while waiting on the JS bridge.

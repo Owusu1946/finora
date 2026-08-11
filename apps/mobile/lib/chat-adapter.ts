@@ -5,7 +5,6 @@ import type { ConversionQuote } from '@/components/chat/ConversionCard';
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
 import type { Invoice } from '@/components/invoices/types';
-import type { RecurringFrequency } from '@/components/recurring/types';
 
 import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
 import { MOCK_INVOICES } from '@/components/invoices/types';
@@ -14,16 +13,12 @@ import { listAutomations } from '@/lib/automations-storage';
 import { listBeneficiaries } from '@/lib/beneficiaries-storage';
 import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
 import {
-    contactToPaymentDestination,
-    contactToSendSeed,
-    findContactsByName,
+  contactToPaymentDestination,
+  contactToSendSeed,
+  findContactsByName,
 } from '@/lib/contact-lookup';
 import { listContacts } from '@/lib/contacts-storage';
-import {
-    createEmployee,
-    defaultPayrollPeriod,
-    listActiveEmployees,
-} from '@/lib/employees-storage';
+import { createEmployee, defaultPayrollPeriod, listActiveEmployees } from '@/lib/employees-storage';
 import { listExpenses } from '@/lib/expenses-storage';
 import { CURRENT_FINORA_ACCOUNT, getCurrentFinoraTag, lookupFinoraTag } from '@/lib/finora-tags';
 import { inferFundingSource, listFundingMethods } from '@/lib/funding-methods';
@@ -34,10 +29,10 @@ import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
 import { listSuppliers } from '@/lib/suppliers-storage';
 import { getTreasuryOverview } from '@/lib/treasury';
 import {
-    findVirtualCardByLabel,
-    getVirtualCard,
-    listVirtualCards,
-    setVirtualCardStatus,
+  findVirtualCardByLabel,
+  getVirtualCard,
+  listVirtualCards,
+  setVirtualCardStatus,
 } from '@/lib/virtual-cards-storage';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -78,18 +73,17 @@ const PAYROLL_RE =
   /\b(run\s+payroll|pay\s+(?:the\s+)?(?:team|staff|employees?)|payroll\s+run|prepare\s+payroll)\b/i;
 const LIST_EMPLOYEES_RE =
   /\b(show|list|my|view)\b.{0,20}\b(employees?|team|roster)\b|\b(team roster|employees?)\b/i;
-const LIST_SUPPLIERS_RE = /\b(show|list|my|view)\b.{0,16}\bsuppliers?\b|\bsuppliers?\s+directory\b/i;
+const LIST_SUPPLIERS_RE =
+  /\b(show|list|my|view)\b.{0,16}\bsuppliers?\b|\bsuppliers?\s+directory\b/i;
 const CREATE_EMPLOYEE_RE = /\b(add|create|hire)\s+(?:an?\s+)?employee\b/i;
 const LIST_BENEFICIARIES_RE =
   /\b(show|list|my|view)\b.{0,16}\bbeneficiar(?:y|ies)\b|\bbeneficiar(?:y|ies)\b/i;
 const LIST_POLICIES_RE =
   /\b(show|list|my|view)\b.{0,20}\b(approval\s+)?polic(?:y|ies)\b|\bwhat happens if i (?:send|pay)\b|\bsimulate\s+polic/i;
-const LIST_AUTOMATIONS_RE =
-  /\b(show|list|my|view)\b.{0,16}\bautomations?\b|\bautomations?\b/i;
+const LIST_AUTOMATIONS_RE = /\b(show|list|my|view)\b.{0,16}\bautomations?\b|\bautomations?\b/i;
 const LIST_EXPENSES_RE =
   /\b(show|list|my|view)\b.{0,24}\b(business\s+)?expenses?\b|\bbusiness expenses?\b/i;
-const TREASURY_RE =
-  /\b(treasury|cash position|operating balance|treasury overview)\b/i;
+const TREASURY_RE = /\b(treasury|cash position|operating balance|treasury overview)\b/i;
 const VIRTUAL_ACCOUNTS_RE =
   /\b(show|list|my|view)\b.{0,20}\bvirtual accounts?\b|\bvirtual accounts?\b/i;
 const FINANCIAL_REPORT_RE =
@@ -188,7 +182,9 @@ function isPayrollIntent(prompt: string) {
 }
 
 function isListEmployeesIntent(prompt: string) {
-  return LIST_EMPLOYEES_RE.test(prompt) && !isPayrollIntent(prompt) && !isCreateEmployeeIntent(prompt);
+  return (
+    LIST_EMPLOYEES_RE.test(prompt) && !isPayrollIntent(prompt) && !isCreateEmployeeIntent(prompt)
+  );
 }
 
 function isListSuppliersIntent(prompt: string) {
@@ -251,9 +247,7 @@ function businessOnlyMessage() {
 }
 
 function parseCreateEmployeeSeed(prompt: string) {
-  const after = prompt.match(
-    /\b(?:add|create|hire)\s+(?:an?\s+)?employee\s+(.+)$/i,
-  )?.[1]?.trim();
+  const after = prompt.match(/\b(?:add|create|hire)\s+(?:an?\s+)?employee\s+(.+)$/i)?.[1]?.trim();
   if (!after) return null;
   const amount = parseAmount(after);
   const currency = amount?.currency ?? parseCurrencyHint(after) ?? 'USD';
@@ -273,7 +267,9 @@ function parseCreateEmployeeSeed(prompt: string) {
         ? parts.slice(2).join(' ')
         : 'Team member';
   const name =
-    roleIdx >= 0 ? parts.slice(0, roleIdx).join(' ') : parts.slice(0, Math.min(2, parts.length)).join(' ');
+    roleIdx >= 0
+      ? parts.slice(0, roleIdx).join(' ')
+      : parts.slice(0, Math.min(2, parts.length)).join(' ');
   if (!name) return null;
   return {
     name,
@@ -759,49 +755,6 @@ function buildMockDueInvoices(): Invoice[] {
   return MOCK_INVOICES.filter((i) => i.status === 'due');
 }
 
-function parseFrequency(prompt: string): RecurringFrequency {
-  if (/\b(week|weekly)\b/i.test(prompt)) return 'weekly';
-  if (/\b(quarter|quarterly)\b/i.test(prompt)) return 'quarterly';
-  return 'monthly';
-}
-
-function buildMockRecurring(prompt: string) {
-  const payment = buildMockPayment(prompt);
-  const named =
-    prompt.match(/\b(?:to|pay)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?(?:\s+Ltd)?)\b/)?.[1] ??
-    payment.recipientName;
-
-  // Prefer known suppliers when mentioned
-  const lower = prompt.toLowerCase();
-  let recipientName = named;
-  let destination = payment.destination;
-  let currency = payment.currency;
-  let amount = payment.amount;
-
-  if (lower.includes('techflow')) {
-    recipientName = 'TechFlow Ltd';
-    currency = payment.currency === 'GHS' && !parseAmount(prompt) ? 'GBP' : payment.currency;
-    amount = parseAmount(prompt)?.amount ?? 780;
-    destination = { kind: 'bank_account', label: 'FPS', value: '•••• 0194' };
-  } else if (lower.includes('clearview')) {
-    recipientName = 'ClearView Partners';
-    amount = parseAmount(prompt)?.amount ?? 1500;
-    currency = 'GBP';
-    destination = { kind: 'bank_account', label: 'SWIFT', value: 'BARCGB22' };
-  }
-
-  return {
-    amount,
-    currency,
-    recipientName,
-    frequency: parseFrequency(prompt),
-    destinationKind: destination.kind,
-    destinationLabel: destination.label,
-    destinationValue: destination.value,
-    reference: 'Recurring supplier payment',
-  };
-}
-
 function buildMockConversion(prompt: string): ConversionQuote {
   const pair =
     prompt.match(
@@ -1232,7 +1185,8 @@ export const finoraChatAdapter = {
       };
       const args = { period: report.period };
       const argsText = JSON.stringify(args);
-      const reasoning = 'Financial report requested.\nSummarizing inflows, expenses, and cash position…';
+      const reasoning =
+        'Financial report requested.\nSummarizing inflows, expenses, and cash position…';
       yield { content: [{ type: 'reasoning', text: reasoning }] };
       await wait(400);
       if (abortSignal.aborted) return;
@@ -1573,7 +1527,11 @@ export const finoraChatAdapter = {
       return;
     }
 
-    if (/\b(pay|send|payout)\b/i.test(prompt) && !isFinancialPlanIntent(prompt) && !isPayrollIntent(prompt)) {
+    if (
+      /\b(pay|send|payout)\b/i.test(prompt) &&
+      !isFinancialPlanIntent(prompt) &&
+      !isPayrollIntent(prompt)
+    ) {
       const employees = await listActiveEmployees();
       const matchedEmployee = employees.find((e) => {
         const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1655,8 +1613,7 @@ export const finoraChatAdapter = {
       const matched =
         /\b(pay|send|payout)\b/i.test(prompt) && !isFinancialPlanIntent(prompt)
           ? suppliers.find((s) => {
-              const escape = (value: string) =>
-                value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
               const first = s.name.split(/\s+/)[0] ?? '';
               return (
                 new RegExp(`\\b${escape(s.name)}\\b`, 'i').test(prompt) ||
@@ -1676,8 +1633,7 @@ export const finoraChatAdapter = {
         const parsed = parseAmount(prompt);
         const amount = parsed?.amount ?? matched.defaultAmount ?? 500;
         const currency = parsed?.currency ?? matched.currency;
-        const reference =
-          prompt.match(/\b(INV[- ]?\d+|invoice\s+\d+)\b/i)?.[1] ?? undefined;
+        const reference = prompt.match(/\b(INV[- ]?\d+|invoice\s+\d+)\b/i)?.[1] ?? undefined;
         const args = {
           supplierId: matched.id,
           supplierName: matched.name,

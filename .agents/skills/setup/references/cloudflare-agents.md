@@ -48,9 +48,9 @@ Pin `agents` and `@cloudflare/ai-chat` to exact versions; both are pre-1.0 and s
 `AIChatAgent` already implements message persistence, the streaming protocol, and WebSocket plumbing. Override `onChatMessage` to plug in your model and tools. `this.messages` is the persisted history for this Durable Object instance.
 
 ```ts title="src/chat.ts"
-import { AIChatAgent } from "@cloudflare/ai-chat";
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
+import { AIChatAgent } from '@cloudflare/ai-chat';
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
 
 export type Env = {
   OPENAI_API_KEY: string;
@@ -58,9 +58,9 @@ export type Env = {
 };
 
 export class Chat extends AIChatAgent<Env> {
-  async onChatMessage(onFinish: Parameters<typeof streamText>[0]["onFinish"]) {
+  async onChatMessage(onFinish: Parameters<typeof streamText>[0]['onFinish']) {
     return streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai('gpt-4o-mini'),
       messages: await convertToModelMessages(this.messages),
       onFinish,
     });
@@ -75,25 +75,24 @@ The `Chat: DurableObjectNamespace<Chat>` field mirrors the binding declared in `
 `routeAgentRequest` handles WebSocket upgrades, agent lookup by URL path, and the `/get-messages` HTTP endpoint the frontend uses for history rehydration. The `cors` helper reflects the request origin so the frontend can talk to the Worker across ports during local development; WebSocket upgrades bypass CORS in the browser, but the `/get-messages` fetch needs these headers.
 
 ```ts title="src/index.ts"
-import { routeAgentRequest } from "agents";
-import { Chat, type Env } from "./chat";
+import { routeAgentRequest } from 'agents';
+import { Chat, type Env } from './chat';
 
 export { Chat };
 
 const cors = (request: Request) => ({
-  "Access-Control-Allow-Origin": request.headers.get("Origin") ?? "*",
-  "Access-Control-Allow-Headers": "Content-Type, Upgrade",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  'Access-Control-Allow-Origin': request.headers.get('Origin') ?? '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Upgrade',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 });
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    if (request.method === "OPTIONS") {
+    if (request.method === 'OPTIONS') {
       return new Response(null, { headers: cors(request) });
     }
     const upstream =
-      (await routeAgentRequest(request, env)) ??
-      new Response("Not found", { status: 404 });
+      (await routeAgentRequest(request, env)) ?? new Response('Not found', { status: 404 });
     const res = new Response(upstream.body, upstream);
     for (const [k, v] of Object.entries(cors(request))) res.headers.set(k, v);
     return res;
@@ -114,11 +113,9 @@ The binding `name` and `class_name` must match the exported class. `new_sqlite_c
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],
   "durable_objects": {
-    "bindings": [{ "name": "Chat", "class_name": "Chat" }]
+    "bindings": [{ "name": "Chat", "class_name": "Chat" }],
   },
-  "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["Chat"] }
-  ]
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Chat"] }],
 }
 ```
 
@@ -145,18 +142,18 @@ wrangler secret put OPENAI_API_KEY
 The full chain: `useAgent` -> `useAgentChat` -> `useAISDKRuntime` -> `AssistantRuntimeProvider`.
 
 ```tsx title="app/assistant.tsx"
-"use client";
+'use client';
 
-import { useAgent } from "agents/react";
-import { useAgentChat } from "@cloudflare/ai-chat/react";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useAgent } from 'agents/react';
+import { useAgentChat } from '@cloudflare/ai-chat/react';
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
+import { Thread } from '@/components/assistant-ui/thread';
 
 export const Assistant = () => {
   const agent = useAgent({
-    agent: "Chat",
-    name: "default",
+    agent: 'Chat',
+    name: 'default',
     host: process.env.NEXT_PUBLIC_AGENT_HOST!,
   });
   const chat = useAgentChat({ agent });
@@ -185,9 +182,7 @@ NEXT_PUBLIC_AGENT_HOST=http://localhost:8787
 `useAgentChat`'s return type is `Omit<ReturnType<typeof useChat>, "addToolOutput"> & { ... }`. The `addToolOutput` option shape differs slightly: `useChat` accepts `{ state, tool, toolCallId, ... }`; `useAgentChat` accepts `{ state, toolCallId, toolName?, ... }`. At runtime the paths converge through `useAISDKRuntime` without issue. If the compiler flags the call, cast at the call site:
 
 ```tsx
-const runtime = useAISDKRuntime(
-  chat as Parameters<typeof useAISDKRuntime>[0],
-);
+const runtime = useAISDKRuntime(chat as Parameters<typeof useAISDKRuntime>[0]);
 ```
 
 If TypeScript still refuses the direct cast, use `chat as unknown as Parameters<typeof useAISDKRuntime>[0]`. Note: `satisfies` does not help; it validates assignability without changing the inferred type, so it surfaces the same error.

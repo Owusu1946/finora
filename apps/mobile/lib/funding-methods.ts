@@ -144,9 +144,7 @@ export function pickMethod(opts: {
   if (opts.methodId) return all.find((m) => m.id === opts.methodId);
   const pool = opts.source ? methodsForSource(opts.source) : all;
   if (opts.currency) {
-    const hit = pool.find(
-      (m) => m.currency.toUpperCase() === opts.currency!.toUpperCase(),
-    );
+    const hit = pool.find((m) => m.currency.toUpperCase() === opts.currency!.toUpperCase());
     if (hit) return hit;
   }
   return pool[0];

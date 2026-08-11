@@ -30,12 +30,12 @@ Plugins ship as separate optional packages: `@streamdown/code`, `@streamdown/mat
 `StreamdownTextPrimitive` replaces the text part renderer. Define a wrapper and render it from `MessagePrimitive.Parts`.
 
 ```tsx
-import { StreamdownTextPrimitive } from "@assistant-ui/react-streamdown";
+import { StreamdownTextPrimitive } from '@assistant-ui/react-streamdown';
 
 const StreamdownText = () => <StreamdownTextPrimitive />;
 
 <MessagePrimitive.Parts>
-  {({ part }) => (part.type === "text" ? <StreamdownText {...part} /> : null)}
+  {({ part }) => (part.type === 'text' ? <StreamdownText {...part} /> : null)}
 </MessagePrimitive.Parts>;
 ```
 
@@ -44,16 +44,16 @@ const StreamdownText = () => <StreamdownTextPrimitive />;
 Pass plugins through the `plugins` prop. Each is imported from its own package; math also needs the KaTeX stylesheet.
 
 ```tsx
-import { StreamdownTextPrimitive } from "@assistant-ui/react-streamdown";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
-import "katex/dist/katex.min.css";
+import { StreamdownTextPrimitive } from '@assistant-ui/react-streamdown';
+import { code } from '@streamdown/code';
+import { math } from '@streamdown/math';
+import { mermaid } from '@streamdown/mermaid';
+import 'katex/dist/katex.min.css';
 
 const StreamdownText = () => (
   <StreamdownTextPrimitive
     plugins={{ code, math, mermaid }}
-    shikiTheme={["github-light", "github-dark"]}
+    shikiTheme={['github-light', 'github-dark']}
   />
 );
 ```
@@ -62,27 +62,27 @@ const StreamdownText = () => (
 
 ## Props
 
-| Prop | Type | Default | Notes |
-|------|------|---------|-------|
-| `mode` | `"streaming" \| "static"` | `"streaming"` | Block-based streaming vs static render |
-| `plugins` | `PluginConfig` | | `code`, `math`, `mermaid`, `cjk` |
-| `shikiTheme` | `[string, string]` | `["github-light", "github-dark"]` | Light/dark themes |
-| `components` | `object` | | Override `SyntaxHighlighter`, `CodeHeader` |
-| `componentsByLanguage` | `object` | | Per-language component overrides |
-| `preprocess` | `(text: string) => string` | | Text preprocessor |
-| `controls` | `boolean \| ControlsConfig` | `true` | Copy/download/fullscreen UI |
-| `caret` | `"block" \| "circle"` | | Streaming caret style |
-| `mermaid` | `MermaidOptions` | | Mermaid config and error handling |
-| `linkSafety` | `LinkSafetyConfig` | | External link confirmation |
-| `remend` | `RemendConfig` | | Incomplete markdown handling |
-| `allowedTags` | `Record<string, string[]>` | | HTML tag whitelist |
-| `security` | `SecurityConfig` | | URL/image restrictions |
-| `containerProps` | `object` | | Props for the container div |
-| `containerClassName` | `string` | | Container class name |
-| `remarkRehypeOptions` | `object` | | remark-rehype options |
-| `BlockComponent` | `ComponentType<BlockProps>` | | Custom block renderer |
-| `parseMarkdownIntoBlocksFn` | `(md: string) => string[]` | | Custom block parser |
-| `parseIncompleteMarkdown` | `boolean` | `false` | Toggle remend processing |
+| Prop                        | Type                        | Default                           | Notes                                      |
+| --------------------------- | --------------------------- | --------------------------------- | ------------------------------------------ |
+| `mode`                      | `"streaming" \| "static"`   | `"streaming"`                     | Block-based streaming vs static render     |
+| `plugins`                   | `PluginConfig`              |                                   | `code`, `math`, `mermaid`, `cjk`           |
+| `shikiTheme`                | `[string, string]`          | `["github-light", "github-dark"]` | Light/dark themes                          |
+| `components`                | `object`                    |                                   | Override `SyntaxHighlighter`, `CodeHeader` |
+| `componentsByLanguage`      | `object`                    |                                   | Per-language component overrides           |
+| `preprocess`                | `(text: string) => string`  |                                   | Text preprocessor                          |
+| `controls`                  | `boolean \| ControlsConfig` | `true`                            | Copy/download/fullscreen UI                |
+| `caret`                     | `"block" \| "circle"`       |                                   | Streaming caret style                      |
+| `mermaid`                   | `MermaidOptions`            |                                   | Mermaid config and error handling          |
+| `linkSafety`                | `LinkSafetyConfig`          |                                   | External link confirmation                 |
+| `remend`                    | `RemendConfig`              |                                   | Incomplete markdown handling               |
+| `allowedTags`               | `Record<string, string[]>`  |                                   | HTML tag whitelist                         |
+| `security`                  | `SecurityConfig`            |                                   | URL/image restrictions                     |
+| `containerProps`            | `object`                    |                                   | Props for the container div                |
+| `containerClassName`        | `string`                    |                                   | Container class name                       |
+| `remarkRehypeOptions`       | `object`                    |                                   | remark-rehype options                      |
+| `BlockComponent`            | `ComponentType<BlockProps>` |                                   | Custom block renderer                      |
+| `parseMarkdownIntoBlocksFn` | `(md: string) => string[]`  |                                   | Custom block parser                        |
+| `parseIncompleteMarkdown`   | `boolean`                   | `false`                           | Toggle remend processing                   |
 
 ## Streaming mode and caret
 
@@ -101,7 +101,7 @@ Configure the underlying Mermaid instance and supply a custom error renderer.
 <StreamdownTextPrimitive
   plugins={{ mermaid }}
   mermaid={{
-    config: { theme: "dark" },
+    config: { theme: 'dark' },
     errorComponent: ({ error, chart, retry }) => (
       <div>
         <p>Failed to render diagram: {error}</p>
@@ -121,7 +121,7 @@ During streaming, markdown is often syntactically incomplete (an unclosed `**`, 
   remend={{
     links: true,
     images: true,
-    linkMode: "protocol",
+    linkMode: 'protocol',
     bold: true,
     italic: true,
     boldItalic: true,
@@ -141,17 +141,17 @@ During streaming, markdown is often syntactically incomplete (an unclosed `**`, 
 ```tsx
 <StreamdownTextPrimitive
   security={{
-    allowedLinkPrefixes: ["https://example.com", "https://docs.example.com"],
-    allowedImagePrefixes: ["https://cdn.example.com"],
-    allowedProtocols: ["https", "mailto"],
+    allowedLinkPrefixes: ['https://example.com', 'https://docs.example.com'],
+    allowedImagePrefixes: ['https://cdn.example.com'],
+    allowedProtocols: ['https', 'mailto'],
     allowDataImages: false,
-    defaultOrigin: "https://example.com",
-    blockedLinkClass: "blocked-link",
-    blockedImageClass: "blocked-image",
+    defaultOrigin: 'https://example.com',
+    blockedLinkClass: 'blocked-link',
+    blockedImageClass: 'blocked-image',
   }}
   linkSafety={{
     enabled: true,
-    onLinkCheck: (url) => url.startsWith("https://trusted.com"),
+    onLinkCheck: (url) => url.startsWith('https://trusted.com'),
   }}
 />
 ```
@@ -161,9 +161,9 @@ During streaming, markdown is often syntactically incomplete (an unclosed `**`, 
 ```tsx
 <StreamdownTextPrimitive
   allowedTags={{
-    div: ["class", "id"],
-    span: ["class", "style"],
-    iframe: ["src", "width", "height"],
+    div: ['class', 'id'],
+    span: ['class', 'style'],
+    iframe: ['src', 'width', 'height'],
   }}
 />
 ```
@@ -187,17 +187,17 @@ Override the highlighter and code header per language, or build a custom code co
 `useIsStreamdownCodeBlock` distinguishes block code from inline code; `useStreamdownPreProps` exposes the `<pre>` props for the current block.
 
 ```tsx
-import {
-  useIsStreamdownCodeBlock,
-  useStreamdownPreProps,
-} from "@assistant-ui/react-streamdown";
+import { useIsStreamdownCodeBlock, useStreamdownPreProps } from '@assistant-ui/react-streamdown';
 
 function MyCodeComponent({ children, ...props }) {
   const isCodeBlock = useIsStreamdownCodeBlock();
   const preProps = useStreamdownPreProps();
   if (!isCodeBlock) {
     return (
-      <code className="inline-code" {...props}>
+      <code
+        className='inline-code'
+        {...props}
+      >
         {children}
       </code>
     );
@@ -233,7 +233,7 @@ const StreamdownText = () => (
 Streamdown assumes shadcn/ui design tokens (`--background`, `--muted-foreground`, `--border`, etc.). With Tailwind v4, add an `@source` directive for each installed package so its classes are not purged.
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 @source "../node_modules/streamdown/dist/*.js";
 @source "../node_modules/@streamdown/code/dist/*.js";
 @source "../node_modules/@streamdown/math/dist/*.js";
@@ -244,7 +244,7 @@ Streamdown assumes shadcn/ui design tokens (`--background`, `--muted-foreground`
 For the word-level fade-in animation, also import the stylesheet at the app entry:
 
 ```ts
-import "streamdown/styles.css";
+import 'streamdown/styles.css';
 ```
 
 Note: without these directives the copy/download/fullscreen controls render with no padding or cursor styling and the `caret` indicator stays invisible.
@@ -260,7 +260,7 @@ import {
   useStreamdownPreProps,
   memoCompareNodes,
   DEFAULT_SHIKI_THEME,
-} from "@assistant-ui/react-streamdown";
+} from '@assistant-ui/react-streamdown';
 
 import type {
   StreamdownTextPrimitiveProps,
@@ -277,5 +277,5 @@ import type {
   RemendConfig,
   SecurityConfig,
   BlockProps,
-} from "@assistant-ui/react-streamdown";
+} from '@assistant-ui/react-streamdown';
 ```

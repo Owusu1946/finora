@@ -17,11 +17,9 @@ Higher-order component that exposes a component's rendered HTML to the assistant
 Wrap a component to make its `outerHTML` available as system context. The assistant can read the live HTML structure of whatever the wrapped component renders.
 
 ```tsx
-import { makeAssistantVisible } from "@assistant-ui/react";
+import { makeAssistantVisible } from '@assistant-ui/react';
 
-const Button = ({ onClick, children }) => (
-  <button onClick={onClick}>{children}</button>
-);
+const Button = ({ onClick, children }) => <button onClick={onClick}>{children}</button>;
 
 const ReadableButton = makeAssistantVisible(Button);
 ```
@@ -57,14 +55,15 @@ const SmartButton = makeAssistantVisible(
 
 function TransactionHistory({ transactions }) {
   return (
-    <div className="transaction-list">
+    <div className='transaction-list'>
       {transactions.map((t) => (
-        <div key={t.id} className="transaction-item">
+        <div
+          key={t.id}
+          className='transaction-item'
+        >
           <span>${t.amount}</span>
           <span>{t.merchant}</span>
-          <SmartButton onClick={() => handleRefund(t.id)}>
-            Request Refund
-          </SmartButton>
+          <SmartButton onClick={() => handleRefund(t.id)}>Request Refund</SmartButton>
         </div>
       ))}
     </div>
@@ -90,7 +89,11 @@ const EditableInput = makeAssistantVisible(Input, { editable: true });
 
 function Form() {
   return (
-    <EditableInput label="Email" type="email" placeholder="Enter your email" />
+    <EditableInput
+      label='Email'
+      type='email'
+      placeholder='Enter your email'
+    />
   );
 }
 ```
@@ -108,7 +111,10 @@ const VisibleRow = makeAssistantVisible(Row, { clickable: true });
 // Only VisibleCard's HTML is sent; VisibleRow rows are still clickable
 <VisibleCard>
   {rows.map((r) => (
-    <VisibleRow key={r.id} onClick={() => select(r.id)} />
+    <VisibleRow
+      key={r.id}
+      onClick={() => select(r.id)}
+    />
   ))}
 </VisibleCard>;
 ```
@@ -118,16 +124,13 @@ const VisibleRow = makeAssistantVisible(Row, { clickable: true });
 Visible HTML tells the assistant what is on screen; pair it with `useAssistantInstructions` so it knows how to act on what it sees.
 
 ```tsx
-import {
-  makeAssistantVisible,
-  useAssistantInstructions,
-} from "@assistant-ui/react";
+import { makeAssistantVisible, useAssistantInstructions } from '@assistant-ui/react';
 
 const VisibleForm = makeAssistantVisible(CheckoutForm, { editable: true });
 
 function Checkout() {
   useAssistantInstructions(
-    "Help the user fill out the checkout form. Read the form HTML, then use the edit tool to set field values.",
+    'Help the user fill out the checkout form. Read the form HTML, then use the edit tool to set field values.',
   );
 
   return <VisibleForm />;

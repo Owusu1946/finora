@@ -1,6 +1,6 @@
 ---
 name: thread-list
-description: "Implements multi-thread (conversation history) management in assistant-ui apps: rendering the prebuilt `ThreadList` next to `Thread`, or building a custom sidebar with `ThreadListPrimitive` and `ThreadListItemPrimitive` (Root, New, Items, Trigger, Title, Archive, Unarchive, Delete). Covers thread CRUD through the `useAui()`/`useAuiState()` API: `switchToThread`, `switchToNewThread`, and per item `rename`, `archive`, `unarchive`, `delete`, `generateTitle`, `initialize`, plus reading `s.threads.threadIds`/`archivedThreadIds`/`mainThreadId`. Includes cloud-backed persistence via `useChatRuntime` + `AssistantCloud` and a local `useRemoteThreadListRuntime` + `InMemoryThreadListAdapter` path. Use when a user wants a thread list/sidebar, switching, searching, sorting, drag-and-drop, or renaming/archiving/deleting conversations. For single-thread state, messages, or composer use runtime; for cloud auth/persistence setup use cloud."
+description: 'Implements multi-thread (conversation history) management in assistant-ui apps: rendering the prebuilt `ThreadList` next to `Thread`, or building a custom sidebar with `ThreadListPrimitive` and `ThreadListItemPrimitive` (Root, New, Items, Trigger, Title, Archive, Unarchive, Delete). Covers thread CRUD through the `useAui()`/`useAuiState()` API: `switchToThread`, `switchToNewThread`, and per item `rename`, `archive`, `unarchive`, `delete`, `generateTitle`, `initialize`, plus reading `s.threads.threadIds`/`archivedThreadIds`/`mainThreadId`. Includes cloud-backed persistence via `useChatRuntime` + `AssistantCloud` and a local `useRemoteThreadListRuntime` + `InMemoryThreadListAdapter` path. Use when a user wants a thread list/sidebar, switching, searching, sorting, drag-and-drop, or renaming/archiving/deleting conversations. For single-thread state, messages, or composer use runtime; for cloud auth/persistence setup use cloud.'
 license: MIT
 ---
 
@@ -20,11 +20,11 @@ Manage multiple chat threads with built-in or custom UI.
 Thread list is available with `useChatRuntime` + cloud:
 
 ```tsx
-import { AssistantCloud } from "assistant-cloud";
-import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { ThreadList } from "@/components/assistant-ui/thread-list";
-import { Thread } from "@/components/assistant-ui/thread";
+import { AssistantCloud } from 'assistant-cloud';
+import { useChatRuntime, AssistantChatTransport } from '@assistant-ui/react-ai-sdk';
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { ThreadList } from '@/components/assistant-ui/thread-list';
+import { Thread } from '@/components/assistant-ui/thread';
 
 const cloud = new AssistantCloud({
   baseUrl: process.env.NEXT_PUBLIC_ASSISTANT_BASE_URL,
@@ -33,15 +33,15 @@ const cloud = new AssistantCloud({
 
 function Chat() {
   const runtime = useChatRuntime({
-    transport: new AssistantChatTransport({ api: "/api/chat" }),
+    transport: new AssistantChatTransport({ api: '/api/chat' }),
     cloud,
   });
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className="flex h-screen">
-        <ThreadList className="w-64 border-r" />
-        <Thread className="flex-1" />
+      <div className='flex h-screen'>
+        <ThreadList className='w-64 border-r' />
+        <Thread className='flex-1' />
       </div>
     </AssistantRuntimeProvider>
   );
@@ -51,7 +51,7 @@ function Chat() {
 ## Thread Operations
 
 ```tsx
-import { useAui, useAuiState } from "@assistant-ui/react";
+import { useAui, useAuiState } from '@assistant-ui/react';
 
 const api = useAui();
 const { threadIds, mainThreadId } = useAuiState((s) => ({
@@ -64,7 +64,7 @@ api.threads().switchToThread(threadId);
 api.threads().switchToNewThread();
 
 const item = api.threads().item({ id: threadId });
-await item.rename("New Title");
+await item.rename('New Title');
 await item.archive();
 await item.delete();
 ```
@@ -72,19 +72,19 @@ await item.delete();
 ## Custom Thread List
 
 ```tsx
-import { ThreadListPrimitive, ThreadListItemPrimitive } from "@assistant-ui/react";
+import { ThreadListPrimitive, ThreadListItemPrimitive } from '@assistant-ui/react';
 
 function CustomThreadList() {
   return (
-    <ThreadListPrimitive.Root className="w-64">
-      <ThreadListPrimitive.New className="w-full p-2 bg-blue-500 text-white">
+    <ThreadListPrimitive.Root className='w-64'>
+      <ThreadListPrimitive.New className='w-full p-2 bg-blue-500 text-white'>
         + New Chat
       </ThreadListPrimitive.New>
 
       <ThreadListPrimitive.Items>
         {() => (
-          <ThreadListItemPrimitive.Root className="flex p-2 hover:bg-gray-100">
-            <ThreadListItemPrimitive.Trigger className="flex-1">
+          <ThreadListItemPrimitive.Root className='flex p-2 hover:bg-gray-100'>
+            <ThreadListItemPrimitive.Trigger className='flex-1'>
               <ThreadListItemPrimitive.Title />
             </ThreadListItemPrimitive.Trigger>
             <ThreadListItemPrimitive.Archive>Archive</ThreadListItemPrimitive.Archive>
@@ -100,10 +100,7 @@ function CustomThreadList() {
 ## Without Cloud (Local)
 
 ```tsx
-import {
-  useRemoteThreadListRuntime,
-  InMemoryThreadListAdapter,
-} from "@assistant-ui/react";
+import { useRemoteThreadListRuntime, InMemoryThreadListAdapter } from '@assistant-ui/react';
 
 const runtime = useRemoteThreadListRuntime({
   adapter: new InMemoryThreadListAdapter(),
@@ -114,9 +111,11 @@ const runtime = useRemoteThreadListRuntime({
 ## Common Gotchas
 
 **ThreadList not showing**
+
 - Pass `cloud` to runtime
 - Check authentication
 
 **Threads not persisting**
+
 - Verify cloud connection
 - Check network requests

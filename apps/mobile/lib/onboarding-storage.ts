@@ -50,8 +50,5 @@ export async function getOnboardingState(): Promise<OnboardingState> {
 }
 
 export async function completeOnboarding(accountType: AccountType): Promise<void> {
-  await Promise.all([
-    setItem(KEYS.completed, 'true'),
-    setItem(KEYS.accountType, accountType),
-  ]);
+  await Promise.all([setItem(KEYS.completed, 'true'), setItem(KEYS.accountType, accountType)]);
 }

@@ -15,14 +15,14 @@ Mount user-managed MCP servers on the `aui` instance with `@assistant-ui/react-m
 ## Imports
 
 ```ts
-import { AuiProvider, useAui } from "@assistant-ui/react";
+import { AuiProvider, useAui } from '@assistant-ui/react';
 import {
   McpManagerResource,
   defineConnector,
   McpLocalStorage,
   McpMemoryStorage,
   McpCustomStorage,
-} from "@assistant-ui/react-mcp";
+} from '@assistant-ui/react-mcp';
 ```
 
 ## defineConnector
@@ -32,17 +32,17 @@ A connector is an app-declared preset the end user can connect to. `id`, `name`,
 ```ts
 const connectors = [
   defineConnector({
-    id: "linear",
-    name: "Linear",
-    url: "https://mcp.linear.app",
-    auth: { type: "oauth", scopes: ["read"] },
-    icon: "/icons/linear.svg",
+    id: 'linear',
+    name: 'Linear',
+    url: 'https://mcp.linear.app',
+    auth: { type: 'oauth', scopes: ['read'] },
+    icon: '/icons/linear.svg',
   }),
   defineConnector({
-    id: "weather",
-    name: "Weather",
-    url: "https://mcp.example.com/weather",
-    auth: { type: "none" },
+    id: 'weather',
+    name: 'Weather',
+    url: 'https://mcp.example.com/weather',
+    auth: { type: 'none' },
   }),
 ];
 ```
@@ -70,16 +70,16 @@ McpManagerResource({
 Pass the resource to `useAui({ mcp })` and wrap the app in `AuiProvider`. Connected servers' tools merge into the chat runtime automatically, namespaced `serverId__toolName`.
 
 ```tsx
-"use client";
-import { AuiProvider, useAui } from "@assistant-ui/react";
-import { McpManagerResource, defineConnector } from "@assistant-ui/react-mcp";
+'use client';
+import { AuiProvider, useAui } from '@assistant-ui/react';
+import { McpManagerResource, defineConnector } from '@assistant-ui/react-mcp';
 
 const connectors = [
   defineConnector({
-    id: "linear",
-    name: "Linear",
-    url: "https://mcp.linear.app",
-    auth: { type: "oauth", scopes: ["read"] },
+    id: 'linear',
+    name: 'Linear',
+    url: 'https://mcp.linear.app',
+    auth: { type: 'oauth', scopes: ['read'] },
   }),
 ];
 
@@ -112,22 +112,20 @@ const aui = useAui({
   mcp: McpManagerResource({
     connectors,
     storage: McpCustomStorage({
-      loadCustomServers: async () =>
-        fetch("/api/mcp/servers").then((r) => r.json()),
+      loadCustomServers: async () => fetch('/api/mcp/servers').then((r) => r.json()),
       saveCustomServers: async (records) =>
-        fetch("/api/mcp/servers", {
-          method: "PUT",
+        fetch('/api/mcp/servers', {
+          method: 'PUT',
           body: JSON.stringify(records),
         }),
       loadAuthState: async (id) =>
         fetch(`/api/mcp/auth/${id}`).then((r) => (r.ok ? r.json() : null)),
       saveAuthState: async (id, state) =>
         fetch(`/api/mcp/auth/${id}`, {
-          method: "PUT",
+          method: 'PUT',
           body: JSON.stringify(state),
         }),
-      clearAuthState: async (id) =>
-        fetch(`/api/mcp/auth/${id}`, { method: "DELETE" }),
+      clearAuthState: async (id) => fetch(`/api/mcp/auth/${id}`, { method: 'DELETE' }),
     }),
   }),
 });
@@ -140,15 +138,15 @@ Drive the manager through `useAui().mcp()` from inside event handlers, never dur
 ```ts
 const aui = useAui();
 // inside an event handler:
-await aui.mcp().addCustomServer({ name, url, auth: { type: "bearer", token } });
+await aui.mcp().addCustomServer({ name, url, auth: { type: 'bearer', token } });
 await aui.mcp().server({ id }).connect();
-const result = await aui.mcp().server({ id }).callTool("echo", { text: "hi" });
+const result = await aui.mcp().server({ id }).callTool('echo', { text: 'hi' });
 ```
 
 Read reactive state with `useAuiState` from `@assistant-ui/store`, scoped under `s.mcp` (manager) and `s.mcpServer` (current item inside a `McpServerPrimitive` subtree).
 
 ```ts
-import { useAuiState } from "@assistant-ui/store";
+import { useAuiState } from '@assistant-ui/store';
 
 const isHydrated = useAuiState((s) => s.mcp.isHydrated);
 const connectionState = useAuiState((s) => s.mcpServer.connectionState);

@@ -22,8 +22,8 @@ import {
   SpanResource,
   SpanByIndexProvider,
   type SpanData,
-} from "@assistant-ui/react-o11y";
-import { useAui, AuiProvider, useAuiState } from "@assistant-ui/store";
+} from '@assistant-ui/react-o11y';
+import { useAui, AuiProvider, useAuiState } from '@assistant-ui/store';
 ```
 
 ## SpanData input
@@ -36,7 +36,7 @@ type SpanData = {
   parentSpanId: string | null;
   name: string;
   type: string; // category, e.g. "llm" or "tool"
-  status: "running" | "completed" | "failed" | "skipped";
+  status: 'running' | 'completed' | 'failed' | 'skipped';
   startedAt: number; // ms
   endedAt: number | null;
   latencyMs: number | null;
@@ -80,11 +80,11 @@ All components forward refs and accept `className`, `style`, and standard DOM pr
 
 ```tsx
 <SpanPrimitive.StatusIndicator
-  className="size-2 rounded-full
+  className='size-2 rounded-full
     data-[span-status=running]:bg-yellow-500
     data-[span-status=completed]:bg-green-500
     data-[span-status=failed]:bg-red-500
-    data-[span-status=skipped]:bg-gray-400"
+    data-[span-status=skipped]:bg-gray-400'
 />
 ```
 
@@ -110,20 +110,20 @@ Lower-level provider that scopes a subtree to the span at `index`. `SpanPrimitiv
 A recursive `SpanRow` renders one span and its children; `TraceView` mounts the resource and renders the roots.
 
 ```tsx
-"use client";
-import { SpanPrimitive, SpanResource, type SpanData } from "@assistant-ui/react-o11y";
-import { useAui, AuiProvider } from "@assistant-ui/store";
+'use client';
+import { SpanPrimitive, SpanResource, type SpanData } from '@assistant-ui/react-o11y';
+import { useAui, AuiProvider } from '@assistant-ui/store';
 
 function SpanRow() {
   return (
-    <SpanPrimitive.Root className="flex items-center gap-2 py-1">
+    <SpanPrimitive.Root className='flex items-center gap-2 py-1'>
       <SpanPrimitive.Indent />
-      <SpanPrimitive.CollapseToggle className="size-4 cursor-pointer">
+      <SpanPrimitive.CollapseToggle className='size-4 cursor-pointer'>
         ▸
       </SpanPrimitive.CollapseToggle>
-      <SpanPrimitive.StatusIndicator className="size-2 rounded-full" />
-      <SpanPrimitive.TypeBadge className="rounded bg-muted px-1.5 text-xs" />
-      <SpanPrimitive.Name className="text-sm" />
+      <SpanPrimitive.StatusIndicator className='size-2 rounded-full' />
+      <SpanPrimitive.TypeBadge className='rounded bg-muted px-1.5 text-xs' />
+      <SpanPrimitive.Name className='text-sm' />
       <SpanPrimitive.Children components={{ Span: SpanRow }} />
     </SpanPrimitive.Root>
   );

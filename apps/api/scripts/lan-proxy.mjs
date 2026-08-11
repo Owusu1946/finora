@@ -93,7 +93,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(LISTEN_PORT, '0.0.0.0', () => {
-  console.log(
-    `[lan-proxy] http://0.0.0.0:${LISTEN_PORT} → http://${TARGET_HOST}:${TARGET_PORT}`,
-  );
+  console.log(`[lan-proxy] http://0.0.0.0:${LISTEN_PORT} → http://${TARGET_HOST}:${TARGET_PORT}`);
 });

@@ -1,6 +1,6 @@
-import { AppText as Text } from '@/components/ui/text';
 import { StyleSheet, View } from 'react-native';
 
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountFullLabel, getAccountLabel, getAccountType } from '@/lib/account';

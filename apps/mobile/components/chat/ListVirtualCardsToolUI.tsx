@@ -2,8 +2,9 @@ import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import type { VirtualCard } from '@/components/cards/types';
+
+import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -33,7 +34,9 @@ function ListVirtualCardsView({ cards }: { cards: VirtualCard[] }) {
 
   if (cards.length === 0) {
     return (
-      <View style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+      <View
+        style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+      >
         <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No virtual cards</Text>
         <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
           Try “Create a virtual card for Netflix with a $50 limit.”
@@ -44,9 +47,7 @@ function ListVirtualCardsView({ cards }: { cards: VirtualCard[] }) {
 
   return (
     <View style={styles.stack}>
-      <Text style={[styles.listTitle, { color: colors.foreground }]}>
-        Virtual cards
-      </Text>
+      <Text style={[styles.listTitle, { color: colors.foreground }]}>Virtual cards</Text>
       {cards.map((card) => (
         <View
           key={card.id}

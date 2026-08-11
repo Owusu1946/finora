@@ -7,20 +7,20 @@ Render custom UI for tool calls.
 Returns a React component that registers the tool UI renderer.
 
 ```tsx
-import { makeAssistantToolUI } from "@assistant-ui/react";
+import { makeAssistantToolUI } from '@assistant-ui/react';
 
 const WeatherToolUI = makeAssistantToolUI({
-  toolName: "get_weather",
+  toolName: 'get_weather',
   render: ({ args, result, status }) => {
-    if (status.type === "running") {
-      return <div className="animate-pulse">Loading weather...</div>;
+    if (status.type === 'running') {
+      return <div className='animate-pulse'>Loading weather...</div>;
     }
 
     if (result) {
       return (
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-bold">{result.city}</h3>
-          <p className="text-2xl">{result.temperature}°</p>
+        <div className='p-4 bg-blue-50 rounded-lg'>
+          <h3 className='font-bold'>{result.city}</h3>
+          <p className='text-2xl'>{result.temperature}°</p>
         </div>
       );
     }
@@ -32,7 +32,7 @@ const WeatherToolUI = makeAssistantToolUI({
 <AssistantRuntimeProvider runtime={runtime}>
   <WeatherToolUI />
   <Thread />
-</AssistantRuntimeProvider>
+</AssistantRuntimeProvider>;
 ```
 
 ## Render Props
@@ -45,12 +45,12 @@ interface ToolCallMessagePartProps {
   toolName: string;
 
   args: Record<string, unknown>;
-  argsText: string;  // Raw streamed JSON string
+  argsText: string; // Raw streamed JSON string
 
   // Result (undefined while running)
   result?: unknown;
   isError?: boolean;
-  artifact?: unknown;  // UI-only artifact attached to the result
+  artifact?: unknown; // UI-only artifact attached to the result
 
   // Status is an OBJECT, not a string. Branch on status.type.
   status: ToolCallMessagePartStatus;
@@ -64,10 +64,10 @@ interface ToolCallMessagePartProps {
 }
 
 type ToolCallMessagePartStatus =
-  | { type: "running" }       // Tool executing
-  | { type: "complete" }      // Finished successfully
-  | { type: "incomplete"; reason: "cancelled" | "length" | "content-filter" | "other" | "error" }
-  | { type: "requires-action"; reason: "interrupt" };  // Waiting for input
+  | { type: 'running' } // Tool executing
+  | { type: 'complete' } // Finished successfully
+  | { type: 'incomplete'; reason: 'cancelled' | 'length' | 'content-filter' | 'other' | 'error' }
+  | { type: 'requires-action'; reason: 'interrupt' }; // Waiting for input
 ```
 
 ## useAssistantToolUI
@@ -75,13 +75,17 @@ type ToolCallMessagePartStatus =
 Hook variant for dynamic registration:
 
 ```tsx
-import { useAssistantToolUI } from "@assistant-ui/react";
+import { useAssistantToolUI } from '@assistant-ui/react';
 
 function DynamicToolUI({ toolConfig }) {
   useAssistantToolUI({
     toolName: toolConfig.name,
     render: ({ args, result, status }) => (
-      <toolConfig.Component args={args} result={result} status={status} />
+      <toolConfig.Component
+        args={args}
+        result={result}
+        status={status}
+      />
     ),
   });
 
@@ -93,36 +97,36 @@ function DynamicToolUI({ toolConfig }) {
 
 ```tsx
 const ComprehensiveToolUI = makeAssistantToolUI({
-  toolName: "process_data",
+  toolName: 'process_data',
   render: ({ args, result, status }) => {
     switch (status.type) {
-      case "running":
+      case 'running':
         return (
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Spinner />
             <span>Processing {args.filename}...</span>
           </div>
         );
 
-      case "complete":
+      case 'complete':
         return (
-          <div className="p-4 bg-green-50 rounded">
-            <CheckIcon className="text-green-500" />
+          <div className='p-4 bg-green-50 rounded'>
+            <CheckIcon className='text-green-500' />
             <pre>{JSON.stringify(result, null, 2)}</pre>
           </div>
         );
 
-      case "incomplete":
+      case 'incomplete':
         return (
-          <div className="p-4 bg-yellow-50 rounded">
-            <WarningIcon className="text-yellow-500" />
+          <div className='p-4 bg-yellow-50 rounded'>
+            <WarningIcon className='text-yellow-500' />
             <span>Processing was cancelled</span>
           </div>
         );
 
-      case "requires-action":
+      case 'requires-action':
         return (
-          <div className="p-4 bg-blue-50 rounded">
+          <div className='p-4 bg-blue-50 rounded'>
             <span>Waiting for user input...</span>
           </div>
         );
@@ -138,36 +142,39 @@ const ComprehensiveToolUI = makeAssistantToolUI({
 
 ```tsx
 const SearchToolUI = makeAssistantToolUI({
-  toolName: "search",
+  toolName: 'search',
   render: ({ args, result, status }) => (
-    <div className="my-4 border rounded-lg overflow-hidden">
-      <div className="px-4 py-2 bg-gray-100 border-b flex items-center gap-2">
-        <SearchIcon className="w-4 h-4" />
-        <span className="font-medium">Search: {args.query}</span>
+    <div className='my-4 border rounded-lg overflow-hidden'>
+      <div className='px-4 py-2 bg-gray-100 border-b flex items-center gap-2'>
+        <SearchIcon className='w-4 h-4' />
+        <span className='font-medium'>Search: {args.query}</span>
       </div>
 
-      <div className="p-4">
-        {status.type === "running" && (
-          <div className="space-y-2">
+      <div className='p-4'>
+        {status.type === 'running' && (
+          <div className='space-y-2'>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-16 bg-gray-100 animate-pulse rounded" />
+              <div
+                key={i}
+                className='h-16 bg-gray-100 animate-pulse rounded'
+              />
             ))}
           </div>
         )}
 
-        {status.type === "complete" && result?.results && (
-          <div className="space-y-3">
+        {status.type === 'complete' && result?.results && (
+          <div className='space-y-3'>
             {result.results.map((item: any) => (
               <a
                 key={item.url}
                 href={item.url}
-                className="block p-3 hover:bg-gray-50 rounded"
-                target="_blank"
-                rel="noopener noreferrer"
+                className='block p-3 hover:bg-gray-50 rounded'
+                target='_blank'
+                rel='noopener noreferrer'
               >
-                <div className="font-medium text-blue-600">{item.title}</div>
-                <div className="text-sm text-gray-500 truncate">{item.url}</div>
-                <div className="text-sm text-gray-700 mt-1">{item.snippet}</div>
+                <div className='font-medium text-blue-600'>{item.title}</div>
+                <div className='text-sm text-gray-500 truncate'>{item.url}</div>
+                <div className='text-sm text-gray-700 mt-1'>{item.snippet}</div>
               </a>
             ))}
           </div>
@@ -185,7 +192,7 @@ For assistant-ui's declarative generative UI system (`MessagePrimitive.Generativ
 You can also map a tool's result to a component yourself with `makeAssistantToolUI`. The tool name below (`render_widget`) is your own, not a built-in:
 
 ```tsx
-import { Chart, Table, Form, Card } from "./components";
+import { Chart, Table, Form, Card } from './components';
 
 const componentMap: Record<string, React.ComponentType<any>> = {
   chart: Chart,
@@ -195,7 +202,7 @@ const componentMap: Record<string, React.ComponentType<any>> = {
 };
 
 const WidgetToolUI = makeAssistantToolUI({
-  toolName: "render_widget",
+  toolName: 'render_widget',
   render: ({ args, result }) => {
     const Component = componentMap[args.type];
 
@@ -204,8 +211,11 @@ const WidgetToolUI = makeAssistantToolUI({
     }
 
     return (
-      <div className="my-4">
-        <Component {...args.props} data={result} />
+      <div className='my-4'>
+        <Component
+          {...args.props}
+          data={result}
+        />
       </div>
     );
   },
@@ -219,16 +229,22 @@ function ToolUIWithState() {
   const [favorites, setFavorites] = useState<string[]>([]);
 
   useAssistantToolUI({
-    toolName: "show_products",
+    toolName: 'show_products',
     render: ({ result }) => (
-      <div className="grid grid-cols-3 gap-4">
+      <div className='grid grid-cols-3 gap-4'>
         {result?.products?.map((product: any) => (
-          <div key={product.id} className="border rounded p-4">
-            <img src={product.image} alt={product.name} />
+          <div
+            key={product.id}
+            className='border rounded p-4'
+          >
+            <img
+              src={product.image}
+              alt={product.name}
+            />
             <h3>{product.name}</h3>
             <button
               onClick={() => setFavorites((f) => [...f, product.id])}
-              className={favorites.includes(product.id) ? "text-red-500" : ""}
+              className={favorites.includes(product.id) ? 'text-red-500' : ''}
             >
               ♥
             </button>
@@ -248,9 +264,9 @@ The render props already carry the tool call metadata (`toolCallId`, `toolName`,
 
 ```tsx
 const MetadataToolUI = makeAssistantToolUI({
-  toolName: "process_data",
+  toolName: 'process_data',
   render: ({ toolCallId, toolName, status }) => (
-    <div className="text-xs text-gray-500">
+    <div className='text-xs text-gray-500'>
       {toolName} ({toolCallId.slice(0, 8)}) - {status.type}
     </div>
   ),

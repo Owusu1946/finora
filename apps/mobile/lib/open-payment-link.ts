@@ -1,11 +1,10 @@
-import * as Linking from 'expo-linking';
 import type { Router } from 'expo-router';
 
-import {
-  buildScanPayPrompt,
-  parsePaymentQr,
-} from '@/lib/payment-qr';
+import * as Linking from 'expo-linking';
+
 import type { ThreadSender } from '@/lib/send-chat-prompt';
+
+import { buildScanPayPrompt, parsePaymentQr } from '@/lib/payment-qr';
 import { sendChatPrompt } from '@/lib/send-chat-prompt';
 
 const PREP_ID = /(?:pay\.finora\.app\/r\/|\/pay\/r\/|finora:\/\/pay\/r\/)([A-Za-z0-9_-]+)/i;
@@ -44,10 +43,7 @@ export function startPaymentFromLink(
   if (!parsed) return;
 
   const amount = parsed.amount ?? 0;
-  const prompt =
-    amount > 0
-      ? buildScanPayPrompt(parsed, amount)
-      : `Pay payment request ${https}`;
+  const prompt = amount > 0 ? buildScanPayPrompt(parsed, amount) : `Pay payment request ${https}`;
 
   router.replace('/');
   setTimeout(() => {

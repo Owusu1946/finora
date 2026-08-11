@@ -17,7 +17,7 @@ Cross-cutting runtime concepts: the `unstable_` stability policy, how the runtim
 APIs prefixed with `unstable_` are publicly exported and meant to be built against, but their signature, naming, semantics, and return shape may change in any release, including patch releases. They carry no semver guarantees, so a breaking change can land in a patch or minor, not only a major.
 
 ```ts
-import { unstable_createMessageConverter as createMessageConverter } from "@assistant-ui/react";
+import { unstable_createMessageConverter as createMessageConverter } from '@assistant-ui/react';
 ```
 
 When an API stabilizes, the prefix is dropped (`unstable_foo` becomes `foo`). The old name is kept as a deprecated alias for at least one minor cycle, and the changelog notes the transition. Breaking changes are announced in the GitHub release notes and the migration guides under `/docs/migrations`.
@@ -38,7 +38,9 @@ Examples of currently unstable exports: `unstable_createMessageConverter`, `unst
 const runtime = useExternalStoreRuntime({
   messages,
   isRunning,
-  onNew: async (message) => { /* you mutate your store */ },
+  onNew: async (message) => {
+    /* you mutate your store */
+  },
 });
 ```
 
@@ -48,7 +50,7 @@ const runtime = useExternalStoreRuntime({
 const runtime = useLocalRuntime({
   model: {
     async *run({ messages, abortSignal }) {
-      yield { content: [{ type: "text", text: "..." }] };
+      yield { content: [{ type: 'text', text: '...' }] };
     },
   },
 });
@@ -61,14 +63,14 @@ Note: reach for `ExternalStoreRuntime` when an external system is the source of 
 `useAssistantTransportRuntime` (from `@assistant-ui/react`) connects to a custom backend agent that streams its full state, rather than a message delta stream. You hold the agent's state object, and a `converter` projects that state into thread messages on every update.
 
 ```tsx
-import { useAssistantTransportRuntime, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useAssistantTransportRuntime, AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 const runtime = useAssistantTransportRuntime({
   initialState: { messages: [] },
-  api: "http://localhost:8010/assistant",
+  api: 'http://localhost:8010/assistant',
   converter,
-  headers: async () => ({ Authorization: "Bearer token" }),
+  headers: async () => ({ Authorization: 'Bearer token' }),
   onError: (error, { commands, updateState }) => {
     updateState((s) => ({ ...s, lastError: error.message }));
   },
@@ -79,27 +81,34 @@ Options:
 
 ```ts
 interface AssistantTransportRuntimeOptions<T> {
-  initialState: T;                 // starting agent state
-  api: string;                     // backend endpoint URL
+  initialState: T; // starting agent state
+  api: string; // backend endpoint URL
   converter: (
     state: T,
     connectionMetadata: AssistantTransportConnectionMetadata,
   ) => { messages: ThreadMessage[]; isRunning: boolean; state?: ReadonlyJSONValue };
 
-  resumeApi?: string;              // optional reconnect endpoint
-  protocol?: "data-stream" | "assistant-transport";
+  resumeApi?: string; // optional reconnect endpoint
+  protocol?: 'data-stream' | 'assistant-transport';
   headers?: Record<string, string> | Headers | (() => Promise<Record<string, string> | Headers>);
   body?: object | (() => Promise<object | undefined>);
   prepareSendCommandsRequest?: (
     body: SendCommandsRequestBody,
   ) => Record<string, unknown> | Promise<Record<string, unknown>>;
-  capabilities?: { edit?: boolean };  // editing disabled by default
+  capabilities?: { edit?: boolean }; // editing disabled by default
   adapters?: { attachments?: AttachmentAdapter; history?: ThreadHistoryAdapter };
 
   onResponse?: (response: Response) => void;
   onFinish?: () => void;
-  onError?: (error: Error, params: { commands: Command[]; updateState: (fn: (s: T) => T) => void }) => void | Promise<void>;
-  onCancel?: (params: { commands: Command[]; updateState: (fn: (s: T) => T) => void; error?: Error }) => void;
+  onError?: (
+    error: Error,
+    params: { commands: Command[]; updateState: (fn: (s: T) => T) => void },
+  ) => void | Promise<void>;
+  onCancel?: (params: {
+    commands: Command[];
+    updateState: (fn: (s: T) => T) => void;
+    error?: Error;
+  }) => void;
 }
 ```
 
@@ -116,11 +125,11 @@ interface AssistantTransportConnectionMetadata {
 Build the message side of the converter with `unstable_createMessageConverter`, which maps your own message shape to thread messages and back:
 
 ```ts
-import { unstable_createMessageConverter as createMessageConverter } from "@assistant-ui/react";
+import { unstable_createMessageConverter as createMessageConverter } from '@assistant-ui/react';
 
 const messageConverter = createMessageConverter((message: YourMessage) => ({
   role: message.role,
-  content: [{ type: "text", text: message.content }],
+  content: [{ type: 'text', text: message.content }],
 }));
 
 const converter = (state: MyState) => ({
@@ -139,20 +148,13 @@ Note: `unstable_createMessageConverter` is explicitly `unstable_`. The wire form
 Inside components under the provider, read agent state with `useAssistantTransportState` (accepts an optional selector) and issue custom commands with `useAssistantTransportSendCommand`.
 
 ```tsx
-import {
-  useAssistantTransportState,
-  useAssistantTransportSendCommand,
-} from "@assistant-ui/react";
+import { useAssistantTransportState, useAssistantTransportSendCommand } from '@assistant-ui/react';
 
 function CustomField() {
   const value = useAssistantTransportState((s) => s.customField);
   const sendCommand = useAssistantTransportSendCommand();
 
-  return (
-    <button onClick={() => sendCommand({ type: "set-field", value: "x" })}>
-      {value}
-    </button>
-  );
+  return <button onClick={() => sendCommand({ type: 'set-field', value: 'x' })}>{value}</button>;
 }
 ```
 
@@ -163,7 +165,7 @@ To resume a run, use `resumeRun` via the general runtime accessor `useAui`.
 Augment the `Assistant.ExternalState` interface so `useAssistantTransportState` and the converter are typed against your state shape:
 
 ```ts
-declare module "@assistant-ui/react" {
+declare module '@assistant-ui/react' {
   namespace Assistant {
     interface ExternalState {
       myState: { messages: Message[]; customField: string };
@@ -179,7 +181,7 @@ declare module "@assistant-ui/react" {
 Note: this is experimental. The `useMessageTiming` API and the set of tracked fields may change in future versions.
 
 ```tsx
-import { useMessageTiming } from "@assistant-ui/react";
+import { useMessageTiming } from '@assistant-ui/react';
 
 function TimingStats() {
   const timing = useMessageTiming();
@@ -197,13 +199,13 @@ The `MessageTiming` shape:
 
 ```ts
 interface MessageTiming {
-  streamStartTime: number;   // Unix timestamp when the stream started
-  firstTokenTime?: number;   // time to first text token, in ms
-  totalStreamTime?: number;  // total stream duration, in ms
-  tokenCount?: number;       // output token count from message metadata usage
-  tokensPerSecond?: number;  // throughput, requires token usage
-  totalChunks: number;       // total stream chunks received
-  toolCallCount: number;     // number of tool calls
+  streamStartTime: number; // Unix timestamp when the stream started
+  firstTokenTime?: number; // time to first text token, in ms
+  totalStreamTime?: number; // total stream duration, in ms
+  tokenCount?: number; // output token count from message metadata usage
+  tokensPerSecond?: number; // throughput, requires token usage
+  totalChunks: number; // total stream chunks received
+  toolCallCount: number; // number of tool calls
 }
 ```
 
@@ -220,7 +222,7 @@ const runtime = useLocalRuntime({
       const startTime = Date.now();
       const result = await callModel(messages);
       return {
-        content: [{ type: "text", text: result.text }],
+        content: [{ type: 'text', text: result.text }],
         metadata: {
           timing: {
             streamStartTime: startTime,
@@ -240,8 +242,8 @@ For `ExternalStoreRuntime`, put it on the `ThreadMessageLike.metadata.timing`:
 
 ```tsx
 const message: ThreadMessageLike = {
-  role: "assistant",
-  content: [{ type: "text", text: fullText }],
+  role: 'assistant',
+  content: [{ type: 'text', text: fullText }],
   metadata: {
     timing: {
       streamStartTime,

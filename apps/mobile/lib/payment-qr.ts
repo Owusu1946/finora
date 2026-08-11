@@ -1,4 +1,5 @@
 import type { PaymentDestinationKind } from '@/components/chat/PaymentConfirmationCard';
+
 import { getPaymentRequest } from '@/lib/payment-request-registry';
 
 export type PaymentQrDestination = {

@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
@@ -10,6 +9,7 @@ import {
   SettingsSwitchRow,
 } from '@/components/settings/SettingsPrimitives';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

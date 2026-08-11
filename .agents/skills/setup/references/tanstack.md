@@ -13,16 +13,16 @@ npm install vite @vitejs/plugin-react
 
 ```ts
 // vite.config.ts
-import { defineConfig } from "vite";
-import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import viteReact from "@vitejs/plugin-react";
-import viteTsConfigPaths from "vite-tsconfig-paths";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from 'vite';
+import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import viteReact from '@vitejs/plugin-react';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [
     viteTsConfigPaths({
-      projects: ["./tsconfig.json"],
+      projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
     tanstackStart(),
@@ -35,8 +35,8 @@ export default defineConfig({
 
 ```tsx
 // src/router.tsx
-import { createRouter } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen";
+import { createRouter } from '@tanstack/react-router';
+import { routeTree } from './routeTree.gen';
 
 export const getRouter = () => {
   return createRouter({
@@ -51,16 +51,16 @@ export const getRouter = () => {
 
 ```tsx
 // src/routes/index.tsx
-import { createFileRoute } from "@tanstack/react-router";
-import { Thread } from "@/components/assistant-ui/thread";
-import { MyRuntimeProvider } from "@/components/MyRuntimeProvider";
+import { createFileRoute } from '@tanstack/react-router';
+import { Thread } from '@/components/assistant-ui/thread';
+import { MyRuntimeProvider } from '@/components/MyRuntimeProvider';
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute('/')({ component: App });
 
 function App() {
   return (
     <MyRuntimeProvider>
-      <main className="h-dvh">
+      <main className='h-dvh'>
         <Thread />
       </main>
     </MyRuntimeProvider>
@@ -72,17 +72,17 @@ function App() {
 
 ```tsx
 // src/components/MyRuntimeProvider.tsx
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode } from 'react';
 import {
   useExternalStoreRuntime,
   ThreadMessageLike,
   AppendMessage,
   AssistantRuntimeProvider,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 
 type MyMessage = {
   id: string;
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
 };
 
@@ -91,7 +91,7 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 const convertMessage = (message: MyMessage): ThreadMessageLike => ({
   id: message.id,
   role: message.role,
-  content: [{ type: "text", text: message.content }],
+  content: [{ type: 'text', text: message.content }],
 });
 
 export function MyRuntimeProvider({ children }: { children: ReactNode }) {
@@ -99,13 +99,12 @@ export function MyRuntimeProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<MyMessage[]>([]);
 
   const onNew = async (message: AppendMessage) => {
-    if (message.content[0]?.type !== "text")
-      throw new Error("Only text messages are supported");
+    if (message.content[0]?.type !== 'text') throw new Error('Only text messages are supported');
 
     const input = message.content[0].text;
     const userMessage: MyMessage = {
       id: generateId(),
-      role: "user",
+      role: 'user',
       content: input,
     };
 
@@ -113,19 +112,14 @@ export function MyRuntimeProvider({ children }: { children: ReactNode }) {
     setIsRunning(true);
 
     const assistantId = generateId();
-    setMessages((prev) => [
-      ...prev,
-      { id: assistantId, role: "assistant", content: "" },
-    ]);
+    setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
 
     try {
       // Your streaming implementation here
       const stream = await fetchStream([...messages, userMessage]);
       for await (const chunk of stream) {
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: m.content + chunk } : m
-          )
+          prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + chunk } : m)),
         );
       }
     } finally {
@@ -140,11 +134,7 @@ export function MyRuntimeProvider({ children }: { children: ReactNode }) {
     onNew,
   });
 
-  return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      {children}
-    </AssistantRuntimeProvider>
-  );
+  return <AssistantRuntimeProvider runtime={runtime}>{children}</AssistantRuntimeProvider>;
 }
 ```
 

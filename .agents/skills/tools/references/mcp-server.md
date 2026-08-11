@@ -52,11 +52,11 @@ Create the client with the transport that matches your server. HTTP is the produ
 
 ```ts
 // app/api/chat/route.ts
-import { createMCPClient } from "@ai-sdk/mcp";
+import { createMCPClient } from '@ai-sdk/mcp';
 
 const mcpClient = await createMCPClient({
   transport: {
-    type: "http",
+    type: 'http',
     url: process.env.MCP_SERVER_URL!,
     headers: { Authorization: `Bearer ${process.env.MCP_TOKEN}` },
   },
@@ -66,13 +66,13 @@ const mcpClient = await createMCPClient({
 For stdio:
 
 ```ts
-import { createMCPClient } from "@ai-sdk/mcp";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { createMCPClient } from '@ai-sdk/mcp';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
 const mcpClient = await createMCPClient({
   transport: new StdioClientTransport({
-    command: "node",
-    args: ["./mcp-server/dist/index.js"],
+    command: 'node',
+    args: ['./mcp-server/dist/index.js'],
   }),
 });
 ```
@@ -83,10 +83,10 @@ const mcpClient = await createMCPClient({
 
 ```ts
 // app/api/chat/route.ts
-import { createMCPClient } from "@ai-sdk/mcp";
-import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
-import type { UIMessage } from "ai";
+import { createMCPClient } from '@ai-sdk/mcp';
+import { openai } from '@ai-sdk/openai';
+import { streamText, convertToModelMessages } from 'ai';
+import type { UIMessage } from 'ai';
 
 export const maxDuration = 60;
 
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
 
   const mcpClient = await createMCPClient({
     transport: {
-      type: "http",
+      type: 'http',
       url: process.env.MCP_SERVER_URL!,
       headers: { Authorization: `Bearer ${process.env.MCP_TOKEN}` },
     },
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
   const tools = await mcpClient.tools();
 
   const result = streamText({
-    model: openai("gpt-5.4-mini"),
+    model: openai('gpt-5.4-mini'),
     messages: await convertToModelMessages(messages),
     tools,
     onFinish: async () => {
@@ -124,10 +124,10 @@ Each server has its own client. Spread their tool maps together:
 
 ```ts
 const githubClient = await createMCPClient({
-  transport: { type: "http", url: process.env.GITHUB_MCP_URL! },
+  transport: { type: 'http', url: process.env.GITHUB_MCP_URL! },
 });
 const filesClient = await createMCPClient({
-  transport: { type: "http", url: process.env.FILES_MCP_URL! },
+  transport: { type: 'http', url: process.env.FILES_MCP_URL! },
 });
 
 const tools = {
@@ -145,21 +145,24 @@ Tool calls flow through the existing assistant-ui tool-call rendering. With no s
 
 ```tsx
 // app/components/GitHubIssueToolUI.tsx
-"use client";
-import { makeAssistantToolUI } from "@assistant-ui/react";
+'use client';
+import { makeAssistantToolUI } from '@assistant-ui/react';
 
 type Args = { repo: string; number: number };
 type Result = { title: string; state: string; url: string };
 
 export const GitHubIssueToolUI = makeAssistantToolUI<Args, Result>({
-  toolName: "github_get_issue",
+  toolName: 'github_get_issue',
   render: ({ args, result }) => (
-    <div className="rounded border p-3">
-      <div className="font-mono text-sm">
+    <div className='rounded border p-3'>
+      <div className='font-mono text-sm'>
         {args.repo}#{args.number}
       </div>
       {result && (
-        <a href={result.url} className="underline">
+        <a
+          href={result.url}
+          className='underline'
+        >
           {result.title} ({result.state})
         </a>
       )}

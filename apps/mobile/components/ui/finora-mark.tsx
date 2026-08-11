@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import Svg, {
   Circle,
   Defs,
@@ -5,7 +6,6 @@ import Svg, {
   Path,
   Stop,
 } from 'react-native-svg';
-import { View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 
@@ -41,12 +41,7 @@ export function finoraToneForTheme(isDark: boolean): 'light' | 'dark' {
  * Official Finora mark from the virtual card art:
  * dual crescent arcs + center node.
  */
-export function FinoraMark({
-  size,
-  variant = 'badge',
-  tone = 'metal',
-  compact,
-}: Props) {
+export function FinoraMark({ size, variant = 'badge', tone = 'metal', compact }: Props) {
   const markSize = size ?? (compact ? 22 : 30);
   const resolved = resolveTone(tone);
 

@@ -24,12 +24,7 @@ export const CurrencySchema = z.enum([
 ]);
 export type Currency = z.infer<typeof CurrencySchema>;
 
-export const SubCustomerStatusSchema = z.enum([
-  'ACTIVE',
-  'INACTIVE',
-  'SUSPENDED',
-  'ARCHIVED',
-]);
+export const SubCustomerStatusSchema = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'ARCHIVED']);
 export type SubCustomerStatus = z.infer<typeof SubCustomerStatusSchema>;
 
 export const SubCustomerTypeSchema = z.enum(['INDIVIDUAL', 'BUSINESS']);
@@ -52,9 +47,7 @@ export const SubCustomerOnboardingStatusSchema = z.enum([
   'REJECTED',
   'REQUIRES_ACTION',
 ]);
-export type SubCustomerOnboardingStatus = z.infer<
-  typeof SubCustomerOnboardingStatusSchema
->;
+export type SubCustomerOnboardingStatus = z.infer<typeof SubCustomerOnboardingStatusSchema>;
 
 export const WalletStatusSchema = z.enum(['ACTIVE', 'SUSPENDED', 'CLOSED']);
 export type WalletStatus = z.infer<typeof WalletStatusSchema>;
@@ -65,13 +58,7 @@ export type AccountStatus = z.infer<typeof AccountStatusSchema>;
 export const CryptoWalletStatusSchema = z.enum(['ACTIVE', 'PENDING', 'DISABLED']);
 export type CryptoWalletStatus = z.infer<typeof CryptoWalletStatusSchema>;
 
-export const BlockchainNetworkSchema = z.enum([
-  'TRON',
-  'ETHEREUM',
-  'SOLANA',
-  'POLYGON',
-  'BASE',
-]);
+export const BlockchainNetworkSchema = z.enum(['TRON', 'ETHEREUM', 'SOLANA', 'POLYGON', 'BASE']);
 export type BlockchainNetwork = z.infer<typeof BlockchainNetworkSchema>;
 
 export const PurposeCodeSchema = z.enum([

@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -8,6 +7,7 @@ import type { RecurringFrequency, RecurringPayment } from '@/components/recurrin
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';

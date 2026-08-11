@@ -2,16 +2,14 @@ import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useState } from 'react';
 import { Keyboard, Share } from 'react-native';
 
-import {
-  CRYPTO_DEPOSIT_NETWORKS,
-  type CryptoNetworkId,
-} from '@/lib/crypto-networks';
+import { CRYPTO_DEPOSIT_NETWORKS, type CryptoNetworkId } from '@/lib/crypto-networks';
 import { haptics } from '@/lib/haptics';
 import { MOMO_NETWORKS, type MomoNetworkId } from '@/lib/momo-networks';
 import { pickPhoneFromContacts } from '@/lib/pick-phone-contact';
 
-import { MOMO_FEE_RATE } from './constants';
 import type { DepositModalProps, DepositState, DepositStep } from './types';
+
+import { MOMO_FEE_RATE } from './constants';
 
 export function useDepositState({
   visible,

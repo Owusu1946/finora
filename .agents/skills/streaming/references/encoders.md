@@ -4,18 +4,18 @@ Encode and decode streaming formats.
 
 ## Available Encoders
 
-| Encoder | Format | Use Case |
-|---------|--------|----------|
-| `DataStreamEncoder` | AI SDK Data Stream | Default (used by `toUIMessageStreamResponse`) |
-| `AssistantTransportEncoder` | Native SSE (`data: {chunk}`) | Custom backends that want all chunk types |
-| `PlainTextEncoder` | Text-only | Very simple demos |
+| Encoder                     | Format                       | Use Case                                      |
+| --------------------------- | ---------------------------- | --------------------------------------------- |
+| `DataStreamEncoder`         | AI SDK Data Stream           | Default (used by `toUIMessageStreamResponse`) |
+| `AssistantTransportEncoder` | Native SSE (`data: {chunk}`) | Custom backends that want all chunk types     |
+| `PlainTextEncoder`          | Text-only                    | Very simple demos                             |
 
 ## DataStreamEncoder
 
 AI SDK compatible format. You normally don't call it directly—wrap an `AssistantStream`:
 
 ```ts
-import { AssistantStream, DataStreamEncoder, DataStreamDecoder } from "assistant-stream";
+import { AssistantStream, DataStreamEncoder, DataStreamDecoder } from 'assistant-stream';
 
 const response = AssistantStream.toResponse(stream, new DataStreamEncoder());
 
@@ -30,10 +30,7 @@ for await (const chunk of stream) {
 Native assistant-ui format with all features.
 
 ```ts
-import {
-  AssistantTransportEncoder,
-  AssistantTransportDecoder,
-} from "assistant-stream";
+import { AssistantTransportEncoder, AssistantTransportDecoder } from 'assistant-stream';
 
 const response = AssistantStream.toResponse(stream, new AssistantTransportEncoder());
 
@@ -48,10 +45,10 @@ for await (const chunk of stream) {
 Simple text-only streaming.
 
 ```ts
-import { PlainTextEncoder, PlainTextDecoder } from "assistant-stream";
+import { PlainTextEncoder, PlainTextDecoder } from 'assistant-stream';
 
 const encoder = new PlainTextEncoder();
-const stream = encoder.encode("Hello world!");
+const stream = encoder.encode('Hello world!');
 
 const decoder = new PlainTextDecoder();
 for await (const text of decoder.decode(stream)) {
@@ -64,7 +61,7 @@ for await (const text of decoder.decode(stream)) {
 Optimized for UI rendering - accumulates into message state.
 
 ```ts
-import { UIMessageStreamDecoder } from "assistant-stream";
+import { UIMessageStreamDecoder } from 'assistant-stream';
 
 const decoder = new UIMessageStreamDecoder();
 
@@ -106,6 +103,6 @@ while (reader) {
 ### Validate Format
 
 ```ts
-const contentType = response.headers.get("Content-Type");
-console.log("Content-Type:", contentType);  // Should be text/event-stream
+const contentType = response.headers.get('Content-Type');
+console.log('Content-Type:', contentType); // Should be text/event-stream
 ```

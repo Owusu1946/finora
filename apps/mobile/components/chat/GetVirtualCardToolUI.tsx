@@ -2,9 +2,10 @@ import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
-import { formatCardAmount } from '@/components/cards/types';
 import type { VirtualCard } from '@/components/cards/types';
+
+import { formatCardAmount } from '@/components/cards/types';
+import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';

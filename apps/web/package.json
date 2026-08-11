@@ -3,26 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev:bare": "next dev --port 3001",
     "build": "next build",
-    "start": "next start --port 3000",
+    "check-types": "tsc --noEmit",
+    "dev:bare": "next dev --port 3001",
     "lint": "eslint .",
-    "check-types": "tsc --noEmit"
+    "start": "next start --port 3000"
   },
   "dependencies": {
     "next": "16.3.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^20.19.43",
-    "@types/react": "^19.1.17",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9.39.5",
+    "eslint": "^10.8.1",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "~5.9.3"
+    "typescript": "~7.0.2"
   }
 }

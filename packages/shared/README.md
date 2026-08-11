@@ -4,11 +4,11 @@ Three-surface tool registry: rich **platform** operations, curated **MCP** orche
 
 ## Surfaces
 
-| Surface | Who calls it | What they see |
-|---|---|---|
-| `mobile` | In-app Gemini / local runtime | PIN, biometrics, theme, threads, execute after approval |
-| `platform` | Finora API | Full operation set (prepare + execute + policy CRUD + webhooks + …) |
-| `mcp` | External AI agents | **~20 high-level tools** only — read + prepare — never settle rails |
+| Surface    | Who calls it                  | What they see                                                       |
+| ---------- | ----------------------------- | ------------------------------------------------------------------- |
+| `mobile`   | In-app Gemini / local runtime | PIN, biometrics, theme, threads, execute after approval             |
+| `platform` | Finora API                    | Full operation set (prepare + execute + policy CRUD + webhooks + …) |
+| `mcp`      | External AI agents            | **~20 high-level tools** only — read + prepare — never settle rails |
 
 Canonical ids are **snake_case** (`prepare_payment`). camelCase (`preparePayment`) is the product alias via `TOOL_CAMEL_ALIASES`.
 
@@ -53,24 +53,24 @@ Agents should use this small set (internally mapped to rich `/v1` routes):
 
 ## Key exports
 
-| Export | Role |
-|---|---|
-| `TOOL_REGISTRY` | Full catalog with surface + risk |
-| `MCP_TOOL_NAMES` | Curated MCP registration list |
-| `PLATFORM_TOOL_NAMES` / `TOOL_NAMES` | Rich API tools |
-| `MOBILE_TOOL_NAMES` | Local / in-app tools |
-| `TOOL_INPUT_SCHEMAS` | Zod inputs for MCP tools |
-| `isMcpSafeTool` | Runtime guard |
+| Export                               | Role                             |
+| ------------------------------------ | -------------------------------- |
+| `TOOL_REGISTRY`                      | Full catalog with surface + risk |
+| `MCP_TOOL_NAMES`                     | Curated MCP registration list    |
+| `PLATFORM_TOOL_NAMES` / `TOOL_NAMES` | Rich API tools                   |
+| `MOBILE_TOOL_NAMES`                  | Local / in-app tools             |
+| `TOOL_INPUT_SCHEMAS`                 | Zod inputs for MCP tools         |
+| `isMcpSafeTool`                      | Runtime guard                    |
 
 ## Key files
 
-| Path | Role |
-|---|---|
-| `packages/shared/src/registry.ts` | Three-surface registry |
-| `packages/shared/src/tools.ts` | Zod input schemas |
-| `apps/api/src/routes/v1.ts` | Mock `/v1/*` routes |
-| `apps/mcp/src/tools/catalog.ts` | MCP → API path map |
-| `apps/mcp/src/server.ts` | Registers `MCP_TOOL_NAMES` only |
+| Path                              | Role                            |
+| --------------------------------- | ------------------------------- |
+| `packages/shared/src/registry.ts` | Three-surface registry          |
+| `packages/shared/src/tools.ts`    | Zod input schemas               |
+| `apps/api/src/routes/v1.ts`       | Mock `/v1/*` routes             |
+| `apps/mcp/src/tools/catalog.ts`   | MCP → API path map              |
+| `apps/mcp/src/server.ts`          | Registers `MCP_TOOL_NAMES` only |
 
 ## Local try
 

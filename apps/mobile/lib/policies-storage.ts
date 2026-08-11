@@ -62,14 +62,21 @@ export async function listPolicies(): Promise<ApprovalPolicy[]> {
   }
 }
 
-export async function setPolicyEnabled(id: string, enabled: boolean): Promise<ApprovalPolicy | null> {
+export async function setPolicyEnabled(
+  id: string,
+  enabled: boolean,
+): Promise<ApprovalPolicy | null> {
   const policies = await listPolicies();
   const next = policies.map((p) => (p.id === id ? { ...p, enabled } : p));
   await setItem(KEY, JSON.stringify(next));
   return next.find((p) => p.id === id) ?? null;
 }
 
-export function simulatePolicy(policies: ApprovalPolicy[], amountUsd: number, isNewRecipient: boolean) {
+export function simulatePolicy(
+  policies: ApprovalPolicy[],
+  amountUsd: number,
+  isNewRecipient: boolean,
+) {
   const active = policies.filter((p) => p.enabled);
   const hits: string[] = [];
   if (active.some((p) => p.id === 'pol-amount') && amountUsd > 500) {

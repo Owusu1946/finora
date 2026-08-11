@@ -127,15 +127,13 @@ export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
   commit_transaction: {
     description: 'Commit agent transaction and request human approval for all items',
     method: 'POST',
-    path: (a) =>
-      `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/commit`,
+    path: (a) => `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/commit`,
     body: true,
   },
   rollback_transaction: {
     description: 'Roll back agent transaction and cancel related preparations',
     method: 'POST',
-    path: (a) =>
-      `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/rollback`,
+    path: (a) => `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/rollback`,
     body: true,
   },
   evaluate_policy: {

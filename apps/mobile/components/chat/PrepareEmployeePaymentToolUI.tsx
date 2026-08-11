@@ -2,6 +2,8 @@ import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import type { Employee } from '@/lib/employees-storage';
+
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
@@ -9,7 +11,6 @@ import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import type { Employee } from '@/lib/employees-storage';
 import { haptics } from '@/lib/haptics';
 import { recordSentPayment } from '@/lib/transactions-storage';
 

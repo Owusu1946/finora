@@ -1,6 +1,6 @@
-import { AppText as Text } from '@/components/ui/text';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

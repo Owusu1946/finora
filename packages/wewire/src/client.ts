@@ -111,26 +111,20 @@ export class WewireClient {
   }
 
   getKycRequirements(subCustomerId: string) {
-    return this.request<KycRequirement[]>(
-      `/v1/subcustomers/${subCustomerId}/kyc/requirements`,
-    );
+    return this.request<KycRequirement[]>(`/v1/subcustomers/${subCustomerId}/kyc/requirements`);
   }
 
   addBeneficialOwner(subCustomerId: string, input: BeneficialOwnerInput) {
-    return this.request<{ id: string }>(
-      `/v1/subcustomers/${subCustomerId}/kyc/beneficial-owners`,
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
-      },
-    );
+    return this.request<{ id: string }>(`/v1/subcustomers/${subCustomerId}/kyc/beneficial-owners`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
   }
 
   submitKycForReview(subCustomerId: string) {
-    return this.request<{ status: string }>(
-      `/v1/subcustomers/${subCustomerId}/kyc/submit`,
-      { method: 'POST' },
-    );
+    return this.request<{ status: string }>(`/v1/subcustomers/${subCustomerId}/kyc/submit`, {
+      method: 'POST',
+    });
   }
 
   // ─── Payouts ─────────────────────────────────────────────────────────────
@@ -159,13 +153,10 @@ export class WewireClient {
   // ─── Internal transfers ──────────────────────────────────────────────────
 
   transfer(subCustomerId: string, input: InternalTransferInput) {
-    return this.request<WewireTransaction>(
-      `/v1/subcustomers/${subCustomerId}/transfer`,
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
-      },
-    );
+    return this.request<WewireTransaction>(`/v1/subcustomers/${subCustomerId}/transfer`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
   }
 
   // ─── MoMo disbursements ──────────────────────────────────────────────────

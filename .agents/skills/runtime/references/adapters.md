@@ -46,13 +46,13 @@ import type {
   PendingAttachment,
   CompleteAttachment,
   Attachment,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 
 type AttachmentAdapter = {
   accept: string;
-  add: (state: { file: File }) =>
-    | Promise<PendingAttachment>
-    | AsyncGenerator<PendingAttachment, void>;
+  add: (state: {
+    file: File;
+  }) => Promise<PendingAttachment> | AsyncGenerator<PendingAttachment, void>;
   send: (attachment: PendingAttachment) => Promise<CompleteAttachment>;
   remove: (attachment: Attachment) => Promise<void>;
 };
@@ -78,7 +78,7 @@ import {
   CompositeAttachmentAdapter,
   SimpleImageAttachmentAdapter,
   SimpleTextAttachmentAdapter,
-} from "@assistant-ui/react";
+} from '@assistant-ui/react';
 
 const runtime = useChatRuntime({
   adapters: {
@@ -105,24 +105,20 @@ const runtime = useChatRuntime({
 Implement `AttachmentAdapter` to control validation and the content shape. This vision adapter rejects oversized images and emits an inline image content part.
 
 ```ts
-import {
-  AttachmentAdapter,
-  PendingAttachment,
-  CompleteAttachment,
-} from "@assistant-ui/react";
+import { AttachmentAdapter, PendingAttachment, CompleteAttachment } from '@assistant-ui/react';
 
 class VisionImageAdapter implements AttachmentAdapter {
-  accept = "image/jpeg,image/png,image/webp,image/gif";
+  accept = 'image/jpeg,image/png,image/webp,image/gif';
 
   async add({ file }: { file: File }): Promise<PendingAttachment> {
     const maxSize = 20 * 1024 * 1024;
-    if (file.size > maxSize) throw new Error("Image size exceeds 20MB limit");
+    if (file.size > maxSize) throw new Error('Image size exceeds 20MB limit');
     return {
       id: crypto.randomUUID(),
-      type: "image",
+      type: 'image',
       name: file.name,
       file,
-      status: { type: "requires-action", reason: "composer-send" },
+      status: { type: 'requires-action', reason: 'composer-send' },
     };
   }
 
@@ -130,10 +126,10 @@ class VisionImageAdapter implements AttachmentAdapter {
     const base64 = await this.fileToBase64DataURL(attachment.file);
     return {
       id: attachment.id,
-      type: "image",
+      type: 'image',
       name: attachment.name,
-      content: [{ type: "image", image: base64 }],
-      status: { type: "complete" },
+      content: [{ type: 'image', image: base64 }],
+      status: { type: 'complete' },
     };
   }
 
@@ -153,7 +149,7 @@ class VisionImageAdapter implements AttachmentAdapter {
 Register it with any runtime:
 
 ```ts
-import { useLocalRuntime } from "@assistant-ui/react";
+import { useLocalRuntime } from '@assistant-ui/react';
 
 const runtime = useLocalRuntime(MyModelAdapter, {
   adapters: {
@@ -168,24 +164,34 @@ When `add` is an async generator it can yield intermediate `PendingAttachment` s
 
 ```ts
 class ServerUploadAdapter implements AttachmentAdapter {
-  accept = "*";
+  accept = '*';
   private urls = new Map<string, string>();
 
   async *add({ file }: { file: File }) {
     const id = crypto.randomUUID();
     yield {
-      id, type: "file" as const, name: file.name, file, contentType: file.type,
-      status: { type: "running" as const, reason: "uploading" as const, progress: 0 },
+      id,
+      type: 'file' as const,
+      name: file.name,
+      file,
+      contentType: file.type,
+      status: { type: 'running' as const, reason: 'uploading' as const, progress: 0 },
     };
 
     const form = new FormData();
-    form.append("file", file);
-    const { url } = await fetch("/api/upload", { method: "POST", body: form }).then((r) => r.json());
+    form.append('file', file);
+    const { url } = await fetch('/api/upload', { method: 'POST', body: form }).then((r) =>
+      r.json(),
+    );
     this.urls.set(id, url);
 
     yield {
-      id, type: "file" as const, name: file.name, file, contentType: file.type,
-      status: { type: "requires-action" as const, reason: "composer-send" as const },
+      id,
+      type: 'file' as const,
+      name: file.name,
+      file,
+      contentType: file.type,
+      status: { type: 'requires-action' as const, reason: 'composer-send' as const },
     };
   }
 
@@ -194,8 +200,15 @@ class ServerUploadAdapter implements AttachmentAdapter {
     this.urls.delete(attachment.id);
     return {
       ...attachment,
-      status: { type: "complete" },
-      content: [{ type: "file", data: url, mimeType: attachment.contentType ?? "", filename: attachment.name }],
+      status: { type: 'complete' },
+      content: [
+        {
+          type: 'file',
+          data: url,
+          mimeType: attachment.contentType ?? '',
+          filename: attachment.name,
+        },
+      ],
     };
   }
 
@@ -210,10 +223,10 @@ This pattern avoids holding large files in memory as base64: the file is uploade
 `CloudFileAttachmentAdapter` stores attachments in assistant-ui Cloud. Pass an `AssistantCloud` instance to the constructor; it supplies its own `accept`, `add`, `send`, and `remove` defaults.
 
 ```ts
-import { CloudFileAttachmentAdapter } from "@assistant-ui/react";
-import { AssistantCloud } from "@assistant-ui/react";
+import { CloudFileAttachmentAdapter } from '@assistant-ui/react';
+import { AssistantCloud } from '@assistant-ui/react';
 
-const cloud = new AssistantCloud({ /* ... */ });
+const cloud = new AssistantCloud({/* ... */});
 
 const runtime = useChatRuntime({
   adapters: {
@@ -227,17 +240,17 @@ const runtime = useChatRuntime({
 Failures surface as the `composer.attachmentAddError` event rather than throwing into the render tree. Subscribe with `useAuiEvent` and branch on `reason`.
 
 ```tsx
-import { useAuiEvent } from "@assistant-ui/react";
+import { useAuiEvent } from '@assistant-ui/react';
 
 function AttachmentErrorToast() {
-  useAuiEvent("composer.attachmentAddError", ({ reason, message, error }) => {
-    if (reason === "not-accepted") {
-      toast.error("This file type is not supported.");
-    } else if (reason === "no-adapter") {
-      toast.error("Attachments are not configured for this composer.");
+  useAuiEvent('composer.attachmentAddError', ({ reason, message, error }) => {
+    if (reason === 'not-accepted') {
+      toast.error('This file type is not supported.');
+    } else if (reason === 'no-adapter') {
+      toast.error('Attachments are not configured for this composer.');
     } else {
       if (error) console.error(error);
-      toast.error(message || "Attachment failed to upload.");
+      toast.error(message || 'Attachment failed to upload.');
     }
   });
   return null;
@@ -251,7 +264,7 @@ function AttachmentErrorToast() {
 Register a `SpeechSynthesisAdapter` under `adapters.speech`. The built-in `WebSpeechSynthesisAdapter` uses the browser's native Web Speech API.
 
 ```ts
-import { WebSpeechSynthesisAdapter } from "@assistant-ui/react";
+import { WebSpeechSynthesisAdapter } from '@assistant-ui/react';
 
 const runtime = useChatRuntime({
   adapters: {
@@ -263,8 +276,8 @@ const runtime = useChatRuntime({
 `ActionBarPrimitive.Speak` is automatically disabled when no speech adapter is configured. Toggle speak and stop buttons with `useMessageTTS`, which reports whether the current message is being spoken.
 
 ```tsx
-import { ActionBarPrimitive, useMessageTTS } from "@assistant-ui/react";
-import { AudioLinesIcon, StopCircleIcon } from "lucide-react";
+import { ActionBarPrimitive, useMessageTTS } from '@assistant-ui/react';
+import { AudioLinesIcon, StopCircleIcon } from 'lucide-react';
 
 const AssistantActionBar = () => {
   const isSpeaking = useMessageTTS();
@@ -291,7 +304,7 @@ const AssistantActionBar = () => {
 The interface is a single `speak` method that returns an `Utterance`. The utterance exposes a live `status`, a `cancel`, and a `subscribe` for change notifications.
 
 ```ts
-import type { SpeechSynthesisAdapter } from "@assistant-ui/react";
+import type { SpeechSynthesisAdapter } from '@assistant-ui/react';
 
 type SpeechSynthesisAdapter = {
   speak: (text: string) => SpeechSynthesisAdapter.Utterance;
@@ -304,14 +317,14 @@ type Utterance = {
 };
 
 type Status =
-  | { type: "starting" | "running" }
-  | { type: "ended"; reason: "finished" | "cancelled" | "error"; error?: unknown };
+  | { type: 'starting' | 'running' }
+  | { type: 'ended'; reason: 'finished' | 'cancelled' | 'error'; error?: unknown };
 ```
 
 A custom adapter that fetches audio from an external endpoint and plays it through an `HTMLAudioElement`:
 
 ```ts
-import type { SpeechSynthesisAdapter } from "@assistant-ui/react";
+import type { SpeechSynthesisAdapter } from '@assistant-ui/react';
 
 export class CustomTTSAdapter implements SpeechSynthesisAdapter {
   private apiUrl: string;
@@ -321,36 +334,46 @@ export class CustomTTSAdapter implements SpeechSynthesisAdapter {
 
   speak(text: string): SpeechSynthesisAdapter.Utterance {
     const subscribers = new Set<() => void>();
-    let status: SpeechSynthesisAdapter.Status = { type: "starting" };
+    let status: SpeechSynthesisAdapter.Status = { type: 'starting' };
     let audio: HTMLAudioElement | null = null;
 
-    const notify = () => { for (const cb of subscribers) cb(); };
-    const finish = (reason: "finished" | "cancelled" | "error", error?: unknown) => {
-      if (status.type === "ended") return;
-      status = { type: "ended", reason, error };
+    const notify = () => {
+      for (const cb of subscribers) cb();
+    };
+    const finish = (reason: 'finished' | 'cancelled' | 'error', error?: unknown) => {
+      if (status.type === 'ended') return;
+      status = { type: 'ended', reason, error };
       notify();
     };
 
     fetch(this.apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
     })
       .then((res) => res.blob())
       .then((blob) => {
         audio = new Audio(URL.createObjectURL(blob));
-        status = { type: "running" };
+        status = { type: 'running' };
         notify();
-        audio.onended = () => finish("finished");
-        audio.onerror = (e) => finish("error", e);
+        audio.onended = () => finish('finished');
+        audio.onerror = (e) => finish('error', e);
         audio.play();
       })
-      .catch((err) => finish("error", err));
+      .catch((err) => finish('error', err));
 
     return {
-      get status() { return status; },
-      cancel: () => { audio?.pause(); finish("cancelled"); },
-      subscribe: (cb) => { subscribers.add(cb); return () => subscribers.delete(cb); },
+      get status() {
+        return status;
+      },
+      cancel: () => {
+        audio?.pause();
+        finish('cancelled');
+      },
+      subscribe: (cb) => {
+        subscribers.add(cb);
+        return () => subscribers.delete(cb);
+      },
     };
   }
 }
@@ -363,12 +386,12 @@ Register it under `adapters.speech` exactly like the built-in adapter.
 Register a `DictationAdapter` under `adapters.dictation` for speech to text input. The built-in `WebSpeechDictationAdapter` wraps the browser's Web Speech recognition API.
 
 ```ts
-import { WebSpeechDictationAdapter } from "@assistant-ui/react";
+import { WebSpeechDictationAdapter } from '@assistant-ui/react';
 
 const runtime = useChatRuntime({
   adapters: {
     dictation: new WebSpeechDictationAdapter({
-      language: "en-US",
+      language: 'en-US',
       continuous: true,
       interimResults: true,
     }),
@@ -387,8 +410,8 @@ if (WebSpeechDictationAdapter.isSupported()) {
 The current interim transcript is available at `composer.dictation?.transcript`; `composer.dictation` is `null` when not dictating. Toggle the mic button with `AuiIf` on that value:
 
 ```tsx
-import { AuiIf, ComposerPrimitive } from "@assistant-ui/react";
-import { MicIcon, SquareIcon } from "lucide-react";
+import { AuiIf, ComposerPrimitive } from '@assistant-ui/react';
+import { MicIcon, SquareIcon } from 'lucide-react';
 
 function DictationButton() {
   return (
@@ -413,7 +436,7 @@ function DictationButton() {
 The interface exposes an optional `disableInputDuringDictation` flag and a `listen` method that returns a session.
 
 ```ts
-import type { DictationAdapter } from "@assistant-ui/react";
+import type { DictationAdapter } from '@assistant-ui/react';
 
 type DictationAdapter = {
   disableInputDuringDictation?: boolean;
@@ -421,7 +444,7 @@ type DictationAdapter = {
 };
 
 type Session = {
-  status: { type: "starting" | "running" | "ended" };
+  status: { type: 'starting' | 'running' | 'ended' };
   stop: () => Promise<void>;
   cancel: () => void;
   onSpeechStart: (cb: () => void) => Unsubscribe;
@@ -435,13 +458,13 @@ type Session = {
 Set `disableInputDuringDictation = true` when the underlying service returns cumulative transcripts that would conflict with simultaneous typing. The ElevenLabs Scribe adapter does this, and it registers the same way:
 
 ```ts
-import { ElevenLabsScribeAdapter } from "./lib/elevenlabs-scribe-adapter";
+import { ElevenLabsScribeAdapter } from './lib/elevenlabs-scribe-adapter';
 
 const runtime = useChatRuntime({
   adapters: {
     dictation: new ElevenLabsScribeAdapter({
-      tokenEndpoint: "/api/scribe-token",
-      languageCode: "en",
+      tokenEndpoint: '/api/scribe-token',
+      languageCode: 'en',
       disableInputDuringDictation: true,
     }),
   },
@@ -453,14 +476,12 @@ const runtime = useChatRuntime({
 A `SuggestionAdapter` generates follow up prompts shown in the thread. Its single `generate` method returns a list of `ThreadSuggestion`, either as a Promise or as an async generator for incremental delivery.
 
 ```ts
-import type { SuggestionAdapter, ThreadSuggestion } from "@assistant-ui/react";
+import type { SuggestionAdapter, ThreadSuggestion } from '@assistant-ui/react';
 
 type SuggestionAdapter = {
   generate: (
     options: SuggestionAdapterGenerateOptions,
-  ) =>
-    | Promise<readonly ThreadSuggestion[]>
-    | AsyncGenerator<readonly ThreadSuggestion[], void>;
+  ) => Promise<readonly ThreadSuggestion[]> | AsyncGenerator<readonly ThreadSuggestion[], void>;
 };
 ```
 
@@ -471,10 +492,7 @@ const runtime = useChatRuntime({
   adapters: {
     suggestion: {
       generate: async (options) => {
-        return [
-          { prompt: "What can you help me with?" },
-          { prompt: "Summarize this document" },
-        ];
+        return [{ prompt: 'What can you help me with?' }, { prompt: 'Summarize this document' }];
       },
     },
   },
@@ -491,9 +509,7 @@ A `ThreadHistoryAdapter` persists and restores thread messages. It exposes `load
 type ThreadHistoryAdapter = {
   load: () => Promise<ExportedMessageRepository & { unstable_resume?: boolean }>;
   append: (item: ExportedMessageRepositoryItem) => Promise<void>;
-  resume?: (
-    options: ChatModelRunOptions,
-  ) => AsyncGenerator<ChatModelRunResult, void, unknown>;
+  resume?: (options: ChatModelRunOptions) => AsyncGenerator<ChatModelRunResult, void, unknown>;
   withFormat?: <TMessage, TStorageFormat extends Record<string, unknown>>(
     formatAdapter: MessageFormatAdapter<TMessage, TStorageFormat>,
   ) => GenericThreadHistoryAdapter<TMessage>;

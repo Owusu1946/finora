@@ -1,18 +1,16 @@
-import { MockQrCode } from '@/components/chat/MockQrCode';
-import { AppText as Text } from '@/components/ui/text';
-import { CurrencyIcon } from '@/components/ui/currency-icon';
-import { Icon } from '@/components/ui/icon';
-import { haptics } from '@/lib/haptics';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { ChainIcon } from './icons';
-import {
-  CopyAddressRow,
-  InfoBanner,
-  PrimaryButton,
-} from './primitives';
-import { depositStyles as styles } from './styles';
+import { MockQrCode } from '@/components/chat/MockQrCode';
+import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
+import { haptics } from '@/lib/haptics';
+
 import type { DepositPalette } from './types';
+
+import { ChainIcon } from './icons';
+import { CopyAddressRow, InfoBanner, PrimaryButton } from './primitives';
+import { depositStyles as styles } from './styles';
 
 export function StablecoinStep({
   colors,

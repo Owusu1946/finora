@@ -4,11 +4,11 @@ Authentication and authorization patterns for assistant-cloud.
 
 ## Auth Methods
 
-| Method | Use Case | Security |
-|--------|----------|----------|
-| JWT Token | Production apps | High |
-| API Key | Server-side only | Medium |
-| Anonymous | Public demos | Low |
+| Method    | Use Case         | Security |
+| --------- | ---------------- | -------- |
+| JWT Token | Production apps  | High     |
+| API Key   | Server-side only | Medium   |
+| Anonymous | Public demos     | Low      |
 
 ## JWT Token Authentication
 
@@ -29,13 +29,13 @@ const cloud = new AssistantCloud({
 ### With NextAuth
 
 ```tsx
-import { useSession } from "next-auth/react";
+import { useSession } from 'next-auth/react';
 
 function Chat() {
   const { data: session, status } = useSession();
 
   const cloud = useMemo(() => {
-    if (status !== "authenticated") return null;
+    if (status !== 'authenticated') return null;
 
     return new AssistantCloud({
       baseUrl: process.env.NEXT_PUBLIC_ASSISTANT_BASE_URL,
@@ -45,12 +45,12 @@ function Chat() {
 
   const runtime = useChatRuntime({
     transport: new AssistantChatTransport({
-      api: "/api/chat",
+      api: '/api/chat',
     }),
     cloud: cloud ?? undefined,
   });
 
-  if (status === "loading") return <Loading />;
+  if (status === 'loading') return <Loading />;
   if (!session) return <SignIn />;
 
   return (
@@ -64,7 +64,7 @@ function Chat() {
 ### With Clerk
 
 ```tsx
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from '@clerk/nextjs';
 
 function Chat() {
   const { getToken, isSignedIn } = useAuth();
@@ -85,7 +85,7 @@ function Chat() {
 ### With Firebase
 
 ```tsx
-import { useAuth } from "reactfire";
+import { useAuth } from 'reactfire';
 
 function Chat() {
   const { data: user } = useAuth();
@@ -111,12 +111,12 @@ For server-side operations only. Never expose API keys to clients.
 
 ```tsx
 // app/api/threads/route.ts
-import { AssistantCloud } from "assistant-cloud";
+import { AssistantCloud } from 'assistant-cloud';
 
 const cloud = new AssistantCloud({
   baseUrl: process.env.ASSISTANT_BASE_URL,
   apiKey: process.env.ASSISTANT_API_KEY,
-  userId: "system",
+  userId: 'system',
   workspaceId: process.env.ASSISTANT_WORKSPACE_ID,
 });
 
@@ -130,11 +130,11 @@ export async function GET() {
 
 ```tsx
 // app/api/chat/threads/route.ts
-import { getServerSession } from "next-auth";
+import { getServerSession } from 'next-auth';
 
 export async function GET() {
   const session = await getServerSession();
-  if (!session) return new Response("Unauthorized", { status: 401 });
+  if (!session) return new Response('Unauthorized', { status: 401 });
 
   const cloud = new AssistantCloud({
     baseUrl: process.env.ASSISTANT_BASE_URL,
@@ -160,6 +160,7 @@ const cloud = new AssistantCloud({
 ```
 
 **Limitations:**
+
 - No user isolation
 - Limited features
 - No cross-device sync
@@ -194,9 +195,9 @@ const cloud = new AssistantCloud({
     try {
       return await getToken();
     } catch (error) {
-      console.error("Auth error:", error);
+      console.error('Auth error:', error);
 
-      window.location.href = "/login";
+      window.location.href = '/login';
       return null;
     }
   },
@@ -212,7 +213,7 @@ const cloud = new AssistantCloud({
   baseUrl: process.env.ASSISTANT_BASE_URL,
   apiKey: process.env.ASSISTANT_API_KEY,
   userId: user.id,
-  workspaceId: user.organization.id,  // Isolates data by org
+  workspaceId: user.organization.id, // Isolates data by org
 });
 ```
 
@@ -227,8 +228,8 @@ export async function DELETE(req: Request, { params }) {
 
   const thread = await cloud.threads.get(params.id);
   if (thread.metadata.ownerId !== session.user.id) {
-    if (!session.user.roles.includes("admin")) {
-      return new Response("Forbidden", { status: 403 });
+    if (!session.user.roles.includes('admin')) {
+      return new Response('Forbidden', { status: 403 });
     }
   }
 

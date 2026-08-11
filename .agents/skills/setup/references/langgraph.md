@@ -12,11 +12,11 @@ npm install @assistant-ui/react @assistant-ui/react-langgraph @langchain/langgra
 
 ```ts
 // lib/chatApi.ts
-import { Client } from "@langchain/langgraph-sdk";
+import { Client } from '@langchain/langgraph-sdk';
 
 export const createClient = () =>
   new Client({
-    apiUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL ?? "http://localhost:8123",
+    apiUrl: process.env.NEXT_PUBLIC_LANGGRAPH_API_URL ?? 'http://localhost:8123',
   });
 ```
 
@@ -25,17 +25,17 @@ export const createClient = () =>
 `useLangGraphRuntime` takes a `stream` callback plus optional `create` / `load` / `delete` handlers for thread lifecycle. Build the stream with `unstable_createLangGraphStream`.
 
 ```tsx
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useMemo } from 'react';
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 import {
   unstable_createLangGraphStream,
   useLangGraphRuntime,
   type LangChainMessage,
-} from "@assistant-ui/react-langgraph";
-import { createClient } from "@/lib/chatApi";
+} from '@assistant-ui/react-langgraph';
+import { createClient } from '@/lib/chatApi';
 
 const ASSISTANT_ID = process.env.NEXT_PUBLIC_LANGGRAPH_ASSISTANT_ID!;
 
@@ -80,7 +80,7 @@ const runtime = useLangGraphRuntime({
   stream,
 
   // Optional thread lifecycle (enables history, switching, and persistence)
-  create: async () => ({ externalId: "thread-id" }),
+  create: async () => ({ externalId: 'thread-id' }),
   load: async (externalId, { signal } = {}) => ({
     messages: [],
     interrupts: [],
@@ -117,9 +117,9 @@ Instead of `unstable_createLangGraphStream`, you can pass your own `LangGraphStr
 ```tsx
 const runtime = useLangGraphRuntime({
   stream: async function* (messages, { abortSignal, ...config }) {
-    const response = await fetch("/api/langgraph", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/langgraph', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages, config }),
       signal: abortSignal,
     });
@@ -143,18 +143,21 @@ const runtime = useLangGraphRuntime({
 LangGraph tool calls can have custom UI. Remember the render prop `status` is an object; branch on `status.type`.
 
 ```tsx
-import { makeAssistantToolUI } from "@assistant-ui/react";
+import { makeAssistantToolUI } from '@assistant-ui/react';
 
 const SearchToolUI = makeAssistantToolUI({
-  toolName: "tavily_search",
+  toolName: 'tavily_search',
   render: ({ args, result, status }) => {
-    if (status.type === "running") {
+    if (status.type === 'running') {
       return <div>Searching for: {args.query}...</div>;
     }
     return (
       <div>
         {result?.results?.map((r: any) => (
-          <a key={r.url} href={r.url}>
+          <a
+            key={r.url}
+            href={r.url}
+          >
             {r.title}
           </a>
         ))}

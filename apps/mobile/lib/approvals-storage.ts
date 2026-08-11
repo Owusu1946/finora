@@ -1,6 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { MOCK_APPROVALS, type ApprovalRequest, type ApprovalStatus } from '@/components/approvals/types';
+import {
+  MOCK_APPROVALS,
+  type ApprovalRequest,
+  type ApprovalStatus,
+} from '@/components/approvals/types';
 
 const KEY = 'finora.approvals.v2';
 

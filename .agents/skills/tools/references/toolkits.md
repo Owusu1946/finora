@@ -17,18 +17,18 @@ Declare a group of tools as a plain object and mount them with the `<Tools />` c
 A `Toolkit` is a record mapping tool name to definition. Write the object literal with `satisfies Toolkit` so each entry stays strongly typed while the keys remain known tool names.
 
 ```tsx
-import type { Toolkit } from "@assistant-ui/react";
+import type { Toolkit } from '@assistant-ui/react';
 
 type Toolkit = Record<string, ToolDefinition<any, any>>;
 ```
 
 ```tsx
-import type { Toolkit } from "@assistant-ui/react";
+import type { Toolkit } from '@assistant-ui/react';
 
 const toolkit = {
   get_weather: {
-    type: "frontend",
-    description: "Get the weather for a city.",
+    type: 'frontend',
+    description: 'Get the weather for a city.',
     parameters: weatherSchema,
     execute: async ({ city }: { city: string }) => fetchWeather(city),
     render: WeatherToolUI,
@@ -44,15 +44,15 @@ The object keys (`get_weather`) become the tool names the model receives and use
 
 ```tsx
 interface ToolDefinition<TArgs, TResult> {
-  type: "frontend";                          // browser-executed tool
-  description?: string;                       // model-visible description
+  type: 'frontend'; // browser-executed tool
+  description?: string; // model-visible description
   parameters: StandardSchemaV1<TArgs> | JSONSchema7;
-  disabled?: boolean;                         // hides the tool from the model when true
+  disabled?: boolean; // hides the tool from the model when true
   execute?: ToolExecuteFunction<TArgs, TResult>;
   toModelOutput?: ToolModelOutputFunction<TArgs, TResult>;
   experimental_onSchemaValidationError?: OnSchemaValidationErrorFunction<TResult>;
   providerOptions?: ProviderOptions;
-  display?: ToolDisplay;                       // "inline" (default) or "standalone"
+  display?: ToolDisplay; // "inline" (default) or "standalone"
   render?: ToolCallMessagePartComponent<TArgs, TResult>;
 }
 ```
@@ -64,7 +64,7 @@ Note: `render` is required for frontend and human tools that need a UI; tools th
 Mount `<Tools />` near an assistant subtree. Tool definitions register with model context; renderers register with the tools scope for message rendering.
 
 ```tsx
-import { Tools } from "@assistant-ui/react";
+import { Tools } from '@assistant-ui/react';
 
 function App() {
   return (
@@ -76,46 +76,50 @@ function App() {
 }
 ```
 
-| Prop | Type | Notes |
-|------|------|-------|
-| `toolkit` | `Toolkit` | Tools and optional renderers to install |
-| `mcpApp` | `ResourceElement<McpAppResourceOutput>` | MCP app whose tools merge into context |
+| Prop      | Type                                    | Notes                                   |
+| --------- | --------------------------------------- | --------------------------------------- |
+| `toolkit` | `Toolkit`                               | Tools and optional renderers to install |
+| `mcpApp`  | `ResourceElement<McpAppResourceOutput>` | MCP app whose tools merge into context  |
 
 ## Carrying render per tool
 
 Each definition can attach its own renderer through `render`. The component receives `args`, `result`, `status`, and `addResult`.
 
 ```tsx
-import { tool } from "@assistant-ui/react";
+import { tool } from '@assistant-ui/react';
 
 const weatherSchema = {
-  type: "object",
-  properties: { city: { type: "string" } },
-  required: ["city"],
+  type: 'object',
+  properties: { city: { type: 'string' } },
+  required: ['city'],
 } as const;
 
 const toolkit = {
   get_weather: tool<{ city: string }, WeatherResult>({
-    type: "frontend",
-    description: "Get the weather for a city.",
+    type: 'frontend',
+    description: 'Get the weather for a city.',
     parameters: weatherSchema,
     execute: async ({ city }) => fetchWeather(city),
     render: ({ args, result, status }) => {
-      if (status.type !== "complete") return <div>Loading {args.city}...</div>;
-      return <div>{result.temperature}° in {args.city}</div>;
+      if (status.type !== 'complete') return <div>Loading {args.city}...</div>;
+      return (
+        <div>
+          {result.temperature}° in {args.city}
+        </div>
+      );
     },
   }),
 
   confirm_action: tool<{ message: string }, { confirmed: boolean }>({
-    type: "frontend",
-    description: "Ask the user to confirm an action.",
+    type: 'frontend',
+    description: 'Ask the user to confirm an action.',
     parameters: {
-      type: "object",
-      properties: { message: { type: "string" } },
-      required: ["message"],
+      type: 'object',
+      properties: { message: { type: 'string' } },
+      required: ['message'],
     },
     render: ({ args, status, addResult }) => {
-      if (status.type !== "requires-action") return <div>Done.</div>;
+      if (status.type !== 'requires-action') return <div>Done.</div>;
       return (
         <div>
           <p>{args.message}</p>
@@ -133,15 +137,15 @@ const toolkit = {
 `tool` defines a single typed model tool. It accepts the same fields as a `ToolDefinition` and returns one, so it slots directly into a toolkit literal while giving you inferred `args` and `result` types inside `execute` and `render`.
 
 ```tsx
-import { tool } from "@assistant-ui/react";
+import { tool } from '@assistant-ui/react';
 
 const getWeather = tool<{ city: string }, string>({
-  type: "frontend",
-  description: "Get the weather for a city.",
+  type: 'frontend',
+  description: 'Get the weather for a city.',
   parameters: {
-    type: "object",
-    properties: { city: { type: "string" } },
-    required: ["city"],
+    type: 'object',
+    properties: { city: { type: 'string' } },
+    required: ['city'],
   },
   execute: async ({ city }) => `Sunny in ${city}`,
 });
@@ -154,11 +158,7 @@ const toolkit = { get_weather: getWeather } satisfies Toolkit;
 `<Tools mcpApp={...} />` merges the tools of an MCP app into the same context. Build the resource element with `McpAppRenderer` and a host such as `McpAppsRemoteHost`.
 
 ```tsx
-import {
-  Tools,
-  McpAppRenderer,
-  McpAppsRemoteHost,
-} from "@assistant-ui/react";
+import { Tools, McpAppRenderer, McpAppsRemoteHost } from '@assistant-ui/react';
 
 function App() {
   return (
@@ -166,9 +166,9 @@ function App() {
       <Tools
         toolkit={toolkit}
         mcpApp={McpAppRenderer({
-          host: McpAppsRemoteHost({ url: "/api/mcp-apps" }),
-          hostInfo: { name: "my-app", version: "1.0.0" },
-          hostContext: { theme: "light" },
+          host: McpAppsRemoteHost({ url: '/api/mcp-apps' }),
+          hostInfo: { name: 'my-app', version: '1.0.0' },
+          hostContext: { theme: 'light' },
         })}
       />
       <Thread />

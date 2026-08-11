@@ -33,9 +33,9 @@ import {
   type Unstable_DirectiveFormatter,
   type Unstable_Mention,
   type Unstable_SlashCommand,
-} from "@assistant-ui/react";
-import type { Unstable_TriggerAdapter } from "@assistant-ui/core";
-import { LexicalComposerInput } from "@assistant-ui/react-lexical";
+} from '@assistant-ui/react';
+import type { Unstable_TriggerAdapter } from '@assistant-ui/core';
+import { LexicalComposerInput } from '@assistant-ui/react-lexical';
 ```
 
 ## Quick start: slash commands
@@ -44,9 +44,17 @@ import { LexicalComposerInput } from "@assistant-ui/react-lexical";
 
 ```tsx
 const SLASH_COMMANDS: readonly Unstable_SlashCommand[] = [
-  { id: "summarize", description: "Summarize the conversation", execute: () => console.log("Summarize!") },
-  { id: "translate", description: "Translate text to another language", execute: () => console.log("Translate!") },
-  { id: "help", description: "List all available commands", execute: () => console.log("Help!") },
+  {
+    id: 'summarize',
+    description: 'Summarize the conversation',
+    execute: () => console.log('Summarize!'),
+  },
+  {
+    id: 'translate',
+    description: 'Translate text to another language',
+    execute: () => console.log('Translate!'),
+  },
+  { id: 'help', description: 'List all available commands', execute: () => console.log('Help!') },
 ];
 
 function MyComposer() {
@@ -54,9 +62,13 @@ function MyComposer() {
   return (
     <ComposerPrimitive.Unstable_TriggerPopoverRoot>
       <ComposerPrimitive.Root>
-        <ComposerPrimitive.Input placeholder="Type / for commands..." />
+        <ComposerPrimitive.Input placeholder='Type / for commands...' />
         <ComposerPrimitive.Send>Send</ComposerPrimitive.Send>
-        <ComposerPrimitive.Unstable_TriggerPopover char="/" adapter={slash.adapter} className="popover">
+        <ComposerPrimitive.Unstable_TriggerPopover
+          char='/'
+          adapter={slash.adapter}
+          className='popover'
+        >
           <ComposerPrimitive.Unstable_TriggerPopover.Action {...slash.action} />
           <ComposerPrimitive.Unstable_TriggerPopoverItems>
             {(items) =>
@@ -65,7 +77,7 @@ function MyComposer() {
                   key={item.id}
                   item={item}
                   index={index}
-                  className="popover-item"
+                  className='popover-item'
                 >
                   <strong>{item.label}</strong>
                   {item.description && <span>{item.description}</span>}
@@ -92,14 +104,20 @@ function MyComposer() {
   return (
     <ComposerPrimitive.Unstable_TriggerPopoverRoot>
       <ComposerPrimitive.Root>
-        <ComposerPrimitive.Input placeholder="Type @ to mention..." />
+        <ComposerPrimitive.Input placeholder='Type @ to mention...' />
         <ComposerPrimitive.Send>Send</ComposerPrimitive.Send>
-        <ComposerPrimitive.Unstable_TriggerPopover char="@" adapter={mention.adapter}>
+        <ComposerPrimitive.Unstable_TriggerPopover
+          char='@'
+          adapter={mention.adapter}
+        >
           <ComposerPrimitive.Unstable_TriggerPopover.Directive {...mention.directive} />
           <ComposerPrimitive.Unstable_TriggerPopoverItems>
             {(items) =>
               items.map((item) => (
-                <ComposerPrimitive.Unstable_TriggerPopoverItem key={item.id} item={item}>
+                <ComposerPrimitive.Unstable_TriggerPopoverItem
+                  key={item.id}
+                  item={item}
+                >
                   {item.label}
                 </ComposerPrimitive.Unstable_TriggerPopoverItem>
               ))
@@ -114,23 +132,23 @@ function MyComposer() {
 
 ## unstable_useMentionAdapter
 
-| Option | Type | Behavior |
-|---|---|---|
-| `items` | `Unstable_Mention[]` | Flat list (ignored when `categories` is set) |
-| `categories` | `{ id, label, items }[]` | Drill-down groups |
-| `includeModelContextTools` | `boolean \| object` | Default: `true` only when neither `items` nor `categories` is given |
-| `formatter` | `Unstable_DirectiveFormatter` | Override directive serialization |
-| `onInserted` | `(item) => void` | Fires after the directive is inserted |
-| `iconMap` | `Record<string, IconComponent>` | Maps `icon` strings to React components |
-| `fallbackIcon` | `IconComponent` | Used when no `iconMap` entry matches |
+| Option                     | Type                            | Behavior                                                            |
+| -------------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| `items`                    | `Unstable_Mention[]`            | Flat list (ignored when `categories` is set)                        |
+| `categories`               | `{ id, label, items }[]`        | Drill-down groups                                                   |
+| `includeModelContextTools` | `boolean \| object`             | Default: `true` only when neither `items` nor `categories` is given |
+| `formatter`                | `Unstable_DirectiveFormatter`   | Override directive serialization                                    |
+| `onInserted`               | `(item) => void`                | Fires after the directive is inserted                               |
+| `iconMap`                  | `Record<string, IconComponent>` | Maps `icon` strings to React components                             |
+| `fallbackIcon`             | `IconComponent`                 | Used when no `iconMap` entry matches                                |
 
 Custom items only:
 
 ```ts
 const mention = unstable_useMentionAdapter({
   items: [
-    { id: "alice", type: "user", label: "Alice", icon: "User" },
-    { id: "bob", type: "user", label: "Bob", icon: "User" },
+    { id: 'alice', type: 'user', label: 'Alice', icon: 'User' },
+    { id: 'bob', type: 'user', label: 'Bob', icon: 'User' },
   ],
 });
 ```
@@ -139,7 +157,7 @@ Mix custom items with model context tools (flat):
 
 ```ts
 const mention = unstable_useMentionAdapter({
-  items: [{ id: "kb", type: "doc", label: "Knowledge Base", icon: "Book" }],
+  items: [{ id: 'kb', type: 'doc', label: 'Knowledge Base', icon: 'Book' }],
   includeModelContextTools: true,
 });
 ```
@@ -148,12 +166,11 @@ Override the tool category, label formatting, and icon:
 
 ```ts
 const mention = unstable_useMentionAdapter({
-  categories: [{ id: "users", label: "Users", items: [/* ... */] }],
+  categories: [{ id: 'users', label: 'Users', items: [/* ... */] }],
   includeModelContextTools: {
-    category: { id: "integrations", label: "Integrations" },
-    formatLabel: (name) =>
-      name.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    icon: "Wrench",
+    category: { id: 'integrations', label: 'Integrations' },
+    formatLabel: (name) => name.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    icon: 'Wrench',
   },
 });
 ```
@@ -162,12 +179,12 @@ const mention = unstable_useMentionAdapter({
 
 `Unstable_SlashCommand` fields: `id: string` (required), `label?: string` (defaults to `/${id}`), `description?: string`, `icon?: string`, `execute: () => void` (required).
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `commands` | `Unstable_SlashCommand[]` | none | Command definitions |
-| `removeOnExecute` | `boolean` | `false` | Strips the trigger text after execution |
-| `iconMap` | `Record<string, IconComponent>` | none | Maps `icon` strings to React components |
-| `fallbackIcon` | `IconComponent` | none | Fallback icon component |
+| Option            | Type                            | Default | Description                             |
+| ----------------- | ------------------------------- | ------- | --------------------------------------- |
+| `commands`        | `Unstable_SlashCommand[]`       | none    | Command definitions                     |
+| `removeOnExecute` | `boolean`                       | `false` | Strips the trigger text after execution |
+| `iconMap`         | `Record<string, IconComponent>` | none    | Maps `icon` strings to React components |
+| `fallbackIcon`    | `IconComponent`                 | none    | Fallback icon component                 |
 
 Returns `{ adapter, action, iconMap?, fallbackIcon? }`. The hook re-runs on every render, so passing a freshly computed `commands` list always reflects the latest state.
 
@@ -199,21 +216,21 @@ Both hooks produce an `Unstable_TriggerAdapter`. Implement it directly for full 
 const adapter: Unstable_TriggerAdapter = {
   categories() {
     return [
-      { id: "tools", label: "Tools" },
-      { id: "users", label: "Users" },
+      { id: 'tools', label: 'Tools' },
+      { id: 'users', label: 'Users' },
     ];
   },
   categoryItems(categoryId) {
-    if (categoryId === "tools") {
+    if (categoryId === 'tools') {
       return [
-        { id: "search", type: "tool", label: "Search" },
-        { id: "calculator", type: "tool", label: "Calculator" },
+        { id: 'search', type: 'tool', label: 'Search' },
+        { id: 'calculator', type: 'tool', label: 'Calculator' },
       ];
     }
-    if (categoryId === "users") {
+    if (categoryId === 'users') {
       return [
-        { id: "alice", type: "user", label: "Alice" },
-        { id: "bob", type: "user", label: "Bob" },
+        { id: 'alice', type: 'user', label: 'Alice' },
+        { id: 'bob', type: 'user', label: 'Bob' },
       ];
     }
     return [];
@@ -221,11 +238,9 @@ const adapter: Unstable_TriggerAdapter = {
   // Optional: enables global (cross-category) search mode
   search(query) {
     const lower = query.toLowerCase();
-    const all = [...this.categoryItems("tools"), ...this.categoryItems("users")];
+    const all = [...this.categoryItems('tools'), ...this.categoryItems('users')];
     return all.filter(
-      (item) =>
-        item.label.toLowerCase().includes(lower) ||
-        item.id.toLowerCase().includes(lower),
+      (item) => item.label.toLowerCase().includes(lower) || item.id.toLowerCase().includes(lower),
     );
   },
 };
@@ -233,17 +248,17 @@ const adapter: Unstable_TriggerAdapter = {
 
 ## TriggerPopover components
 
-| Component | Description |
-|---|---|
-| `.Unstable_TriggerPopoverRoot` | Outermost wrapper around the whole composer |
-| `.Unstable_TriggerPopover` | One trigger; props `char`, `adapter`, optional `className` |
-| `.Unstable_TriggerPopover.Directive` | Insert-only behavior (mentions); prop `formatter` |
-| `.Unstable_TriggerPopover.Action` | Insert plus action callback (slash commands); props `formatter`, `onExecute` |
-| `.Unstable_TriggerPopoverItems` | Render-prop child receiving the filtered item list |
-| `.Unstable_TriggerPopoverItem` | One item; props `item`, optional `index`, `className` |
-| `.Unstable_TriggerPopoverCategories` | Render-prop child receiving the filtered category list |
-| `.Unstable_TriggerPopoverCategoryItem` | One category row; prop `categoryId` |
-| `.Unstable_TriggerPopoverBack` | Navigation back button for drill-down |
+| Component                              | Description                                                                  |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| `.Unstable_TriggerPopoverRoot`         | Outermost wrapper around the whole composer                                  |
+| `.Unstable_TriggerPopover`             | One trigger; props `char`, `adapter`, optional `className`                   |
+| `.Unstable_TriggerPopover.Directive`   | Insert-only behavior (mentions); prop `formatter`                            |
+| `.Unstable_TriggerPopover.Action`      | Insert plus action callback (slash commands); props `formatter`, `onExecute` |
+| `.Unstable_TriggerPopoverItems`        | Render-prop child receiving the filtered item list                           |
+| `.Unstable_TriggerPopoverItem`         | One item; props `item`, optional `index`, `className`                        |
+| `.Unstable_TriggerPopoverCategories`   | Render-prop child receiving the filtered category list                       |
+| `.Unstable_TriggerPopoverCategoryItem` | One category row; prop `categoryId`                                          |
+| `.Unstable_TriggerPopoverBack`         | Navigation back button for drill-down                                        |
 
 ## Behavior sub-primitives: Directive vs Action
 
@@ -262,17 +277,17 @@ Provide `categories` to the hook (or implement `categories()` / `categoryItems()
 const mention = unstable_useMentionAdapter({
   categories: [
     {
-      id: "users",
-      label: "Users",
+      id: 'users',
+      label: 'Users',
       items: [
-        { id: "alice", type: "user", label: "Alice", icon: "User" },
-        { id: "bob", type: "user", label: "Bob", icon: "User" },
+        { id: 'alice', type: 'user', label: 'Alice', icon: 'User' },
+        { id: 'bob', type: 'user', label: 'Bob', icon: 'User' },
       ],
     },
     {
-      id: "files",
-      label: "Files",
-      items: [{ id: "readme", type: "file", label: "README.md", icon: "FileText" }],
+      id: 'files',
+      label: 'Files',
+      items: [{ id: 'readme', type: 'file', label: 'README.md', icon: 'FileText' }],
     },
   ],
   includeModelContextTools: true,
@@ -280,13 +295,21 @@ const mention = unstable_useMentionAdapter({
 ```
 
 ```tsx
-<ComposerPrimitive.Unstable_TriggerPopover char="@" adapter={mention.adapter}>
+<ComposerPrimitive.Unstable_TriggerPopover
+  char='@'
+  adapter={mention.adapter}
+>
   <ComposerPrimitive.Unstable_TriggerPopover.Directive {...mention.directive} />
-  <ComposerPrimitive.Unstable_TriggerPopoverBack>← Back</ComposerPrimitive.Unstable_TriggerPopoverBack>
+  <ComposerPrimitive.Unstable_TriggerPopoverBack>
+    ← Back
+  </ComposerPrimitive.Unstable_TriggerPopoverBack>
   <ComposerPrimitive.Unstable_TriggerPopoverCategories>
     {(categories) =>
       categories.map((cat) => (
-        <ComposerPrimitive.Unstable_TriggerPopoverCategoryItem key={cat.id} categoryId={cat.id}>
+        <ComposerPrimitive.Unstable_TriggerPopoverCategoryItem
+          key={cat.id}
+          categoryId={cat.id}
+        >
           {cat.label}
         </ComposerPrimitive.Unstable_TriggerPopoverCategoryItem>
       ))
@@ -295,7 +318,11 @@ const mention = unstable_useMentionAdapter({
   <ComposerPrimitive.Unstable_TriggerPopoverItems>
     {(items) =>
       items.map((item, index) => (
-        <ComposerPrimitive.Unstable_TriggerPopoverItem key={item.id} item={item} index={index}>
+        <ComposerPrimitive.Unstable_TriggerPopoverItem
+          key={item.id}
+          item={item}
+          index={index}
+        >
           {item.label}
         </ComposerPrimitive.Unstable_TriggerPopoverItem>
       ))
@@ -311,15 +338,21 @@ Share one `TriggerPopoverRoot`; give each trigger its own `TriggerPopover` with 
 ```tsx
 <ComposerPrimitive.Unstable_TriggerPopoverRoot>
   <ComposerPrimitive.Root>
-    <ComposerPrimitive.Input placeholder="Type @ to mention, / for commands..." />
+    <ComposerPrimitive.Input placeholder='Type @ to mention, / for commands...' />
     <ComposerPrimitive.Send>Send</ComposerPrimitive.Send>
 
-    <ComposerPrimitive.Unstable_TriggerPopover char="@" adapter={mention.adapter}>
+    <ComposerPrimitive.Unstable_TriggerPopover
+      char='@'
+      adapter={mention.adapter}
+    >
       <ComposerPrimitive.Unstable_TriggerPopover.Directive {...mention.directive} />
       <ComposerPrimitive.Unstable_TriggerPopoverItems>
         {(items) =>
           items.map((item) => (
-            <ComposerPrimitive.Unstable_TriggerPopoverItem key={item.id} item={item}>
+            <ComposerPrimitive.Unstable_TriggerPopoverItem
+              key={item.id}
+              item={item}
+            >
               {item.label}
             </ComposerPrimitive.Unstable_TriggerPopoverItem>
           ))
@@ -327,12 +360,19 @@ Share one `TriggerPopoverRoot`; give each trigger its own `TriggerPopover` with 
       </ComposerPrimitive.Unstable_TriggerPopoverItems>
     </ComposerPrimitive.Unstable_TriggerPopover>
 
-    <ComposerPrimitive.Unstable_TriggerPopover char="/" adapter={slash.adapter}>
+    <ComposerPrimitive.Unstable_TriggerPopover
+      char='/'
+      adapter={slash.adapter}
+    >
       <ComposerPrimitive.Unstable_TriggerPopover.Action {...slash.action} />
       <ComposerPrimitive.Unstable_TriggerPopoverItems>
         {(items) =>
           items.map((item, index) => (
-            <ComposerPrimitive.Unstable_TriggerPopoverItem key={item.id} item={item} index={index}>
+            <ComposerPrimitive.Unstable_TriggerPopoverItem
+              key={item.id}
+              item={item}
+              index={index}
+            >
               {item.label}
             </ComposerPrimitive.Unstable_TriggerPopoverItem>
           ))
@@ -354,9 +394,9 @@ function MyComposer() {
     commands: SLASH_COMMANDS.map((cmd) => ({
       ...cmd,
       execute: () => {
-        const raw = composerRef.current?.value ?? "";
+        const raw = composerRef.current?.value ?? '';
         const match = raw.match(new RegExp(`^/${cmd.id}\\s+(.*)`));
-        const args = match?.[1]?.trim() ?? "";
+        const args = match?.[1]?.trim() ?? '';
         handleCommand(cmd.id, args);
       },
     })),
@@ -365,13 +405,23 @@ function MyComposer() {
   return (
     <ComposerPrimitive.Unstable_TriggerPopoverRoot>
       <ComposerPrimitive.Root>
-        <ComposerPrimitive.Input ref={composerRef} placeholder="Type / for commands..." />
-        <ComposerPrimitive.Unstable_TriggerPopover char="/" adapter={slash.adapter}>
+        <ComposerPrimitive.Input
+          ref={composerRef}
+          placeholder='Type / for commands...'
+        />
+        <ComposerPrimitive.Unstable_TriggerPopover
+          char='/'
+          adapter={slash.adapter}
+        >
           <ComposerPrimitive.Unstable_TriggerPopover.Action {...slash.action} />
           <ComposerPrimitive.Unstable_TriggerPopoverItems>
             {(items) =>
               items.map((item, i) => (
-                <ComposerPrimitive.Unstable_TriggerPopoverItem key={item.id} item={item} index={i}>
+                <ComposerPrimitive.Unstable_TriggerPopoverItem
+                  key={item.id}
+                  item={item}
+                  index={i}
+                >
                   <strong>{item.label}</strong>
                   {item.description && <span>{item.description}</span>}
                 </ComposerPrimitive.Unstable_TriggerPopoverItem>
@@ -406,16 +456,19 @@ function MyComposer() {
 // Mention search backed by React Query
 function useMentionAdapter(query: string): Unstable_TriggerAdapter {
   const { data = [] } = useQuery({
-    queryKey: ["mention-search", query],
+    queryKey: ['mention-search', query],
     queryFn: () => fetchUsers(query),
     enabled: query.length > 0,
   });
 
-  return useMemo(() => ({
-    categories: () => [],
-    categoryItems: () => [],
-    search: () => data.map((u) => ({ id: u.id, type: "user", label: u.name })),
-  }), [data]);
+  return useMemo(
+    () => ({
+      categories: () => [],
+      categoryItems: () => [],
+      search: () => data.map((u) => ({ id: u.id, type: 'user', label: u.name })),
+    }),
+    [data],
+  );
 }
 ```
 
@@ -426,9 +479,12 @@ function useMentionAdapter(query: string): Unstable_TriggerAdapter {
 ```tsx
 <ComposerPrimitive.Unstable_TriggerPopoverRoot>
   <ComposerPrimitive.Root>
-    <LexicalComposerInput placeholder="Type @ to mention..." />
+    <LexicalComposerInput placeholder='Type @ to mention...' />
     <ComposerPrimitive.Send />
-    <ComposerPrimitive.Unstable_TriggerPopover char="@" adapter={mention.adapter}>
+    <ComposerPrimitive.Unstable_TriggerPopover
+      char='@'
+      adapter={mention.adapter}
+    >
       <ComposerPrimitive.Unstable_TriggerPopover.Directive {...mention.directive} />
       {/* categories / items render props same as above */}
     </ComposerPrimitive.Unstable_TriggerPopover>
@@ -464,7 +520,7 @@ Supply a custom `Unstable_DirectiveFormatter` to change serialization (for examp
 ```tsx
 const SlashDirectiveText = createDirectiveText(slashFormatter);
 
-<MessagePrimitive.Parts components={{ Text: SlashDirectiveText }} />
+<MessagePrimitive.Parts components={{ Text: SlashDirectiveText }} />;
 ```
 
 ## Scope context hook

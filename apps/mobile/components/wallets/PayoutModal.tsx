@@ -1,10 +1,10 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import React, { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -89,9 +89,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
           </View>
         ) : (
           <View style={{ gap: 14 }}>
-            <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
-              Source Wallet
-            </Text>
+            <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>Source Wallet</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}

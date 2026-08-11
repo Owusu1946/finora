@@ -1,8 +1,8 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View, type TextInputProps } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

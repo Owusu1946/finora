@@ -1,4 +1,3 @@
-import { AppText as Text } from '@/components/ui/text';
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -15,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AccountType } from '@/lib/account';
 
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';

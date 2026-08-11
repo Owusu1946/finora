@@ -1,9 +1,9 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { CorridorFieldKey, SettlementMethod } from '@/lib/send-corridors';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { SETTLEMENT_METHOD_LABELS } from '@/lib/send-corridors';

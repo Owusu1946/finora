@@ -1,8 +1,8 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { SEND_CORRIDORS } from '@/lib/send-corridors';
 

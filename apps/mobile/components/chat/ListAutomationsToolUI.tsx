@@ -1,10 +1,11 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import type { Automation } from '@/lib/automations-storage';
+
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import type { Automation } from '@/lib/automations-storage';
 
 type Result = { automations?: Automation[] };
 

@@ -1,10 +1,4 @@
-import {
-  Canvas,
-  Circle,
-  Group,
-  Path,
-  Skia,
-} from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import {
@@ -33,11 +27,7 @@ type SuccessCheckmarkProps = {
 /**
  * Apple Pay–style success mark: disc springs in, then the check draws.
  */
-export function SuccessCheckmark({
-  size = 72,
-  color,
-  backgroundColor,
-}: SuccessCheckmarkProps) {
+export function SuccessCheckmark({ size = 72, color, backgroundColor }: SuccessCheckmarkProps) {
   const { colors } = useTheme();
   const markColor = color ?? colors.foreground;
   const discColor = backgroundColor ?? colors.muted;
@@ -77,9 +67,7 @@ export function SuccessCheckmark({
 
     progress.value = withDelay(
       120,
-      withSequence(
-        withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }),
-      ),
+      withSequence(withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) })),
     );
   }, [reducedMotion, progress, scale]);
 

@@ -6,26 +6,26 @@ Use this when the app uses `@assistant-ui/react-ai-sdk` and an `/api/chat` route
 
 Agents trained on older AI SDK versions will use outdated patterns. These are **AI SDK** breaking changes (not assistant-ui changes):
 
-| Concept | Old (v4/v5) | Current (v6) |
-|---------|-------------|--------------|
-| useChat import | `import { useChat } from "ai/react"` | `import { useChat } from "@ai-sdk/react"` |
-| assistant-ui wiring | `useAISDKRuntime(chat)` | `useChatRuntime({ transport })` |
-| Message conversion | Pass messages directly to `streamText` | `await convertToModelMessages(messages)` |
-| Stream response | `result.toDataStreamResponse()` | `result.toUIMessageStreamResponse()` |
-| Tool schema key | `parameters: z.object({...})` | `inputSchema: z.object({...})` |
-| Multi-step tools | `maxSteps: n` | `stopWhen: stepCountIs(n)` |
+| Concept             | Old (v4/v5)                            | Current (v6)                              |
+| ------------------- | -------------------------------------- | ----------------------------------------- |
+| useChat import      | `import { useChat } from "ai/react"`   | `import { useChat } from "@ai-sdk/react"` |
+| assistant-ui wiring | `useAISDKRuntime(chat)`                | `useChatRuntime({ transport })`           |
+| Message conversion  | Pass messages directly to `streamText` | `await convertToModelMessages(messages)`  |
+| Stream response     | `result.toDataStreamResponse()`        | `result.toUIMessageStreamResponse()`      |
+| Tool schema key     | `parameters: z.object({...})`          | `inputSchema: z.object({...})`            |
+| Multi-step tools    | `maxSteps: n`                          | `stopWhen: stepCountIs(n)`                |
 
 ## Standard Setup
 
 **Frontend**:
 
 ```tsx
-"use client";
+'use client';
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
-import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
-import { Thread } from "@/components/assistant-ui/thread";
+import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
+import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
+import { Thread } from '@/components/assistant-ui/thread';
 
 export function Assistant() {
   const runtime = useChatRuntime({
@@ -34,7 +34,7 @@ export function Assistant() {
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className="h-dvh">
+      <div className='h-dvh'>
         <Thread />
       </div>
     </AssistantRuntimeProvider>
@@ -45,9 +45,9 @@ export function Assistant() {
 **Backend** route (`app/api/chat/route.ts`):
 
 ```ts
-import { openai } from "@ai-sdk/openai";
-import { frontendTools } from "@assistant-ui/react-ai-sdk";
-import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import { openai } from '@ai-sdk/openai';
+import { frontendTools } from '@assistant-ui/react-ai-sdk';
+import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 
 export async function POST(req: Request) {
   const {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   } = await req.json();
 
   const result = streamText({
-    model: openai("gpt-4o"),
+    model: openai('gpt-4o'),
     system,
     messages: await convertToModelMessages(messages),
     tools: {
@@ -86,17 +86,17 @@ The route must destructure and use both `system` and `tools` for frontend tool f
 `useChatRuntime` supports the underlying AI SDK chat options plus assistant-ui extensions like `cloud`, `adapters`, and `toCreateMessage`.
 
 ```tsx
-import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
-import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import { useChatRuntime, AssistantChatTransport } from '@assistant-ui/react-ai-sdk';
+import { lastAssistantMessageIsCompleteWithToolCalls } from 'ai';
 
 const runtime = useChatRuntime({
   transport: new AssistantChatTransport({
-    api: "/api/chat",
-    headers: { "X-Workspace": "acme" },
-    body: { model: "gpt-4o-mini" },
+    api: '/api/chat',
+    headers: { 'X-Workspace': 'acme' },
+    body: { model: 'gpt-4o-mini' },
   }),
   messages: [
-    { id: "1", role: "assistant", parts: [{ type: "text", text: "Hello! How can I help?" }] },
+    { id: '1', role: 'assistant', parts: [{ type: 'text', text: 'Hello! How can I help?' }] },
   ],
   sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   onError: (error) => {
@@ -113,11 +113,11 @@ const runtime = useChatRuntime({
 If you explicitly need non-assistant transport behavior, pass a custom transport:
 
 ```tsx
-import { DefaultChatTransport } from "ai";
-import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
+import { DefaultChatTransport } from 'ai';
+import { useChatRuntime } from '@assistant-ui/react-ai-sdk';
 
 const runtime = useChatRuntime({
-  transport: new DefaultChatTransport({ api: "/api/chat" }),
+  transport: new DefaultChatTransport({ api: '/api/chat' }),
 });
 ```
 
@@ -126,28 +126,22 @@ const runtime = useChatRuntime({
 Use `tool({ inputSchema: z.object({...}) })` and `stopWhen: stepCountIs(...)` for multi-step tool loops.
 
 ```ts
-import { openai } from "@ai-sdk/openai";
-import {
-  streamText,
-  tool,
-  stepCountIs,
-  convertToModelMessages,
-  type UIMessage,
-} from "ai";
-import { z } from "zod";
+import { openai } from '@ai-sdk/openai';
+import { streamText, tool, stepCountIs, convertToModelMessages, type UIMessage } from 'ai';
+import { z } from 'zod';
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
-    model: openai("gpt-4o"),
+    model: openai('gpt-4o'),
     messages: await convertToModelMessages(messages),
     stopWhen: stepCountIs(10),
     tools: {
       get_weather: tool({
-        description: "Get weather by city",
+        description: 'Get weather by city',
         inputSchema: z.object({ city: z.string() }),
-        execute: async ({ city }) => ({ city, temperature: 22, unit: "C" }),
+        execute: async ({ city }) => ({ city, temperature: 22, unit: 'C' }),
       }),
     },
   });
@@ -161,16 +155,16 @@ export async function POST(req: Request) {
 Use `makeAssistantToolUI` to render tool calls in the chat. Place the component inside `AssistantRuntimeProvider`.
 
 ```tsx
-import { makeAssistantToolUI } from "@assistant-ui/react";
+import { makeAssistantToolUI } from '@assistant-ui/react';
 
 const WeatherToolUI = makeAssistantToolUI({
-  toolName: "get_weather",
+  toolName: 'get_weather',
   render: ({ args, result, status }) => {
-    if (status.type === "running") {
+    if (status.type === 'running') {
       return <div>Loading weather for {args.city}...</div>;
     }
     return (
-      <div className="p-4 rounded bg-blue-50">
+      <div className='p-4 rounded bg-blue-50'>
         <strong>{result?.city}</strong>: {result?.temperature}°{result?.unit}
       </div>
     );
@@ -180,7 +174,7 @@ const WeatherToolUI = makeAssistantToolUI({
 <AssistantRuntimeProvider runtime={runtime}>
   <WeatherToolUI />
   <Thread />
-</AssistantRuntimeProvider>
+</AssistantRuntimeProvider>;
 ```
 
 ## Using Different Providers
@@ -206,8 +200,8 @@ Pass the model name from the frontend via `body`, then select the provider on th
 // Frontend
 const runtime = useChatRuntime({
   transport: new AssistantChatTransport({
-    api: "/api/chat",
-    body: { model: "gpt-4o-mini" },
+    api: '/api/chat',
+    body: { model: 'gpt-4o-mini' },
   }),
 });
 ```
@@ -216,9 +210,7 @@ const runtime = useChatRuntime({
 // Backend
 const { messages, model } = await req.json();
 
-const provider = model.startsWith("claude")
-  ? anthropic(model)
-  : openai(model);
+const provider = model.startsWith('claude') ? anthropic(model) : openai(model);
 
 const result = streamText({
   model: provider,
@@ -231,10 +223,10 @@ const result = streamText({
 Pass a `cloud` instance to `useChatRuntime` to enable thread persistence and history. Use `ThreadList` to display saved threads.
 
 ```tsx
-import { AssistantCloud, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
-import { ThreadList } from "@/components/assistant-ui/thread-list";
-import { useChatRuntime, AssistantChatTransport } from "@assistant-ui/react-ai-sdk";
+import { AssistantCloud, AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
+import { ThreadList } from '@/components/assistant-ui/thread-list';
+import { useChatRuntime, AssistantChatTransport } from '@assistant-ui/react-ai-sdk';
 
 const cloud = new AssistantCloud({
   baseUrl: process.env.NEXT_PUBLIC_ASSISTANT_BASE_URL,
@@ -243,7 +235,7 @@ const cloud = new AssistantCloud({
 
 function ChatPage() {
   const runtime = useChatRuntime({
-    transport: new AssistantChatTransport({ api: "/api/chat" }),
+    transport: new AssistantChatTransport({ api: '/api/chat' }),
     cloud,
   });
 
@@ -261,12 +253,14 @@ See the `/cloud` skill for authentication and configuration details.
 ## Troubleshooting
 
 **"Module not found: @ai-sdk/react"**
+
 ```bash
 npm install @ai-sdk/react
 ```
 
 **"useChat is not a function"**
 Mixing v5 and v6. Remove old imports:
+
 ```bash
 npm uninstall ai/react  # if present
 npm install @ai-sdk/react@latest ai@latest

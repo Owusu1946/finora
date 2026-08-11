@@ -1,10 +1,13 @@
-import { AppText as Text } from '@/components/ui/text';
-import { Icon } from '@/components/ui/icon';
-import { Pressable, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-import { depositStyles as styles } from './styles';
+import { Pressable, View } from 'react-native';
+
+import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
+
 import type { DepositPalette } from './types';
+
+import { depositStyles as styles } from './styles';
 
 export function IconStack({ children }: { children: ReactNode[] }) {
   return (
@@ -12,7 +15,10 @@ export function IconStack({ children }: { children: ReactNode[] }) {
       {children.map((child, i) => (
         <View
           key={i}
-          style={[styles.iconStackItem, { marginLeft: i === 0 ? 0 : -10, zIndex: children.length - i }]}
+          style={[
+            styles.iconStackItem,
+            { marginLeft: i === 0 ? 0 : -10, zIndex: children.length - i },
+          ]}
         >
           {child}
         </View>
@@ -21,15 +27,7 @@ export function IconStack({ children }: { children: ReactNode[] }) {
   );
 }
 
-export function MetaRow({
-  eta,
-  fee,
-  muted,
-}: {
-  eta: string;
-  fee?: string;
-  muted: string;
-}) {
+export function MetaRow({ eta, fee, muted }: { eta: string; fee?: string; muted: string }) {
   return (
     <View style={styles.metaRow}>
       <Icon
@@ -215,10 +213,7 @@ export function CopyAddressRow({
       </View>
       <Text
         selectable={mono}
-        style={[
-          mono ? styles.addressValueMono : styles.addressValue,
-          { color: colors.foreground },
-        ]}
+        style={[mono ? styles.addressValueMono : styles.addressValue, { color: colors.foreground }]}
       >
         {value}
       </Text>

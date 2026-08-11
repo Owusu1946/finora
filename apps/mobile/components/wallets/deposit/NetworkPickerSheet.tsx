@@ -1,5 +1,7 @@
-import { AppText as Text } from '@/components/ui/text';
+import { Pressable, ScrollView, View } from 'react-native';
+
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text } from '@/components/ui/text';
 import {
   CRYPTO_DEPOSIT_NETWORKS,
   truncateAddress,
@@ -7,11 +9,11 @@ import {
 } from '@/lib/crypto-networks';
 import { haptics } from '@/lib/haptics';
 import { MOMO_NETWORKS, type MomoNetworkId } from '@/lib/momo-networks';
-import { Pressable, ScrollView, View } from 'react-native';
+
+import type { DepositPalette, DepositStep } from './types';
 
 import { ChainIcon, MomoIcon } from './icons';
 import { depositStyles as styles } from './styles';
-import type { DepositPalette, DepositStep } from './types';
 
 export function NetworkPickerSheet({
   step,

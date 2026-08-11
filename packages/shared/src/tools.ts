@@ -575,14 +575,7 @@ export const CreateFinancialPlanInputSchema = z
     items: z
       .array(
         z.object({
-          kind: z.enum([
-            'payment',
-            'payroll',
-            'invoice',
-            'supplier',
-            'conversion',
-            'recurring',
-          ]),
+          kind: z.enum(['payment', 'payroll', 'invoice', 'supplier', 'conversion', 'recurring']),
           label: z.string().optional(),
           amount: MoneyAmountSchema.optional(),
           currency: CurrencySchema.optional(),

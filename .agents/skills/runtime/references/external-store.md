@@ -16,8 +16,8 @@ Connect assistant-ui to custom message stores (Redux, Zustand, etc.).
 ## Basic Usage
 
 ```tsx
-import { useExternalStoreRuntime, AssistantRuntimeProvider } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/thread";
+import { useExternalStoreRuntime, AssistantRuntimeProvider } from '@assistant-ui/react';
+import { Thread } from '@/components/assistant-ui/thread';
 
 function App() {
   // Your existing state
@@ -32,19 +32,22 @@ function App() {
       setIsRunning(true);
 
       // Call your API
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      const response = await fetch('/api/chat', {
+        method: 'POST',
         body: JSON.stringify({ messages: [...messages, message] }),
       });
 
       const data = await response.json();
-      setMessages((prev) => [...prev, {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: [{ type: "text", text: data.text }],
-        status: { type: "complete" },
-        createdAt: new Date(),
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: [{ type: 'text', text: data.text }],
+          status: { type: 'complete' },
+          createdAt: new Date(),
+        },
+      ]);
       setIsRunning(false);
     },
   });
@@ -89,8 +92,8 @@ interface ExternalStoreRuntimeOptions<T = ThreadMessage> {
 ## With Redux
 
 ```tsx
-import { useSelector, useDispatch } from "react-redux";
-import { addMessage, setRunning } from "./chatSlice";
+import { useSelector, useDispatch } from 'react-redux';
+import { addMessage, setRunning } from './chatSlice';
 
 function Chat() {
   const dispatch = useDispatch();
@@ -129,7 +132,7 @@ function Chat() {
 ## With Zustand
 
 ```tsx
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface ChatStore {
   messages: ThreadMessage[];
@@ -176,7 +179,7 @@ function Chat() {
 // Your message format
 interface MyMessage {
   uuid: string;
-  sender: "human" | "ai";
+  sender: 'human' | 'ai';
   text: string;
   timestamp: number;
 }
@@ -189,20 +192,20 @@ function Chat() {
     isRunning: false,
     convertMessage: (msg: MyMessage): ThreadMessage => ({
       id: msg.uuid,
-      role: msg.sender === "human" ? "user" : "assistant",
-      content: [{ type: "text", text: msg.text }],
-      status: { type: "complete" },
+      role: msg.sender === 'human' ? 'user' : 'assistant',
+      content: [{ type: 'text', text: msg.text }],
+      status: { type: 'complete' },
       createdAt: new Date(msg.timestamp),
     }),
     onNew: async (appendMessage) => {
       // Convert back to your format
       const myMessage: MyMessage = {
         uuid: crypto.randomUUID(),
-        sender: "human",
+        sender: 'human',
         text: appendMessage.content
-          .filter((p): p is { type: "text"; text: string } => p.type === "text")
+          .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
           .map((p) => p.text)
-          .join(""),
+          .join(''),
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, myMessage]);
@@ -231,21 +234,21 @@ const runtime = useExternalStoreRuntime({
     const assistantId = crypto.randomUUID();
     addMessage({
       id: assistantId,
-      role: "assistant",
-      content: [{ type: "text", text: "" }],
-      status: { type: "running" },
+      role: 'assistant',
+      content: [{ type: 'text', text: '' }],
+      status: { type: 'running' },
       createdAt: new Date(),
     });
 
     // Stream response
-    const response = await fetch("/api/chat", {
-      method: "POST",
+    const response = await fetch('/api/chat', {
+      method: 'POST',
       body: JSON.stringify({ messages }),
     });
 
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
-    let fullText = "";
+    let fullText = '';
 
     while (reader) {
       const { done, value } = await reader.read();
@@ -255,15 +258,15 @@ const runtime = useExternalStoreRuntime({
 
       // Update message in place
       updateMessage(assistantId, {
-        content: [{ type: "text", text: fullText }],
-        status: { type: "running" },
+        content: [{ type: 'text', text: fullText }],
+        status: { type: 'running' },
       });
     }
 
     // Mark complete
     updateMessage(assistantId, {
-      content: [{ type: "text", text: fullText }],
-      status: { type: "complete" },
+      content: [{ type: 'text', text: fullText }],
+      status: { type: 'complete' },
     });
     setRunning(false);
   },
@@ -289,9 +292,9 @@ const runtime = useExternalStoreRuntime({
       ...messages.slice(0, parentIndex + 1),
       {
         id: crypto.randomUUID(),
-        role: "user",
+        role: 'user',
         content: message.content,
-        status: { type: "complete" },
+        status: { type: 'complete' },
         createdAt: new Date(),
       },
     ]);
@@ -321,7 +324,7 @@ const runtime = useExternalStoreRuntime({
   onNew: handleNew,
   // Only enable capabilities you implement
   capabilities: {
-    edit: false,   // Disable edit if onEdit not provided
+    edit: false, // Disable edit if onEdit not provided
     reload: true,
     cancel: true,
     copy: true,

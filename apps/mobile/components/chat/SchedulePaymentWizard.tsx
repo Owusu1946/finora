@@ -1,4 +1,3 @@
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -8,6 +7,7 @@ import { RecurringPaymentCard, type RecurringDraft } from '@/components/chat/Rec
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
+import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';

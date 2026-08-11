@@ -1,10 +1,12 @@
+import { ScrollView, View } from 'react-native';
+
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { FinoraMark } from '@/components/ui/finora-mark';
-import { ScrollView, View } from 'react-native';
+
+import type { DepositPalette } from './types';
 
 import { CopyAddressRow, InfoBanner, PrimaryButton } from './primitives';
 import { depositStyles as styles } from './styles';
-import type { DepositPalette } from './types';
 
 export function FinoraUserStep({
   colors,

@@ -55,10 +55,7 @@ export async function updateRecurringStatus(
   const idx = items.findIndex((r) => r.id === id);
   if (idx < 0) return null;
   const next: RecurringPayment = { ...items[idx]!, status };
-  await setItem(
-    KEY,
-    JSON.stringify(items.map((r, i) => (i === idx ? next : r))),
-  );
+  await setItem(KEY, JSON.stringify(items.map((r, i) => (i === idx ? next : r))));
   return next;
 }
 

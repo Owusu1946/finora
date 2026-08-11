@@ -174,13 +174,13 @@ Finora Tags are separate from contacts and beneficiaries. `lookup_finora_tag` re
 
 Especially for **business** accounts (Vision + plan UI).
 
-| Tool                                                             | Risk         | Surfaces                   | How it’s used                                      |
-| ---------------------------------------------------------------- | ------------ | -------------------------- | -------------------------------------------------- |
-| `list_suppliers` / `list_employees` / `create_employee`          | read/execute | platform, **mobile**       | Business drawer + chat directory (mock).           |
-| `prepare_supplier_payment` / `prepare_payroll` / `prepare_employee_payment` | prepare | platform (+ mcp/mobile) | Agent/chat prepares; human approves.        |
-| `get_treasury_overview` / `list_expenses` / `list_beneficiaries` | read         | platform, **mobile**       | Treasury, expenses, beneficiaries (mock).          |
-| `list_policies` / `list_automations`                             | read         | platform, **mobile**       | Approval policies + automation rules (mock).       |
-| `execute_approved_supplier_payment` / `execute_approved_payroll` | execute      | platform, mobile           | After PIN — **never** MCP execute.                 |
+| Tool                                                                        | Risk         | Surfaces                | How it’s used                                |
+| --------------------------------------------------------------------------- | ------------ | ----------------------- | -------------------------------------------- |
+| `list_suppliers` / `list_employees` / `create_employee`                     | read/execute | platform, **mobile**    | Business drawer + chat directory (mock).     |
+| `prepare_supplier_payment` / `prepare_payroll` / `prepare_employee_payment` | prepare      | platform (+ mcp/mobile) | Agent/chat prepares; human approves.         |
+| `get_treasury_overview` / `list_expenses` / `list_beneficiaries`            | read         | platform, **mobile**    | Treasury, expenses, beneficiaries (mock).    |
+| `list_policies` / `list_automations`                                        | read         | platform, **mobile**    | Approval policies + automation rules (mock). |
+| `execute_approved_supplier_payment` / `execute_approved_payroll`            | execute      | platform, mobile        | After PIN — **never** MCP execute.           |
 
 ---
 
