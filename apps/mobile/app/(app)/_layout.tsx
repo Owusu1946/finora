@@ -173,8 +173,9 @@ export default function AppLayout() {
       screenOptions={{
         headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
-        headerLeftContainerStyle: { paddingLeft: 16 },
-        headerRightContainerStyle: { gap: 10, paddingRight: 16 },
+        headerLeftContainerStyle: { paddingLeft: 16, paddingBottom: 8 },
+        headerRightContainerStyle: { gap: 10, paddingRight: 16, paddingBottom: 8 },
+        headerTitleContainerStyle: { paddingBottom: 8 },
         headerShadowVisible: false,
         headerStatusBarHeight: insets.top + 8,
         headerTintColor: colors.foreground,

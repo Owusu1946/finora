@@ -2,7 +2,7 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { BlurView } from 'expo-blur';
 import { useNavigation } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
@@ -70,6 +70,17 @@ export function CollapsibleList<Item>({
   const headerHeight = useHeaderHeight();
   const navigation = useNavigation();
   const [collapsed, setCollapsed] = useState(false);
+  const didScroll = useRef(false);
+
+  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    const y = event.nativeEvent.contentOffset.y;
+    if (y <= 1) {
+      didScroll.current = false;
+      setCollapsed(false);
+    } else {
+      didScroll.current = true;
+    }
+  }, []);
 
   useEffect(() => {
     navigation.setOptions({
@@ -121,12 +132,18 @@ export function CollapsibleList<Item>({
       getItemType={(row) => (row.kind === 'item' ? (getItemType?.(row.item) ?? 'item') : row.kind)}
       recycleItems
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.list, { paddingTop: headerHeight + 16 }]}
+      contentContainerStyle={[
+        styles.list,
+        { paddingTop: headerHeight + 16, paddingBottom: headerHeight + 16 },
+      ]}
       contentInsetAdjustmentBehavior='never'
       stickyHeaderIndices={[1]}
       stickyHeaderConfig={{ offset: headerHeight }}
       renderScrollComponent={(props) => <Animated.ScrollView {...props} />}
-      onStickyHeaderChange={({ index }) => setCollapsed(index === 1)}
+      onScroll={handleScroll}
+      onStickyHeaderChange={({ index }) => {
+        if (didScroll.current) setCollapsed(index === 1);
+      }}
       onRefresh={onRefresh}
       refreshing={refreshing}
       progressViewOffset={headerHeight}
@@ -135,7 +152,7 @@ export function CollapsibleList<Item>({
 }
 
 const styles = StyleSheet.create({
-  list: { paddingBottom: 32 },
+  list: {},
   intro: { paddingHorizontal: 20 },
   controls: { paddingHorizontal: 20, paddingTop: 2 },
   empty: { paddingHorizontal: 20 },

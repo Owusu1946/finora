@@ -153,18 +153,21 @@ export default function WalletsScreen() {
         data={filteredWallets}
         intro={
           <View style={styles.listHeader}>
-            <WalletHeader
-              accountLabel={accountLabel}
-              totalNetWorthUSD={totalNetWorthUSD}
-              hideBalances={hideBalances}
-              onToggleHideBalances={() => setHideBalances((prev) => !prev)}
-              onOpenSend={() => setActiveModal('send')}
-              onOpenDeposit={() => {
-                setSelectedWallet(wallets[0]);
-                setActiveModal('deposit');
-              }}
-              onOpenConvert={() => setActiveModal('convert')}
-            />
+            <View style={styles.walletSummary}>
+              <Text style={[styles.title, { color: colors.foreground }]}>Wallets</Text>
+              <WalletHeader
+                accountLabel={accountLabel}
+                totalNetWorthUSD={totalNetWorthUSD}
+                hideBalances={hideBalances}
+                onToggleHideBalances={() => setHideBalances((prev) => !prev)}
+                onOpenSend={() => setActiveModal('send')}
+                onOpenDeposit={() => {
+                  setSelectedWallet(wallets[0]);
+                  setActiveModal('deposit');
+                }}
+                onOpenConvert={() => setActiveModal('convert')}
+              />
+            </View>
             {cardCount === 0 ? (
               <Pressable
                 onPress={() => {
@@ -279,6 +282,15 @@ const styles = StyleSheet.create({
   listHeader: {
     gap: 24,
     paddingBottom: 24,
+  },
+  walletSummary: {
+    gap: 12,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
+    fontWeight: '600',
+    letterSpacing: -0.4,
   },
   cardEntry: {
     borderWidth: StyleSheet.hairlineWidth,
