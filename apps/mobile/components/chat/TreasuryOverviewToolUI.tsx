@@ -1,9 +1,10 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { TreasuryOverview } from '@/lib/treasury';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,7 +23,7 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
         <View
           style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
           <Text style={[styles.muted, { color: colors.mutedForeground }]}>
             Building treasury overview…
           </Text>

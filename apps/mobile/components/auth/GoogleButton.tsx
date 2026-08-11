@@ -1,5 +1,6 @@
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -36,7 +37,7 @@ export function GoogleButton({ onPress, loading = false, disabled = false }: Goo
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.foreground} />
+        <LoadingIcon color={colors.foreground} />
       ) : (
         <View style={styles.row}>
           <GoogleIcon size={20} />

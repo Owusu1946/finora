@@ -1,11 +1,12 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Contact, ContactFilter } from '@/components/contacts/types';
 
 import { ContactListItem } from '@/components/contacts/ContactListItem';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listContacts } from '@/lib/contacts-storage';
@@ -97,7 +98,7 @@ export default function ContactsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator
+        <LoadingIcon
           style={{ marginTop: 24 }}
           color={colors.mutedForeground}
         />

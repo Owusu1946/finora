@@ -1,8 +1,9 @@
 import { LegendList } from '@legendapp/list/react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState, useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -21,8 +22,11 @@ import { getAccountType, getAccountLabel } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
+type WalletRow = { kind: 'header' } | { kind: 'tabs' } | { kind: 'wallet'; wallet: WalletItem };
+
 export default function WalletsScreen() {
   const { colors } = useTheme();
+  const headerHeight = useHeaderHeight();
   const router = useRouter();
   const accountType = getAccountType();
   const accountLabel = getAccountLabel(accountType);
@@ -70,6 +74,14 @@ export default function WalletsScreen() {
     if (filter === 'all') return wallets;
     return wallets.filter((w) => w.type === filter);
   }, [wallets, filter]);
+  const rows = useMemo<WalletRow[]>(
+    () => [
+      { kind: 'header' },
+      { kind: 'tabs' },
+      ...filteredWallets.map((wallet) => ({ kind: 'wallet' as const, wallet })),
+    ],
+    [filteredWallets],
+  );
 
   const showToast = (msg: string) => {
     haptics.selection();
@@ -130,27 +142,10 @@ export default function WalletsScreen() {
     );
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Sleek Floating Toast */}
-      {toastMessage && (
-        <View style={[styles.toast, { backgroundColor: colors.foreground }]}>
-          <Icon
-            name='check'
-            size={13}
-            color={colors.background}
-          />
-          <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
-        </View>
-      )}
-
-      <LegendList
-        data={filteredWallets}
-        keyExtractor={(wallet) => wallet.id}
-        recycleItems
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        ListHeaderComponent={
+  const renderRow = useCallback(
+    ({ item, index }: { item: WalletRow; index: number }) => {
+      if (item.kind === 'header') {
+        return (
           <View style={styles.listHeader}>
             <WalletHeader
               accountLabel={accountLabel}
@@ -202,25 +197,79 @@ export default function WalletsScreen() {
                 />
               </Pressable>
             ) : null}
+          </View>
+        );
+      }
 
+      if (item.kind === 'tabs') {
+        return (
+          <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
             <WalletFilterTabs
               filter={filter}
               onSelectFilter={setFilter}
               onOpenAddWallet={() => setActiveModal('new_wallet')}
             />
           </View>
-        }
-        renderItem={({ item: wallet, index }) => (
+        );
+      }
+
+      return (
+        <View style={styles.walletRow}>
           <WalletListItem
-            wallet={wallet}
+            wallet={item.wallet}
             hideBalances={hideBalances}
-            isLast={index === filteredWallets.length - 1}
-            onSelect={(w) => {
-              setSelectedWallet(w);
+            isLast={index === filteredWallets.length + 1}
+            onSelect={(wallet) => {
+              setSelectedWallet(wallet);
               setActiveModal('deposit');
             }}
           />
-        )}
+        </View>
+      );
+    },
+    [
+      accountLabel,
+      cardCount,
+      colors,
+      filter,
+      filteredWallets.length,
+      hideBalances,
+      router,
+      totalNetWorthUSD,
+      wallets,
+    ],
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Sleek Floating Toast */}
+      {toastMessage && (
+        <View
+          style={[styles.toast, { backgroundColor: colors.foreground, top: headerHeight + 12 }]}
+        >
+          <Icon
+            name='check'
+            size={13}
+            color={colors.background}
+          />
+          <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
+        </View>
+      )}
+
+      <LegendList
+        data={rows}
+        renderItem={renderRow}
+        keyExtractor={(item, index) =>
+          item.kind === 'wallet' ? item.wallet.id : `${item.kind}-${index}`
+        }
+        getItemType={(item) => item.kind}
+        recycleItems
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 16 }]}
+        contentInsetAdjustmentBehavior='never'
+        stickyHeaderIndices={[1]}
+        stickyHeaderConfig={{ offset: headerHeight }}
+        renderScrollComponent={(props) => <Animated.ScrollView {...props} />}
       />
 
       {/* Modals */}
@@ -259,7 +308,6 @@ const styles = StyleSheet.create({
   },
   toast: {
     position: 'absolute',
-    top: 12,
     alignSelf: 'center',
     zIndex: 99,
     flexDirection: 'row',
@@ -275,8 +323,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 40,
     maxWidth: Spacing.threadMaxWidth,
     alignSelf: 'center',
@@ -284,7 +330,15 @@ const styles = StyleSheet.create({
   },
   listHeader: {
     gap: 24,
+    paddingHorizontal: 20,
     paddingBottom: 24,
+  },
+  stickyTabs: {
+    paddingHorizontal: 20,
+    paddingVertical: 2,
+  },
+  walletRow: {
+    paddingHorizontal: 20,
   },
   cardEntry: {
     borderWidth: StyleSheet.hairlineWidth,

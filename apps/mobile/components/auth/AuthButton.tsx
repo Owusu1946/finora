@@ -1,5 +1,6 @@
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -48,7 +49,7 @@ export function AuthButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.background : colors.foreground} />
+        <LoadingIcon color={isPrimary ? colors.background : colors.foreground} />
       ) : (
         <Text
           style={[

@@ -1,9 +1,10 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { CalendarMoneyEvent } from '@/lib/calendar-events-storage';
 
 import { CalendarEventCard } from '@/components/chat/CalendarEventCard';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -36,7 +37,7 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
             { borderColor: colors.border, backgroundColor: colors.composer },
           ]}
         >
-          <ActivityIndicator color={colors.mutedForeground} />
+          <LoadingIcon color={colors.mutedForeground} />
           <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
             Checking Google Calendar…
           </Text>

@@ -1,10 +1,11 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -100,7 +101,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
         <View style={styles.header}>
           <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             {phase === 'sending' ? (
-              <ActivityIndicator
+              <LoadingIcon
                 size='small'
                 color={colors.foreground}
               />

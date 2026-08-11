@@ -28,6 +28,7 @@ import {
   Image01Icon,
   InformationCircleIcon,
   Link01Icon,
+  Loading01Icon,
   MenuTwoLineIcon,
   MessageAdd01Icon,
   QrCodeIcon,
@@ -68,6 +69,7 @@ export type IconName =
   | 'activity'
   | 'contacts'
   | 'integrations'
+  | 'loading'
   | 'settings'
   | 'attach'
   | 'edit'
@@ -125,6 +127,7 @@ export const HUGE_ICONS = {
   activity: Activity01Icon,
   contacts: UserGroupIcon,
   integrations: Link01Icon,
+  loading: Loading01Icon,
   settings: Settings01Icon,
   attach: Add01Icon,
   edit: Edit02Icon,
