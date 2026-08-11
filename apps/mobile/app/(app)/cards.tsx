@@ -1,4 +1,3 @@
-import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
@@ -6,8 +5,8 @@ import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
 
 import { VirtualCardListItem } from '@/components/cards/VirtualCardListItem';
+import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
-import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import {
@@ -69,10 +68,10 @@ export default function CardsScreen() {
     [router],
   );
   const renderCard = useCallback(
-    ({ item, index }: { item: VirtualCard; index: number }) => (
+    (item: VirtualCard, _index: number, isLast: boolean) => (
       <VirtualCardListItem
         card={item}
-        isLast={index === filtered.length - 1}
+        isLast={isLast}
         onPress={openCard}
       />
     ),
@@ -81,59 +80,62 @@ export default function CardsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Cards</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-            Issue virtual cards with spend limits. Reveal details with your passcode.
-          </Text>
-        </View>
-        <Pressable
-          onPress={createCard}
-          style={({ pressed }) => [
-            styles.newBtn,
-            {
-              backgroundColor: colors.primary,
-              opacity: pressed ? 0.8 : 1,
-            },
-          ]}
-        >
-          <Text style={[styles.newBtnText, { color: colors.primaryForeground }]}>New</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.filters}>
-        {FILTERS.map((item) => {
-          const active = filter === item.id;
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => {
-                haptics.selection();
-                setFilter(item.id);
-              }}
-              style={[styles.chip, { backgroundColor: active ? colors.foreground : colors.muted }]}
-            >
-              <Text
-                style={[
-                  styles.chipLabel,
-                  { color: active ? colors.background : colors.foreground },
-                ]}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <LegendList
-        showsVerticalScrollIndicator={false}
+      <CollapsibleList
+        title='Cards'
         data={filtered}
+        intro={
+          <View style={styles.header}>
+            <View style={styles.headerCopy}>
+              <Text style={[styles.title, { color: colors.foreground }]}>Cards</Text>
+              <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+                Issue virtual cards with spend limits. Reveal details with your passcode.
+              </Text>
+            </View>
+            <Pressable
+              onPress={createCard}
+              style={({ pressed }) => [
+                styles.newBtn,
+                {
+                  backgroundColor: colors.primary,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.newBtnText, { color: colors.primaryForeground }]}>New</Text>
+            </Pressable>
+          </View>
+        }
+        controls={
+          <View style={styles.filters}>
+            {FILTERS.map((item) => {
+              const active = filter === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => {
+                    haptics.selection();
+                    setFilter(item.id);
+                  }}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: active ? colors.foreground : colors.muted },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.background : colors.foreground },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        }
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        recycleItems
-        ListEmptyComponent={
+        empty={
           <View style={styles.empty}>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
               {loading ? 'Loading…' : 'No cards yet'}
@@ -155,8 +157,7 @@ export default function CardsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: Spacing.gutter,
-    paddingTop: 8,
+    paddingTop: 0,
   },
   header: {
     flexDirection: 'row',

@@ -1,10 +1,10 @@
-import { LegendList } from '@legendapp/list/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -16,13 +16,11 @@ import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from '@/components/wallets
 import { WalletFilterTabs, FilterCategory } from '@/components/wallets/WalletFilterTabs';
 import { WalletHeader } from '@/components/wallets/WalletHeader';
 import { WalletListItem } from '@/components/wallets/WalletListItem';
-import { Spacing, Radius } from '@/constants/theme';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, getAccountLabel } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
-
-type WalletRow = { kind: 'header' } | { kind: 'tabs' } | { kind: 'wallet'; wallet: WalletItem };
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
@@ -74,14 +72,6 @@ export default function WalletsScreen() {
     if (filter === 'all') return wallets;
     return wallets.filter((w) => w.type === filter);
   }, [wallets, filter]);
-  const rows = useMemo<WalletRow[]>(
-    () => [
-      { kind: 'header' },
-      { kind: 'tabs' },
-      ...filteredWallets.map((wallet) => ({ kind: 'wallet' as const, wallet })),
-    ],
-    [filteredWallets],
-  );
 
   const showToast = (msg: string) => {
     haptics.selection();
@@ -142,10 +132,26 @@ export default function WalletsScreen() {
     );
   };
 
-  const renderRow = useCallback(
-    ({ item, index }: { item: WalletRow; index: number }) => {
-      if (item.kind === 'header') {
-        return (
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Sleek Floating Toast */}
+      {toastMessage && (
+        <View
+          style={[styles.toast, { backgroundColor: colors.foreground, top: headerHeight + 12 }]}
+        >
+          <Icon
+            name='check'
+            size={13}
+            color={colors.background}
+          />
+          <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
+        </View>
+      )}
+
+      <CollapsibleList
+        title='Wallets'
+        data={filteredWallets}
+        intro={
           <View style={styles.listHeader}>
             <WalletHeader
               accountLabel={accountLabel}
@@ -159,7 +165,6 @@ export default function WalletsScreen() {
               }}
               onOpenConvert={() => setActiveModal('convert')}
             />
-
             {cardCount === 0 ? (
               <Pressable
                 onPress={() => {
@@ -198,78 +203,27 @@ export default function WalletsScreen() {
               </Pressable>
             ) : null}
           </View>
-        );
-      }
-
-      if (item.kind === 'tabs') {
-        return (
-          <View style={[styles.stickyTabs, { backgroundColor: colors.background }]}>
-            <WalletFilterTabs
-              filter={filter}
-              onSelectFilter={setFilter}
-              onOpenAddWallet={() => setActiveModal('new_wallet')}
-            />
-          </View>
-        );
-      }
-
-      return (
-        <View style={styles.walletRow}>
+        }
+        controls={
+          <WalletFilterTabs
+            filter={filter}
+            onSelectFilter={setFilter}
+            onOpenAddWallet={() => setActiveModal('new_wallet')}
+          />
+        }
+        renderItem={(wallet, _index, isLast) => (
           <WalletListItem
-            wallet={item.wallet}
+            wallet={wallet}
             hideBalances={hideBalances}
-            isLast={index === filteredWallets.length + 1}
-            onSelect={(wallet) => {
-              setSelectedWallet(wallet);
+            isLast={isLast}
+            onSelect={(selected) => {
+              setSelectedWallet(selected);
               setActiveModal('deposit');
             }}
           />
-        </View>
-      );
-    },
-    [
-      accountLabel,
-      cardCount,
-      colors,
-      filter,
-      filteredWallets.length,
-      hideBalances,
-      router,
-      totalNetWorthUSD,
-      wallets,
-    ],
-  );
-
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Sleek Floating Toast */}
-      {toastMessage && (
-        <View
-          style={[styles.toast, { backgroundColor: colors.foreground, top: headerHeight + 12 }]}
-        >
-          <Icon
-            name='check'
-            size={13}
-            color={colors.background}
-          />
-          <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
-        </View>
-      )}
-
-      <LegendList
-        data={rows}
-        renderItem={renderRow}
-        keyExtractor={(item, index) =>
-          item.kind === 'wallet' ? item.wallet.id : `${item.kind}-${index}`
-        }
-        getItemType={(item) => item.kind}
-        recycleItems
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: headerHeight + 16 }]}
-        contentInsetAdjustmentBehavior='never'
-        stickyHeaderIndices={[1]}
-        stickyHeaderConfig={{ offset: headerHeight }}
-        renderScrollComponent={(props) => <Animated.ScrollView {...props} />}
+        )}
+        keyExtractor={(wallet) => wallet.id}
+        getItemType={() => 'wallet'}
       />
 
       {/* Modals */}
@@ -322,23 +276,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  scrollContent: {
-    paddingBottom: 40,
-    maxWidth: Spacing.threadMaxWidth,
-    alignSelf: 'center',
-    width: '100%',
-  },
   listHeader: {
     gap: 24,
-    paddingHorizontal: 20,
     paddingBottom: 24,
-  },
-  stickyTabs: {
-    paddingHorizontal: 20,
-    paddingVertical: 2,
-  },
-  walletRow: {
-    paddingHorizontal: 20,
   },
   cardEntry: {
     borderWidth: StyleSheet.hairlineWidth,
