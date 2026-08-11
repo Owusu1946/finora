@@ -25,6 +25,7 @@ export function ApprovalFlow() {
   return (
     <section
       id='safety'
+      tabIndex={-1}
       className='landing-section approval-section'
     >
       <div className='approval-intro'>

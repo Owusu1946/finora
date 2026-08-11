@@ -37,6 +37,11 @@ a:focus-visible {
   outline-offset: 4px;
 }
 
+:where(main, article, section, footer)[tabindex='-1']:focus-visible {
+  outline: 2px solid var(--border);
+  outline-offset: 6px;
+}
+
 .font-mono {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
 }
@@ -589,7 +594,7 @@ a:focus-visible {
 
 .mcp-console-bar p {
   margin: 0 0 0 5px;
-  color: #71717a;
+  color: #a1a1aa;
 }
 
 .mcp-console-body {
@@ -800,7 +805,7 @@ a:focus-visible {
 .footer-brand p {
   max-width: 280px;
   margin: 24px 0 0;
-  color: #71717a;
+  color: #a1a1aa;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -813,7 +818,7 @@ a:focus-visible {
 
 .footer-links h3 {
   margin: 0 0 20px;
-  color: #71717a;
+  color: #a1a1aa;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 9px;
   font-weight: 500;
@@ -845,7 +850,7 @@ a:focus-visible {
   justify-content: space-between;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 22px 0;
-  color: #71717a;
+  color: #a1a1aa;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 9px;
   letter-spacing: 0.08em;
@@ -890,7 +895,7 @@ a:focus-visible {
 }
 
 @keyframes mobile-signal {
-  from {
+  0% {
     opacity: 0;
     transform: translate(-50%, 0);
   }
@@ -898,7 +903,7 @@ a:focus-visible {
   80% {
     opacity: 1;
   }
-  to {
+  100% {
     opacity: 0;
     transform: translate(-50%, 620px);
   }

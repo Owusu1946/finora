@@ -77,6 +77,7 @@ export function BentoGrid() {
 
         <article
           id='developers'
+          tabIndex={-1}
           className='bento-card bento-mcp'
         >
           <div className='bento-copy bento-copy-light'>

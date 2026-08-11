@@ -31,6 +31,7 @@ export function SiteFooter() {
   return (
     <footer
       id='get-started'
+      tabIndex={-1}
       className='site-footer'
     >
       <div className='footer-cta'>
@@ -70,7 +71,7 @@ export function SiteFooter() {
       </div>
 
       <div className='footer-bottom'>
-        <p>© {new Date().getFullYear()} Finora. All rights reserved.</p>
+        <p>© Finora. All rights reserved.</p>
         <p>AI prepares. People approve.</p>
       </div>
     </footer>

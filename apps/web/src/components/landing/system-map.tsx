@@ -5,24 +5,28 @@ const nodes = [
     className: 'system-node-context',
     eyebrow: 'Context',
     title: 'Every balance in view',
+    src: '/images/finora/screens/node-wallets.webp',
     alt: 'Finora wallet balances across fiat, crypto, and mobile money',
   },
   {
     className: 'system-node-prepare',
     eyebrow: 'Prepare',
     title: 'A complete action, ready to review',
+    src: '/images/finora/screens/node-fx.webp',
     alt: 'Finora currency conversion confirmation',
   },
   {
     className: 'system-node-operations',
     eyebrow: 'Operate',
     title: 'Invoices and payroll stay connected',
+    src: '/images/finora/screens/node-invoices.webp',
     alt: 'Finora invoice management screen',
   },
   {
     className: 'system-node-approve',
     eyebrow: 'Approve',
     title: 'You remain in control',
+    src: '/images/finora/screens/node-payment.webp',
     alt: 'Finora completed payment screen',
   },
 ] as const;
@@ -133,18 +137,10 @@ export function SystemMap() {
             </div>
             <div className='system-node-screen'>
               <Image
-                src={
-                  node.eyebrow === 'Context'
-                    ? '/images/finora/screens/node-wallets.webp'
-                    : node.eyebrow === 'Prepare'
-                      ? '/images/finora/screens/node-fx.webp'
-                      : node.eyebrow === 'Operate'
-                        ? '/images/finora/screens/node-invoices.webp'
-                        : '/images/finora/screens/node-payment.webp'
-                }
+                src={node.src}
                 alt={node.alt}
                 fill
-                sizes='280px'
+                sizes='(max-width: 767px) 44vw, (max-width: 1024px) 46vw, 280px'
                 className='object-cover'
               />
             </div>
