@@ -1,9 +1,5 @@
-import { FinoraHero } from '@/components/hero/finora-hero';
+import { LandingPage } from '@/components/landing/landing-page';
 
 export default function Home() {
-  return (
-    <main>
-      <FinoraHero />
-    </main>
-  );
+  return <LandingPage />;
 }
