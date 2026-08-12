@@ -1,3 +1,5 @@
+import { useClerk, useUser } from '@clerk/expo';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -11,8 +13,6 @@ import {
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, setAccountType } from '@/lib/account';
-import { useAuthGate } from '@/lib/auth-gate';
-import { clearAuthSession } from '@/lib/auth-storage';
 import { haptics } from '@/lib/haptics';
 import { completeOnboarding } from '@/lib/onboarding-storage';
 import { useSettings } from '@/lib/settings-context';
@@ -21,7 +21,8 @@ export default function AccountSettingsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { settings, loading, refresh } = useSettings();
-  const { markSignedOut } = useAuthGate();
+  const { signOut } = useClerk();
+  const { user } = useUser();
   const [accountType, setAccountTypeLocal] = useState(getAccountType());
 
   useFocusEffect(
@@ -46,8 +47,7 @@ export default function AccountSettingsScreen() {
         style: 'destructive',
         onPress: async () => {
           haptics.selection();
-          await clearAuthSession();
-          markSignedOut();
+          await signOut();
           haptics.success();
           router.replace('/auth' as Href);
         },
@@ -60,9 +60,18 @@ export default function AccountSettingsScreen() {
       <SettingsSection>
         <View style={styles.profile}>
           <View style={[styles.avatar, { backgroundColor: colors.muted }]}>
-            <Text style={[styles.avatarLetter, { color: colors.foreground }]}>
-              {settings.displayName.trim().charAt(0).toUpperCase() || 'F'}
-            </Text>
+            {user?.imageUrl ? (
+              <Image
+                source={user.imageUrl}
+                style={styles.avatarImage}
+                contentFit='cover'
+                transition={150}
+              />
+            ) : (
+              <Text style={[styles.avatarLetter, { color: colors.foreground }]}>
+                {settings.displayName.trim().charAt(0).toUpperCase() || 'F'}
+              </Text>
+            )}
           </View>
           <View style={styles.profileMeta}>
             <Text style={[styles.profileName, { color: colors.foreground }]}>
@@ -124,6 +133,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 23,
     fontWeight: '600',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 26,
   },
   profileMeta: {
     flex: 1,

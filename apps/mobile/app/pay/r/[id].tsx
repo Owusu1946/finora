@@ -1,4 +1,5 @@
 import { useAui } from '@assistant-ui/react-native';
+import { useAuth } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -6,7 +7,6 @@ import { StyleSheet, View } from 'react-native';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { useAuthGate } from '@/lib/auth-gate';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { startPaymentFromLink } from '@/lib/open-payment-link';
 import { setPendingPaymentLink } from '@/lib/pending-payment-link';
@@ -21,7 +21,7 @@ export default function PayRequestDeepLinkScreen() {
   const aui = useAui();
   const router = useRouter();
   const { colors } = useTheme();
-  const { authenticated } = useAuthGate();
+  const { isSignedIn } = useAuth();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const started = useRef(false);
 
@@ -33,7 +33,7 @@ export default function PayRequestDeepLinkScreen() {
       router.replace('/onboarding');
       return;
     }
-    if (!authenticated) {
+    if (!isSignedIn) {
       setPendingPaymentLink(preparationId);
       router.replace('/auth');
       return;
@@ -41,7 +41,7 @@ export default function PayRequestDeepLinkScreen() {
 
     started.current = true;
     startPaymentFromLink(preparationId, aui, router);
-  }, [preparationId, authenticated, onboardingCompleted, aui, router]);
+  }, [preparationId, isSignedIn, onboardingCompleted, aui, router]);
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.background }]}>

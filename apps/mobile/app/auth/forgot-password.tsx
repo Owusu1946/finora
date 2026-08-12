@@ -1,3 +1,4 @@
+import { useSignIn } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,36 +8,42 @@ import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { requestPasswordReset } from '@/lib/auth-mock';
+import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const params = useLocalSearchParams<{ email?: string }>();
+  const { signIn, errors, fetchStatus } = useSignIn();
   const initialEmail = typeof params.email === 'string' ? params.email : '';
 
   const [email, setEmail] = useState(initialEmail);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const loading = fetchStatus === 'fetching';
 
   const canSubmit = useMemo(() => email.trim().includes('@'), [email]);
 
   const handleContinue = async () => {
     if (loading || !canSubmit) return;
     setError(null);
-    setLoading(true);
-    const result = await requestPasswordReset(email);
-    setLoading(false);
-    if (!result.ok) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const created = await signIn.create({ identifier: normalizedEmail });
+    if (created.error) {
       haptics.impact();
-      setError(result.error);
+      setError(clerkErrorMessage(created.error, 'Could not start password recovery.'));
+      return;
+    }
+    const sent = await signIn.resetPasswordEmailCode.sendCode();
+    if (sent.error) {
+      haptics.impact();
+      setError(clerkErrorMessage(sent.error, 'Could not send the reset code.'));
       return;
     }
     haptics.success();
     router.push({
       pathname: '/auth/otp',
-      params: { email: email.trim(), purpose: 'reset' },
+      params: { email: normalizedEmail, purpose: 'reset' },
     });
   };
 
@@ -85,7 +92,7 @@ export default function ForgotPasswordScreen() {
           textContentType='emailAddress'
           placeholder='you@example.com'
           autoFocus
-          error={error ?? undefined}
+          error={error ?? clerkFieldErrorMessage(errors.fields.identifier)}
         />
       </View>
     </AuthShell>

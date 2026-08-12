@@ -12,6 +12,7 @@
     "dev:lan": "node ./scripts/lan-proxy.mjs"
   },
   "dependencies": {
+    "@clerk/hono": "^0.1.64",
     "@finora/shared": "workspace:*",
     "@finora/wewire": "workspace:*",
     "hono": "^4.13.1",

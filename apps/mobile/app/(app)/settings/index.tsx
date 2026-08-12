@@ -1,4 +1,6 @@
+import { useClerk, useUser } from '@clerk/expo';
 import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
@@ -15,7 +17,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountFullLabel, getAccountType } from '@/lib/account';
 import { useAuthGate } from '@/lib/auth-gate';
-import { clearAuthSession } from '@/lib/auth-storage';
+import { clearTagConfigured } from '@/lib/auth-storage';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { hasPasscode } from '@/lib/passcode-storage';
@@ -55,7 +57,9 @@ export default function SettingsHubScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const { settings, loading, refresh } = useSettings();
-  const { markSignedOut } = useAuthGate();
+  const { signOut } = useClerk();
+  const { user } = useUser();
+  const { markTagUnconfigured } = useAuthGate();
   const { markIncomplete } = useOnboardingGate();
   const [hasPin, setHasPin] = useState(false);
   const [accountType, setAccountTypeLocal] = useState(getAccountType());
@@ -76,8 +80,7 @@ export default function SettingsHubScreen() {
         style: 'destructive',
         onPress: async () => {
           haptics.selection();
-          await clearAuthSession();
-          markSignedOut();
+          await signOut();
           haptics.success();
           router.replace('/auth' as Href);
         },
@@ -96,8 +99,10 @@ export default function SettingsHubScreen() {
           style: 'destructive',
           onPress: async () => {
             haptics.selection();
+            await signOut();
             await resetFinoraSession();
-            markSignedOut();
+            await clearTagConfigured();
+            markTagUnconfigured();
             markIncomplete();
             haptics.success();
             router.replace('/onboarding' as Href);
@@ -118,9 +123,18 @@ export default function SettingsHubScreen() {
           style={({ pressed }) => [styles.profile, pressed && { opacity: 0.7 }]}
         >
           <View style={[styles.avatar, { backgroundColor: colors.muted }]}>
-            <Text style={[styles.avatarLetter, { color: colors.foreground }]}>
-              {settings.displayName.trim().charAt(0).toUpperCase() || 'F'}
-            </Text>
+            {user?.imageUrl ? (
+              <Image
+                source={user.imageUrl}
+                style={styles.avatarImage}
+                contentFit='cover'
+                transition={150}
+              />
+            ) : (
+              <Text style={[styles.avatarLetter, { color: colors.foreground }]}>
+                {settings.displayName.trim().charAt(0).toUpperCase() || 'F'}
+              </Text>
+            )}
           </View>
           <View style={styles.profileMeta}>
             <Text style={[styles.profileName, { color: colors.foreground }]}>
@@ -251,6 +265,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 23,
     fontWeight: '600',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 26,
   },
   profileMeta: {
     flex: 1,

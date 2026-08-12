@@ -6,6 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "development"
 FINORA_API_URL = "http://127.0.0.1:8787"
+CLERK_PUBLISHABLE_KEY = "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"

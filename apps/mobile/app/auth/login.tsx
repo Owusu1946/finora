@@ -1,7 +1,9 @@
+import { useClerk, useSignIn } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppleButton } from '@/components/auth/AppleButton';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
 import { AuthField } from '@/components/auth/AuthField';
@@ -9,14 +11,21 @@ import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { signInEmail, signInGoogle } from '@/lib/auth-mock';
+import { setPendingAuthProfile } from '@/lib/auth-profile';
+import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
+import { useAppleAuth } from '@/lib/use-apple-auth';
+import { useGoogleAuth } from '@/lib/use-google-auth';
 import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const postAuthNavigate = usePostAuthNavigate();
+  const clerk = useClerk();
+  const { signIn, errors, fetchStatus } = useSignIn();
+  const google = useGoogleAuth();
+  const apple = useAppleAuth();
   const params = useLocalSearchParams<{ email?: string; reset?: string }>();
   const initialEmail = typeof params.email === 'string' ? params.email : '';
   const showResetSuccess = params.reset === '1';
@@ -24,21 +33,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handleGoogle = async () => {
-    if (googleLoading) return;
-    setGoogleLoading(true);
-    const result = await signInGoogle();
-    setGoogleLoading(false);
-    if (result.ok) {
-      haptics.success();
-      postAuthNavigate();
-    } else {
-      haptics.impact();
-    }
-  };
+  const loading = fetchStatus === 'fetching';
 
   const handleSignIn = async () => {
     if (loading) return;
@@ -48,16 +43,35 @@ export default function LoginScreen() {
       setError('Enter email and password.');
       return;
     }
-    setLoading(true);
-    const result = await signInEmail(email, password);
-    setLoading(false);
-    if (result.ok) {
-      haptics.success();
-      postAuthNavigate();
-    } else {
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await signIn.password({ emailAddress: normalizedEmail, password });
+    if (result.error) {
       haptics.impact();
-      setError(result.error);
+      setError(clerkErrorMessage(result.error, 'Could not sign in.'));
+      return;
     }
+    if (signIn.status !== 'complete') {
+      haptics.impact();
+      setError('This account requires an authentication step Finora does not support yet.');
+      return;
+    }
+
+    const finalized = await signIn.finalize();
+    if (finalized.error) {
+      haptics.impact();
+      setError(clerkErrorMessage(finalized.error, 'Could not finish signing in.'));
+      return;
+    }
+
+    setPendingAuthProfile({
+      name: normalizedEmail.split('@')[0] || 'Finora user',
+      email: normalizedEmail,
+    });
+    haptics.success();
+    const authenticatedUserId =
+      clerk?.client?.sessions?.find((session) => session.id === signIn.createdSessionId)?.user
+        ?.id ?? clerk?.session?.user?.id;
+    await postAuthNavigate(authenticatedUserId);
   };
 
   return (
@@ -69,7 +83,7 @@ export default function LoginScreen() {
             label='Sign in'
             onPress={handleSignIn}
             loading={loading}
-            disabled={loading || googleLoading}
+            disabled={loading || google.loading || apple.loading}
           />
           <Pressable
             onPress={() => {
@@ -113,9 +127,14 @@ export default function LoginScreen() {
       </View>
 
       <GoogleButton
-        onPress={handleGoogle}
-        loading={googleLoading}
-        disabled={loading}
+        onPress={google.startGoogleAuth}
+        loading={google.loading}
+        disabled={loading || apple.loading}
+      />
+      <AppleButton
+        onPress={apple.startAppleAuth}
+        loading={apple.loading}
+        disabled={loading || google.loading}
       />
       <AuthDivider />
 
@@ -137,7 +156,13 @@ export default function LoginScreen() {
           autoComplete='password'
           textContentType='password'
           placeholder='Your password'
-          error={error ?? undefined}
+          error={
+            error ??
+            google.error ??
+            apple.error ??
+            clerkFieldErrorMessage(errors.fields.identifier) ??
+            clerkFieldErrorMessage(errors.fields.password)
+          }
         />
       </View>
     </AuthShell>

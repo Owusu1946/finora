@@ -1,11 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 type AuthGateValue = {
-  authenticated: boolean;
   tagConfigured: boolean;
-  markAuthenticated: () => void;
   markTagConfigured: () => void;
-  markSignedOut: () => void;
+  markTagUnconfigured: () => void;
 };
 
 const AuthGateContext = createContext<AuthGateValue | null>(null);
@@ -19,41 +17,32 @@ export function useAuthGate() {
 }
 
 type ProviderProps = {
-  authenticated: boolean;
   tagConfigured: boolean;
   children: ReactNode;
 };
 
-export function AuthGateProvider({
-  authenticated: initialAuth,
-  tagConfigured: initialTagConfigured,
-  children,
-}: ProviderProps) {
-  const [authenticated, setAuthenticated] = useState(initialAuth);
+export function AuthGateProvider({ tagConfigured: initialTagConfigured, children }: ProviderProps) {
   const [tagConfigured, setTagConfiguredState] = useState(initialTagConfigured);
 
-  const markAuthenticated = useCallback(() => {
-    setAuthenticated(true);
-  }, []);
+  useEffect(() => {
+    setTagConfiguredState(initialTagConfigured);
+  }, [initialTagConfigured]);
 
   const markTagConfigured = useCallback(() => {
     setTagConfiguredState(true);
   }, []);
 
-  const markSignedOut = useCallback(() => {
-    setAuthenticated(false);
+  const markTagUnconfigured = useCallback(() => {
     setTagConfiguredState(false);
   }, []);
 
   const value = useMemo(
     () => ({
-      authenticated,
       tagConfigured,
-      markAuthenticated,
       markTagConfigured,
-      markSignedOut,
+      markTagUnconfigured,
     }),
-    [authenticated, tagConfigured, markAuthenticated, markTagConfigured, markSignedOut],
+    [tagConfigured, markTagConfigured, markTagUnconfigured],
   );
 
   return <AuthGateContext.Provider value={value}>{children}</AuthGateContext.Provider>;

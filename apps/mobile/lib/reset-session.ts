@@ -21,8 +21,8 @@ import { clearSuppliers } from '@/lib/suppliers-storage';
 import { clearTransactions } from '@/lib/transactions-storage';
 
 const KEYS = [
-  'finora.auth.session',
   'finora.auth.tagConfigured',
+  'finora.auth.tagConfiguredUserId',
   'finora.onboarding.completed',
   'finora.accountType',
   'finora.passcode.hash',

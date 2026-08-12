@@ -5,6 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "development"
+CLERK_PUBLISHABLE_KEY = "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA"
 
 # Secrets (set via `wrangler secret put` or local `.dev.vars`):
 # WEWIRE_API_KEY

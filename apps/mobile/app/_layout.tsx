@@ -1,4 +1,6 @@
 import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react-native';
+import { ClerkProvider, useAuth } from '@clerk/expo';
+import { tokenCache } from '@clerk/expo/token-cache';
 import {
   DMSans_400Regular,
   DMSans_500Medium,
@@ -7,7 +9,7 @@ import {
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Redirect, Stack, type Href } from 'expo-router';
+import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -57,12 +59,16 @@ import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
-import { getAuthSession, getTagConfigured } from '@/lib/auth-storage';
+import { getTagConfigured } from '@/lib/auth-storage';
 import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
+
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
+
+if (!publishableKey) throw new Error('Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to apps/mobile/.env.');
 
 export const unstable_settings = {
   anchor: '(app)',
@@ -73,8 +79,10 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 function RootNavigator() {
-  const { authenticated, tagConfigured } = useAuthGate();
+  const { isSignedIn } = useAuth();
+  const { tagConfigured } = useAuthGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
+  const segments = useSegments();
   const { isDark, colors } = useTheme();
   useDrainPendingPaymentLink();
   const base = isDark ? DarkTheme : DefaultTheme;
@@ -99,16 +107,20 @@ function RootNavigator() {
         <Stack.Screen name='pay/r/[id]' />
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
-      {onboardingCompleted && !authenticated ? <Redirect href={'/auth' as Href} /> : null}
-      {onboardingCompleted && authenticated && !tagConfigured ? (
+      {onboardingCompleted && !isSignedIn ? <Redirect href={'/auth' as Href} /> : null}
+      {onboardingCompleted && isSignedIn && !tagConfigured ? (
         <Redirect href={'/auth/choose-tag' as Href} />
+      ) : null}
+      {onboardingCompleted && isSignedIn && tagConfigured && segments[0] === 'auth' ? (
+        <Redirect href={'/(app)' as Href} />
       ) : null}
       <StatusBar style='auto' />
     </ThemeProvider>
   );
 }
 
-export default function RootLayout() {
+function RootApp() {
+  const { isLoaded: clerkLoaded, userId } = useAuth();
   const [fontsLoaded] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
@@ -116,11 +128,11 @@ export default function RootLayout() {
     DMSans_700Bold,
   });
   const [boot, setBoot] = useState<{
-    authenticated: boolean;
     onboardingCompleted: boolean;
     tagConfigured: boolean;
+    userId: string | null;
   } | null>(null);
-  const bootReady = fontsLoaded && boot !== null;
+  const bootReady = fontsLoaded && clerkLoaded && boot !== null;
   const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
     useSplashGate(bootReady);
   const runtime = useLocalRuntime(finoraChatAdapter as never);
@@ -128,23 +140,22 @@ export default function RootLayout() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [session, onboarding, tagConfigured] = await Promise.all([
-        getAuthSession(),
+      const [onboarding, tagConfigured] = await Promise.all([
         getOnboardingState(),
-        getTagConfigured(),
+        getTagConfigured(userId),
       ]);
       if (cancelled) return;
       if (onboarding.accountType) setAccountType(onboarding.accountType);
       setBoot({
-        authenticated: session,
         onboardingCompleted: onboarding.completed,
         tagConfigured,
+        userId: userId ?? null,
       });
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userId]);
 
   // Keep a stable root so the splash overlay can mount + lay out before native hide.
   return (
@@ -153,10 +164,7 @@ export default function RootLayout() {
         <SplashPlaceholder />
       ) : (
         <SettingsProvider>
-          <AuthGateProvider
-            authenticated={boot.authenticated}
-            tagConfigured={boot.tagConfigured}
-          >
+          <AuthGateProvider tagConfigured={boot.tagConfigured}>
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
               <AssistantRuntimeProvider runtime={runtime}>
                 <PreparePaymentToolUI />
@@ -208,5 +216,16 @@ export default function RootLayout() {
       {/* Covers UI in App Switcher / Recents so balances aren't previewed. */}
       <AppSwitcherPrivacy />
     </GestureHandlerRootView>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ClerkProvider
+      publishableKey={publishableKey}
+      tokenCache={tokenCache}
+    >
+      <RootApp />
+    </ClerkProvider>
   );
 }

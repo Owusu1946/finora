@@ -1,7 +1,9 @@
+import { useSignUp } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppleButton } from '@/components/auth/AppleButton';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthDivider } from '@/components/auth/AuthDivider';
 import { AuthField } from '@/components/auth/AuthField';
@@ -9,39 +11,29 @@ import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { sendEmailVerificationOtp, signInGoogle, signUpEmail } from '@/lib/auth-mock';
+import { setPendingAuthProfile } from '@/lib/auth-profile';
+import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
-import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
+import { useAppleAuth } from '@/lib/use-apple-auth';
+import { useGoogleAuth } from '@/lib/use-google-auth';
 
 export default function SignupScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const postAuthNavigate = usePostAuthNavigate();
+  const { signUp, errors, fetchStatus } = useSignUp();
+  const google = useGoogleAuth();
+  const apple = useAppleAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const loading = fetchStatus === 'fetching';
 
   const canSubmit = useMemo(() => {
-    return email.trim().length > 0 && password.length >= 8 && confirm === password;
+    return email.trim().length > 0 && password.length >= 15 && confirm === password;
   }, [confirm, email, password]);
-
-  const handleGoogle = async () => {
-    if (googleLoading) return;
-    setGoogleLoading(true);
-    const result = await signInGoogle();
-    setGoogleLoading(false);
-    if (result.ok) {
-      haptics.success();
-      postAuthNavigate();
-    } else {
-      haptics.impact();
-    }
-  };
 
   const handleSignup = async () => {
     if (loading) return;
@@ -51,32 +43,38 @@ export default function SignupScreen() {
       setError('Passwords do not match.');
       return;
     }
-    if (password.length < 8) {
+    if (password.length < 15) {
       haptics.impact();
-      setError('Password must be at least 8 characters.');
+      setError('Password must be at least 15 characters.');
       return;
     }
-    setLoading(true);
-    const signedUp = await signUpEmail({ name, email, password });
-    if (!signedUp.ok) {
-      setLoading(false);
+    const normalizedEmail = email.trim().toLowerCase();
+    const result = await signUp.password({
+      emailAddress: normalizedEmail,
+      password,
+      unsafeMetadata: { displayName: name.trim() },
+    });
+    if (result.error) {
       haptics.impact();
-      setError(signedUp.error);
+      setError(clerkErrorMessage(result.error, 'Could not create your account.'));
       return;
     }
 
-    const otpSent = await sendEmailVerificationOtp(email);
-    setLoading(false);
-    if (!otpSent.ok) {
+    setPendingAuthProfile({
+      name: name.trim() || normalizedEmail.split('@')[0] || 'Finora user',
+      email: normalizedEmail,
+    });
+    const verification = await signUp.verifications.sendEmailCode();
+    if (verification.error) {
       haptics.impact();
-      setError(otpSent.error);
+      setError(clerkErrorMessage(verification.error, 'Could not send the verification code.'));
       return;
     }
 
     haptics.success();
     router.push({
       pathname: '/auth/otp',
-      params: { email: email.trim() },
+      params: { email: normalizedEmail },
     });
   };
 
@@ -89,7 +87,7 @@ export default function SignupScreen() {
             label='Create account'
             onPress={handleSignup}
             loading={loading}
-            disabled={!canSubmit || loading || googleLoading}
+            disabled={!canSubmit || loading || google.loading || apple.loading}
           />
           <Pressable
             onPress={() => {
@@ -113,9 +111,14 @@ export default function SignupScreen() {
       </View>
 
       <GoogleButton
-        onPress={handleGoogle}
-        loading={googleLoading}
-        disabled={loading}
+        onPress={google.startGoogleAuth}
+        loading={google.loading}
+        disabled={loading || apple.loading}
+      />
+      <AppleButton
+        onPress={apple.startAppleAuth}
+        loading={apple.loading}
+        disabled={loading || google.loading}
       />
       <AuthDivider />
 
@@ -144,7 +147,7 @@ export default function SignupScreen() {
           password
           autoComplete='new-password'
           textContentType='newPassword'
-          placeholder='At least 8 characters'
+          placeholder='At least 15 characters'
         />
         <AuthField
           label='Confirm password'
@@ -154,9 +157,16 @@ export default function SignupScreen() {
           autoComplete='new-password'
           textContentType='newPassword'
           placeholder='Repeat password'
-          error={error ?? undefined}
+          error={
+            error ??
+            google.error ??
+            apple.error ??
+            clerkFieldErrorMessage(errors.fields.emailAddress) ??
+            clerkFieldErrorMessage(errors.fields.password)
+          }
         />
       </View>
+      <View nativeID='clerk-captcha' />
     </AuthShell>
   );
 }

@@ -1,3 +1,4 @@
+import { useSignIn, useSignUp } from '@clerk/expo';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,13 +8,7 @@ import { AUTH_OTP_LENGTH, AuthOtpInput } from '@/components/auth/AuthOtpInput';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  MOCK_EMAIL_OTP,
-  checkForgetPasswordOtp,
-  requestPasswordReset,
-  sendEmailVerificationOtp,
-  verifyEmailOtp,
-} from '@/lib/auth-mock';
+import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
 import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
 
@@ -23,15 +18,17 @@ export default function AuthOtpScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const postAuthNavigate = usePostAuthNavigate();
+  const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
+  const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
   const params = useLocalSearchParams<{ email?: string; purpose?: string }>();
   const email = typeof params.email === 'string' ? params.email.trim() : '';
   const isReset = params.purpose === 'reset';
 
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_SECONDS);
+  const loading = signInFetchStatus === 'fetching' || signUpFetchStatus === 'fetching';
 
   useEffect(() => {
     if (!email) {
@@ -50,52 +47,64 @@ export default function AuthOtpScreen() {
   const handleVerify = useCallback(async () => {
     if (loading || !canVerify || !email) return;
     setError(null);
-    setLoading(true);
-
     if (isReset) {
-      const result = await checkForgetPasswordOtp(email, code);
-      setLoading(false);
-      if (!result.ok) {
+      const result = await signIn.resetPasswordEmailCode.verifyCode({ code });
+      if (result.error) {
         haptics.impact();
-        setError(result.error);
+        setError(clerkErrorMessage(result.error, 'That reset code is invalid or expired.'));
+        return;
+      }
+      if (signIn.status !== 'needs_new_password') {
+        haptics.impact();
+        setError('Password recovery could not continue. Request a new code.');
         return;
       }
       haptics.success();
       router.push({
         pathname: '/auth/reset-password',
-        params: { email, otp: code },
+        params: { email },
       });
       return;
     }
 
-    const result = await verifyEmailOtp(email, code);
-    setLoading(false);
-    if (result.ok) {
-      haptics.success();
-      postAuthNavigate();
-    } else {
+    const result = await signUp.verifications.verifyEmailCode({ code });
+    if (result.error) {
       haptics.impact();
-      setError(result.error);
+      setError(clerkErrorMessage(result.error, 'That verification code is invalid or expired.'));
+      return;
     }
-  }, [canVerify, code, email, isReset, loading, postAuthNavigate, router]);
+    if (signUp.status !== 'complete') {
+      haptics.impact();
+      setError('Your account still has incomplete sign-up requirements.');
+      return;
+    }
+    const finalized = await signUp.finalize();
+    if (finalized.error) {
+      haptics.impact();
+      setError(clerkErrorMessage(finalized.error, 'Could not finish creating your account.'));
+      return;
+    }
+    haptics.success();
+    await postAuthNavigate(signUp.createdUserId);
+  }, [canVerify, code, email, isReset, loading, postAuthNavigate, router, signIn, signUp]);
 
   const handleResend = useCallback(async () => {
     if (resending || cooldown > 0 || !email) return;
     setError(null);
     setResending(true);
     const result = isReset
-      ? await requestPasswordReset(email)
-      : await sendEmailVerificationOtp(email);
+      ? await signIn.resetPasswordEmailCode.sendCode()
+      : await signUp.verifications.sendEmailCode();
     setResending(false);
-    if (result.ok) {
+    if (!result.error) {
       haptics.success();
       setCooldown(RESEND_SECONDS);
       setCode('');
     } else {
       haptics.impact();
-      setError(result.error);
+      setError(clerkErrorMessage(result.error, 'Could not resend the code.'));
     }
-  }, [cooldown, email, isReset, resending]);
+  }, [cooldown, email, isReset, resending, signIn, signUp]);
 
   if (!email) return null;
 
@@ -142,14 +151,11 @@ export default function AuthOtpScreen() {
           setError(null);
           setCode(next);
         }}
-        error={error ?? undefined}
+        error={
+          error ??
+          clerkFieldErrorMessage(isReset ? signInErrors.fields.code : signUpErrors.fields.code)
+        }
       />
-
-      {__DEV__ ? (
-        <Text style={[styles.devHint, { color: colors.mutedForeground }]}>
-          Dev mock code: {MOCK_EMAIL_OTP}
-        </Text>
-      ) : null}
     </AuthShell>
   );
 }
@@ -183,12 +189,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     paddingVertical: 4,
-  },
-  devHint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginTop: 4,
   },
 });

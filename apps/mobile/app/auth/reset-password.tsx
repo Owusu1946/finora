@@ -1,3 +1,4 @@
+import { useSignIn } from '@clerk/expo';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,26 +8,26 @@ import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { resetPasswordWithOtp } from '@/lib/auth-mock';
+import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const params = useLocalSearchParams<{ email?: string; otp?: string }>();
+  const { signIn, errors, fetchStatus } = useSignIn();
+  const params = useLocalSearchParams<{ email?: string }>();
   const email = typeof params.email === 'string' ? params.email.trim() : '';
-  const otp = typeof params.otp === 'string' ? params.otp.trim() : '';
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const loading = fetchStatus === 'fetching';
 
   const canSubmit = useMemo(() => {
-    return password.length >= 8 && confirm === password && Boolean(email) && Boolean(otp);
-  }, [confirm, email, otp, password]);
+    return password.length >= 15 && confirm === password && Boolean(email);
+  }, [confirm, email, password]);
 
-  if (!email || !otp) {
+  if (!email || signIn.status !== 'needs_new_password') {
     return (
       <AuthShell showBack>
         <View style={styles.header}>
@@ -51,20 +52,22 @@ export default function ResetPasswordScreen() {
       setError('Passwords do not match.');
       return;
     }
-    if (password.length < 8) {
+    if (password.length < 15) {
       haptics.impact();
-      setError('Password must be at least 8 characters.');
+      setError('Password must be at least 15 characters.');
       return;
     }
 
-    setLoading(true);
-    const result = await resetPasswordWithOtp({ email, otp, password });
-    setLoading(false);
-    if (!result.ok) {
+    const result = await signIn.resetPasswordEmailCode.submitPassword({
+      password,
+      signOutOfOtherSessions: true,
+    });
+    if (result.error) {
       haptics.impact();
-      setError(result.error);
+      setError(clerkErrorMessage(result.error, 'Could not update your password.'));
       return;
     }
+    await signIn.reset();
 
     haptics.success();
     router.replace({
@@ -100,7 +103,7 @@ export default function ResetPasswordScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.foreground }]}>Choose a new password</Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Use at least 8 characters for{' '}
+          Use at least 15 characters for{' '}
           <Text style={{ color: colors.foreground, fontWeight: '600' }}>{email}</Text>
         </Text>
       </View>
@@ -113,7 +116,7 @@ export default function ResetPasswordScreen() {
           password
           autoComplete='new-password'
           textContentType='newPassword'
-          placeholder='At least 8 characters'
+          placeholder='At least 15 characters'
           autoFocus
         />
         <AuthField
@@ -124,7 +127,7 @@ export default function ResetPasswordScreen() {
           autoComplete='new-password'
           textContentType='newPassword'
           placeholder='Repeat password'
-          error={error ?? undefined}
+          error={error ?? clerkFieldErrorMessage(errors.fields.password)}
         />
       </View>
     </AuthShell>

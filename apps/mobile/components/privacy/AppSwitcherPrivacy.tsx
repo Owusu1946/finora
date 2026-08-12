@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { AppState, Modal, StyleSheet, View, type AppStateStatus } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AppState, StyleSheet, View, type AppStateStatus } from 'react-native';
 
 import { FinoraMark } from '@/components/ui/finora-mark';
 import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
@@ -19,12 +19,10 @@ const MARK_SIZE = 96;
  *   Finora splash look without a custom native module.
  */
 export function AppSwitcherPrivacy() {
-  const appState = useRef(AppState.currentState);
   const [covered, setCovered] = useState(AppState.currentState !== 'active');
 
   useEffect(() => {
     const onChange = (next: AppStateStatus) => {
-      appState.current = next;
       // Cover whenever the app is not actively foregrounded so the OS snapshot
       // (taken around resign-active / pause) captures the splash, not the UI.
       setCovered(next !== 'active');
@@ -34,35 +32,30 @@ export function AppSwitcherPrivacy() {
     return () => sub.remove();
   }, []);
 
+  if (!covered) return null;
+
   return (
-    <Modal
-      visible={covered}
-      animationType='none'
-      transparent={false}
-      statusBarTranslucent
-      presentationStyle='fullScreen'
-      onRequestClose={() => {}}
+    <View
+      style={styles.root}
+      accessibilityElementsHidden
+      importantForAccessibility='no-hide-descendants'
     >
-      <View
-        style={styles.root}
-        accessibilityElementsHidden
-        importantForAccessibility='no-hide-descendants'
-      >
-        <FinoraMark
-          size={MARK_SIZE}
-          variant='bare'
-          tone='light'
-        />
-      </View>
-    </Modal>
+      <FinoraMark
+        size={MARK_SIZE}
+        variant='bare'
+        tone='light'
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: SPLASH_BACKGROUND,
+    zIndex: 10_000,
+    elevation: 10_000,
   },
 });

@@ -5,10 +5,9 @@ import {
   PasscodeModal,
   type PasscodeMode,
 } from '@/components/passcode/PasscodeModal';
-import { checkForgetPasswordOtp, requestPasswordReset } from '@/lib/auth-mock';
 import { haptics } from '@/lib/haptics';
 import { clearPasscode, hasPasscode, setPasscode, verifyPasscode } from '@/lib/passcode-storage';
-import { getCachedSettings } from '@/lib/settings-storage';
+import { useEmailVerification } from '@/lib/use-email-verification';
 
 type GatePhase = 'closed' | 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp';
 
@@ -24,6 +23,7 @@ function maskEmail(email: string) {
  * Wrong unlock codes shake + vibrate; 3 fails lock the pad and require email OTP reset.
  */
 export function usePasscodeApproval() {
+  const emailVerification = useEmailVerification();
   const [phase, setPhase] = useState<GatePhase>('closed');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -69,14 +69,8 @@ export function usePasscodeApproval() {
   }, []);
 
   const startForgot = useCallback(async () => {
-    const email = getCachedSettings().email.trim();
-    if (!email.includes('@')) {
-      haptics.error();
-      setError('Add an email in Settings → Account before resetting.');
-      return;
-    }
     setError(null);
-    const result = await requestPasswordReset(email);
+    const result = await emailVerification.sendCode();
     if (!result.ok) {
       haptics.error();
       setError(result.error ?? 'Could not send reset code.');
@@ -85,10 +79,10 @@ export function usePasscodeApproval() {
     haptics.success();
     recoveringRef.current = true;
     setLocked(false);
-    setForgotHint(maskEmail(email));
+    setForgotHint(maskEmail(result.email));
     setError(null);
     setPhase('forgot-otp');
-  }, []);
+  }, [emailVerification]);
 
   const onComplete = useCallback(
     async (code: string) => {
@@ -113,8 +107,7 @@ export function usePasscodeApproval() {
       }
 
       if (phase === 'forgot-otp') {
-        const email = getCachedSettings().email.trim();
-        const result = await checkForgetPasswordOtp(email, code);
+        const result = await emailVerification.verifyCode(code);
         if (!result.ok) {
           markFailure(result.error ?? 'That code is incorrect.');
           return;
@@ -151,7 +144,7 @@ export function usePasscodeApproval() {
         close(true);
       }
     },
-    [attemptsLeft, close, draft, locked, markFailure, phase, startForgot],
+    [attemptsLeft, close, draft, emailVerification, locked, markFailure, phase, startForgot],
   );
 
   const mode: PasscodeMode =

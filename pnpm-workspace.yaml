@@ -5,10 +5,14 @@ packages:
 # pnpm 11 blocks dependency lifecycle scripts unless they are approved here.
 # Entries are scoped to packages this generated stack can pull in.
 allowBuilds:
+  browser-tabs-lock: true
+  bufferutil: true
+  core-js: true
   core-js-pure: true
   esbuild: true
   sharp: true
   unrs-resolver: true
+  utf-8-validate: true
   workerd: true
 
 overrides:
