@@ -1,3 +1,4 @@
+import { getAuth } from '@clerk/hono';
 import { SEND_CORRIDORS, normalizeFinoraTag, previewFxQuote, type Currency } from '@finora/shared';
 import { Hono } from 'hono';
 
@@ -10,6 +11,15 @@ type AppEnv = { Bindings: Env };
  * Shape matches future live WeWire-backed handlers so MCP/mobile can stay stable.
  */
 export const v1 = new Hono<AppEnv>();
+
+v1.get('/auth/me', (c) => {
+  const auth = getAuth(c, { acceptsToken: 'session_token' });
+  return c.json({
+    userId: auth.userId,
+    sessionId: auth.sessionId,
+    tokenType: auth.tokenType,
+  });
+});
 
 function publicFinoraAccount(account: (typeof mockStore.subcustomers)[number]) {
   return {

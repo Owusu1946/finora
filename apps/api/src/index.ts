@@ -1,7 +1,9 @@
+import { clerkMiddleware } from '@clerk/hono';
 import { TOOL_NAMES } from '@finora/shared';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
+import { requireSession } from './auth';
 import { v1 } from './routes/v1';
 
 type AppEnv = {
@@ -31,12 +33,14 @@ app.get('/', (c) =>
 
 app.get('/health', (c) => c.json({ ok: true, mode: 'mock' }));
 
-app.route('/v1', v1);
-
 app.post('/v1/webhooks/wewire', async (c) => {
   const payload = await c.req.json();
   console.log('wewire webhook', payload);
   return c.json({ received: true, mode: 'mock' });
 });
+
+app.use('/v1/*', clerkMiddleware());
+app.use('/v1/*', requireSession);
+app.route('/v1', v1);
 
 export default app;

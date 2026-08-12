@@ -2,6 +2,7 @@ import type { ZodRawShape } from 'zod';
 
 import { MCP_TOOL_NAMES, TOOL_INPUT_SCHEMAS, type McpToolName } from '@finora/shared';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { getCurrentAgent } from 'agents';
 import { McpAgent } from 'agents/mcp';
 
 import { TOOL_CATALOG } from './tools/catalog';
@@ -14,6 +15,7 @@ function textResult(data: unknown) {
 
 async function callFinoraApi(
   env: Env,
+  authorization: string,
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   body?: Record<string, unknown>,
@@ -21,9 +23,12 @@ async function callFinoraApi(
   const base = env.FINORA_API_URL.replace(/\/$/, '');
   const response = await fetch(`${base}${path}`, {
     method,
+    headers: {
+      Authorization: authorization,
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
     ...(body
       ? {
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         }
       : {}),
@@ -93,8 +98,14 @@ export class FinoraMCP extends McpAgent<Env> {
       }
 
       try {
+        const { request } = getCurrentAgent();
+        const authorization = request?.headers.get('Authorization');
+        if (!authorization) {
+          return textResult({ tool: name, ok: false, status: 401, error: 'unauthorized' });
+        }
         const result = await callFinoraApi(
           this.env,
+          authorization,
           meta.method,
           path,
           meta.body ? bodyArgs : undefined,

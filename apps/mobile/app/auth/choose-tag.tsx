@@ -1,3 +1,4 @@
+import { useUser } from '@clerk/expo';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -9,7 +10,7 @@ import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthGate } from '@/lib/auth-gate';
-import { clearPendingSignupProfile, getPendingSignupProfile } from '@/lib/auth-mock';
+import { clearPendingAuthProfile, getPendingAuthProfile } from '@/lib/auth-profile';
 import { setTagConfigured } from '@/lib/auth-storage';
 import {
   checkFinoraTagAvailability,
@@ -37,24 +38,36 @@ export default function ChooseTagScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { markTagConfigured } = useAuthGate();
+  const { user } = useUser();
 
-  const pending = getPendingSignupProfile();
+  const pending = getPendingAuthProfile();
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    const profile = getPendingSignupProfile();
-    const suggested = suggestFinoraTagFromName(profile?.name ?? '', profile?.email);
+    const profile = getPendingAuthProfile();
+    const clerkEmail =
+      user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses[0]?.emailAddress ?? '';
+    const clerkName = user?.fullName?.trim() || user?.firstName?.trim() || '';
+    const suggested = suggestFinoraTagFromName(
+      profile?.name ?? clerkName,
+      profile?.email ?? clerkEmail,
+    );
     if (suggested) setTagInput(suggested);
-  }, []);
+  }, [user]);
 
   const availability = useMemo(() => checkFinoraTagAvailability(tagInput), [tagInput]);
   const hint = availabilityMessage(availability);
-  const canSubmit = availability.ok && !loading;
+  const canSubmit = availability.ok && !loading && Boolean(user?.id);
 
   const handleContinue = async () => {
     if (!canSubmit || !availability.ok) return;
+    if (!user?.id) {
+      haptics.impact();
+      setSubmitError('Your authenticated profile is still loading. Try again.');
+      return;
+    }
     setSubmitError(null);
     setLoading(true);
 
@@ -66,9 +79,14 @@ export default function ChooseTagScreen() {
       return;
     }
 
-    const profile = getPendingSignupProfile();
-    const displayName = profile?.name?.trim() || recheck.tag;
-    const email = profile?.email ?? '';
+    const profile = getPendingAuthProfile();
+    const email =
+      profile?.email ??
+      user?.primaryEmailAddress?.emailAddress ??
+      user?.emailAddresses[0]?.emailAddress ??
+      '';
+    const displayName =
+      profile?.name?.trim() || user?.fullName?.trim() || user?.firstName?.trim() || recheck.tag;
 
     await saveSettings({
       finoraTag: recheck.tag,
@@ -80,8 +98,8 @@ export default function ChooseTagScreen() {
       displayName,
       email,
     });
-    await setTagConfigured();
-    clearPendingSignupProfile();
+    await setTagConfigured(user.id);
+    clearPendingAuthProfile();
     markTagConfigured();
     setLoading(false);
     haptics.success();

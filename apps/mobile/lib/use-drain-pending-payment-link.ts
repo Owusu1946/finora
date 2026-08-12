@@ -1,8 +1,8 @@
 import { useAui } from '@assistant-ui/react-native';
+import { useAuth } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 
-import { useAuthGate } from '@/lib/auth-gate';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { startPaymentFromLink } from '@/lib/open-payment-link';
 import { takePendingPaymentLink } from '@/lib/pending-payment-link';
@@ -11,15 +11,15 @@ import { takePendingPaymentLink } from '@/lib/pending-payment-link';
 export function useDrainPendingPaymentLink() {
   const aui = useAui();
   const router = useRouter();
-  const { authenticated } = useAuthGate();
+  const { isSignedIn } = useAuth();
   const { completed } = useOnboardingGate();
   const drained = useRef(false);
 
   useEffect(() => {
-    if (!authenticated || !completed || drained.current) return;
+    if (!isSignedIn || !completed || drained.current) return;
     const id = takePendingPaymentLink();
     if (!id) return;
     drained.current = true;
     startPaymentFromLink(id, aui, router);
-  }, [authenticated, completed, aui, router]);
+  }, [isSignedIn, completed, aui, router]);
 }

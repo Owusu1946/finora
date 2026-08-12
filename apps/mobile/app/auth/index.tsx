@@ -1,34 +1,20 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { AppleButton } from '@/components/auth/AppleButton';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { signInGoogle } from '@/lib/auth-mock';
-import { haptics } from '@/lib/haptics';
-import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
+import { useAppleAuth } from '@/lib/use-apple-auth';
+import { useGoogleAuth } from '@/lib/use-google-auth';
 
 export default function AuthWelcomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const postAuthNavigate = usePostAuthNavigate();
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handleGoogle = async () => {
-    if (googleLoading) return;
-    setGoogleLoading(true);
-    const result = await signInGoogle();
-    setGoogleLoading(false);
-    if (result.ok) {
-      haptics.success();
-      postAuthNavigate();
-    } else {
-      haptics.impact();
-    }
-  };
+  const google = useGoogleAuth();
+  const apple = useAppleAuth();
 
   return (
     <AuthShell
@@ -39,8 +25,14 @@ export default function AuthWelcomeScreen() {
             onPress={() => router.push('/auth/signup')}
           />
           <GoogleButton
-            onPress={handleGoogle}
-            loading={googleLoading}
+            onPress={google.startGoogleAuth}
+            loading={google.loading}
+            disabled={apple.loading}
+          />
+          <AppleButton
+            onPress={apple.startAppleAuth}
+            loading={apple.loading}
+            disabled={google.loading}
           />
           <AuthButton
             label='Sign in'
@@ -56,6 +48,14 @@ export default function AuthWelcomeScreen() {
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           Create an account or sign in to continue.
         </Text>
+        {google.error || apple.error ? (
+          <Text
+            accessibilityRole='alert'
+            style={[styles.error, { color: colors.destructive }]}
+          >
+            {google.error ?? apple.error}
+          </Text>
+        ) : null}
       </View>
     </AuthShell>
   );
@@ -87,6 +87,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: -0.2,
     lineHeight: 23,
+    textAlign: 'center',
+    maxWidth: 300,
+  },
+  error: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
     textAlign: 'center',
     maxWidth: 300,
   },
