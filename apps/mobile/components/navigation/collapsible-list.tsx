@@ -1,6 +1,5 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { BlurView } from 'expo-blur';
 import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
@@ -15,33 +14,12 @@ type Row<Item> =
   | { kind: 'empty' }
   | { kind: 'item'; item: Item };
 
-function CollapsedHeaderBackground({ visible }: { visible: boolean }) {
-  const { colors, isDark } = useTheme();
-  if (!visible) return null;
+const bodyTitleTopGap = 16;
 
-  const fill = (
-    <View
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          backgroundColor: isDark ? 'rgba(24, 24, 27, 0.72)' : 'rgba(255, 255, 255, 0.72)',
-          borderBottomColor: colors.border,
-          borderBottomWidth: StyleSheet.hairlineWidth,
-        },
-      ]}
-    />
-  );
+function HeaderBackground() {
+  const { colors } = useTheme();
 
-  return (
-    <BlurView
-      tint={isDark ? 'systemMaterialDark' : 'systemMaterialLight'}
-      intensity={86}
-      experimentalBlurMethod='dimezisBlurView'
-      style={StyleSheet.absoluteFill}
-    >
-      {fill}
-    </BlurView>
-  );
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />;
 }
 
 export function CollapsibleList<Item>({
@@ -72,16 +50,14 @@ export function CollapsibleList<Item>({
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [collapsed, setCollapsed] = useState(false);
-  const didScroll = useRef(false);
+  const collapsedRef = useRef(false);
 
   const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    const y = event.nativeEvent.contentOffset.y;
-    if (y <= 1) {
-      didScroll.current = false;
-      setCollapsed(false);
-    } else {
-      didScroll.current = true;
-    }
+    const nextCollapsed = event.nativeEvent.contentOffset.y >= bodyTitleTopGap;
+    if (nextCollapsed === collapsedRef.current) return;
+
+    collapsedRef.current = nextCollapsed;
+    setCollapsed(nextCollapsed);
   }, []);
 
   useEffect(() => {
@@ -89,7 +65,7 @@ export function CollapsibleList<Item>({
       headerTransparent: true,
       headerStyle: { backgroundColor: 'transparent' },
       headerTitle: () => (collapsed ? <HeaderTitleWithAccount title={title} /> : <AccountBadge />),
-      headerBackground: () => <CollapsedHeaderBackground visible={collapsed} />,
+      headerBackground: () => <HeaderBackground />,
     });
   }, [collapsed, navigation, title]);
 
@@ -128,6 +104,7 @@ export function CollapsibleList<Item>({
     <LegendList
       key={isDark ? 'collapsible-list-dark' : 'collapsible-list-light'}
       data={rows}
+      extraData={controls}
       renderItem={renderRow}
       keyExtractor={(row, index) =>
         row.kind === 'item' ? keyExtractor(row.item) : `${row.kind}-${index}`
@@ -137,16 +114,16 @@ export function CollapsibleList<Item>({
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[
         styles.list,
-        { paddingTop: headerHeight + 16, paddingBottom: headerHeight + 16 },
+        {
+          paddingTop: headerHeight + bodyTitleTopGap,
+          paddingBottom: headerHeight + bodyTitleTopGap,
+        },
       ]}
       contentInsetAdjustmentBehavior='never'
       stickyHeaderIndices={[1]}
       stickyHeaderConfig={{ offset: headerHeight }}
       renderScrollComponent={(props) => <Animated.ScrollView {...props} />}
       onScroll={handleScroll}
-      onStickyHeaderChange={({ index }) => {
-        if (didScroll.current) setCollapsed(index === 1);
-      }}
       onRefresh={onRefresh}
       refreshing={refreshing}
       // Keep the native refresh spinner below the status-bar/notch area.
