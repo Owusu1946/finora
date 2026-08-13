@@ -1,33 +1,53 @@
-import Image from 'next/image';
+import { ApprovalPreview } from '@/components/landing/product-previews/approval-preview';
+import { AssistantPreview } from '@/components/landing/product-previews/assistant-preview';
+import { ConversionPreview } from '@/components/landing/product-previews/conversion-preview';
+import { InvoicesPreview } from '@/components/landing/product-previews/operations-preview';
+import { WalletsPreview } from '@/components/landing/product-previews/wallets-preview';
 
 const nodes = [
   {
     className: 'system-node-context',
     eyebrow: 'Context',
     title: 'Every balance in view',
-    src: '/images/finora/screens/node-wallets.webp',
-    alt: 'Finora wallet balances across fiat, crypto, and mobile money',
+    preview: (
+      <WalletsPreview
+        density='compact'
+        decorative
+      />
+    ),
   },
   {
     className: 'system-node-prepare',
     eyebrow: 'Prepare',
     title: 'A complete action, ready to review',
-    src: '/images/finora/screens/node-fx.webp',
-    alt: 'Finora currency conversion confirmation',
+    preview: (
+      <ConversionPreview
+        density='compact'
+        decorative
+      />
+    ),
   },
   {
     className: 'system-node-operations',
     eyebrow: 'Operate',
     title: 'Invoices and payroll stay connected',
-    src: '/images/finora/screens/node-invoices.webp',
-    alt: 'Finora invoice management screen',
+    preview: (
+      <InvoicesPreview
+        density='compact'
+        decorative
+      />
+    ),
   },
   {
     className: 'system-node-approve',
     eyebrow: 'Approve',
     title: 'You remain in control',
-    src: '/images/finora/screens/node-payment.webp',
-    alt: 'Finora completed payment screen',
+    preview: (
+      <ApprovalPreview
+        density='compact'
+        decorative
+      />
+    ),
   },
 ] as const;
 
@@ -114,15 +134,7 @@ export function SystemMap() {
 
         <div className='system-phone-wrap'>
           <div className='system-phone'>
-            <Image
-              src='/images/finora/screens/chat-home.jpg'
-              alt='Finora conversational home screen'
-              width={591}
-              height={1280}
-              priority
-              sizes='(max-width: 767px) 58vw, 254px'
-              className='h-auto w-full select-none'
-            />
+            <AssistantPreview />
           </div>
         </div>
 
@@ -135,15 +147,7 @@ export function SystemMap() {
               <span>{node.eyebrow}</span>
               <strong>{node.title}</strong>
             </div>
-            <div className='system-node-screen'>
-              <Image
-                src={node.src}
-                alt={node.alt}
-                fill
-                sizes='(max-width: 767px) 44vw, (max-width: 1024px) 46vw, 280px'
-                className='object-cover'
-              />
-            </div>
+            <div className='system-node-screen'>{node.preview}</div>
           </article>
         ))}
       </div>
