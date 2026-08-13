@@ -12,6 +12,7 @@ import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { useSettings } from '@/lib/settings-context';
 
 function NewChatButton() {
   const aui = useAui();
@@ -158,6 +159,7 @@ function bodyTitleScreenOptions(title: string) {
 
 export default function AppLayout() {
   const { colors } = useTheme();
+  const { t } = useSettings();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
@@ -209,19 +211,19 @@ export default function AppLayout() {
       <Drawer.Screen
         name='wallets'
         options={{
-          ...screenOptions('Wallets'),
+          ...screenOptions(t('nav_wallets')),
           headerTransparent: true,
           headerStyle: { backgroundColor: 'transparent' },
         }}
       />
       <Drawer.Screen
         name='cards'
-        options={bodyTitleScreenOptions('Cards')}
+        options={bodyTitleScreenOptions(t('nav_cards'))}
       />
       <Drawer.Screen
         name='virtual-card'
         options={{
-          ...screenOptions('Request card'),
+          ...screenOptions(t('nav_request_card')),
           drawerItemStyle: { display: 'none' },
           headerLeft: () => <BackHeaderButton fallback='cards' />,
           headerRight: () => null,
@@ -230,7 +232,7 @@ export default function AppLayout() {
       <Drawer.Screen
         name='activity'
         options={{
-          ...bodyTitleScreenOptions('Activity'),
+          ...bodyTitleScreenOptions(t('nav_activity')),
           headerTransparent: true,
           headerStyle: { backgroundColor: 'transparent' },
         }}
@@ -238,7 +240,7 @@ export default function AppLayout() {
       <Drawer.Screen
         name='card/[id]'
         options={{
-          ...screenOptions('Card'),
+          ...screenOptions(t('nav_card')),
           drawerItemStyle: { display: 'none' },
           headerLeft: () => <BackHeaderButton fallback='cards' />,
           headerRight: () => null,
@@ -246,56 +248,56 @@ export default function AppLayout() {
       />
       <Drawer.Screen
         name='approvals'
-        options={bodyTitleScreenOptions('Approvals')}
+        options={bodyTitleScreenOptions(t('nav_approvals'))}
       />
       <Drawer.Screen
         name='invoices'
-        options={bodyTitleScreenOptions('Invoices')}
+        options={bodyTitleScreenOptions(t('nav_invoices'))}
       />
       <Drawer.Screen
         name='recurring'
-        options={bodyTitleScreenOptions('Recurring')}
+        options={bodyTitleScreenOptions(t('nav_recurring'))}
       />
       <Drawer.Screen
         name='payroll'
-        options={bodyTitleScreenOptions('Payroll')}
+        options={bodyTitleScreenOptions(t('nav_payroll'))}
       />
       <Drawer.Screen
         name='suppliers'
-        options={bodyTitleScreenOptions('Suppliers')}
+        options={bodyTitleScreenOptions(t('nav_suppliers'))}
       />
       <Drawer.Screen
         name='beneficiaries'
-        options={bodyTitleScreenOptions('Beneficiaries')}
+        options={bodyTitleScreenOptions(t('nav_beneficiaries'))}
       />
       <Drawer.Screen
         name='expenses'
-        options={bodyTitleScreenOptions('Expenses')}
+        options={bodyTitleScreenOptions(t('nav_expenses'))}
       />
       <Drawer.Screen
         name='treasury'
-        options={bodyTitleScreenOptions('Treasury')}
+        options={bodyTitleScreenOptions(t('nav_treasury'))}
       />
       <Drawer.Screen
         name='automations'
-        options={bodyTitleScreenOptions('Automations')}
+        options={bodyTitleScreenOptions(t('nav_automations'))}
       />
       <Drawer.Screen
         name='policies'
-        options={bodyTitleScreenOptions('Policies')}
+        options={bodyTitleScreenOptions(t('nav_policies'))}
       />
       <Drawer.Screen
         name='contacts'
-        options={bodyTitleScreenOptions('Contacts')}
+        options={bodyTitleScreenOptions(t('nav_contacts'))}
       />
       <Drawer.Screen
         name='integrations'
-        options={bodyTitleScreenOptions('Integrations')}
+        options={bodyTitleScreenOptions(t('nav_integrations'))}
       />
       <Drawer.Screen
         name='settings'
         options={{
-          title: 'Settings',
+          title: t('nav_settings'),
           // Nested settings Stack owns its own headers (hub + drill-downs).
           headerShown: false,
         }}
@@ -303,7 +305,7 @@ export default function AppLayout() {
       <Drawer.Screen
         name='transaction/[id]'
         options={{
-          ...screenOptions('Transaction'),
+          ...screenOptions(t('nav_transaction')),
           drawerItemStyle: { display: 'none' },
           headerLeft: () => <BackHeaderButton />,
           headerRight: () => null,
@@ -312,7 +314,7 @@ export default function AppLayout() {
       <Drawer.Screen
         name='approval/[id]'
         options={{
-          ...screenOptions('Approve payment'),
+          ...screenOptions(t('nav_approve_payment')),
           drawerItemStyle: { display: 'none' },
           headerLeft: () => <BackHeaderButton />,
           headerRight: () => null,
@@ -321,7 +323,7 @@ export default function AppLayout() {
       <Drawer.Screen
         name='scan'
         options={{
-          ...screenOptions('Scan'),
+          ...screenOptions(t('nav_scan')),
           drawerItemStyle: { display: 'none' },
           headerLeft: () => <BackHeaderButton />,
           headerRight: () => null,

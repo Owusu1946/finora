@@ -5,8 +5,6 @@ import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
-import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
-
 import {
   SettingsRow,
   SettingsScreen,
@@ -24,39 +22,10 @@ import { hasPasscode } from '@/lib/passcode-storage';
 import { resetFinoraSession } from '@/lib/reset-session';
 import { useSettings } from '@/lib/settings-context';
 
-function themeLabel(theme: ThemePreference): string {
-  switch (theme) {
-    case 'light':
-      return 'Light';
-    case 'dark':
-      return 'Dark';
-    default:
-      return 'System';
-  }
-}
-
-function languageLabel(language: AppLanguage): string {
-  return language === 'fr' ? 'Français' : 'English';
-}
-
-function notificationsSummary(prefs: {
-  approvals: boolean;
-  payments: boolean;
-  invoices: boolean;
-  marketing: boolean;
-}): string {
-  const on = [prefs.approvals, prefs.payments, prefs.invoices, prefs.marketing].filter(
-    Boolean,
-  ).length;
-  if (on === 0) return 'Off';
-  if (on === 4) return 'All on';
-  return `${on} on`;
-}
-
 export default function SettingsHubScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { settings, loading, refresh } = useSettings();
+  const { settings, loading, refresh, t } = useSettings();
   const { signOut } = useClerk();
   const { user } = useUser();
   const { markTagUnconfigured } = useAuthGate();
@@ -72,11 +41,34 @@ export default function SettingsHubScreen() {
     }, [refresh]),
   );
 
+  const themeLabel = () => {
+    switch (settings.theme) {
+      case 'light':
+        return t('settings_theme_light');
+      case 'dark':
+        return t('settings_theme_dark');
+      default:
+        return t('settings_theme_system');
+    }
+  };
+
+  const notifSummary = () => {
+    const on = [
+      settings.notifications.approvals,
+      settings.notifications.payments,
+      settings.notifications.invoices,
+      settings.notifications.marketing,
+    ].filter(Boolean).length;
+    if (on === 0) return t('settings_notif_off');
+    if (on === 4) return t('settings_notif_all_on');
+    return `${on} on`;
+  };
+
   const handleSignOut = () => {
-    Alert.alert('Sign out', 'You’ll need to sign in again to use Finora.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('settings_sign_out'), t('settings_sign_out_confirm'), [
+      { text: t('action_cancel'), style: 'cancel' },
       {
-        text: 'Sign out',
+        text: t('settings_sign_out'),
         style: 'destructive',
         onPress: async () => {
           haptics.selection();
@@ -89,27 +81,23 @@ export default function SettingsHubScreen() {
   };
 
   const handleReset = () => {
-    Alert.alert(
-      'Reset Finora',
-      'Clears auth, onboarding, passcode, and local demo data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            haptics.selection();
-            await signOut();
-            await resetFinoraSession();
-            await clearTagConfigured();
-            markTagUnconfigured();
-            markIncomplete();
-            haptics.success();
-            router.replace('/onboarding' as Href);
-          },
+    Alert.alert(t('settings_reset_title'), t('settings_reset_confirm'), [
+      { text: t('action_cancel'), style: 'cancel' },
+      {
+        text: t('settings_reset_title'),
+        style: 'destructive',
+        onPress: async () => {
+          haptics.selection();
+          await signOut();
+          await resetFinoraSession();
+          await clearTagConfigured();
+          markTagUnconfigured();
+          markIncomplete();
+          haptics.success();
+          router.replace('/onboarding' as Href);
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -158,31 +146,31 @@ export default function SettingsHubScreen() {
         </Pressable>
       </SettingsSection>
 
-      <SettingsSection title='App'>
+      <SettingsSection title={t('settings_section_app')}>
         <SettingsRow
-          label='Security'
-          detail={hasPin ? 'Passcode on' : 'Passcode off'}
+          label={t('settings_security_label')}
+          detail={hasPin ? t('settings_passcode_on') : t('settings_passcode_off')}
           icon='shield'
           showChevron
           onPress={() => router.push('/settings/security' as Href)}
         />
         <SettingsRow
-          label='Memory'
-          detail='What Finora remembers about you'
+          label={t('settings_memory_label')}
+          detail={t('settings_memory_detail')}
           icon='brain'
           showChevron
           onPress={() => router.push('/settings/memory' as Href)}
         />
         <SettingsRow
-          label='Notifications'
-          detail={notificationsSummary(settings.notifications)}
+          label={t('settings_notifications_label')}
+          detail={notifSummary()}
           icon='activity'
           showChevron
           onPress={() => router.push('/settings/notifications' as Href)}
         />
         <SettingsRow
-          label='Appearance'
-          detail={`${themeLabel(settings.theme)} · ${languageLabel(settings.language)}`}
+          label={t('settings_appearance_label')}
+          detail={`${themeLabel()} \u00b7 ${settings.language === 'fr' ? t('settings_lang_fr') : t('settings_lang_en')}`}
           icon='eye'
           showChevron
           isLast
@@ -190,23 +178,23 @@ export default function SettingsHubScreen() {
         />
       </SettingsSection>
 
-      <SettingsSection title='More'>
+      <SettingsSection title={t('settings_section_more')}>
         <SettingsRow
-          label='Integrations'
-          detail='Gmail and connected tools'
+          label={t('settings_integrations_label')}
+          detail={t('settings_integrations_detail')}
           icon='integrations'
           showChevron
           onPress={() => router.push('/integrations' as Href)}
         />
         <SettingsRow
-          label='Approvals'
-          detail='Agent-prepared payments and plans'
+          label={t('settings_approvals_label')}
+          detail={t('settings_approvals_detail')}
           icon='shield'
           showChevron
           onPress={() => router.push('/approvals' as Href)}
         />
         <SettingsRow
-          label='About Finora'
+          label={t('settings_about_label')}
           detail={`v${Constants.expoConfig?.version ?? '0.1.0'}`}
           icon='info'
           showChevron
@@ -217,7 +205,7 @@ export default function SettingsHubScreen() {
 
       <SettingsSection>
         <SettingsRow
-          label='Sign out'
+          label={t('settings_sign_out')}
           icon='arrow-up'
           destructive
           showChevron
@@ -228,12 +216,12 @@ export default function SettingsHubScreen() {
 
       {__DEV__ ? (
         <SettingsSection
-          title='Developer'
-          footer='Only visible in development builds.'
+          title={t('settings_section_developer')}
+          footer={t('settings_dev_footer')}
         >
           <SettingsRow
-            label='Reset Finora data'
-            detail='Auth, onboarding, passcode, local mocks'
+            label={t('settings_reset_label')}
+            detail={t('settings_reset_detail')}
             icon='reload'
             destructive
             showChevron

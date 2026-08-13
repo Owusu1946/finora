@@ -13,8 +13,9 @@ import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
+import { useSettings } from '@/lib/settings-context';
 
-export type PasscodeMode = 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp';
+export type PasscodeMode = 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp' | 'phone-required';
 
 type PasscodeModalProps = {
   visible: boolean;
@@ -38,6 +39,8 @@ type PasscodeModalProps = {
   onComplete: (passcode: string) => void;
   /** Start forgot-passcode recovery (unlock mode). */
   onForgot?: () => void;
+  /** Open verified phone setup when recovery is unavailable. */
+  onAddPhone?: () => void;
   /** Clear a stale error when the user starts typing again. */
   onClearError?: () => void;
 };
@@ -60,9 +63,11 @@ export function PasscodeModal({
   onClose,
   onComplete,
   onForgot,
+  onAddPhone,
   onClearError,
 }: PasscodeModalProps) {
   const { colors } = useTheme();
+  const { t } = useSettings();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [value, setValue] = useState('');
@@ -83,7 +88,7 @@ export function PasscodeModal({
     if (!visible) return;
     setValue('');
     lastSubmittedRef.current = null;
-  }, [visible, mode]);
+  }, [visible, mode, title, subtitle]);
 
   useEffect(() => {
     if (!visible || failureSignal < 1) return;
@@ -101,42 +106,41 @@ export function PasscodeModal({
     );
   }, [failureSignal, shakeX, visible]);
 
-  useEffect(() => {
-    if (locked || value.length !== PASSCODE_LENGTH) return;
-    if (lastSubmittedRef.current === value) return;
-    const code = value;
-    lastSubmittedRef.current = code;
-    const id = setTimeout(() => onCompleteRef.current(code), 80);
-    return () => clearTimeout(id);
-  }, [locked, value]);
+
 
   const copy = useMemo(() => {
     if (title && subtitle) return { title, subtitle };
     if (mode === 'setup') {
       return {
-        title: 'Create passcode',
-        subtitle: 'You’ll use this to approve money moves in Finora.',
+        title: t('passcode_create_title'),
+        subtitle: t('passcode_create_sub'),
       };
     }
     if (mode === 'confirm-setup') {
       return {
-        title: 'Confirm passcode',
-        subtitle: 'Enter the same passcode once more.',
+        title: t('passcode_confirm_title'),
+        subtitle: t('passcode_confirm_sub'),
       };
     }
     if (mode === 'forgot-otp') {
       return {
-        title: 'Check your email',
+        title: t('passcode_forgot_title'),
         subtitle: forgotHint
-          ? `Enter the 6-digit code sent to ${forgotHint}.`
-          : 'Enter the 6-digit code we sent to your email.',
+          ? `${t('phone_code_sent')} ${forgotHint}.`
+          : t('passcode_forgot_sub'),
+      };
+    }
+    if (mode === 'phone-required') {
+      return {
+        title: t('passcode_phone_req_title'),
+        subtitle: t('passcode_phone_req_sub'),
       };
     }
     return {
-      title: 'Enter passcode',
-      subtitle: 'Confirm this transaction with your Finora passcode.',
+      title: t('passcode_enter_title'),
+      subtitle: t('passcode_enter_sub'),
     };
-  }, [forgotHint, mode, subtitle, title]);
+  }, [forgotHint, mode, subtitle, t, title]);
 
   const shakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeX.value }],
@@ -146,7 +150,15 @@ export function PasscodeModal({
     if (locked || value.length >= PASSCODE_LENGTH) return;
     if (error) onClearError?.();
     haptics.selection();
-    setValue((v) => v + digit);
+    const nextValue = value + digit;
+    setValue(nextValue);
+    if (nextValue.length === PASSCODE_LENGTH) {
+      if (lastSubmittedRef.current === nextValue) return;
+      lastSubmittedRef.current = nextValue;
+      setTimeout(() => {
+        onCompleteRef.current(nextValue);
+      }, 10);
+    }
   };
 
   const backspace = () => {
@@ -154,9 +166,12 @@ export function PasscodeModal({
     if (error) onClearError?.();
     haptics.selection();
     setValue((v) => v.slice(0, -1));
+    lastSubmittedRef.current = null;
   };
 
-  const showForgot = (mode === 'unlock' || mode === 'forgot-otp' || locked) && onForgot;
+  const showForgot =
+    mode !== 'phone-required' && (mode === 'unlock' || mode === 'forgot-otp' || locked) && onForgot;
+  const phoneRequired = mode === 'phone-required';
 
   return (
     <Modal
@@ -208,29 +223,58 @@ export function PasscodeModal({
               </Text>
             </View>
 
-            <Animated.View style={[styles.dots, shakeStyle]}>
-              {Array.from({ length: PASSCODE_LENGTH }).map((_, i) => {
-                const filled = i < value.length;
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.dot,
-                      {
-                        borderColor: error || locked ? colors.destructive : colors.border,
-                        backgroundColor: filled
-                          ? error || locked
-                            ? colors.destructive
-                            : colors.foreground
-                          : 'transparent',
-                      },
-                    ]}
-                  />
-                );
-              })}
-            </Animated.View>
+            {!phoneRequired ? (
+              <Animated.View style={[styles.dots, shakeStyle]}>
+                {Array.from({ length: PASSCODE_LENGTH }).map((_, i) => {
+                  const filled = i < value.length;
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        styles.dot,
+                        {
+                          borderColor: error || locked ? colors.destructive : colors.border,
+                          backgroundColor: filled
+                            ? error || locked
+                              ? colors.destructive
+                              : colors.foreground
+                            : 'transparent',
+                        },
+                      ]}
+                    />
+                  );
+                })}
+              </Animated.View>
+            ) : null}
 
-            {error ? (
+            {phoneRequired ? (
+              <View style={styles.phoneActions}>
+                <Pressable
+                  accessibilityRole='button'
+                  onPress={() => {
+                    haptics.selection();
+                    onAddPhone?.();
+                  }}
+                  style={({ pressed }) => [
+                    styles.phonePrimary,
+                    { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+                  ]}
+                >
+                  <Text style={[styles.phonePrimaryText, { color: colors.background }]}>
+                    Add phone number
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole='button'
+                  onPress={onClose}
+                  style={({ pressed }) => [styles.phoneSecondary, { opacity: pressed ? 0.55 : 1 }]}
+                >
+                  <Text style={[styles.phoneSecondaryText, { color: colors.mutedForeground }]}>
+                    Not now
+                  </Text>
+                </Pressable>
+              </View>
+            ) : error ? (
               <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
             ) : attemptsLeft != null && mode === 'unlock' && attemptsLeft < MAX_ATTEMPTS ? (
               <Text style={[styles.error, { color: colors.mutedForeground }]}>
@@ -252,7 +296,7 @@ export function PasscodeModal({
                 style={styles.forgotBtn}
               >
                 <Text style={[styles.forgotText, { color: colors.foreground }]}>
-                  {mode === 'forgot-otp' ? 'Resend code' : 'Forgot passcode?'}
+                  {mode === 'forgot-otp' ? t('action_resend') : t('passcode_forgot_btn')}
                 </Text>
               </Pressable>
             ) : (
@@ -260,84 +304,86 @@ export function PasscodeModal({
             )}
           </View>
 
-          <View style={[styles.pad, { width: keypadWidth, opacity: locked ? 0.45 : 1 }]}>
-            {KEYS.map((key) => {
-              if (key === 'bio') {
-                if (mode !== 'unlock' || locked) {
+          {!phoneRequired ? (
+            <View style={[styles.pad, { width: keypadWidth, opacity: locked ? 0.45 : 1 }]}>
+              {KEYS.map((key) => {
+                if (key === 'bio') {
+                  if (mode !== 'unlock' || locked) {
+                    return (
+                      <View
+                        key='bio'
+                        style={{ width: keySize, height: keySize }}
+                      />
+                    );
+                  }
                   return (
-                    <View
+                    <Pressable
                       key='bio'
-                      style={{ width: keySize, height: keySize }}
-                    />
+                      accessibilityLabel='Biometric unlock (coming soon)'
+                      accessibilityHint='Biometric authentication is not available yet. Enter your passcode.'
+                      onPress={() => {
+                        haptics.selection();
+                      }}
+                      style={({ pressed }) => [
+                        styles.key,
+                        { width: keySize, height: keySize },
+                        pressed && { opacity: 0.55 },
+                      ]}
+                    >
+                      <Icon
+                        name='biometric'
+                        size={28}
+                        color={colors.mutedForeground}
+                      />
+                    </Pressable>
+                  );
+                }
+                if (key === 'back') {
+                  return (
+                    <Pressable
+                      key='back'
+                      accessibilityLabel='Delete'
+                      disabled={locked}
+                      onPress={backspace}
+                      style={({ pressed }) => [
+                        styles.key,
+                        { width: keySize, height: keySize },
+                        pressed && { opacity: 0.55 },
+                      ]}
+                    >
+                      <View style={{ transform: [{ rotate: '180deg' }] }}>
+                        <Icon
+                          name='eraser'
+                          size={26}
+                          color={colors.foreground}
+                        />
+                      </View>
+                    </Pressable>
                   );
                 }
                 return (
                   <Pressable
-                    key='bio'
-                    accessibilityLabel='Biometric unlock (coming soon)'
-                    accessibilityHint='Biometric authentication is not available yet. Enter your passcode.'
-                    onPress={() => {
-                      haptics.selection();
-                    }}
-                    style={({ pressed }) => [
-                      styles.key,
-                      { width: keySize, height: keySize },
-                      pressed && { opacity: 0.55 },
-                    ]}
-                  >
-                    <Icon
-                      name='biometric'
-                      size={28}
-                      color={colors.mutedForeground}
-                    />
-                  </Pressable>
-                );
-              }
-              if (key === 'back') {
-                return (
-                  <Pressable
-                    key='back'
-                    accessibilityLabel='Delete'
+                    key={key}
+                    accessibilityLabel={`Digit ${key}`}
                     disabled={locked}
-                    onPress={backspace}
+                    onPress={() => pushDigit(key)}
                     style={({ pressed }) => [
                       styles.key,
-                      { width: keySize, height: keySize },
-                      pressed && { opacity: 0.55 },
+                      styles.keyDigit,
+                      {
+                        width: keySize,
+                        height: keySize,
+                        backgroundColor: pressed ? colors.muted : colors.composer,
+                        borderColor: colors.border,
+                      },
                     ]}
                   >
-                    <View style={{ transform: [{ rotate: '180deg' }] }}>
-                      <Icon
-                        name='eraser'
-                        size={26}
-                        color={colors.foreground}
-                      />
-                    </View>
+                    <Text style={[styles.keyLabel, { color: colors.foreground }]}>{key}</Text>
                   </Pressable>
                 );
-              }
-              return (
-                <Pressable
-                  key={key}
-                  accessibilityLabel={`Digit ${key}`}
-                  disabled={locked}
-                  onPress={() => pushDigit(key)}
-                  style={({ pressed }) => [
-                    styles.key,
-                    styles.keyDigit,
-                    {
-                      width: keySize,
-                      height: keySize,
-                      backgroundColor: pressed ? colors.muted : colors.composer,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.keyLabel, { color: colors.foreground }]}>{key}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+              })}
+            </View>
+          ) : null}
         </View>
       </View>
     </Modal>
@@ -428,6 +474,33 @@ const styles = StyleSheet.create({
   },
   forgotSpacer: {
     height: 32,
+  },
+  phoneActions: {
+    width: 280,
+    gap: 10,
+    marginTop: 8,
+  },
+  phonePrimary: {
+    minHeight: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+  phonePrimaryText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 16,
+    letterSpacing: -0.2,
+  },
+  phoneSecondary: {
+    minHeight: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phoneSecondaryText: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 15,
+    letterSpacing: -0.2,
   },
   pad: {
     flexDirection: 'row',

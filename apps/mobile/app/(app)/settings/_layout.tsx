@@ -7,6 +7,7 @@ import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { useSettings } from '@/lib/settings-context';
 
 function MenuHeaderButton() {
   const navigation = useNavigation();
@@ -58,6 +59,7 @@ function NewChatHeaderButton() {
 
 export default function SettingsLayout() {
   const { colors } = useTheme();
+  const { t } = useSettings();
 
   return (
     <Stack
@@ -69,41 +71,41 @@ export default function SettingsLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTitleAlign: 'center',
         contentStyle: { backgroundColor: colors.background },
-        headerBackTitle: 'Settings',
+        headerBackTitle: t('nav_settings'),
       }}
     >
       <Stack.Screen
         name='index'
         options={{
-          title: 'Settings',
-          headerTitle: () => <HeaderTitleWithAccount title='Settings' />,
+          title: t('nav_settings'),
+          headerTitle: () => <HeaderTitleWithAccount title={t('nav_settings')} />,
           headerLeft: () => <MenuHeaderButton />,
           headerRight: () => <NewChatHeaderButton />,
         }}
       />
       <Stack.Screen
         name='account'
-        options={{ title: 'Account' }}
+        options={{ title: t('nav_account') }}
       />
       <Stack.Screen
         name='security'
-        options={{ title: 'Security' }}
+        options={{ title: t('nav_security') }}
       />
       <Stack.Screen
         name='notifications'
-        options={{ title: 'Notifications' }}
+        options={{ title: t('nav_notifications') }}
       />
       <Stack.Screen
         name='appearance'
-        options={{ title: 'Appearance' }}
+        options={{ title: t('nav_appearance') }}
       />
       <Stack.Screen
         name='memory'
-        options={{ title: 'Memory' }}
+        options={{ title: t('nav_memory') }}
       />
       <Stack.Screen
         name='about'
-        options={{ title: 'About Finora' }}
+        options={{ title: t('nav_about') }}
       />
     </Stack>
   );

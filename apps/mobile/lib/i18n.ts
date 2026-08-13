@@ -1,0 +1,269 @@
+import * as Localization from 'expo-localization';
+
+import type { AppLanguage } from './settings-storage';
+
+export type TranslationKey = keyof typeof en;
+
+const en = {
+  // Navigation & Tabs
+  nav_home: 'Home',
+  nav_treasury: 'Treasury',
+  nav_approvals: 'Approvals',
+  nav_cards: 'Cards',
+  nav_invoices: 'Invoices',
+  nav_policies: 'Policies',
+  nav_settings: 'Settings',
+  nav_security: 'Security',
+  nav_appearance: 'Appearance',
+  nav_wallets: 'Wallets',
+  nav_activity: 'Activity',
+  nav_recurring: 'Recurring',
+  nav_payroll: 'Payroll',
+  nav_suppliers: 'Suppliers',
+  nav_beneficiaries: 'Beneficiaries',
+  nav_expenses: 'Expenses',
+  nav_automations: 'Automations',
+  nav_contacts: 'Contacts',
+  nav_integrations: 'Integrations',
+  nav_account: 'Account',
+  nav_notifications: 'Notifications',
+  nav_memory: 'Memory',
+  nav_about: 'About Finora',
+  nav_transaction: 'Transaction',
+  nav_approve_payment: 'Approve payment',
+  nav_scan: 'Scan',
+  nav_request_card: 'Request card',
+  nav_card: 'Card',
+
+  // Actions
+  action_approve: 'Approve',
+  action_reject: 'Reject',
+  action_cancel: 'Cancel',
+  action_confirm: 'Confirm',
+  action_continue: 'Continue',
+  action_send: 'Send',
+  action_resend: 'Resend code',
+  action_verify: 'Verify',
+  action_save: 'Save',
+  action_done: 'Done',
+  action_close: 'Close',
+  action_sign_out: 'Sign out',
+
+  // Statuses
+  status_pending: 'Pending',
+  status_approved: 'Approved',
+  status_rejected: 'Rejected',
+  status_executed: 'Executed',
+  status_cancelled: 'Cancelled',
+  status_verified: 'Verified',
+  status_required: 'Required',
+
+  // Phone verification
+  phone_title: 'Phone verification',
+  phone_subtitle: 'Enter your Ghana phone number to receive a 6-digit verification code.',
+  phone_enter_code: 'Check your phone',
+  phone_code_sent: 'Enter the 6-digit code sent to',
+  phone_invalid: 'Please enter a valid phone number.',
+  phone_error: 'Could not send verification code. Try again.',
+
+  // Passcode modal
+  passcode_create_title: 'Create passcode',
+  passcode_create_sub: 'You\u2019ll use this to approve money moves in Finora.',
+  passcode_confirm_title: 'Confirm passcode',
+  passcode_confirm_sub: 'Enter the same passcode once more.',
+  passcode_enter_title: 'Enter passcode',
+  passcode_enter_sub: 'Confirm this transaction with your Finora passcode.',
+  passcode_forgot_title: 'Check your phone',
+  passcode_forgot_sub: 'Enter the 6-digit code sent by SMS.',
+  passcode_phone_req_title: 'Add a recovery phone',
+  passcode_phone_req_sub: 'Verify a phone number first so Finora can securely send reset codes.',
+  passcode_incorrect: 'Incorrect passcode. Try again.',
+  passcode_forgot_btn: 'Forgot passcode?',
+  passcode_new_title: 'New passcode',
+  passcode_new_sub: 'Choose a new passcode for approving money moves.',
+
+  // Settings hub
+  settings_title: 'Settings',
+  settings_appearance: 'Appearance',
+  settings_security: 'Security & Passcode',
+  settings_language: 'Language',
+  settings_theme: 'Theme',
+  settings_theme_system: 'System',
+  settings_theme_light: 'Light',
+  settings_theme_dark: 'Dark',
+  settings_lang_en: 'English',
+  settings_lang_fr: 'Fran\u00e7ais',
+  settings_haptics: 'Haptics',
+  settings_haptics_sub: 'Vibration feedback on taps and confirms',
+  settings_section_app: 'App',
+  settings_section_more: 'More',
+  settings_section_developer: 'Developer',
+  settings_security_label: 'Security',
+  settings_passcode_on: 'Passcode on',
+  settings_passcode_off: 'Passcode off',
+  settings_memory_label: 'Memory',
+  settings_memory_detail: 'What Finora remembers about you',
+  settings_notifications_label: 'Notifications',
+  settings_appearance_label: 'Appearance',
+  settings_integrations_label: 'Integrations',
+  settings_integrations_detail: 'Gmail and connected tools',
+  settings_approvals_label: 'Approvals',
+  settings_approvals_detail: 'Agent-prepared payments and plans',
+  settings_about_label: 'About Finora',
+  settings_sign_out: 'Sign out',
+  settings_sign_out_confirm: 'You\u2019ll need to sign in again to use Finora.',
+  settings_reset_label: 'Reset Finora data',
+  settings_reset_detail: 'Auth, onboarding, passcode, local mocks',
+  settings_reset_confirm: 'Clears auth, onboarding, passcode, and local demo data. This cannot be undone.',
+  settings_reset_title: 'Reset Finora',
+  settings_dev_footer: 'Only visible in development builds.',
+  settings_theme_follows: 'System follows your device appearance.',
+  settings_lang_hint: 'Applies to Finora copy. Chat replies follow the model language.',
+  settings_accessibility: 'Accessibility',
+  settings_larger_text: 'Larger text',
+  settings_larger_text_detail: 'Increase text across Finora',
+  settings_notif_all_on: 'All on',
+  settings_notif_off: 'Off',
+};
+
+const fr: Record<TranslationKey, string> = {
+  // Navigation & Tabs
+  nav_home: 'Accueil',
+  nav_treasury: 'Tr\u00e9sorerie',
+  nav_approvals: 'Approbations',
+  nav_cards: 'Cartes',
+  nav_invoices: 'Factures',
+  nav_policies: 'R\u00e8gles',
+  nav_settings: 'Param\u00e8tres',
+  nav_security: 'S\u00e9curit\u00e9',
+  nav_appearance: 'Apparence',
+  nav_wallets: 'Portefeuilles',
+  nav_activity: 'Activit\u00e9',
+  nav_recurring: 'R\u00e9currents',
+  nav_payroll: 'Paie',
+  nav_suppliers: 'Fournisseurs',
+  nav_beneficiaries: 'B\u00e9n\u00e9ficiaires',
+  nav_expenses: 'D\u00e9penses',
+  nav_automations: 'Automatisations',
+  nav_contacts: 'Contacts',
+  nav_integrations: 'Int\u00e9grations',
+  nav_account: 'Compte',
+  nav_notifications: 'Notifications',
+  nav_memory: 'M\u00e9moire',
+  nav_about: '\u00c0 propos de Finora',
+  nav_transaction: 'Transaction',
+  nav_approve_payment: 'Approuver le paiement',
+  nav_scan: 'Scanner',
+  nav_request_card: 'Demander une carte',
+  nav_card: 'Carte',
+
+  // Actions
+  action_approve: 'Approuver',
+  action_reject: 'Refuser',
+  action_cancel: 'Annuler',
+  action_confirm: 'Confirmer',
+  action_continue: 'Continuer',
+  action_send: 'Envoyer',
+  action_resend: 'Renvoyer le code',
+  action_verify: 'V\u00e9rifier',
+  action_save: 'Enregistrer',
+  action_done: 'Termin\u00e9',
+  action_close: 'Fermer',
+  action_sign_out: 'Se d\u00e9connecter',
+
+  // Statuses
+  status_pending: 'En attente',
+  status_approved: 'Approuv\u00e9',
+  status_rejected: 'Refus\u00e9',
+  status_executed: 'Ex\u00e9cut\u00e9',
+  status_cancelled: 'Annul\u00e9',
+  status_verified: 'V\u00e9rifi\u00e9',
+  status_required: 'Requis',
+
+  // Phone verification
+  phone_title: 'V\u00e9rification du t\u00e9l\u00e9phone',
+  phone_subtitle: 'Entrez votre num\u00e9ro pour recevoir un code de v\u00e9rification \u00e0 6 chiffres.',
+  phone_enter_code: 'V\u00e9rifiez votre t\u00e9l\u00e9phone',
+  phone_code_sent: 'Entrez le code \u00e0 6 chiffres envoy\u00e9 au',
+  phone_invalid: 'Veuillez entrer un num\u00e9ro de t\u00e9l\u00e9phone valide.',
+  phone_error: 'Impossible d\u2019envoyer le code de v\u00e9rification. R\u00e9essayez.',
+
+  // Passcode modal
+  passcode_create_title: 'Cr\u00e9er un code secret',
+  passcode_create_sub: 'Vous l\u2019utiliserez pour approuver les op\u00e9rations financi\u00e8res.',
+  passcode_confirm_title: 'Confirmer le code secret',
+  passcode_confirm_sub: 'Saisissez \u00e0 nouveau le m\u00eame code secret.',
+  passcode_enter_title: 'Entrer le code secret',
+  passcode_enter_sub: 'Confirmez cette transaction avec votre code secret Finora.',
+  passcode_forgot_title: 'V\u00e9rifiez votre t\u00e9l\u00e9phone',
+  passcode_forgot_sub: 'Entrez le code \u00e0 6 chiffres envoy\u00e9 par SMS.',
+  passcode_phone_req_title: 'Ajouter un t\u00e9l\u00e9phone de r\u00e9cup\u00e9ration',
+  passcode_phone_req_sub: 'V\u00e9rifiez d\u2019abord un num\u00e9ro pour recevoir vos codes de r\u00e9initialisation.',
+  passcode_incorrect: 'Code secret incorrect. R\u00e9essayez.',
+  passcode_forgot_btn: 'Code secret oubli\u00e9\u00a0?',
+  passcode_new_title: 'Nouveau code secret',
+  passcode_new_sub: 'Choisissez un nouveau code secret pour approuver vos transactions.',
+
+  // Settings hub
+  settings_title: 'Param\u00e8tres',
+  settings_appearance: 'Apparence',
+  settings_security: 'S\u00e9curit\u00e9 & Code secret',
+  settings_language: 'Langue',
+  settings_theme: 'Th\u00e8me',
+  settings_theme_system: 'Syst\u00e8me',
+  settings_theme_light: 'Clair',
+  settings_theme_dark: 'Sombre',
+  settings_lang_en: 'English',
+  settings_lang_fr: 'Fran\u00e7ais',
+  settings_haptics: 'Retour haptique',
+  settings_haptics_sub: 'Vibrations lors des appuis et confirmations',
+  settings_section_app: 'Application',
+  settings_section_more: 'Plus',
+  settings_section_developer: 'D\u00e9veloppeur',
+  settings_security_label: 'S\u00e9curit\u00e9',
+  settings_passcode_on: 'Code secret actif',
+  settings_passcode_off: 'Code secret d\u00e9sactiv\u00e9',
+  settings_memory_label: 'M\u00e9moire',
+  settings_memory_detail: 'Ce que Finora retient de vous',
+  settings_notifications_label: 'Notifications',
+  settings_appearance_label: 'Apparence',
+  settings_integrations_label: 'Int\u00e9grations',
+  settings_integrations_detail: 'Gmail et outils connect\u00e9s',
+  settings_approvals_label: 'Approbations',
+  settings_approvals_detail: 'Paiements et plans pr\u00e9par\u00e9s par l\u2019agent',
+  settings_about_label: '\u00c0 propos de Finora',
+  settings_sign_out: 'Se d\u00e9connecter',
+  settings_sign_out_confirm: 'Vous devrez vous reconnecter pour utiliser Finora.',
+  settings_reset_label: 'R\u00e9initialiser Finora',
+  settings_reset_detail: 'Auth, onboarding, code secret, donn\u00e9es locales',
+  settings_reset_confirm: 'Efface l\u2019authentification, l\u2019onboarding, le code secret et les donn\u00e9es locales. Irr\u00e9versible.',
+  settings_reset_title: 'R\u00e9initialiser Finora',
+  settings_dev_footer: 'Visible uniquement en mode d\u00e9veloppement.',
+  settings_theme_follows: 'Syst\u00e8me suit l\u2019apparence de votre appareil.',
+  settings_lang_hint: 'S\u2019applique au texte Finora. Le chat suit la langue du mod\u00e8le.',
+  settings_accessibility: 'Accessibilit\u00e9',
+  settings_larger_text: 'Texte plus grand',
+  settings_larger_text_detail: 'Augmenter le texte dans Finora',
+  settings_notif_all_on: 'Toutes actives',
+  settings_notif_off: 'D\u00e9sactiv\u00e9es',
+};
+
+const dictionaries = { en, fr };
+
+/** Detect system device language automatically if no explicit user preference is saved */
+export function getSystemLanguage(): AppLanguage {
+  try {
+    const locales = Localization.getLocales();
+    const primary = locales[0]?.languageCode?.toLowerCase();
+    if (primary === 'fr') return 'fr';
+  } catch {
+    // fallback to English
+  }
+  return 'en';
+}
+
+/** Translate key according to current app language setting */
+export function t(key: TranslationKey, lang: AppLanguage = 'en'): string {
+  const dict = dictionaries[lang] ?? dictionaries.en;
+  return dict[key] ?? en[key] ?? key;
+}

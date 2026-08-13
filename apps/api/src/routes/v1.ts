@@ -1,8 +1,10 @@
 import type { ApiEnv } from '@finora/env/api';
 
 import {
+  PhoneVerificationCodeSchema,
   SEND_CORRIDORS,
   UpdateUserProfileSchema,
+  normalizeGhanaPhoneNumber,
   normalizeFinoraTag,
   previewFxQuote,
   type Currency,
@@ -12,7 +14,25 @@ import { Hono } from 'hono';
 import type { AuthenticatedUser } from '../auth';
 
 import { createDb } from '../db/client';
-import { upsertUserProfile } from '../db/user-profiles';
+import {
+  consumeRecoveryAttempt,
+  deleteRecoveryChallenge,
+  getActiveRecoveryChallenge,
+  markRecoveryVerified,
+  saveRecoveryChallenge,
+} from '../db/passcode-recovery';
+import {
+  consumePhoneVerificationAttempt,
+  deletePhoneVerificationChallenge,
+  getPhoneVerificationChallenge,
+  savePhoneVerificationChallenge,
+} from '../db/phone-verification';
+import {
+  getUserProfileByClerkId,
+  getUserProfileByPhoneNumber,
+  setVerifiedPhoneNumber,
+  upsertUserProfile,
+} from '../db/user-profiles';
 import { createPreparation, mockStore, newId } from '../mock/store';
 
 type AppEnv = {
@@ -25,6 +45,248 @@ type AppEnv = {
  * Shape matches future live WeWire-backed handlers so MCP/mobile can stay stable.
  */
 export const v1 = new Hono<AppEnv>();
+
+const RECOVERY_TTL_MS = 10 * 60_000;
+const PHONE_VERIFICATION_TTL_MS = 10 * 60_000;
+const SMS_RESEND_COOLDOWN_MS = 30_000;
+
+async function hashOtp(env: Env, value: string) {
+  if (!env.AGOO_SMS_API_KEY) throw new Error('SMS provider is not configured.');
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(env.AGOO_SMS_API_KEY),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const digest = await crypto.subtle.sign('HMAC', key, encoder.encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function generateOtpCode() {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return String(bytes[0]! % 1_000_000).padStart(6, '0');
+}
+
+async function sendAgooSms(env: Env, to: string, message: string) {
+  if (!env.AGOO_SMS_API_KEY) throw new Error('SMS provider is not configured.');
+  const senderId = env.AGOO_SMS_SENDER_ID ?? 'VENTRAPOS';
+  const requestBody = { to, message, senderId };
+  console.log('[Agoo SMS] Sending:', JSON.stringify({ to, senderId, messageLength: message.length }));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  let response: Response;
+  try {
+    response = await fetch('https://api.agoosms.com/v1/sms/send', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'X-API-Key': env.AGOO_SMS_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+  } catch (error) {
+    clearTimeout(timeout);
+    console.error('[Agoo SMS] Network/fetch error:', error);
+    throw new Error(`SMS provider network error: ${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+  const rawText = await response.text().catch(() => '');
+  let payload: Record<string, unknown> | null = null;
+  try {
+    payload = JSON.parse(rawText) as Record<string, unknown>;
+  } catch {
+    console.error('[Agoo SMS] Non-JSON response:', response.status, rawText.slice(0, 500));
+  }
+  console.log('[Agoo SMS] Response:', response.status, JSON.stringify(payload));
+  if (!response.ok || !payload?.success) {
+    console.error('[Agoo SMS] Rejected:', response.status, payload);
+    throw new Error('SMS provider rejected the request.');
+  }
+}
+
+v1.post('/auth/passcode-recovery/request', async (c) => {
+  const { userId } = c.get('auth');
+  const db = createDb(c.env.DATABASE_URL);
+  const profile = await getUserProfileByClerkId(db, userId);
+  const phoneNumber = profile?.phoneVerifiedAt ? profile.phoneNumber : null;
+  if (!phoneNumber) {
+    return c.json({ error: 'verified_phone_required' }, 422);
+  }
+
+  const previous = await getActiveRecoveryChallenge(db, userId);
+  if (previous && Date.now() - previous.lastSentAt.getTime() < SMS_RESEND_COOLDOWN_MS) {
+    return c.json({ error: 'sms_rate_limited', retryAfterSeconds: 30 }, 429);
+  }
+
+  const code = generateOtpCode();
+  const challengeId = await saveRecoveryChallenge(db, {
+    clerkUserId: userId,
+    codeHash: await hashOtp(c.env, `${userId}:${code}`),
+    expiresAt: new Date(Date.now() + RECOVERY_TTL_MS),
+  });
+  try {
+    await sendAgooSms(
+      c.env,
+      phoneNumber,
+      `Your Finora passcode reset code is ${code}. It expires in 10 minutes.`,
+    );
+  } catch {
+    await deleteRecoveryChallenge(db, challengeId);
+    return c.json({ error: 'sms_delivery_failed' }, 502);
+  }
+
+  return c.json({
+    challengeId,
+    expiresInSeconds: RECOVERY_TTL_MS / 1000,
+    phoneHint: phoneNumber.slice(-4),
+  });
+});
+
+v1.post('/auth/phone-verification/request', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as {
+    phoneNumber?: unknown;
+    force?: unknown;
+  } | null;
+  if (typeof body?.phoneNumber !== 'string') {
+    return c.json({ error: 'invalid_phone_number' }, 400);
+  }
+  const phoneNumber = normalizeGhanaPhoneNumber(body.phoneNumber);
+  if (!phoneNumber) return c.json({ error: 'invalid_phone_number' }, 400);
+  const force = body.force === true;
+
+  const { userId } = c.get('auth');
+  const db = createDb(c.env.DATABASE_URL);
+  let profile = await getUserProfileByClerkId(db, userId);
+  if (!profile) {
+    const user = await c.get('clerk').users.getUser(userId);
+    const primaryEmail =
+      user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
+      user.emailAddresses[0]?.emailAddress;
+    if (!primaryEmail) return c.json({ error: 'profile_email_missing' }, 422);
+    profile = await upsertUserProfile(db, {
+      clerkUserId: user.id,
+      email: primaryEmail,
+      displayName:
+        [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+        primaryEmail.split('@')[0] ||
+        'Finora user',
+      imageUrl: user.imageUrl || null,
+    });
+  }
+  if (!force && profile.phoneNumber === phoneNumber && profile.phoneVerifiedAt) {
+    console.log('[Phone Verify] Already verified, short-circuiting for', phoneNumber.slice(-4));
+    return c.json({ verified: true, phoneHint: phoneNumber.slice(-4) });
+  }
+  const owner = await getUserProfileByPhoneNumber(db, phoneNumber);
+  if (owner && owner.clerkUserId !== userId) {
+    return c.json({ error: 'phone_number_in_use' }, 409);
+  }
+
+  const previous = await getPhoneVerificationChallenge(db, userId);
+  if (previous && Date.now() - previous.lastSentAt.getTime() < SMS_RESEND_COOLDOWN_MS) {
+    return c.json({ error: 'sms_rate_limited', retryAfterSeconds: 30 }, 429);
+  }
+
+  const code = generateOtpCode();
+  console.log('[Phone Verify] Generated OTP for', phoneNumber.slice(-4));
+  const challengeId = await savePhoneVerificationChallenge(db, {
+    clerkUserId: userId,
+    phoneNumber,
+    codeHash: await hashOtp(c.env, `${userId}:${phoneNumber}:${code}`),
+    expiresAt: new Date(Date.now() + PHONE_VERIFICATION_TTL_MS),
+  });
+  try {
+    await sendAgooSms(
+      c.env,
+      phoneNumber,
+      `Your Finora phone verification code is ${code}. It expires in 10 minutes.`,
+    );
+  } catch (smsError) {
+    console.error('[Phone Verify] SMS delivery failed:', smsError);
+    await deletePhoneVerificationChallenge(db, challengeId);
+    return c.json({ error: 'sms_delivery_failed' }, 502);
+  }
+
+  return c.json({
+    challengeId,
+    expiresInSeconds: PHONE_VERIFICATION_TTL_MS / 1000,
+    phoneHint: phoneNumber.slice(-4),
+  });
+});
+
+v1.post('/auth/phone-verification/verify', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { code?: unknown } | null;
+  const code = PhoneVerificationCodeSchema.safeParse(body?.code);
+  if (!code.success) {
+    return c.json({ error: 'invalid_code' }, 400);
+  }
+
+  const { userId } = c.get('auth');
+  const db = createDb(c.env.DATABASE_URL);
+  const challenge = await consumePhoneVerificationAttempt(db, userId);
+  if (!challenge || challenge.expiresAt.getTime() <= Date.now()) {
+    const profile = await getUserProfileByClerkId(db, userId);
+    if (profile?.phoneNumber && profile?.phoneVerifiedAt) {
+      return c.json({ verified: true, profile });
+    }
+    return c.json({ error: 'verification_code_expired' }, 410);
+  }
+  const valid =
+    (await hashOtp(c.env, `${userId}:${challenge.phoneNumber}:${code.data}`)) ===
+    challenge.codeHash;
+  if (!valid) return c.json({ error: 'invalid_code' }, 400);
+
+  try {
+    let profile = await getUserProfileByClerkId(db, userId);
+    if (!profile) {
+      const user = await c.get('clerk').users.getUser(userId);
+      const primaryEmail =
+        user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
+        user.emailAddresses[0]?.emailAddress;
+      if (!primaryEmail) return c.json({ error: 'profile_email_missing' }, 422);
+      profile = await upsertUserProfile(db, {
+        clerkUserId: user.id,
+        email: primaryEmail,
+        displayName:
+          [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+          primaryEmail.split('@')[0] ||
+          'Finora user',
+        imageUrl: user.imageUrl || null,
+      });
+    }
+    const updatedProfile = await setVerifiedPhoneNumber(db, userId, challenge.phoneNumber);
+    await deletePhoneVerificationChallenge(db, challenge.id);
+    return c.json({ verified: true, profile: updatedProfile });
+  } catch (error) {
+    console.error('Phone verification verify error:', error);
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
+      return c.json({ error: 'phone_number_in_use' }, 409);
+    }
+    throw error;
+  }
+});
+
+v1.post('/auth/passcode-recovery/verify', async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { code?: unknown } | null;
+  const code = PhoneVerificationCodeSchema.safeParse(body?.code);
+  if (!code.success) {
+    return c.json({ error: 'invalid_code' }, 400);
+  }
+  const { userId } = c.get('auth');
+  const challenge = await consumeRecoveryAttempt(createDb(c.env.DATABASE_URL), userId);
+  if (!challenge || challenge.expiresAt.getTime() <= Date.now() || challenge.verifiedAt) {
+    return c.json({ error: 'recovery_code_expired' }, 410);
+  }
+  const valid = (await hashOtp(c.env, `${userId}:${code.data}`)) === challenge.codeHash;
+  if (!valid) return c.json({ error: 'invalid_code' }, 400);
+  await markRecoveryVerified(createDb(c.env.DATABASE_URL), challenge.id);
+  return c.json({ verified: true });
+});
 
 v1.get('/auth/me', async (c) => {
   const { userId } = c.get('auth');

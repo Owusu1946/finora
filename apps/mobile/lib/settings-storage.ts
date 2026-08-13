@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { getSystemLanguage } from './i18n';
+
 const KEY = 'finora.settings.v1';
 
 const memory = new Map<string, string>();
@@ -66,7 +68,7 @@ export const DEFAULT_SETTINGS: FinoraSettings = {
   email: 'kenneth@finora.app',
   finoraTag: 'kennethowusu',
   theme: 'system',
-  language: 'en',
+  language: getSystemLanguage(),
   largerText: false,
   biometricsEnabled: false,
   hapticsEnabled: true,
