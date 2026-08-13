@@ -8,6 +8,9 @@ import { v1 } from './routes/v1';
 
 type AppEnv = {
   Bindings: Env;
+  Variables: {
+    auth: import('./auth').AuthenticatedUser;
+  };
 };
 
 const app = new Hono<AppEnv>();

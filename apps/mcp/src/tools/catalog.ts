@@ -19,6 +19,11 @@ export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
     method: 'GET',
     path: '/health',
   },
+  get_current_user: {
+    description: 'Get the authenticated Finora profile for the current Clerk session',
+    method: 'GET',
+    path: '/v1/auth/me',
+  },
   get_balances: {
     description: 'Get wallet balances for the Finora account',
     method: 'GET',

@@ -7,6 +7,9 @@
     "build": "wrangler deploy --dry-run",
     "cf-typegen": "wrangler types",
     "check-types": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
     "dev:lan": "node ./scripts/lan-proxy.mjs"
@@ -15,11 +18,15 @@
     "@clerk/hono": "^0.1.64",
     "@finora/shared": "workspace:*",
     "@finora/wewire": "workspace:*",
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.13.1",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260810.1",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
     "typescript": "~7.0.2",
     "wrangler": "^4.120.0"
   }

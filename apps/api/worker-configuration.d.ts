@@ -3,5 +3,6 @@ interface Env {
   WEWIRE_API_KEY?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;
+  DATABASE_URL: string;
   WEWIRE_WEBHOOK_SECRET?: string;
 }
