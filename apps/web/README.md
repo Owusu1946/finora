@@ -6,7 +6,7 @@ Next.js App Router landing site for Finora.
 
 ```bash
 # from monorepo root
-pnpm landing          # next dev on :3000
+pnpm run dev:web      # next dev on :3000
 pnpm --filter @finora/web build
 pnpm --filter @finora/web check-types
 ```

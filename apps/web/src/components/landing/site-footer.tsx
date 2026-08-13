@@ -20,7 +20,7 @@ const footerGroups = [
   {
     title: 'Company',
     links: [
-      { label: 'About', href: '#top' },
+      { label: 'About', href: '#about' },
       { label: 'Contact', href: 'mailto:hello@finora.app' },
       { label: 'Get started', href: '#get-started' },
     ],
@@ -49,9 +49,17 @@ export function SiteFooter() {
       </div>
 
       <div className='footer-main'>
-        <div className='footer-brand'>
+        <div
+          id='about'
+          tabIndex={-1}
+          className='footer-brand'
+        >
+          <h2 className='sr-only'>About Finora</h2>
           <FinoraLogo tone='light' />
-          <p>A financial operating system for people and AI agents.</p>
+          <p>
+            A financial operating system for people and AI agents. AI prepares financial work;
+            people review and approve it.
+          </p>
         </div>
 
         <div className='footer-links'>

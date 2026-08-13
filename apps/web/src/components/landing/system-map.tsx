@@ -1,33 +1,35 @@
 import Image from 'next/image';
 
+import { AssistantPreview } from '@/components/landing/product-previews/assistant-preview';
+
 const nodes = [
   {
     className: 'system-node-context',
     eyebrow: 'Context',
     title: 'Every balance in view',
-    src: '/images/finora/screens/node-wallets.webp',
-    alt: 'Finora wallet balances across fiat, crypto, and mobile money',
+    src: '/images/finora/previews/node-wallets.webp',
+    alt: 'Wallet balances across financial rails',
   },
   {
     className: 'system-node-prepare',
     eyebrow: 'Prepare',
     title: 'A complete action, ready to review',
-    src: '/images/finora/screens/node-fx.webp',
-    alt: 'Finora currency conversion confirmation',
+    src: '/images/finora/previews/node-conversion.webp',
+    alt: 'Prepared currency conversion',
   },
   {
     className: 'system-node-operations',
     eyebrow: 'Operate',
     title: 'Invoices and payroll stay connected',
-    src: '/images/finora/screens/node-invoices.webp',
-    alt: 'Finora invoice management screen',
+    src: '/images/finora/previews/node-invoices.webp',
+    alt: 'Invoices awaiting review',
   },
   {
     className: 'system-node-approve',
     eyebrow: 'Approve',
     title: 'You remain in control',
-    src: '/images/finora/screens/node-payment.webp',
-    alt: 'Finora completed payment screen',
+    src: '/images/finora/previews/node-receipt.webp',
+    alt: 'Completed payment receipt',
   },
 ] as const;
 
@@ -114,15 +116,7 @@ export function SystemMap() {
 
         <div className='system-phone-wrap'>
           <div className='system-phone'>
-            <Image
-              src='/images/finora/screens/chat-home.jpg'
-              alt='Finora conversational home screen'
-              width={591}
-              height={1280}
-              priority
-              sizes='(max-width: 767px) 58vw, 254px'
-              className='h-auto w-full select-none'
-            />
+            <AssistantPreview />
           </div>
         </div>
 
@@ -140,8 +134,8 @@ export function SystemMap() {
                 src={node.src}
                 alt={node.alt}
                 fill
-                sizes='(max-width: 767px) 44vw, (max-width: 1024px) 46vw, 280px'
-                className='object-cover'
+                sizes='(max-width: 767px) 44vw, (max-width: 1024px) 46vw, 286px'
+                className='object-cover object-top'
               />
             </div>
           </article>

@@ -1,4 +1,11 @@
-import Image from 'next/image';
+import { ActivityPreview } from '@/components/landing/product-previews/activity-preview';
+import { AssistantPreview } from '@/components/landing/product-previews/assistant-preview';
+import { ConversionPreview } from '@/components/landing/product-previews/conversion-preview';
+import {
+  InvoicesPreview,
+  PayrollPreview,
+} from '@/components/landing/product-previews/operations-preview';
+import { WalletsPreview } from '@/components/landing/product-previews/wallets-preview';
 
 export function BentoGrid() {
   return (
@@ -27,14 +34,7 @@ export function BentoGrid() {
             </p>
           </div>
           <div className='bento-chat-phone'>
-            <Image
-              src='/images/finora/screens/chat-home.jpg'
-              alt='Finora chat interface with suggested financial actions'
-              width={591}
-              height={1280}
-              sizes='(max-width: 767px) 58vw, 285px'
-              className='h-auto w-full'
-            />
+            <AssistantPreview />
           </div>
           <div className='bento-prompt bento-prompt-one'>Show treasury overview</div>
           <div className='bento-prompt bento-prompt-two'>Pay everything due today</div>
@@ -46,14 +46,8 @@ export function BentoGrid() {
             <h3>See value across rails.</h3>
             <p>Fiat, stablecoins, and mobile money stay legible in one place.</p>
           </div>
-          <div className='bento-screen-crop bento-wallet-crop'>
-            <Image
-              src='/images/finora/screens/wallets.png'
-              alt='Finora wallets showing multiple currencies and rails'
-              fill
-              sizes='(max-width: 767px) 90vw, 440px'
-              className='object-cover object-top'
-            />
+          <div className='bento-preview-host bento-wallet-preview'>
+            <WalletsPreview />
           </div>
         </article>
 
@@ -63,15 +57,8 @@ export function BentoGrid() {
             <h3>AI prepares. You decide.</h3>
             <p>Review the rate, fee, and destination before anything can move.</p>
           </div>
-          <div className='bento-screen-crop bento-approval-crop'>
-            <Image
-              src='/images/finora/screens/fx-confirm.png'
-              alt='A prepared currency conversion awaiting confirmation'
-              fill
-              sizes='(max-width: 767px) 90vw, 420px'
-              className='object-cover'
-              style={{ objectPosition: '50% 34%' }}
-            />
+          <div className='bento-preview-host bento-approval-preview'>
+            <ConversionPreview />
           </div>
         </article>
 
@@ -119,22 +106,10 @@ export function BentoGrid() {
           </div>
           <div className='operations-stack'>
             <div className='operations-screen operations-invoices'>
-              <Image
-                src='/images/finora/screens/invoices.png'
-                alt='Finora invoices screen'
-                fill
-                sizes='320px'
-                className='object-cover object-top'
-              />
+              <InvoicesPreview />
             </div>
             <div className='operations-screen operations-payroll'>
-              <Image
-                src='/images/finora/screens/payroll.png'
-                alt='Finora payroll screen'
-                fill
-                sizes='320px'
-                className='object-cover object-top'
-              />
+              <PayrollPreview />
             </div>
           </div>
         </article>
@@ -145,14 +120,8 @@ export function BentoGrid() {
             <h3>Every move stays legible.</h3>
             <p>Review what happened, on which rail, and in which currency.</p>
           </div>
-          <div className='bento-screen-crop bento-activity-crop'>
-            <Image
-              src='/images/finora/screens/activity.png'
-              alt='Finora transaction activity across several payment rails'
-              fill
-              sizes='(max-width: 767px) 90vw, 440px'
-              className='object-cover object-top'
-            />
+          <div className='bento-preview-host bento-activity-preview'>
+            <ActivityPreview />
           </div>
         </article>
       </div>

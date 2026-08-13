@@ -1,0 +1,959 @@
+.frame {
+  --canvas: #fefefe;
+  --surface: #f4f4f5;
+  --surface-soft: #f9f9f9;
+  --ink: #18181b;
+  --muted: #74747d;
+  --border: #e5e5e7;
+  --radius-panel: clamp(16px, 5.8cqw, 24px);
+  --radius-inset: clamp(12px, 4.35cqw, 18px);
+  --radius-row: clamp(13px, 4.6cqw, 19px);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--canvas);
+  color: var(--ink);
+  container-type: inline-size;
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.full {
+  --gutter: 20px;
+}
+
+.compact {
+  --gutter: 12px;
+}
+
+@supports (width: 1cqw) {
+  .full {
+    --gutter: 4.8cqw;
+  }
+
+  .compact {
+    --gutter: 4cqw;
+  }
+}
+
+.mobileScreen,
+.assistant,
+.receiptPreview {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileHeader {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  padding: 5.4cqw var(--gutter) 0;
+}
+
+.roundIcon {
+  display: grid;
+  width: 10.6cqw;
+  height: 10.6cqw;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.roundIcon > svg {
+  width: 5.4cqw;
+  height: 5.4cqw;
+}
+
+.headerCenter {
+  display: flex;
+  min-height: 10.6cqw;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1cqw;
+}
+
+.headerCenter > strong {
+  font-size: 4.4cqw;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.accountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.4cqw;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 1.2cqw 2.1cqw;
+  color: var(--muted);
+  font-size: 2.9cqw;
+  line-height: 1;
+}
+
+.accountBadge i {
+  width: 1.8cqw;
+  height: 1.8cqw;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2cqw;
+}
+
+.screenBody {
+  min-height: 0;
+  padding: 7.3cqw var(--gutter) 0;
+}
+
+.screenTitle {
+  margin: 0;
+  font-size: 7cqw;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.screenDescription {
+  margin: 3.2cqw 0 0;
+  color: var(--muted);
+  font-size: 3.7cqw;
+  line-height: 1.45;
+}
+
+.netWorth {
+  position: relative;
+  margin-top: 8cqw;
+}
+
+.netWorth span {
+  color: var(--muted);
+  font-size: 3.8cqw;
+}
+
+.netWorth strong {
+  display: block;
+  margin-top: 4cqw;
+  font-size: 8.2cqw;
+  font-weight: 400;
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+
+.actionPills,
+.filterPills {
+  display: flex;
+  gap: 2.2cqw;
+  margin-top: 6.7cqw;
+}
+
+.actionPills span,
+.filterPills span {
+  display: flex;
+  min-height: 9.5cqw;
+  align-items: center;
+  justify-content: center;
+  gap: 1.8cqw;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 3.6cqw;
+  white-space: nowrap;
+}
+
+.actionPills span {
+  flex: 1;
+}
+
+.filterPills span {
+  padding: 0 4cqw;
+}
+
+.actionPills .primaryPill,
+.filterPills .primaryPill {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 5.2cqw;
+  margin-top: 8.5cqw;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 3.7cqw;
+  white-space: nowrap;
+}
+
+.tabs span {
+  position: relative;
+  padding-bottom: 3.3cqw;
+}
+
+.tabs .activeTab {
+  color: var(--ink);
+}
+
+.tabs .activeTab::after {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 3.4cqw;
+  height: 0.8cqw;
+  border-radius: 999px;
+  background: var(--ink);
+  content: '';
+}
+
+.walletRows,
+.activityRows,
+.invoiceRows {
+  margin: 0;
+}
+
+.moneyRow,
+.invoiceRow {
+  display: grid;
+  min-height: 17cqw;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3cqw;
+  border-bottom: 1px solid var(--border);
+}
+
+.currencyGlyph {
+  position: relative;
+  display: grid;
+  width: 10cqw;
+  height: 10cqw;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 2.5cqw;
+  font-weight: 600;
+}
+
+.currencyGlyph span {
+  position: relative;
+  z-index: 2;
+}
+
+.currencyGlyph[data-currency='usd'] {
+  background: repeating-linear-gradient(to bottom, #b22234 0 8%, #fff 8% 16%);
+  color: transparent;
+}
+
+.currencyGlyph[data-currency='usd']::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 54%;
+  height: 54%;
+  background: #3c3b6e;
+  content: '';
+}
+
+.currencyGlyph[data-currency='usdt'] {
+  background: #4da983;
+  font-size: 6cqw;
+}
+
+.currencyGlyph[data-currency='eur'] {
+  background: #183aa8;
+  color: #ffd700;
+}
+
+.currencyGlyph[data-currency='eur'] span {
+  font-size: 0;
+}
+
+.currencyGlyph[data-currency='eur'] span::after {
+  content: '✦ ✦';
+  font-size: 2.4cqw;
+}
+
+.currencyGlyph[data-currency='gbp'] {
+  background:
+    linear-gradient(
+      33deg,
+      transparent 42%,
+      #fff 42% 48%,
+      #c8102e 48% 53%,
+      #fff 53% 59%,
+      transparent 59%
+    ),
+    linear-gradient(
+      -33deg,
+      transparent 42%,
+      #fff 42% 48%,
+      #c8102e 48% 53%,
+      #fff 53% 59%,
+      transparent 59%
+    ),
+    linear-gradient(to right, transparent 39%, #fff 39% 61%, transparent 61%),
+    linear-gradient(to bottom, transparent 39%, #fff 39% 61%, transparent 61%),
+    linear-gradient(to right, transparent 45%, #c8102e 45% 55%, transparent 55%),
+    linear-gradient(to bottom, transparent 45%, #c8102e 45% 55%, transparent 55%), #012169;
+  color: transparent;
+}
+
+.currencyGlyph[data-currency='ghs'] {
+  background: linear-gradient(to bottom, #ce2939 0 33%, #f6d64a 33% 66%, #16714d 66%);
+  color: #111;
+}
+
+.currencyGlyph[data-currency='ghs'] span {
+  font-size: 0;
+}
+
+.currencyGlyph[data-currency='ghs'] span::after {
+  content: '★';
+  font-size: 3.2cqw;
+}
+
+.rowCopy,
+.rowAmount,
+.invoiceAmount {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1.1cqw;
+}
+
+.rowCopy strong,
+.rowAmount strong,
+.invoiceAmount strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 3.9cqw;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowCopy small,
+.rowAmount small,
+.invoiceAmount small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 3cqw;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowAmount,
+.invoiceAmount {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.rowAmount strong,
+.invoiceAmount strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.rowAmount.positive strong {
+  color: #43b982;
+}
+
+.assistantCenter {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 27cqw var(--gutter) 0;
+  text-align: center;
+}
+
+.finoraMark {
+  width: 8.5cqw !important;
+  height: 8.5cqw !important;
+  color: var(--ink);
+}
+
+.assistantCenter h3 {
+  margin: 5.8cqw 0 0;
+  font-size: 6.4cqw;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+.suggestions {
+  display: flex;
+  max-width: 88cqw;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2.2cqw 2.6cqw;
+  margin-top: 8cqw;
+}
+
+.suggestion {
+  display: inline-flex;
+  min-height: 8.8cqw;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 4cqw;
+  font-size: 3.6cqw;
+  white-space: nowrap;
+}
+
+.composer {
+  position: relative;
+  display: grid;
+  min-height: 25cqw;
+  flex: 0 0 auto;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  margin: auto var(--gutter) 4.8cqw;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius-panel) + 6px);
+  background: var(--surface-soft);
+  padding: 4cqw 4.8cqw;
+  color: var(--muted);
+}
+
+.composerText {
+  grid-column: 1 / -1;
+  font-size: 3.7cqw;
+}
+
+.composerTools {
+  display: flex;
+  align-items: center;
+  gap: 5cqw;
+  margin-top: 5cqw;
+}
+
+.plusIcon {
+  font-size: 6cqw;
+  font-weight: 200;
+  line-height: 1;
+}
+
+.composerTools > svg {
+  width: 5cqw;
+  height: 5cqw;
+}
+
+.sendIcon {
+  display: grid;
+  width: 10cqw;
+  height: 10cqw;
+  align-self: end;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 5cqw;
+}
+
+.sendIcon > svg {
+  width: 5.2cqw;
+  height: 5.2cqw;
+}
+
+.activityTabs {
+  margin-top: 0;
+}
+
+.documentIcon {
+  display: grid;
+  width: 10cqw;
+  height: 10cqw;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.documentIcon > svg {
+  width: 5cqw;
+  height: 5cqw;
+}
+
+.invoiceAmount small {
+  color: #f0a000;
+}
+
+.payrollSummary {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6cqw;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-soft);
+  padding: 5cqw;
+}
+
+.payrollSummary > span,
+.payrollSummary > small,
+.listLabel {
+  color: var(--muted);
+  font-size: 3.5cqw;
+}
+
+.payrollSummary > strong {
+  margin-top: 3cqw;
+  font-size: 7.4cqw;
+  font-weight: 400;
+  letter-spacing: -0.05em;
+}
+
+.payrollSummary > small {
+  margin-top: 3cqw;
+}
+
+.payrollSummary > b {
+  display: grid;
+  min-height: 11.5cqw;
+  place-items: center;
+  margin-top: 5cqw;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 3.8cqw;
+  font-weight: 400;
+}
+
+.listLabel {
+  margin: 7cqw 0 3cqw;
+}
+
+.employeeRows {
+  display: flex;
+  flex-direction: column;
+  gap: 3cqw;
+}
+
+.employeeRow {
+  display: flex;
+  min-height: 15cqw;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3cqw;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-row);
+  background: var(--surface-soft);
+  padding: 0 4cqw;
+}
+
+.employeeRow > strong {
+  font-size: 3.8cqw;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.conversionPreview {
+  padding: 4.4cqw;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-soft);
+}
+
+.conversionHeading {
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+}
+
+.conversionIcon {
+  display: grid;
+  width: 10cqw;
+  height: 10cqw;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.conversionIcon > svg {
+  width: 5cqw;
+  height: 5cqw;
+}
+
+.conversionHeading > span:last-child,
+.conversionFacts span {
+  display: flex;
+  flex-direction: column;
+  gap: 1cqw;
+}
+
+.conversionHeading small,
+.transferCopy small,
+.conversionFacts small {
+  color: var(--muted);
+  font-size: 3.1cqw;
+}
+
+.conversionHeading strong {
+  font-size: 5.4cqw;
+  font-weight: 400;
+}
+
+.transferPanel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2cqw;
+  margin-top: 5cqw;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-inset);
+  background: #fff;
+  padding: 3cqw;
+}
+
+.transferPanel .currencyGlyph {
+  width: 8cqw;
+  height: 8cqw;
+}
+
+.transferCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1cqw;
+}
+
+.transferCopy strong {
+  overflow: hidden;
+  font-size: 3.5cqw;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transferCopyRight {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.transferArrows {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.transferArrows > svg {
+  width: 4.5cqw;
+  height: 4.5cqw;
+}
+
+.conversionFacts {
+  display: flex;
+  flex-direction: column;
+  gap: 4cqw;
+  margin-top: 5cqw;
+}
+
+.conversionFacts strong {
+  font-size: 3.8cqw;
+  font-weight: 400;
+}
+
+.conversionActions {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 2.5cqw;
+  margin-top: 5cqw;
+}
+
+.conversionActions span,
+.conversionActions strong {
+  display: grid;
+  min-height: 11cqw;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 3.7cqw;
+  font-weight: 400;
+}
+
+.conversionActions strong {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.receiptPreview {
+  display: flex;
+  flex-direction: column;
+  padding: 4cqw;
+}
+
+.receiptCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-soft);
+  padding: 6cqw 4cqw 4cqw;
+}
+
+.receiptCheck {
+  display: grid;
+  width: 14cqw;
+  height: 14cqw;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.receiptCheck > svg {
+  width: 6cqw;
+  height: 6cqw;
+}
+
+.receiptCard > small {
+  margin-top: 4cqw;
+  font-size: 3.5cqw;
+}
+
+.receiptCard > strong {
+  margin-top: 2cqw;
+  font-size: 6.8cqw;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.receiptCard > p {
+  margin: 2cqw 0 0;
+  color: var(--muted);
+  font-size: 3.5cqw;
+}
+
+.receiptDetails {
+  display: grid;
+  width: 100%;
+  gap: 3cqw;
+  margin-top: 5cqw;
+  border-top: 1px solid var(--border);
+  padding-top: 4cqw;
+}
+
+.receiptDetails span {
+  display: flex;
+  flex-direction: column;
+  gap: 1cqw;
+}
+
+.receiptDetails small {
+  color: var(--muted);
+  font-size: 2.8cqw;
+}
+
+.receiptDetails strong {
+  font-size: 3.5cqw;
+  font-weight: 400;
+}
+
+.receiptButton {
+  display: grid;
+  width: 100%;
+  min-height: 10cqw;
+  place-items: center;
+  margin-top: 4cqw;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 3.5cqw;
+}
+
+.compact .mobileHeader {
+  display: none;
+}
+
+.compact .screenBody {
+  padding: 3.5cqw 4cqw 0;
+}
+
+.compact .screenTitle {
+  font-size: 7cqw;
+}
+
+.compact .screenDescription,
+.compact .netWorth,
+.compact .actionPills,
+.compact .tabs,
+.compact .payrollSummary,
+.compact .listLabel,
+.compact .composer {
+  display: none;
+}
+
+.compact .moneyRow,
+.compact .invoiceRow {
+  min-height: 27cqw;
+}
+
+.compact .currencyGlyph,
+.compact .documentIcon {
+  width: 15cqw;
+  height: 15cqw;
+}
+
+.compact .rowCopy strong,
+.compact .rowAmount strong,
+.compact .invoiceAmount strong {
+  font-size: 5.5cqw;
+}
+
+.compact .rowCopy small,
+.compact .rowAmount small,
+.compact .invoiceAmount small {
+  font-size: 4.2cqw;
+}
+
+.compact .filterPills {
+  margin-top: 4cqw;
+}
+
+.compact .filterPills span {
+  min-height: 13cqw;
+  font-size: 5cqw;
+}
+
+.compact .filterPills span:nth-child(n + 3),
+.compact .invoiceRow:nth-child(n + 2),
+.compact .employeeRow:nth-child(n + 2) {
+  display: none;
+}
+
+.compact .employeeRows {
+  margin-top: 4cqw;
+}
+
+.compact .employeeRow {
+  min-height: 25cqw;
+}
+
+.compact .assistantCenter {
+  justify-content: center;
+  padding: 5cqw 3cqw;
+}
+
+.compact .assistantCenter h3 {
+  margin-top: 3cqw;
+  font-size: 7cqw;
+}
+
+.compact .suggestions {
+  gap: 2cqw;
+  margin-top: 4cqw;
+}
+
+.compact .suggestion {
+  min-height: 11cqw;
+  padding: 0 4cqw;
+  font-size: 4.5cqw;
+}
+
+.compact .suggestion:nth-child(n + 3) {
+  display: none;
+}
+
+.compact.conversionPreview {
+  display: grid;
+  align-content: center;
+  padding: 5cqw;
+  border: 0;
+  border-radius: 0;
+}
+
+.compact .conversionHeading {
+  gap: 4cqw;
+}
+
+.compact .conversionIcon {
+  width: 13cqw;
+  height: 13cqw;
+}
+
+.compact .conversionHeading strong {
+  font-size: 6cqw;
+}
+
+.compact .conversionHeading small {
+  font-size: 4cqw;
+}
+
+.compact .transferPanel,
+.compact .conversionFacts,
+.compact .conversionActions {
+  display: none;
+}
+
+.compact.receiptPreview {
+  padding: 0;
+  background: var(--surface-soft);
+}
+
+.compact .receiptCard {
+  height: 100%;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 4cqw;
+}
+
+.compact .receiptCheck {
+  width: 12cqw;
+  height: 12cqw;
+}
+
+.compact .receiptCard > small {
+  margin-top: 2cqw;
+  font-size: 4cqw;
+}
+
+.compact .receiptCard > strong {
+  margin-top: 1cqw;
+  font-size: 6cqw;
+}
+
+.compact .receiptCard > p {
+  margin-top: 1cqw;
+  font-size: 3.5cqw;
+}
+
+.compact .receiptDetails,
+.compact .receiptButton {
+  display: none;
+}
+
+@supports not (width: 1cqw) {
+  .hasLegacyFallback {
+    background: var(--preview-fallback) top / cover no-repeat;
+  }
+
+  .hasLegacyFallback > * {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
