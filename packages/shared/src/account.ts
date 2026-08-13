@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { FinoraTagSchema } from './finora-tag';
+import { GhanaPhoneNumberSchema } from './phone';
 
 export const AccountTypeSchema = z.enum(['personal', 'business']);
 export type AccountType = z.infer<typeof AccountTypeSchema>;
@@ -13,6 +14,8 @@ export const UserProfileSchema = z.object({
   imageUrl: z.string().url().nullable(),
   accountType: AccountTypeSchema.nullable(),
   finoraTag: FinoraTagSchema.nullable(),
+  phoneNumber: GhanaPhoneNumberSchema.nullable(),
+  phoneVerifiedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

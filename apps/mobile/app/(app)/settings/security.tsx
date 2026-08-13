@@ -1,5 +1,5 @@
-import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, StyleSheet } from 'react-native';
 
 import { useChangePasscode } from '@/components/passcode/use-change-passcode';
@@ -32,10 +32,13 @@ function relativeTime(iso: string): string {
 }
 
 export default function SecuritySettingsScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ changePasscode?: string }>();
   const { colors } = useTheme();
   const { settings, loading, update, refresh } = useSettings();
   const { requestChange, modal: passcodeModal } = useChangePasscode();
   const [hasPin, setHasPin] = useState(false);
+  const resumedChangeRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -44,13 +47,20 @@ export default function SecuritySettingsScreen() {
     }, [refresh]),
   );
 
-  const handleChangePasscode = async () => {
+  const handleChangePasscode = useCallback(async () => {
     const ok = await requestChange();
     if (ok) {
       setHasPin(true);
       Alert.alert('Passcode updated', 'Use your new passcode to approve money moves.');
     }
-  };
+  }, [requestChange]);
+
+  useEffect(() => {
+    if (params.changePasscode !== '1' || resumedChangeRef.current) return;
+    resumedChangeRef.current = true;
+    router.setParams({ changePasscode: undefined });
+    void handleChangePasscode();
+  }, [handleChangePasscode, params.changePasscode, router]);
 
   const handleBiometrics = async (next: boolean) => {
     await update({ biometricsEnabled: next });

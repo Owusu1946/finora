@@ -1,3 +1,4 @@
+import { usePathname, useRouter, type Href } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 
 import {
@@ -7,23 +8,18 @@ import {
 } from '@/components/passcode/PasscodeModal';
 import { haptics } from '@/lib/haptics';
 import { clearPasscode, hasPasscode, setPasscode, verifyPasscode } from '@/lib/passcode-storage';
-import { useEmailVerification } from '@/lib/use-email-verification';
+import { PasscodeRecoveryError, usePasscodeRecovery } from '@/lib/use-passcode-recovery';
 
-type GatePhase = 'closed' | 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp';
-
-function maskEmail(email: string) {
-  const [user, domain] = email.split('@');
-  if (!user || !domain) return email;
-  const head = user.slice(0, Math.min(2, user.length));
-  return `${head}${'•'.repeat(Math.max(1, user.length - head.length))}@${domain}`;
-}
+type GatePhase = 'closed' | 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp' | 'phone-required';
 
 /**
  * Opens passcode setup (first time) or unlock, then resolves true if approved.
- * Wrong unlock codes shake + vibrate; 3 fails lock the pad and require email OTP reset.
+ * Wrong unlock codes shake + vibrate; 3 fails lock the pad and require SMS OTP reset.
  */
 export function usePasscodeApproval() {
-  const emailVerification = useEmailVerification();
+  const router = useRouter();
+  const pathname = usePathname();
+  const passcodeRecovery = usePasscodeRecovery();
   const [phase, setPhase] = useState<GatePhase>('closed');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +27,7 @@ export function usePasscodeApproval() {
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
   const [locked, setLocked] = useState(false);
   const [forgotHint, setForgotHint] = useState<string | null>(null);
+  const draftRef = useRef('');
   const resolverRef = useRef<((ok: boolean) => void) | null>(null);
   const recoveringRef = useRef(false);
 
@@ -41,6 +38,7 @@ export function usePasscodeApproval() {
 
   const close = useCallback((ok: boolean) => {
     setPhase('closed');
+    draftRef.current = '';
     setDraft('');
     setError(null);
     setFailureSignal(0);
@@ -70,23 +68,30 @@ export function usePasscodeApproval() {
 
   const startForgot = useCallback(async () => {
     setError(null);
-    const result = await emailVerification.sendCode();
-    if (!result.ok) {
+    try {
+      const result = await passcodeRecovery.request();
+      haptics.success();
+      recoveringRef.current = true;
+      setLocked(false);
+      setForgotHint(result.phoneHint);
+      setError(null);
+      setPhase('forgot-otp');
+    } catch (error) {
       haptics.error();
-      setError(result.error ?? 'Could not send reset code.');
-      return;
+      if (error instanceof PasscodeRecoveryError && error.code === 'verified_phone_required') {
+        setError(null);
+        setLocked(false);
+        setPhase('phone-required');
+        return;
+      }
+      setError(error instanceof Error ? error.message : 'Could not send reset code.');
     }
-    haptics.success();
-    recoveringRef.current = true;
-    setLocked(false);
-    setForgotHint(maskEmail(result.email));
-    setError(null);
-    setPhase('forgot-otp');
-  }, [emailVerification]);
+  }, [passcodeRecovery]);
 
   const onComplete = useCallback(
     async (code: string) => {
       if (phase === 'setup') {
+        draftRef.current = code;
         setDraft(code);
         setError(null);
         setPhase('confirm-setup');
@@ -94,8 +99,10 @@ export function usePasscodeApproval() {
       }
 
       if (phase === 'confirm-setup') {
-        if (code !== draft) {
+        const expected = draftRef.current || draft;
+        if (code !== expected) {
           markFailure('Passcodes don’t match. Try again.');
+          draftRef.current = '';
           setDraft('');
           setPhase('setup');
           return;
@@ -107,9 +114,10 @@ export function usePasscodeApproval() {
       }
 
       if (phase === 'forgot-otp') {
-        const result = await emailVerification.verifyCode(code);
-        if (!result.ok) {
-          markFailure(result.error ?? 'That code is incorrect.');
+        try {
+          await passcodeRecovery.verify(code);
+        } catch (error) {
+          markFailure(error instanceof Error ? error.message : 'That code is incorrect.');
           return;
         }
         await clearPasscode();
@@ -129,7 +137,7 @@ export function usePasscodeApproval() {
           setAttemptsLeft(next);
           if (next <= 0) {
             setLocked(true);
-            markFailure('Too many attempts. Reset with the code sent to your email.');
+            markFailure('Too many attempts. Reset with the code sent to your phone.');
             void startForgot();
             return;
           }
@@ -144,7 +152,7 @@ export function usePasscodeApproval() {
         close(true);
       }
     },
-    [attemptsLeft, close, draft, emailVerification, locked, markFailure, phase, startForgot],
+    [attemptsLeft, close, draft, locked, markFailure, passcodeRecovery, phase, startForgot],
   );
 
   const mode: PasscodeMode =
@@ -154,7 +162,9 @@ export function usePasscodeApproval() {
         ? 'setup'
         : phase === 'forgot-otp'
           ? 'forgot-otp'
-          : 'unlock';
+          : phase === 'phone-required'
+            ? 'phone-required'
+            : 'unlock';
 
   const modal = (
     <PasscodeModal
@@ -173,6 +183,13 @@ export function usePasscodeApproval() {
           ? () => void startForgot()
           : undefined
       }
+      onAddPhone={() => {
+        close(false);
+        router.push({
+          pathname: '/auth/add-phone',
+          params: { returnTo: pathname },
+        } as unknown as Href);
+      }}
       title={
         recoveringRef.current && phase === 'setup'
           ? 'Create new passcode'

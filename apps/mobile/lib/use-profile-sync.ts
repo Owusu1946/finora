@@ -5,14 +5,17 @@ import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { usePhoneGate } from '@/lib/phone-gate';
 import { getUserProfile, updateUserProfile } from '@/lib/profile-api';
 import { getSettings } from '@/lib/settings-storage';
 
 export function useProfileSync() {
   const { getToken, isLoaded, isSignedIn, userId } = useAuth();
+  const { markLoading, setFromProfile } = usePhoneGate();
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !userId || !getApiUrl()) return;
+    markLoading();
 
     let cancelled = false;
     void (async () => {
@@ -23,6 +26,7 @@ export function useProfileSync() {
           getTagConfigured(userId),
         ]);
         if (cancelled) return;
+        setFromProfile(remote.phoneVerifiedAt);
 
         const settings = tagConfigured ? await getSettings() : null;
         const updates = {
@@ -50,5 +54,5 @@ export function useProfileSync() {
     return () => {
       cancelled = true;
     };
-  }, [getToken, isLoaded, isSignedIn, userId]);
+  }, [getToken, isLoaded, isSignedIn, markLoading, setFromProfile, userId]);
 }

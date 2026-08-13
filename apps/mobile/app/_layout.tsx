@@ -64,6 +64,7 @@ import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
 import { useProfileSync } from '@/lib/use-profile-sync';
@@ -79,11 +80,13 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 function RootNavigator() {
-  const { isSignedIn } = useAuth();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const { status: phoneStatus } = usePhoneGate();
   const { tagConfigured } = useAuthGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const segments = useSegments();
   const { isDark, colors } = useTheme();
+  const isPhoneSetup = segments[0] === 'auth' && String(segments[1]) === 'add-phone';
   useDrainPendingPaymentLink();
   const base = isDark ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
@@ -107,11 +110,25 @@ function RootNavigator() {
         <Stack.Screen name='pay/r/[id]' />
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
-      {onboardingCompleted && !isSignedIn ? <Redirect href={'/auth' as Href} /> : null}
-      {onboardingCompleted && isSignedIn && !tagConfigured ? (
+      {onboardingCompleted && authLoaded && !isSignedIn ? (
+        <Redirect href={'/auth' as Href} />
+      ) : null}
+      {onboardingCompleted &&
+      isSignedIn &&
+      phoneStatus !== 'loading' &&
+      !tagConfigured &&
+      phoneStatus === 'required' &&
+      !isPhoneSetup ? (
+        <Redirect href={'/auth/add-phone' as Href} />
+      ) : null}
+      {onboardingCompleted && isSignedIn && phoneStatus === 'verified' && !tagConfigured ? (
         <Redirect href={'/auth/choose-tag' as Href} />
       ) : null}
-      {onboardingCompleted && isSignedIn && tagConfigured && segments[0] === 'auth' ? (
+      {onboardingCompleted &&
+      isSignedIn &&
+      tagConfigured &&
+      segments[0] === 'auth' &&
+      !isPhoneSetup ? (
         <Redirect href={'/(app)' as Href} />
       ) : null}
       <StatusBar style='auto' />
@@ -136,7 +153,6 @@ function RootApp() {
   const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
     useSplashGate(bootReady);
   const runtime = useLocalRuntime(finoraChatAdapter as never);
-  useProfileSync();
 
   useEffect(() => {
     let cancelled = false;
@@ -167,41 +183,44 @@ function RootApp() {
         <SettingsProvider>
           <AuthGateProvider tagConfigured={boot.tagConfigured}>
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
-              <AssistantRuntimeProvider runtime={runtime}>
-                <PreparePaymentToolUI />
-                <FundAccountToolUI />
-                <ListReceiveMethodsToolUI />
-                <CreatePaymentRequestToolUI />
-                <GeneratePaymentLinkToolUI />
-                <GetBalancesToolUI />
-                <PrepareConversionToolUI />
-                <PrepareInternalTransferToolUI />
-                <ListInvoicesToolUI />
-                <ListCalendarDuesToolUI />
-                <ListSmsRequestsToolUI />
-                <ListEmployeesToolUI />
-                <ListSuppliersToolUI />
-                <ListBeneficiariesToolUI />
-                <ListPoliciesToolUI />
-                <ListAutomationsToolUI />
-                <ListExpensesToolUI />
-                <ListVirtualAccountsToolUI />
-                <TreasuryOverviewToolUI />
-                <FinancialReportToolUI />
-                <PreparePayrollToolUI />
-                <PrepareSupplierPaymentToolUI />
-                <PrepareEmployeePaymentToolUI />
-                <CreateEmployeeToolUI />
-                <PrepareRecurringToolUI />
-                <SchedulePaymentWizardToolUI />
-                <ResolveSendToolUI />
-                <CreateFinancialPlanToolUI />
-                <CreateVirtualCardToolUI />
-                <ListVirtualCardsToolUI />
-                <GetVirtualCardToolUI />
-                <RootNavigator />
-                <VirtualCardIssuedPopup />
-              </AssistantRuntimeProvider>
+              <PhoneGateProvider key={boot.userId ?? 'signed-out'}>
+                <ProfileSyncBridge />
+                <AssistantRuntimeProvider runtime={runtime}>
+                  <PreparePaymentToolUI />
+                  <FundAccountToolUI />
+                  <ListReceiveMethodsToolUI />
+                  <CreatePaymentRequestToolUI />
+                  <GeneratePaymentLinkToolUI />
+                  <GetBalancesToolUI />
+                  <PrepareConversionToolUI />
+                  <PrepareInternalTransferToolUI />
+                  <ListInvoicesToolUI />
+                  <ListCalendarDuesToolUI />
+                  <ListSmsRequestsToolUI />
+                  <ListEmployeesToolUI />
+                  <ListSuppliersToolUI />
+                  <ListBeneficiariesToolUI />
+                  <ListPoliciesToolUI />
+                  <ListAutomationsToolUI />
+                  <ListExpensesToolUI />
+                  <ListVirtualAccountsToolUI />
+                  <TreasuryOverviewToolUI />
+                  <FinancialReportToolUI />
+                  <PreparePayrollToolUI />
+                  <PrepareSupplierPaymentToolUI />
+                  <PrepareEmployeePaymentToolUI />
+                  <CreateEmployeeToolUI />
+                  <PrepareRecurringToolUI />
+                  <SchedulePaymentWizardToolUI />
+                  <ResolveSendToolUI />
+                  <CreateFinancialPlanToolUI />
+                  <CreateVirtualCardToolUI />
+                  <ListVirtualCardsToolUI />
+                  <GetVirtualCardToolUI />
+                  <RootNavigator />
+                  <VirtualCardIssuedPopup />
+                </AssistantRuntimeProvider>
+              </PhoneGateProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>
         </SettingsProvider>
@@ -218,6 +237,11 @@ function RootApp() {
       <AppSwitcherPrivacy />
     </GestureHandlerRootView>
   );
+}
+
+function ProfileSyncBridge() {
+  useProfileSync();
+  return null;
 }
 
 export default function RootLayout() {
