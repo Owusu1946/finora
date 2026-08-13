@@ -14,6 +14,7 @@ export function ConversionPreview({
     <ProductPreviewFrame
       density={density}
       label='Prepared US dollar to Ghana cedi conversion awaiting confirmation'
+      fallbackSrc='/images/finora/previews/conversion.webp'
       decorative={decorative}
       className={styles.conversionPreview}
     >

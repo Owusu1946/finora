@@ -17,6 +17,7 @@ export function AssistantPreview({
     <ProductPreviewFrame
       density={density}
       label='Finora assistant home with suggested financial actions'
+      fallbackSrc='/images/finora/previews/assistant.webp'
       decorative={decorative}
       className={`${styles.assistant} ${className}`}
     >

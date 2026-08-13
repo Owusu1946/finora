@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { PreviewIcon } from './preview-icon';
 import styles from './product-preview.module.css';
@@ -9,23 +9,29 @@ export function ProductPreviewFrame({
   children,
   density = 'full',
   label,
+  fallbackSrc,
   decorative = false,
   className = '',
 }: {
   children: ReactNode;
   density?: PreviewDensity;
   label: string;
+  fallbackSrc?: string;
   decorative?: boolean;
   className?: string;
 }) {
   const accessibility = decorative
     ? { 'aria-hidden': true as const }
     : { role: 'img', 'aria-label': `${label}. Illustrative UI using demo data.` };
+  const fallbackStyle = fallbackSrc
+    ? ({ '--preview-fallback': `url(${fallbackSrc})` } as CSSProperties)
+    : undefined;
 
   return (
     <div
       {...accessibility}
-      className={`${styles.frame} ${density === 'compact' ? styles.compact : styles.full} ${className}`}
+      className={`${styles.frame} ${fallbackSrc ? styles.hasLegacyFallback : ''} ${density === 'compact' ? styles.compact : styles.full} ${className}`}
+      style={fallbackStyle}
     >
       {children}
     </div>

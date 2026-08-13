@@ -1,53 +1,35 @@
-import { ApprovalPreview } from '@/components/landing/product-previews/approval-preview';
+import Image from 'next/image';
+
 import { AssistantPreview } from '@/components/landing/product-previews/assistant-preview';
-import { ConversionPreview } from '@/components/landing/product-previews/conversion-preview';
-import { InvoicesPreview } from '@/components/landing/product-previews/operations-preview';
-import { WalletsPreview } from '@/components/landing/product-previews/wallets-preview';
 
 const nodes = [
   {
     className: 'system-node-context',
     eyebrow: 'Context',
     title: 'Every balance in view',
-    preview: (
-      <WalletsPreview
-        density='compact'
-        decorative
-      />
-    ),
+    src: '/images/finora/previews/node-wallets.webp',
+    alt: 'Wallet balances across financial rails',
   },
   {
     className: 'system-node-prepare',
     eyebrow: 'Prepare',
     title: 'A complete action, ready to review',
-    preview: (
-      <ConversionPreview
-        density='compact'
-        decorative
-      />
-    ),
+    src: '/images/finora/previews/node-conversion.webp',
+    alt: 'Prepared currency conversion',
   },
   {
     className: 'system-node-operations',
     eyebrow: 'Operate',
     title: 'Invoices and payroll stay connected',
-    preview: (
-      <InvoicesPreview
-        density='compact'
-        decorative
-      />
-    ),
+    src: '/images/finora/previews/node-invoices.webp',
+    alt: 'Invoices awaiting review',
   },
   {
     className: 'system-node-approve',
     eyebrow: 'Approve',
     title: 'You remain in control',
-    preview: (
-      <ApprovalPreview
-        density='compact'
-        decorative
-      />
-    ),
+    src: '/images/finora/previews/node-receipt.webp',
+    alt: 'Completed payment receipt',
   },
 ] as const;
 
@@ -147,7 +129,15 @@ export function SystemMap() {
               <span>{node.eyebrow}</span>
               <strong>{node.title}</strong>
             </div>
-            <div className='system-node-screen'>{node.preview}</div>
+            <div className='system-node-screen'>
+              <Image
+                src={node.src}
+                alt={node.alt}
+                fill
+                sizes='(max-width: 767px) 44vw, (max-width: 1024px) 46vw, 286px'
+                className='object-cover object-top'
+              />
+            </div>
           </article>
         ))}
       </div>

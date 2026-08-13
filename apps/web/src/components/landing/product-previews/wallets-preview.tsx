@@ -16,6 +16,7 @@ export function WalletsPreview({
     <ProductPreviewFrame
       density={density}
       label='Wallets screen showing balances across financial rails'
+      fallbackSrc='/images/finora/previews/wallets.webp'
       decorative={decorative}
       className={styles.mobileScreen}
     >

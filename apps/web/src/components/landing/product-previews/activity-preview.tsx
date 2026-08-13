@@ -15,6 +15,7 @@ export function ActivityPreview({
     <ProductPreviewFrame
       density={density}
       label='Activity screen showing transactions across currencies and rails'
+      fallbackSrc='/images/finora/previews/activity.webp'
       decorative={decorative}
       className={styles.mobileScreen}
     >

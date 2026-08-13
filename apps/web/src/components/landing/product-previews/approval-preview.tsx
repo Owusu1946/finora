@@ -13,6 +13,7 @@ export function ApprovalPreview({
     <ProductPreviewFrame
       density={density}
       label='Completed payment receipt with transaction reference and audit details'
+      fallbackSrc='/images/finora/previews/receipt.webp'
       decorative={decorative}
       className={styles.receiptPreview}
     >

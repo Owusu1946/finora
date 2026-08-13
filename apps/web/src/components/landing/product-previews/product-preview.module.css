@@ -22,15 +22,18 @@
 }
 
 .full {
+  --gutter: 20px;
   --gutter: 4.8cqw;
 }
 
 .compact {
+  --gutter: 12px;
   --gutter: 4cqw;
 }
 
 .mobileScreen,
-.assistant {
+.assistant,
+.receiptPreview {
   display: flex;
   flex-direction: column;
 }
@@ -930,6 +933,16 @@
 .compact .receiptDetails,
 .compact .receiptButton {
   display: none;
+}
+
+@supports not (width: 1cqw) {
+  .hasLegacyFallback {
+    background: var(--preview-fallback) top / cover no-repeat;
+  }
+
+  .hasLegacyFallback > * {
+    display: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

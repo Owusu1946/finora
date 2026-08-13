@@ -13,6 +13,7 @@ export function InvoicesPreview({
     <ProductPreviewFrame
       density={density}
       label='Invoices screen showing supplier bills due for review'
+      fallbackSrc='/images/finora/previews/invoices.webp'
       decorative={decorative}
       className={styles.mobileScreen}
     >
@@ -62,6 +63,7 @@ export function PayrollPreview({
     <ProductPreviewFrame
       density={density}
       label='Payroll screen showing August team salaries prepared for approval'
+      fallbackSrc='/images/finora/previews/payroll.webp'
       decorative={decorative}
       className={styles.mobileScreen}
     >
