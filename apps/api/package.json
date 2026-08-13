@@ -7,8 +7,7 @@
     "build": "wrangler deploy --dry-run",
     "cf-typegen": "wrangler types",
     "check-types": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
@@ -16,6 +15,7 @@
   },
   "dependencies": {
     "@clerk/hono": "^0.1.64",
+    "@finora/env": "workspace:*",
     "@finora/shared": "workspace:*",
     "@finora/wewire": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",

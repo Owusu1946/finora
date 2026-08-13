@@ -1,5 +1,6 @@
 import type { ZodRawShape } from 'zod';
 
+import { createMcpEnv } from '@finora/env/mcp';
 import { MCP_TOOL_NAMES, TOOL_INPUT_SCHEMAS, type McpToolName } from '@finora/shared';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { getCurrentAgent } from 'agents';
@@ -20,7 +21,12 @@ async function callFinoraApi(
   path: string,
   body?: Record<string, unknown>,
 ) {
-  const base = env.FINORA_API_URL.replace(/\/$/, '');
+  const base = createMcpEnv({
+    ENVIRONMENT: env.ENVIRONMENT,
+    FINORA_API_URL: env.FINORA_API_URL,
+    CLERK_SECRET_KEY: env.CLERK_SECRET_KEY,
+    CLERK_PUBLISHABLE_KEY: env.CLERK_PUBLISHABLE_KEY,
+  }).FINORA_API_URL.replace(/\/$/, '');
   const response = await fetch(`${base}${path}`, {
     method,
     headers: {

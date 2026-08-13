@@ -1,4 +1,5 @@
 import { clerkMiddleware } from '@clerk/hono';
+import { createApiEnv, type ApiEnv } from '@finora/env/api';
 import { TOOL_NAMES } from '@finora/shared';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -10,10 +11,26 @@ type AppEnv = {
   Bindings: Env;
   Variables: {
     auth: import('./auth').AuthenticatedUser;
+    env: ApiEnv;
   };
 };
 
 const app = new Hono<AppEnv>();
+
+app.use('*', async (c, next) => {
+  c.set(
+    'env',
+    createApiEnv({
+      ENVIRONMENT: c.env.ENVIRONMENT,
+      DATABASE_URL: c.env.DATABASE_URL,
+      CLERK_SECRET_KEY: c.env.CLERK_SECRET_KEY,
+      CLERK_PUBLISHABLE_KEY: c.env.CLERK_PUBLISHABLE_KEY,
+      WEWIRE_API_KEY: c.env.WEWIRE_API_KEY,
+      WEWIRE_WEBHOOK_SECRET: c.env.WEWIRE_WEBHOOK_SECRET,
+    }),
+  );
+  await next();
+});
 
 app.use(
   '*',
