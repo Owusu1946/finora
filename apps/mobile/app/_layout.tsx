@@ -61,15 +61,14 @@ import { setAccountType } from '@/lib/account';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { finoraChatAdapter } from '@/lib/chat-adapter';
+import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
 import { useProfileSync } from '@/lib/use-profile-sync';
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
-
-if (!publishableKey) throw new Error('Add EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY to apps/mobile/.env.');
+const publishableKey = env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export const unstable_settings = {
   anchor: '(app)',

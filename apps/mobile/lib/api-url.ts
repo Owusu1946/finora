@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
 
+import { env } from './env';
+
 const LAN_PROXY_PORT = 8788;
 
 function normalizeUrl(value: string | undefined) {
@@ -41,5 +43,5 @@ export function getApiUrl() {
     }
   }
 
-  return normalizeUrl(process.env.EXPO_PUBLIC_API_URL);
+  return normalizeUrl(env.EXPO_PUBLIC_API_URL);
 }
