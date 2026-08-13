@@ -9,6 +9,8 @@ import {
   MessageAdd01Icon,
   QrCodeIcon,
   SentIcon,
+  StarIcon,
+  StarsIcon,
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 
@@ -22,6 +24,8 @@ const icons = {
   payout: ArrowUpRight01Icon,
   qr: QrCodeIcon,
   send: SentIcon,
+  star: StarIcon,
+  stars: StarsIcon,
   swap: ArrowLeftRightIcon,
 } as const;
 

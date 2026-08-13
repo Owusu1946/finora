@@ -278,13 +278,9 @@
   color: #ffd700;
 }
 
-.currencyGlyph[data-currency='eur'] span {
-  font-size: 0;
-}
-
-.currencyGlyph[data-currency='eur'] span::after {
-  content: '✦ ✦';
-  font-size: 2.4cqw;
+.currencyGlyph[data-currency='eur'] > svg {
+  width: 5.2cqw;
+  height: 5.2cqw;
 }
 
 .currencyGlyph[data-currency='gbp'] {
@@ -317,13 +313,10 @@
   color: #111;
 }
 
-.currencyGlyph[data-currency='ghs'] span {
-  font-size: 0;
-}
-
-.currencyGlyph[data-currency='ghs'] span::after {
-  content: '★';
-  font-size: 3.2cqw;
+.currencyGlyph[data-currency='ghs'] > svg {
+  width: 4.3cqw;
+  height: 4.3cqw;
+  fill: currentColor;
 }
 
 .rowCopy,
