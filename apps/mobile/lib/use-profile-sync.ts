@@ -2,6 +2,7 @@ import { useAuth } from '@clerk/expo';
 import { useEffect } from 'react';
 
 import { setAccountType } from '@/lib/account';
+import { getApiUrl } from '@/lib/api-url';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { getUserProfile, updateUserProfile } from '@/lib/profile-api';
@@ -11,7 +12,7 @@ export function useProfileSync() {
   const { getToken, isLoaded, isSignedIn, userId } = useAuth();
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !userId || !process.env.EXPO_PUBLIC_API_URL) return;
+    if (!isLoaded || !isSignedIn || !userId || !getApiUrl()) return;
 
     let cancelled = false;
     void (async () => {

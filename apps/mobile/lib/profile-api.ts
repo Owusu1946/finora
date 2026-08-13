@@ -1,30 +1,77 @@
 import { UserProfileSchema, type UpdateUserProfile, type UserProfile } from '@finora/shared';
 
+import { getApiUrl } from '@/lib/api-url';
+
 type GetToken = () => Promise<string | null>;
 
-const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
+const PROFILE_REQUEST_TIMEOUT_MS = 12_000;
 
-async function requestProfile(
-  path: string,
-  getToken: GetToken,
-  init?: RequestInit,
-): Promise<UserProfile> {
-  if (!apiUrl) throw new Error('EXPO_PUBLIC_API_URL is not configured.');
+export class ProfileApiError extends Error {
+  constructor(
+    message: string,
+    readonly code:
+      | 'configuration'
+      | 'timeout'
+      | 'network'
+      | 'unauthorized'
+      | 'tag_taken'
+      | 'server',
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'ProfileApiError';
+  }
+}
+
+async function profileFetch(path: string, getToken: GetToken, init?: RequestInit) {
+  const apiUrl = getApiUrl();
+  if (!apiUrl) throw new ProfileApiError('The Finora API URL is not configured.', 'configuration');
 
   const token = await getToken();
-  if (!token) throw new Error('A Clerk session token is required.');
+  if (!token) throw new ProfileApiError('Your session is not ready. Try again.', 'unauthorized');
 
-  const response = await fetch(`${apiUrl}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...init?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROFILE_REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) throw new Error(`Profile request failed with status ${response.status}.`);
+  try {
+    const response = await fetch(`${apiUrl}${path}`, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...init?.headers,
+      },
+    });
 
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new ProfileApiError('Your session expired. Sign in again.', 'unauthorized', 401);
+      }
+      if (response.status === 409) {
+        throw new ProfileApiError('That Finora tag is already taken.', 'tag_taken', 409);
+      }
+      throw new ProfileApiError(
+        `Profile request failed with status ${response.status}.`,
+        'server',
+        response.status,
+      );
+    }
+
+    return response;
+  } catch (error) {
+    if (error instanceof ProfileApiError) throw error;
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ProfileApiError('The local API did not respond in time.', 'timeout');
+    }
+    throw new ProfileApiError('The mobile app could not reach the local API.', 'network');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function requestProfile(path: string, getToken: GetToken): Promise<UserProfile> {
+  const response = await profileFetch(path, getToken);
   const payload: unknown = await response.json();
   const parsed = UserProfileSchema.safeParse(
     typeof payload === 'object' && payload !== null && 'profile' in payload
@@ -35,29 +82,14 @@ async function requestProfile(
   return parsed.data;
 }
 
-async function requestProfileUpdate(getToken: GetToken, updates: UpdateUserProfile) {
-  if (!apiUrl) throw new Error('EXPO_PUBLIC_API_URL is not configured.');
-
-  const token = await getToken();
-  if (!token) throw new Error('A Clerk session token is required.');
-
-  const response = await fetch(`${apiUrl}/v1/auth/me`, {
-    method: 'PATCH',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(updates),
-  });
-
-  if (!response.ok) throw new Error(`Profile request failed with status ${response.status}.`);
-}
-
 export function getUserProfile(getToken: GetToken) {
   return requestProfile('/v1/auth/me', getToken);
 }
 
-export function updateUserProfile(getToken: GetToken, updates: UpdateUserProfile) {
-  return requestProfileUpdate(getToken, updates);
+export async function updateUserProfile(getToken: GetToken, updates: UpdateUserProfile) {
+  await profileFetch('/v1/auth/me', getToken, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
 }

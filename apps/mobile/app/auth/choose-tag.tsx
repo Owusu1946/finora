@@ -19,7 +19,7 @@ import {
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
 import { getOnboardingState } from '@/lib/onboarding-storage';
-import { updateUserProfile } from '@/lib/profile-api';
+import { ProfileApiError, updateUserProfile } from '@/lib/profile-api';
 import { saveSettings } from '@/lib/settings-storage';
 
 function availabilityMessage(result: ReturnType<typeof checkFinoraTagAvailability>) {
@@ -118,11 +118,19 @@ export default function ChooseTagScreen() {
       router.replace('/(app)' as Href);
     } catch (error) {
       haptics.impact();
-      setSubmitError(
-        error instanceof Error && error.message.includes('409')
-          ? 'That tag was just taken — try another.'
-          : 'Could not save your profile. Check your connection and try again.',
-      );
+      if (error instanceof ProfileApiError) {
+        setSubmitError(
+          error.code === 'tag_taken'
+            ? 'That tag was just taken — try another.'
+            : error.code === 'timeout'
+              ? 'The local API timed out. Make sure the API and LAN proxy are running.'
+              : error.code === 'network'
+                ? 'Could not reach the local API. Make sure this phone and computer share a network.'
+                : error.message,
+        );
+      } else {
+        setSubmitError('Could not finish profile setup. Try again.');
+      }
     } finally {
       setLoading(false);
     }
