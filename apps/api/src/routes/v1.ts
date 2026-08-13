@@ -1,10 +1,22 @@
-import { getAuth } from '@clerk/hono';
-import { SEND_CORRIDORS, normalizeFinoraTag, previewFxQuote, type Currency } from '@finora/shared';
+import {
+  SEND_CORRIDORS,
+  UpdateUserProfileSchema,
+  normalizeFinoraTag,
+  previewFxQuote,
+  type Currency,
+} from '@finora/shared';
 import { Hono } from 'hono';
 
+import type { AuthenticatedUser } from '../auth';
+
+import { createDb } from '../db/client';
+import { upsertUserProfile } from '../db/user-profiles';
 import { createPreparation, mockStore, newId } from '../mock/store';
 
-type AppEnv = { Bindings: Env };
+type AppEnv = {
+  Bindings: Env;
+  Variables: { auth: AuthenticatedUser };
+};
 
 /**
  * Mock Finora platform routes.
@@ -12,13 +24,62 @@ type AppEnv = { Bindings: Env };
  */
 export const v1 = new Hono<AppEnv>();
 
-v1.get('/auth/me', (c) => {
-  const auth = getAuth(c, { acceptsToken: 'session_token' });
-  return c.json({
-    userId: auth.userId,
-    sessionId: auth.sessionId,
-    tokenType: auth.tokenType,
+v1.get('/auth/me', async (c) => {
+  const { userId } = c.get('auth');
+  const clerk = c.get('clerk');
+  const user = await clerk.users.getUser(userId);
+  const primaryEmail =
+    user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
+    user.emailAddresses[0]?.emailAddress;
+  if (!primaryEmail) return c.json({ error: 'profile_email_missing' }, 422);
+
+  const displayName =
+    [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+    primaryEmail.split('@')[0] ||
+    'Finora user';
+  const profile = await upsertUserProfile(createDb(c.env.DATABASE_URL), {
+    clerkUserId: user.id,
+    email: primaryEmail,
+    displayName,
+    imageUrl: user.imageUrl || null,
   });
+
+  return c.json({ profile });
+});
+
+v1.patch('/auth/me', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const parsed = UpdateUserProfileSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: 'invalid_request', issues: parsed.error.issues }, 400);
+  }
+
+  const { userId } = c.get('auth');
+  const clerk = c.get('clerk');
+  const user = await clerk.users.getUser(userId);
+  const primaryEmail =
+    user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
+    user.emailAddresses[0]?.emailAddress;
+  if (!primaryEmail) return c.json({ error: 'profile_email_missing' }, 422);
+
+  try {
+    const profile = await upsertUserProfile(createDb(c.env.DATABASE_URL), {
+      clerkUserId: user.id,
+      email: primaryEmail,
+      displayName:
+        [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+        primaryEmail.split('@')[0] ||
+        'Finora user',
+      imageUrl: user.imageUrl || null,
+      ...parsed.data,
+    });
+    return c.json({ profile });
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
+      return c.json({ error: 'finora_tag_taken' }, 409);
+    }
+    throw error;
+  }
 });
 
 function publicFinoraAccount(account: (typeof mockStore.subcustomers)[number]) {

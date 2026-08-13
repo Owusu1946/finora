@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/expo';
+import { useAuth, useUser } from '@clerk/expo';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -18,6 +18,8 @@ import {
   suggestFinoraTagFromName,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
+import { getOnboardingState } from '@/lib/onboarding-storage';
+import { updateUserProfile } from '@/lib/profile-api';
 import { saveSettings } from '@/lib/settings-storage';
 
 function availabilityMessage(result: ReturnType<typeof checkFinoraTagAvailability>) {
@@ -39,6 +41,7 @@ export default function ChooseTagScreen() {
   const { colors } = useTheme();
   const { markTagConfigured } = useAuthGate();
   const { user } = useUser();
+  const { getToken } = useAuth();
 
   const pending = getPendingAuthProfile();
   const [tagInput, setTagInput] = useState('');
@@ -88,22 +91,41 @@ export default function ChooseTagScreen() {
     const displayName =
       profile?.name?.trim() || user?.fullName?.trim() || user?.firstName?.trim() || recheck.tag;
 
-    await saveSettings({
-      finoraTag: recheck.tag,
-      displayName,
-      ...(email ? { email } : {}),
-    });
-    registerCurrentUserFinoraTag({
-      tag: recheck.tag,
-      displayName,
-      email,
-    });
-    await setTagConfigured(user.id);
-    clearPendingAuthProfile();
-    markTagConfigured();
-    setLoading(false);
-    haptics.success();
-    router.replace('/(app)' as Href);
+    try {
+      const onboarding = await getOnboardingState();
+      if (!onboarding.accountType) throw new Error('Your account type is missing.');
+
+      await updateUserProfile(getToken, {
+        accountType: onboarding.accountType,
+        finoraTag: recheck.tag,
+      });
+      await Promise.all([
+        saveSettings({
+          finoraTag: recheck.tag,
+          displayName,
+          ...(email ? { email } : {}),
+        }),
+        setTagConfigured(user.id),
+      ]);
+      registerCurrentUserFinoraTag({
+        tag: recheck.tag,
+        displayName,
+        email,
+      });
+      clearPendingAuthProfile();
+      markTagConfigured();
+      haptics.success();
+      router.replace('/(app)' as Href);
+    } catch (error) {
+      haptics.impact();
+      setSubmitError(
+        error instanceof Error && error.message.includes('409')
+          ? 'That tag was just taken — try another.'
+          : 'Could not save your profile. Check your connection and try again.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

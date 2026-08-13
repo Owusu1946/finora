@@ -13,6 +13,7 @@ Aligned with Vision §2 / §6: MCP is how ChatGPT, Claude Desktop, Cursor, etc. 
 | Tool                           | Purpose         | Typical agent use                        |
 | ------------------------------ | --------------- | ---------------------------------------- |
 | `ping`                         | Health          | Connectivity check                       |
+| `get_current_user`             | Profile         | Confirm the authenticated Finora identity |
 | `get_balances`                 | Balances        | “How much USD do I have?”                |
 | `list_wallets`                 | Wallets         | Pick a funding source                    |
 | `search_recipient`             | Find payee      | “Pay Ama…”                               |
@@ -44,7 +45,7 @@ Even if the name exists in the full registry:
 
 - Any `execute_approved_*` / “send money” settle
 - `approve_transaction` / `verify_pin` / biometrics
-- Auth (`login_user`, `delete_account`)
+- Credential/session lifecycle (`create_user`, `login_user`, `logout_user`, `refresh_session`, `delete_account`)
 - Theme / language / conversation CRUD
 - Notification **mutations** (`mark_notification_read`, `delete_notification`)
 - KYC submit / device revoke

@@ -734,6 +734,7 @@ export const DeleteWebhookInputSchema = z
  */
 export const TOOL_INPUT_SCHEMAS = {
   ping: PingInputSchema,
+  get_current_user: EmptyInputSchema,
   get_balances: GetBalancesInputSchema,
   list_wallets: ListWalletsInputSchema,
   search_recipient: SearchRecipientInputSchema,

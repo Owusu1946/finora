@@ -42,7 +42,7 @@ export const TOOL_REGISTRY = [
   // ── Health ───────────────────────────────────────────────────────────────
   t('ping', 'ping', 'health', ['platform', 'mcp'], 'read', 'Health check'),
 
-  // ── Auth & user (platform / mobile; never MCP) ───────────────────────────
+  // ── Auth & user ──────────────────────────────────────────────────────────
   t(
     'create_user',
     'createUser',
@@ -65,7 +65,7 @@ export const TOOL_REGISTRY = [
     'get_current_user',
     'getCurrentUser',
     'auth',
-    ['platform', 'mobile'],
+    ['platform', 'mobile', 'mcp'],
     'read',
     'Return authenticated user',
   ),

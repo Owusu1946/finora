@@ -65,6 +65,7 @@ import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
+import { useProfileSync } from '@/lib/use-profile-sync';
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
@@ -136,6 +137,7 @@ function RootApp() {
   const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
     useSplashGate(bootReady);
   const runtime = useLocalRuntime(finoraChatAdapter as never);
+  useProfileSync();
 
   useEffect(() => {
     let cancelled = false;
