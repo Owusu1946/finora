@@ -11,6 +11,10 @@ export function WalletsPreview({
   decorative?: boolean;
 }) {
   const wallets = density === 'compact' ? previewWallets.slice(0, 2) : previewWallets;
+  const walletValues: number[] = wallets.map((wallet) =>
+    Number(wallet.equivalent.replace(/[^\d.]/g, '')),
+  );
+  const netWorth = walletValues.reduce((total, value) => total + value, 0);
 
   return (
     <ProductPreviewFrame
@@ -20,12 +24,18 @@ export function WalletsPreview({
       decorative={decorative}
       className={styles.mobileScreen}
     >
-      <MobileHeader account='Personal' />
+      <MobileHeader account='Business' />
       <div className={styles.screenBody}>
         <h3 className={styles.screenTitle}>Wallets</h3>
         <div className={styles.netWorth}>
           <span>Business Net Worth</span>
-          <strong>$16,560.90</strong>
+          <strong>
+            $
+            {netWorth.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </strong>
         </div>
         <div className={styles.actionPills}>
           <span className={styles.primaryPill}>

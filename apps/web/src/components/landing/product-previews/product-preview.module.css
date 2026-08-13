@@ -21,12 +21,20 @@
 
 .full {
   --gutter: 20px;
-  --gutter: 4.8cqw;
 }
 
 .compact {
   --gutter: 12px;
-  --gutter: 4cqw;
+}
+
+@supports (width: 1cqw) {
+  .full {
+    --gutter: 4.8cqw;
+  }
+
+  .compact {
+    --gutter: 4cqw;
+  }
 }
 
 .mobileScreen,

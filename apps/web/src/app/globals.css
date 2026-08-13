@@ -1080,7 +1080,7 @@ a:focus-visible {
     padding: 18px 0;
   }
 
-  .site-header nav {
+  .site-header > nav {
     display: none;
   }
 
