@@ -14,47 +14,47 @@ import { useSettings } from '@/lib/settings-context';
 
 export default function AppearanceSettingsScreen() {
   const { colors } = useTheme();
-  const { settings, loading, update, setTheme, setLanguage, setLargerText } = useSettings();
+  const { settings, loading, update, setTheme, setLanguage, setLargerText, t } = useSettings();
 
   return (
     <SettingsScreen loading={loading}>
       <SettingsSection
-        title='Theme'
-        footer='System follows your device appearance.'
+        title={t('settings_theme')}
+        footer={t('settings_theme_follows')}
       >
         <View style={styles.segmentPad}>
           <SettingsSegmented
             value={settings.theme}
             onChange={(id) => void setTheme(id as ThemePreference)}
             options={[
-              { id: 'system', label: 'System' },
-              { id: 'light', label: 'Light' },
-              { id: 'dark', label: 'Dark' },
+              { id: 'system', label: t('settings_theme_system') },
+              { id: 'light', label: t('settings_theme_light') },
+              { id: 'dark', label: t('settings_theme_dark') },
             ]}
           />
         </View>
       </SettingsSection>
 
-      <SettingsSection title='Language'>
+      <SettingsSection title={t('settings_language')}>
         <View style={styles.segmentPad}>
           <Text style={[styles.hint, { color: colors.mutedForeground }]}>
-            Applies to Finora copy. Chat replies follow the model language.
+            {t('settings_lang_hint')}
           </Text>
           <SettingsSegmented
             value={settings.language}
             onChange={(id) => void setLanguage(id as AppLanguage)}
             options={[
-              { id: 'en', label: 'English' },
-              { id: 'fr', label: 'Français' },
+              { id: 'en', label: t('settings_lang_en') },
+              { id: 'fr', label: t('settings_lang_fr') },
             ]}
           />
         </View>
       </SettingsSection>
 
-      <SettingsSection title='Accessibility'>
+      <SettingsSection title={t('settings_accessibility')}>
         <SettingsSwitchRow
-          label='Larger text'
-          detail='Increase text across Finora'
+          label={t('settings_larger_text')}
+          detail={t('settings_larger_text_detail')}
           icon='eye'
           value={settings.largerText}
           onValueChange={(value) => void setLargerText(value)}
@@ -64,8 +64,8 @@ export default function AppearanceSettingsScreen() {
 
       <SettingsSection>
         <SettingsSwitchRow
-          label='Haptics'
-          detail='Vibration feedback on taps and confirms'
+          label={t('settings_haptics')}
+          detail={t('settings_haptics_sub')}
           icon='activity'
           value={settings.hapticsEnabled}
           onValueChange={(v) => void update({ hapticsEnabled: v })}

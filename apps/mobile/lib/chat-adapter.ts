@@ -48,51 +48,51 @@ function lastUserText(messages: readonly ThreadMessage[]) {
   );
 }
 
-const SEND_RE = /\b(send|pay|transfer|payout)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
+const SEND_RE = /\b(send|pay|transfer|payout|envoyer|payer|transférer|virement)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
 const FUND_RE =
-  /\b(deposit|fund|top\s*up|add money|add funds|load (?:my )?(?:wallet|account)|charge my momo)\b/i;
+  /\b(deposit|fund|top\s*up|add money|add funds|load (?:my )?(?:wallet|account)|charge my momo|déposer|recharger)\b/i;
 const RECEIVE_RE =
-  /\b(receive|get paid|payment details|virtual account|wallet address|how (?:do|can) i (?:receive|get paid))\b/i;
+  /\b(receive|get paid|payment details|virtual account|wallet address|how (?:do|can) i (?:receive|get paid)|recevoir|rib|iban)\b/i;
 const PAYMENT_REQUEST_RE =
-  /\b(payment\s+link|payment\s+request|create\s+(?:a\s+)?(?:payment\s+)?(?:link|request)|request\s+(?:\d+|money|payment|ghs|usd|eur|gbp|usdt)|ask\s+(?:for\s+)?(?:\d+|money|payment)|pay\s+me|send\s+me\s+(?:money|\d+)|invoice\s+me)\b/i;
+  /\b(payment\s+link|payment\s+request|create\s+(?:a\s+)?(?:payment\s+)?(?:link|request)|request\s+(?:\d+|money|payment|ghs|usd|eur|gbp|usdt)|ask\s+(?:for\s+)?(?:\d+|money|payment)|pay\s+me|send\s+me\s+(?:money|\d+)|invoice\s+me|lien\s+de\s+paiement|demander\s+un\s+paiement)\b/i;
 const BALANCE_RE =
-  /\b(balance|balances|wallets|how much|what.?s in my|check my (money|account))\b/i;
+  /\b(balance|balances|wallets|how much|what.?s in my|check my (money|account)|solde|soldes|portefeuilles?|compte)\b/i;
 const CONVERT_RE =
-  /\b(convert|exchange|fx|swap|change)\b|\b(usd|ghs|eur|gbp|usdt|usdc)\s*(to|into)\s*(usd|ghs|eur|gbp|usdt|usdc)\b/i;
+  /\b(convert|exchange|fx|swap|change|convertir|échanger|taux)\b|\b(usd|ghs|eur|gbp|usdt|usdc)\s*(to|into|en)\s*(usd|ghs|eur|gbp|usdt|usdc)\b/i;
 const INVOICE_RE =
-  /\b(invoice|invoices|unpaid bill|bills? from|find (?:my )?bills|supplier invoices?|unpaid invoices?)\b/i;
+  /\b(invoice|invoices|unpaid bill|bills? from|find (?:my )?bills|supplier invoices?|unpaid invoices?|facture|factures)\b/i;
 const CALENDAR_DUES_RE =
-  /\b(calendar|what.?s due|due on my calendar|money events?|rent (?:and|&) payroll|payroll (?:and|&) rent|due this week|upcoming (?:dues?|bills?|payments?))\b/i;
+  /\b(calendar|what.?s due|due on my calendar|money events?|rent (?:and|&) payroll|payroll (?:and|&) rent|due this week|upcoming (?:dues?|bills?|payments?)|calendrier|échéances?)\b/i;
 const SMS_REQUESTS_RE =
   /\b(sms|text message|momo (?:sms|prompt)|payment requests? from (?:my )?(?:sms|texts?)|requests? from (?:my )?sms)\b/i;
 const RECURRING_RE =
-  /\b(every\s+(week|month|quarter)|recurring|schedule|weekly|monthly|quarterly|auto(?:matic)?(?:ally)?\s+pay|standing\s+order|set\s*up\s+(my\s+)?(rent|payment|payout|salary)|rent\s+payment|setup\s+(a\s+)?(recurring|scheduled)|i want to (setup|set up|schedule))\b/i;
+  /\b(every\s+(week|month|quarter)|recurring|schedule|weekly|monthly|quarterly|auto(?:matic)?(?:ally)?\s+pay|standing\s+order|set\s*up\s+(my\s+)?(rent|payment|payout|salary)|rent\s+payment|setup\s+(a\s+)?(recurring|scheduled)|i want to (setup|set up|schedule)|récurrent|mensuel|hebdomadaire)\b/i;
 const FINANCIAL_PLAN_RE =
-  /\bpay\s+everyone\b|\bpay\s+everything\s+due\b|\beverything\s+due\s+today\b|\bpay\s+all\s+(due|bills|invoices|suppliers)\b|\bfinancial\s+plan\b|\brun\s+(payroll\s+and|all)\b/i;
+  /\bpay\s+everyone\b|\bpay\s+everything\s+due\b|\beverything\s+due\s+today\b|\bpay\s+all\s+(due|bills|invoices|suppliers)\b|\bfinancial\s+plan\b|\brun\s+(payroll\s+and|all)\b|\bplan\s+financier\b/i;
 const PAYROLL_RE =
-  /\b(run\s+payroll|pay\s+(?:the\s+)?(?:team|staff|employees?)|payroll\s+run|prepare\s+payroll)\b/i;
+  /\b(run\s+payroll|pay\s+(?:the\s+)?(?:team|staff|employees?)|payroll\s+run|prepare\s+payroll|paie|salaires?|payer\s+l.?équipe)\b/i;
 const LIST_EMPLOYEES_RE =
-  /\b(show|list|my|view)\b.{0,20}\b(employees?|team|roster)\b|\b(team roster|employees?)\b/i;
+  /\b(show|list|my|view)\b.{0,20}\b(employees?|team|roster)\b|\b(team roster|employees?|employés?|salariés?)\b/i;
 const LIST_SUPPLIERS_RE =
-  /\b(show|list|my|view)\b.{0,16}\bsuppliers?\b|\bsuppliers?\s+directory\b/i;
-const CREATE_EMPLOYEE_RE = /\b(add|create|hire)\s+(?:an?\s+)?employee\b/i;
+  /\b(show|list|my|view)\b.{0,16}\bsuppliers?\b|\bsuppliers?\s+directory\b|\bfournisseurs?\b/i;
+const CREATE_EMPLOYEE_RE = /\b(add|create|hire)\s+(?:an?\s+)?employee\b|\bajouter\s+un\s+employé\b/i;
 const LIST_BENEFICIARIES_RE =
-  /\b(show|list|my|view)\b.{0,16}\bbeneficiar(?:y|ies)\b|\bbeneficiar(?:y|ies)\b/i;
+  /\b(show|list|my|view)\b.{0,16}\bbeneficiar(?:y|ies)\b|\bbeneficiar(?:y|ies)\b|\bbénéficiaires?\b/i;
 const LIST_POLICIES_RE =
-  /\b(show|list|my|view)\b.{0,20}\b(approval\s+)?polic(?:y|ies)\b|\bwhat happens if i (?:send|pay)\b|\bsimulate\s+polic/i;
+  /\b(show|list|my|view)\b.{0,20}\b(approval\s+)?polic(?:y|ies)\b|\bwhat happens if i (?:send|pay)\b|\bsimulate\s+polic|\brègles?\b/i;
 const LIST_AUTOMATIONS_RE = /\b(show|list|my|view)\b.{0,16}\bautomations?\b|\bautomations?\b/i;
 const LIST_EXPENSES_RE =
-  /\b(show|list|my|view)\b.{0,24}\b(business\s+)?expenses?\b|\bbusiness expenses?\b/i;
-const TREASURY_RE = /\b(treasury|cash position|operating balance|treasury overview)\b/i;
+  /\b(show|list|my|view)\b.{0,24}\b(business\s+)?expenses?\b|\bbusiness expenses?\b|\bdépenses?\b/i;
+const TREASURY_RE = /\b(treasury|cash position|operating balance|treasury overview|trésorerie)\b/i;
 const VIRTUAL_ACCOUNTS_RE =
-  /\b(show|list|my|view)\b.{0,20}\bvirtual accounts?\b|\bvirtual accounts?\b/i;
+  /\b(show|list|my|view)\b.{0,20}\bvirtual accounts?\b|\bvirtual accounts?\b|\bcomptes?\s+virtuels?\b/i;
 const FINANCIAL_REPORT_RE =
-  /\b(financial (report|insights?|summary)|cash flow|spending (summary|report)|business report)\b/i;
+  /\b(financial (report|insights?|summary)|cash flow|spending (summary|report)|business report|rapport|flux\s+de\s+trésorerie)\b/i;
 const CREATE_CARD_RE =
-  /\b(create|issue|make|new)\b.{0,24}\b(virtual\s+)?card\b|\bvirtual\s+card\s+for\b|\bcard\s+for\s+(netflix|meta|aws|travel)\b/i;
-const LIST_CARDS_RE = /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b/i;
+  /\b(create|issue|make|new)\b.{0,24}\b(virtual\s+)?card\b|\bvirtual\s+card\s+for\b|\bcard\s+for\s+(netflix|meta|aws|travel)\b|\bcréer\s+une\s+carte\b/i;
+const LIST_CARDS_RE = /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b|\bcartes?\b/i;
 const MANAGE_CARD_RE =
-  /\b(freeze|unfreeze|cancel)\b.{0,24}\bcard\b|\bcard\b.{0,24}\b(freeze|unfreeze|cancel|details|limit)\b/i;
+  /\b(freeze|unfreeze|cancel)\b.{0,24}\bcard\b|\bcard\b.{0,24}\b(freeze|unfreeze|cancel|details|limit)\b|\bbloquer|débloquer\b/i;
 
 function isFinancialPlanIntent(prompt: string) {
   return FINANCIAL_PLAN_RE.test(prompt);

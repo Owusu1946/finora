@@ -10,6 +10,7 @@ import {
 import { useColorScheme as useSystemColorScheme } from 'react-native';
 
 import { Colors, type Palette } from '@/constants/theme';
+import { t, type TranslationKey } from './i18n';
 
 import {
   DEFAULT_SETTINGS,
@@ -31,6 +32,7 @@ type SettingsContextValue = {
   setLargerText: (largerText: boolean) => Promise<void>;
   isDark: boolean;
   colors: Palette;
+  t: (key: TranslationKey) => string;
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -87,6 +89,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const colors = isDark ? Colors.dark : Colors.light;
 
+  const translate = useCallback(
+    (key: TranslationKey) => t(key, settings.language),
+    [settings.language],
+  );
+
   const value = useMemo(
     () => ({
       settings,
@@ -98,8 +105,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setLargerText,
       isDark,
       colors,
+      t: translate,
     }),
-    [settings, loading, refresh, update, setTheme, setLanguage, setLargerText, isDark, colors],
+    [
+      settings,
+      loading,
+      refresh,
+      update,
+      setTheme,
+      setLanguage,
+      setLargerText,
+      isDark,
+      colors,
+      translate,
+    ],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

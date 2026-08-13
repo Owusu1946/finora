@@ -13,6 +13,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
+import { useSettings } from '@/lib/settings-context';
 
 export type PasscodeMode = 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp' | 'phone-required';
 
@@ -66,6 +67,7 @@ export function PasscodeModal({
   onClearError,
 }: PasscodeModalProps) {
   const { colors } = useTheme();
+  const { t } = useSettings();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [value, setValue] = useState('');
@@ -110,36 +112,35 @@ export function PasscodeModal({
     if (title && subtitle) return { title, subtitle };
     if (mode === 'setup') {
       return {
-        title: 'Create passcode',
-        subtitle: 'You’ll use this to approve money moves in Finora.',
+        title: t('passcode_create_title'),
+        subtitle: t('passcode_create_sub'),
       };
     }
     if (mode === 'confirm-setup') {
       return {
-        title: 'Confirm passcode',
-        subtitle: 'Enter the same passcode once more.',
+        title: t('passcode_confirm_title'),
+        subtitle: t('passcode_confirm_sub'),
       };
     }
     if (mode === 'forgot-otp') {
       return {
-        title: 'Check your phone',
+        title: t('passcode_forgot_title'),
         subtitle: forgotHint
-          ? `Enter the 6-digit code sent by SMS to ${forgotHint}.`
-          : 'Enter the 6-digit code we sent by SMS.',
+          ? `${t('phone_code_sent')} ${forgotHint}.`
+          : t('passcode_forgot_sub'),
       };
     }
     if (mode === 'phone-required') {
       return {
-        title: 'Add a recovery phone',
-        subtitle:
-          'Verify a phone number first, then Finora can securely send passcode reset codes.',
+        title: t('passcode_phone_req_title'),
+        subtitle: t('passcode_phone_req_sub'),
       };
     }
     return {
-      title: 'Enter passcode',
-      subtitle: 'Confirm this transaction with your Finora passcode.',
+      title: t('passcode_enter_title'),
+      subtitle: t('passcode_enter_sub'),
     };
-  }, [forgotHint, mode, subtitle, title]);
+  }, [forgotHint, mode, subtitle, t, title]);
 
   const shakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeX.value }],
@@ -295,7 +296,7 @@ export function PasscodeModal({
                 style={styles.forgotBtn}
               >
                 <Text style={[styles.forgotText, { color: colors.foreground }]}>
-                  {mode === 'forgot-otp' ? 'Resend code' : 'Forgot passcode?'}
+                  {mode === 'forgot-otp' ? t('action_resend') : t('passcode_forgot_btn')}
                 </Text>
               </Pressable>
             ) : (

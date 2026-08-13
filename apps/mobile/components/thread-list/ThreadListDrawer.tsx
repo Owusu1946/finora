@@ -21,61 +21,63 @@ import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
+import type { TranslationKey } from '@/lib/i18n';
+import { useSettings } from '@/lib/settings-context';
 import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
 import { ThreadListItem } from './ThreadListItem';
 
 type NavTab = 'money' | 'pay' | 'more';
 
-type NavItem = { href: Href; label: string; icon: IconName };
+type NavItem = { href: Href; key: TranslationKey; icon: IconName };
 
 const MONEY_ITEMS_BASE: NavItem[] = [
-  { href: '/wallets', label: 'Wallets', icon: 'wallet' },
-  { href: '/cards', label: 'Cards', icon: 'card' },
-  { href: '/activity', label: 'Activity', icon: 'activity' },
+  { href: '/wallets', key: 'nav_wallets', icon: 'wallet' },
+  { href: '/cards', key: 'nav_cards', icon: 'card' },
+  { href: '/activity', key: 'nav_activity', icon: 'activity' },
 ];
 
-const MONEY_ITEMS_BUSINESS: NavItem[] = [{ href: '/treasury', label: 'Treasury', icon: 'wallet' }];
+const MONEY_ITEMS_BUSINESS: NavItem[] = [{ href: '/treasury', key: 'nav_treasury', icon: 'wallet' }];
 
 const PAY_ITEMS_BASE: NavItem[] = [
-  { href: '/approvals', label: 'Approvals', icon: 'shield' },
-  { href: '/invoices', label: 'Invoices', icon: 'file' },
-  { href: '/recurring', label: 'Recurring', icon: 'reload' },
+  { href: '/approvals', key: 'nav_approvals', icon: 'shield' },
+  { href: '/invoices', key: 'nav_invoices', icon: 'file' },
+  { href: '/recurring', key: 'nav_recurring', icon: 'reload' },
 ];
 
 const PAY_ITEMS_BUSINESS: NavItem[] = [
-  { href: '/payroll', label: 'Payroll', icon: 'contacts' },
-  { href: '/suppliers', label: 'Suppliers', icon: 'bank' },
-  { href: '/beneficiaries', label: 'Beneficiaries', icon: 'bank' },
-  { href: '/expenses', label: 'Expenses', icon: 'card' },
+  { href: '/payroll', key: 'nav_payroll', icon: 'contacts' },
+  { href: '/suppliers', key: 'nav_suppliers', icon: 'bank' },
+  { href: '/beneficiaries', key: 'nav_beneficiaries', icon: 'bank' },
+  { href: '/expenses', key: 'nav_expenses', icon: 'card' },
 ];
 
 const MORE_ITEMS_BASE: NavItem[] = [
-  { href: '/contacts', label: 'Contacts', icon: 'contacts' },
-  { href: '/integrations', label: 'Integrations', icon: 'integrations' },
-  { href: '/settings', label: 'Settings', icon: 'settings' },
+  { href: '/contacts', key: 'nav_contacts', icon: 'contacts' },
+  { href: '/integrations', key: 'nav_integrations', icon: 'integrations' },
+  { href: '/settings', key: 'nav_settings', icon: 'settings' },
 ];
 
 const MORE_ITEMS_BUSINESS: NavItem[] = [
-  { href: '/automations', label: 'Automations', icon: 'reload' },
-  { href: '/policies', label: 'Policies', icon: 'shield' },
+  { href: '/automations', key: 'nav_automations', icon: 'reload' },
+  { href: '/policies', key: 'nav_policies', icon: 'shield' },
 ];
 
 function buildNavTabs(business: boolean) {
   return [
     {
       id: 'money' as const,
-      label: 'Money',
+      labelKey: 'nav_wallets' as TranslationKey,
       items: business ? [...MONEY_ITEMS_BASE, ...MONEY_ITEMS_BUSINESS] : MONEY_ITEMS_BASE,
     },
     {
       id: 'pay' as const,
-      label: 'Pay',
+      labelKey: 'nav_approvals' as TranslationKey,
       items: business ? [...PAY_ITEMS_BASE, ...PAY_ITEMS_BUSINESS] : PAY_ITEMS_BASE,
     },
     {
       id: 'more' as const,
-      label: 'More',
+      labelKey: 'settings_section_more' as TranslationKey,
       items: business ? [...MORE_ITEMS_BASE, ...MORE_ITEMS_BUSINESS] : MORE_ITEMS_BASE,
     },
   ];
@@ -92,6 +94,7 @@ function tabForPathname(pathname: string, tabs: ReturnType<typeof buildNavTabs>)
 
 export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const { colors } = useTheme();
+  const { t } = useSettings();
   const aui = useAui();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
@@ -237,7 +240,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
                     },
                   ]}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </Text>
                 {showDot ? (
                   <View style={[styles.tabDot, { backgroundColor: colors.foreground }]} />
@@ -280,7 +283,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
                   },
                 ]}
               >
-                {item.label}
+                {t(item.key)}
               </Text>
               {showApprovalBadge ? (
                 <View style={[styles.badge, { backgroundColor: colors.foreground }]}>
