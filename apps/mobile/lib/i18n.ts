@@ -124,6 +124,37 @@ const en = {
   settings_larger_text_detail: 'Increase text across Finora',
   settings_notif_all_on: 'All on',
   settings_notif_off: 'Off',
+
+  // Security screen
+  sec_change_passcode: 'Change passcode',
+  sec_create_passcode: 'Create passcode',
+  sec_passcode_detail_has: 'Used to approve payments and plans',
+  sec_passcode_detail_none: 'Required before first send',
+  sec_biometrics: 'Biometrics',
+  sec_biometrics_detail: 'Face ID / Touch ID (coming soon)',
+  sec_footer_passcode: 'Passcode and biometrics gate Approvals before money moves.',
+  sec_trusted_devices: 'Trusted devices',
+  sec_trusted_footer: 'Revoke a device to require sign-in again on that device.',
+  sec_this_device: 'This device',
+  sec_current: 'Current',
+  sec_revoke_title: 'Revoke device',
+  sec_revoke_confirm: 'Remove device from trusted devices?',
+  sec_passcode_updated_title: 'Passcode updated',
+  sec_passcode_updated_sub: 'Use your new passcode to approve money moves.',
+
+  // Account screen
+  account_type_title: 'Account type',
+  account_type_footer: 'Personal or business changes how Finora labels wallets and plans.',
+  account_type_personal: 'Personal',
+  account_type_business: 'Business',
+
+  // Notifications screen
+  notif_footer: 'Agent prepares always land in Approvals, even if alerts are off.',
+  notif_approvals_detail: 'When an agent prepares a payment or plan',
+  notif_payments_detail: 'Sent, received, and failed transfers',
+  notif_invoices_detail: 'New or due supplier invoices from Gmail',
+  notif_tips_label: 'Tips & product',
+  notif_tips_detail: 'Occasional product updates',
 };
 
 const fr: Record<TranslationKey, string> = {
@@ -246,6 +277,37 @@ const fr: Record<TranslationKey, string> = {
   settings_larger_text_detail: 'Augmenter le texte dans Finora',
   settings_notif_all_on: 'Toutes actives',
   settings_notif_off: 'D\u00e9sactiv\u00e9es',
+
+  // Security screen
+  sec_change_passcode: 'Modifier le code secret',
+  sec_create_passcode: 'Cr\u00e9er un code secret',
+  sec_passcode_detail_has: 'Utilis\u00e9 pour approuver les paiements et plans',
+  sec_passcode_detail_none: 'Requis avant le premier envoi',
+  sec_biometrics: 'Biom\u00e9trie',
+  sec_biometrics_detail: 'Face ID / Empreinte (bient\u00f4t disponible)',
+  sec_footer_passcode: 'Le code secret et la biom\u00e9trie prot\u00e8gent les approbations avant d\u2019ex\u00e9cuter un paiement.',
+  sec_trusted_devices: 'Appareils de confiance',
+  sec_trusted_footer: 'R\u00e9voquez un appareil pour demander une nouvelle connexion.',
+  sec_this_device: 'Cet appareil',
+  sec_current: 'Actuel',
+  sec_revoke_title: 'R\u00e9voquer l\u2019appareil',
+  sec_revoke_confirm: 'Retirer cet appareil des appareils de confiance\u00a0?',
+  sec_passcode_updated_title: 'Code secret mis \u00e0 jour',
+  sec_passcode_updated_sub: 'Utilisez votre nouveau code secret pour approuver vos transactions.',
+
+  // Account screen
+  account_type_title: 'Type de compte',
+  account_type_footer: 'Le choix entre personnel ou entreprise modifie l\u2019affichage de vos portefeuilles.',
+  account_type_personal: 'Personnel',
+  account_type_business: 'Entreprise',
+
+  // Notifications screen
+  notif_footer: 'Les approbations pr\u00e9par\u00e9es par l\u2019agent arrivent toujours dans Approbations, m\u00eame si les alertes sont d\u00e9sactiv\u00e9es.',
+  notif_approvals_detail: 'Lorsqu\u2019un agent pr\u00e9pare un paiement ou un plan',
+  notif_payments_detail: 'Transferts envoy\u00e9s, re\u00e7us et \u00e9chou\u00e9s',
+  notif_invoices_detail: 'Nouvelles factures fournisseurs depuis Gmail',
+  notif_tips_label: 'Conseils & nouveaut\u00e9s',
+  notif_tips_detail: 'Mises \u00e0 jour occasionnelles du produit',
 };
 
 const dictionaries = { en, fr };

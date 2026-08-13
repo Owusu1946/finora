@@ -6,14 +6,14 @@ import {
 import { useSettings } from '@/lib/settings-context';
 
 export default function NotificationsSettingsScreen() {
-  const { settings, loading, update } = useSettings();
+  const { settings, loading, update, t } = useSettings();
 
   return (
     <SettingsScreen loading={loading}>
-      <SettingsSection footer='Agent prepares always land in Approvals, even if alerts are off.'>
+      <SettingsSection footer={t('notif_footer')}>
         <SettingsSwitchRow
-          label='Approvals'
-          detail='When an agent prepares a payment or plan'
+          label={t('settings_approvals_label')}
+          detail={t('notif_approvals_detail')}
           value={settings.notifications.approvals}
           onValueChange={(v) =>
             void update({ notifications: { ...settings.notifications, approvals: v } })
@@ -21,23 +21,23 @@ export default function NotificationsSettingsScreen() {
         />
         <SettingsSwitchRow
           label='Payments'
-          detail='Sent, received, and failed transfers'
+          detail={t('notif_payments_detail')}
           value={settings.notifications.payments}
           onValueChange={(v) =>
             void update({ notifications: { ...settings.notifications, payments: v } })
           }
         />
         <SettingsSwitchRow
-          label='Invoices'
-          detail='New or due supplier invoices from Gmail'
+          label={t('nav_invoices')}
+          detail={t('notif_invoices_detail')}
           value={settings.notifications.invoices}
           onValueChange={(v) =>
             void update({ notifications: { ...settings.notifications, invoices: v } })
           }
         />
         <SettingsSwitchRow
-          label='Tips & product'
-          detail='Occasional product updates'
+          label={t('notif_tips_label')}
+          detail={t('notif_tips_detail')}
           value={settings.notifications.marketing}
           onValueChange={(v) =>
             void update({ notifications: { ...settings.notifications, marketing: v } })

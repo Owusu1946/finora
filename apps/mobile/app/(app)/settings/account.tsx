@@ -20,7 +20,7 @@ import { useSettings } from '@/lib/settings-context';
 export default function AccountSettingsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { settings, loading, refresh } = useSettings();
+  const { settings, loading, refresh, t } = useSettings();
   const { signOut } = useClerk();
   const { user } = useUser();
   const [accountType, setAccountTypeLocal] = useState(getAccountType());
@@ -40,10 +40,10 @@ export default function AccountSettingsScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert('Sign out', 'You’ll need to sign in again to use Finora.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('settings_sign_out'), t('settings_sign_out_confirm'), [
+      { text: t('action_cancel'), style: 'cancel' },
       {
-        text: 'Sign out',
+        text: t('settings_sign_out'),
         style: 'destructive',
         onPress: async () => {
           haptics.selection();
@@ -85,16 +85,16 @@ export default function AccountSettingsScreen() {
       </SettingsSection>
 
       <SettingsSection
-        title='Account type'
-        footer='Personal or business changes how Finora labels wallets and plans.'
+        title={t('account_type_title')}
+        footer={t('account_type_footer')}
       >
         <View style={styles.segmentPad}>
           <SettingsSegmented
             value={accountType}
             onChange={(id) => void handleAccountType(id as 'personal' | 'business')}
             options={[
-              { id: 'personal', label: 'Personal' },
-              { id: 'business', label: 'Business' },
+              { id: 'personal', label: t('account_type_personal') },
+              { id: 'business', label: t('account_type_business') },
             ]}
           />
         </View>
@@ -102,7 +102,7 @@ export default function AccountSettingsScreen() {
 
       <SettingsSection>
         <SettingsRow
-          label='Sign out'
+          label={t('settings_sign_out')}
           icon='arrow-up'
           destructive
           showChevron

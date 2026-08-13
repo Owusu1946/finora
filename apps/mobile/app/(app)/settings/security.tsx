@@ -35,7 +35,7 @@ export default function SecuritySettingsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ changePasscode?: string }>();
   const { colors } = useTheme();
-  const { settings, loading, update, refresh } = useSettings();
+  const { settings, loading, update, refresh, t } = useSettings();
   const { requestChange, modal: passcodeModal } = useChangePasscode();
   const [hasPin, setHasPin] = useState(false);
   const resumedChangeRef = useRef(false);
@@ -51,9 +51,9 @@ export default function SecuritySettingsScreen() {
     const ok = await requestChange();
     if (ok) {
       setHasPin(true);
-      Alert.alert('Passcode updated', 'Use your new passcode to approve money moves.');
+      Alert.alert(t('sec_passcode_updated_title'), t('sec_passcode_updated_sub'));
     }
-  }, [requestChange]);
+  }, [requestChange, t]);
 
   useEffect(() => {
     if (params.changePasscode !== '1' || resumedChangeRef.current) return;
@@ -66,17 +66,17 @@ export default function SecuritySettingsScreen() {
     await update({ biometricsEnabled: next });
     if (next) {
       Alert.alert(
-        'Biometrics',
+        t('sec_biometrics'),
         'Face ID / fingerprint will unlock Approvals once device auth is wired. The toggle is saved for now.',
       );
     }
   };
 
   const handleRevokeDevice = (id: string, name: string) => {
-    Alert.alert('Revoke device', `Remove “${name}” from trusted devices?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('sec_revoke_title'), `${t('sec_revoke_confirm')} (${name})`, [
+      { text: t('action_cancel'), style: 'cancel' },
       {
-        text: 'Revoke',
+        text: t('action_done'),
         style: 'destructive',
         onPress: async () => {
           await revokeTrustedDevice(id);
@@ -93,21 +93,17 @@ export default function SecuritySettingsScreen() {
         loading={loading}
         contentStyle={styles.content}
       >
-        <SettingsSection footer='Passcode and biometrics gate Approvals before money moves.'>
+        <SettingsSection footer={t('sec_footer_passcode')}>
           <SettingsRow
-            label={hasPin ? 'Change passcode' : 'Create passcode'}
-            detail={hasPin ? 'Used to approve payments and plans' : 'Required before first send'}
+            label={hasPin ? t('sec_change_passcode') : t('sec_create_passcode')}
+            detail={hasPin ? t('sec_passcode_detail_has') : t('sec_passcode_detail_none')}
             icon='shield'
             showChevron
             onPress={() => void handleChangePasscode()}
           />
           <SettingsSwitchRow
-            label='Biometrics'
-            detail={
-              Platform.OS === 'ios'
-                ? 'Face ID / Touch ID (coming soon)'
-                : 'Fingerprint (coming soon)'
-            }
+            label={t('sec_biometrics')}
+            detail={t('sec_biometrics_detail')}
             icon='biometric'
             value={settings.biometricsEnabled}
             onValueChange={(v) => void handleBiometrics(v)}
@@ -116,8 +112,8 @@ export default function SecuritySettingsScreen() {
         </SettingsSection>
 
         <SettingsSection
-          title='Trusted devices'
-          footer='Revoke a device to require sign-in again on that device.'
+          title={t('sec_trusted_devices')}
+          footer={t('sec_trusted_footer')}
         >
           {settings.trustedDevices.map((device, index) => (
             <SettingsRow
@@ -125,8 +121,8 @@ export default function SecuritySettingsScreen() {
               label={device.name}
               detail={
                 device.current
-                  ? `This device · Active ${relativeTime(device.lastActiveAt)}`
-                  : `${device.platform} · Last active ${relativeTime(device.lastActiveAt)}`
+                  ? `${t('sec_this_device')} \u00b7 Active ${relativeTime(device.lastActiveAt)}`
+                  : `${device.platform} \u00b7 Last active ${relativeTime(device.lastActiveAt)}`
               }
               icon={device.platform === 'web' ? 'integrations' : 'phone'}
               isLast={index === settings.trustedDevices.length - 1}
@@ -137,7 +133,7 @@ export default function SecuritySettingsScreen() {
               right={
                 device.current ? (
                   <Text style={[styles.currentPill, { color: colors.mutedForeground }]}>
-                    Current
+                    {t('sec_current')}
                   </Text>
                 ) : undefined
               }
