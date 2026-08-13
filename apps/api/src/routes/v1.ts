@@ -1,3 +1,5 @@
+import type { ApiEnv } from '@finora/env/api';
+
 import {
   SEND_CORRIDORS,
   UpdateUserProfileSchema,
@@ -15,7 +17,7 @@ import { createPreparation, mockStore, newId } from '../mock/store';
 
 type AppEnv = {
   Bindings: Env;
-  Variables: { auth: AuthenticatedUser };
+  Variables: { auth: AuthenticatedUser; env: ApiEnv };
 };
 
 /**
@@ -37,7 +39,7 @@ v1.get('/auth/me', async (c) => {
     [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
     primaryEmail.split('@')[0] ||
     'Finora user';
-  const profile = await upsertUserProfile(createDb(c.env.DATABASE_URL), {
+  const profile = await upsertUserProfile(createDb(c.get('env').DATABASE_URL), {
     clerkUserId: user.id,
     email: primaryEmail,
     displayName,
@@ -63,7 +65,7 @@ v1.patch('/auth/me', async (c) => {
   if (!primaryEmail) return c.json({ error: 'profile_email_missing' }, 422);
 
   try {
-    const profile = await upsertUserProfile(createDb(c.env.DATABASE_URL), {
+    const profile = await upsertUserProfile(createDb(c.get('env').DATABASE_URL), {
       clerkUserId: user.id,
       email: primaryEmail,
       displayName:

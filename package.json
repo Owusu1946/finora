@@ -10,6 +10,7 @@
     "build:web": "turbo run build --filter=@finora/web",
     "check": "oxlint && oxfmt --write",
     "check-types": "turbo run check-types",
+    "db:push": "pnpm --filter @finora/api db:push",
     "deploy:api": "turbo run deploy --filter=@finora/api",
     "deploy:mcp": "turbo run deploy --filter=@finora/mcp",
     "dev": "turbo run dev",
