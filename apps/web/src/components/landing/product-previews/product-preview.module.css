@@ -16,9 +16,7 @@
   background: var(--canvas);
   color: var(--ink);
   container-type: inline-size;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', var(--font-dm-sans),
-    sans-serif;
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 .full {
