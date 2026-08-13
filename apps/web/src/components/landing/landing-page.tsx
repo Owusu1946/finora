@@ -35,12 +35,27 @@ export function LandingPage() {
             ))}
           </nav>
 
-          <a
-            href='#get-started'
-            className='button button-dark button-compact'
-          >
-            Get started
-          </a>
+          <div className='site-header-actions'>
+            <details className='mobile-navigation'>
+              <summary aria-label='Open navigation'>Menu</summary>
+              <nav aria-label='Mobile navigation'>
+                {navigation.map((item) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </details>
+            <a
+              href='#get-started'
+              className='button button-dark button-compact'
+            >
+              Get started
+            </a>
+          </div>
         </header>
 
         <div className='hero-copy'>

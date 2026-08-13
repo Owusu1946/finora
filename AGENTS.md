@@ -21,7 +21,7 @@ WeWire provides the underlying financial rails. Much of the current product is s
 
 ## Web (Next.js)
 
-The landing app lives in `apps/web` (`@finora/web`). Use Next.js 16 docs shipped with the installed package (`node_modules/next/dist/docs/`, or the package-local `AGENTS.md`). Run `pnpm landing` from the repo root for `next dev` on port 3000.
+The landing app lives in `apps/web` (`@finora/web`). Use Next.js 16 docs shipped with the installed package (`node_modules/next/dist/docs/`, or the package-local `AGENTS.md`). Run `pnpm run dev:web` from the repo root for `next dev` on port 3000.
 
 React stays pinned to `19.1.0` via workspace overrides (same as mobile). Do not bump React only for the web app without checking Expo compatibility.
 
