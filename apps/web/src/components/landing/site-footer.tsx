@@ -1,4 +1,5 @@
 import { FinoraLogo } from '@/components/brand/finora-logo';
+import { LandingIcon } from '@/components/landing/landing-icon';
 
 const footerGroups = [
   {
@@ -44,7 +45,7 @@ export function SiteFooter() {
           className='button button-light'
         >
           Get started
-          <span aria-hidden>↗</span>
+          <LandingIcon name='up-right' />
         </a>
       </div>
 

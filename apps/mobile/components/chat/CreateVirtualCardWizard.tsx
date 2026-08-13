@@ -8,6 +8,7 @@ import {
 } from '@/components/cards/types';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -223,7 +224,12 @@ export function CreateVirtualCardWizard({
       {step === 'issued' && issued ? (
         <View style={styles.issuedBlock}>
           <View style={[styles.issuedIcon, { backgroundColor: colors.foreground }]}>
-            <Text style={[styles.issuedCheck, { color: colors.background }]}>✓</Text>
+            <Icon
+              name='check'
+              size={24}
+              color={colors.background}
+              weight='bold'
+            />
           </View>
           <View style={styles.issuedCopy}>
             <Text style={[styles.issuedTitle, { color: colors.foreground }]}>
@@ -408,7 +414,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  issuedCheck: { fontFamily: 'DMSans_700Bold', fontSize: 22 },
   issuedCopy: {
     gap: 2,
     paddingHorizontal: 4,

@@ -87,13 +87,20 @@ export function Composer() {
 }
 
 export function CurrencyGlyph({ currency }: { currency: string }) {
+  const icon =
+    currency === 'EUR' ? (
+      <PreviewIcon name='stars' />
+    ) : currency === 'GHS' ? (
+      <PreviewIcon name='star' />
+    ) : null;
+
   return (
     <span
       className={styles.currencyGlyph}
       data-currency={currency.toLowerCase()}
       aria-hidden
     >
-      <span>{currency === 'USDT' ? '₮' : currency === 'USDC' ? '$' : currency}</span>
+      {icon ?? <span>{currency === 'USDT' ? '₮' : currency === 'USDC' ? '$' : currency}</span>}
     </span>
   );
 }

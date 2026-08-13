@@ -1,6 +1,7 @@
 import { FinoraLogo } from '@/components/brand/finora-logo';
 import { ApprovalFlow } from '@/components/landing/approval-flow';
 import { BentoGrid } from '@/components/landing/bento-grid';
+import { LandingIcon } from '@/components/landing/landing-icon';
 import { SiteFooter } from '@/components/landing/site-footer';
 import { SystemMap } from '@/components/landing/system-map';
 
@@ -71,14 +72,14 @@ export function LandingPage() {
               className='button button-dark'
             >
               Get started
-              <span aria-hidden>↗</span>
+              <LandingIcon name='up-right' />
             </a>
             <a
               href='#product'
               className='text-link'
             >
               Explore the system
-              <span aria-hidden>↓</span>
+              <LandingIcon name='down' />
             </a>
           </div>
         </div>
