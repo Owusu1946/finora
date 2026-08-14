@@ -12,4 +12,5 @@ CLERK_PUBLISHABLE_KEY = "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA"
 # CLERK_SECRET_KEY
 # DATABASE_URL
 # OPENAI_API_KEY
+# REDIS_URL (optional, enables resumable chat streams)
 # WEWIRE_WEBHOOK_SECRET

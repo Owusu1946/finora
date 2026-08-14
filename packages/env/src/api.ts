@@ -11,6 +11,7 @@ export function createApiEnv(runtimeEnv: RuntimeEnv) {
       CLERK_SECRET_KEY: z.string().min(1),
       CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
       OPENAI_API_KEY: z.string().min(1).optional(),
+      REDIS_URL: z.url().optional(),
       WEWIRE_API_KEY: z.string().min(1).optional(),
       WEWIRE_WEBHOOK_SECRET: z.string().min(1).optional(),
     },

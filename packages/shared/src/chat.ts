@@ -5,6 +5,7 @@ export const ChatIdSchema = z
   .min(1)
   .max(128)
   .regex(/^[A-Za-z0-9_-]+$/);
+export const ChatStreamIdSchema = z.uuid();
 
 export const ChatRequestSchema = z
   .object({
@@ -15,6 +16,13 @@ export const ChatRequestSchema = z
   })
   .strict();
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
+
+export const ChatStopRequestSchema = z
+  .object({
+    activeStreamId: ChatStreamIdSchema.nullish(),
+  })
+  .strict();
+export type ChatStopRequest = z.infer<typeof ChatStopRequestSchema>;
 
 export const ChatErrorCodeSchema = z.enum([
   'chat_busy',
@@ -44,7 +52,7 @@ export const ChatStateResponseSchema = z.object({
   id: ChatIdSchema,
   messages: z.array(z.unknown()),
   active: z.boolean(),
-  activeStreamId: z.string().nullable(),
+  activeStreamId: ChatStreamIdSchema.nullable(),
   resumable: z.boolean(),
 });
 export type ChatStateResponse = z.infer<typeof ChatStateResponseSchema>;

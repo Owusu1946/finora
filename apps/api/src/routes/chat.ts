@@ -2,6 +2,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import {
   ChatIdSchema,
   ChatRequestSchema,
+  ChatStopRequestSchema,
   type ChatErrorResponse,
   type ChatStateResponse,
 } from '@finora/shared';
@@ -11,6 +12,7 @@ import {
   safeValidateUIMessages,
   streamText,
   toUIMessageStream,
+  UI_MESSAGE_STREAM_HEADERS,
 } from 'ai';
 import { Hono } from 'hono';
 
@@ -23,10 +25,16 @@ import {
   sanitizeIncomingMessages,
 } from '../ai/messages';
 import {
+  closeStreamWith,
+  createRedisStreamSession,
+  publishStreamCancellation,
+} from '../ai/resumable-stream';
+import {
   chatIsActive,
   claimChatStream,
   clearChatStream,
   ensureChat,
+  finalizeChatStream,
   loadChat,
   replaceChatMessages,
 } from '../db/chat-store';
@@ -35,6 +43,7 @@ import { createDb } from '../db/client';
 const MODEL_ID = 'gpt-5.6-luna';
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
+const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
 
 const FINORA_SYSTEM_PROMPT = `You are Finora, a financial operations assistant.
 
@@ -67,6 +76,199 @@ function logPersistenceError(error: unknown, requestId: string) {
     errorName: error instanceof Error ? error.name : typeof error,
   });
 }
+
+function logRedisError(error: unknown, requestId: string) {
+  console.error('[chat:redis]', {
+    requestId,
+    errorName: error instanceof Error ? error.name : typeof error,
+  });
+}
+
+chat.get('/:id/stream', async (c) => {
+  const requestId = crypto.randomUUID();
+  const parsedId = ChatIdSchema.safeParse(c.req.param('id'));
+  if (!parsedId.success) {
+    return c.json(
+      errorResponse('invalid_request', 'The chat ID is invalid.', requestId, false),
+      400,
+      { 'x-request-id': requestId },
+    );
+  }
+
+  const env = c.get('env');
+  const db = createDb(env.DATABASE_URL);
+
+  try {
+    const { userId } = c.get('auth');
+    const stored = await loadChat(db, parsedId.data, userId);
+    if (!stored) {
+      return c.json(
+        errorResponse('chat_not_found', 'The chat was not found.', requestId, false),
+        404,
+        { 'x-request-id': requestId },
+      );
+    }
+
+    const active = chatIsActive(stored);
+    const activeStreamId = stored.activeStreamId;
+    if (!active || !activeStreamId || !stored.activeStreamResumable || !env.REDIS_URL) {
+      if (
+        activeStreamId &&
+        (!active || (stored.activeStreamResumable && env.REDIS_URL === undefined))
+      ) {
+        await clearChatStream(db, parsedId.data, userId, activeStreamId);
+      }
+      return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+    }
+
+    let redisSession: Awaited<ReturnType<typeof createRedisStreamSession>>;
+    try {
+      redisSession = await createRedisStreamSession({
+        redisUrl: env.REDIS_URL,
+        waitUntil: (promise) => c.executionCtx.waitUntil(promise),
+        onError: (error) => logRedisError(error, requestId),
+      });
+    } catch (error) {
+      logRedisError(error, requestId);
+      return c.json(
+        errorResponse(
+          'model_unavailable',
+          'The chat stream is temporarily unavailable. Please try again.',
+          requestId,
+          true,
+        ),
+        503,
+        { 'x-request-id': requestId },
+      );
+    }
+
+    try {
+      const resumedStream = await redisSession.context.resumeExistingStream(activeStreamId);
+      if (!resumedStream) {
+        await redisSession.close();
+        await clearChatStream(db, parsedId.data, userId, activeStreamId);
+        return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+      }
+
+      return new Response(
+        closeStreamWith(resumedStream, redisSession.close).pipeThrough(new TextEncoderStream()),
+        {
+          headers: {
+            ...UI_MESSAGE_STREAM_HEADERS,
+            'x-request-id': requestId,
+            [RESUMABLE_STREAM_ID_HEADER]: activeStreamId,
+          },
+        },
+      );
+    } catch (error) {
+      await redisSession.close();
+      throw error;
+    }
+  } catch (error) {
+    logChatError(error, requestId);
+    const publicChatError = toPublicChatError(error, requestId);
+    return c.json(
+      errorResponse(
+        publicChatError.code,
+        publicChatError.message,
+        requestId,
+        publicChatError.retryable,
+      ),
+      publicChatError.status,
+      { 'x-request-id': requestId },
+    );
+  }
+});
+
+chat.post('/:id/stop', async (c) => {
+  const requestId = crypto.randomUUID();
+  const parsedId = ChatIdSchema.safeParse(c.req.param('id'));
+  if (!parsedId.success) {
+    return c.json(
+      errorResponse('invalid_request', 'The chat ID is invalid.', requestId, false),
+      400,
+      { 'x-request-id': requestId },
+    );
+  }
+
+  const body = await c.req.json().catch(() => ({}));
+  const parsedBody = ChatStopRequestSchema.safeParse(body);
+  if (!parsedBody.success) {
+    return c.json(
+      errorResponse('invalid_request', 'The stop request is invalid.', requestId, false),
+      400,
+      { 'x-request-id': requestId },
+    );
+  }
+
+  const env = c.get('env');
+  const db = createDb(env.DATABASE_URL);
+
+  try {
+    const { userId } = c.get('auth');
+    const stored = await loadChat(db, parsedId.data, userId);
+    if (!stored) {
+      return c.json(
+        errorResponse('chat_not_found', 'The chat was not found.', requestId, false),
+        404,
+        { 'x-request-id': requestId },
+      );
+    }
+
+    const activeStreamId = stored.activeStreamId;
+    if (!activeStreamId || !chatIsActive(stored)) {
+      if (activeStreamId) await clearChatStream(db, parsedId.data, userId, activeStreamId);
+      return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+    }
+    if (parsedBody.data.activeStreamId && parsedBody.data.activeStreamId !== activeStreamId) {
+      return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+    }
+    if (!stored.activeStreamResumable) {
+      return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+    }
+    if (!env.REDIS_URL) {
+      await clearChatStream(db, parsedId.data, userId, activeStreamId);
+      return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+    }
+
+    let listenerCount: number;
+    try {
+      listenerCount = await publishStreamCancellation(env.REDIS_URL, activeStreamId, (error) =>
+        logRedisError(error, requestId),
+      );
+    } catch (error) {
+      logRedisError(error, requestId);
+      return c.json(
+        errorResponse(
+          'model_unavailable',
+          'The chat stream could not be stopped. Please try again.',
+          requestId,
+          true,
+        ),
+        503,
+        { 'x-request-id': requestId },
+      );
+    }
+
+    if (listenerCount === 0) {
+      await clearChatStream(db, parsedId.data, userId, activeStreamId);
+    }
+    return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
+  } catch (error) {
+    logChatError(error, requestId);
+    const publicChatError = toPublicChatError(error, requestId);
+    return c.json(
+      errorResponse(
+        publicChatError.code,
+        publicChatError.message,
+        requestId,
+        publicChatError.retryable,
+      ),
+      publicChatError.status,
+      { 'x-request-id': requestId },
+    );
+  }
+});
 
 chat.get('/:id', async (c) => {
   const requestId = crypto.randomUUID();
@@ -160,6 +362,8 @@ chat.post('/', async (c) => {
   const { userId } = c.get('auth');
   const db = createDb(env.DATABASE_URL);
   const streamId = crypto.randomUUID();
+  const producerAbortController = new AbortController();
+  let redisSession: Awaited<ReturnType<typeof createRedisStreamSession>> | null = null;
   let streamClaimed = false;
 
   try {
@@ -170,8 +374,33 @@ chat.post('/', async (c) => {
         { 'x-request-id': requestId },
       );
     }
-    streamClaimed = await claimChatStream(db, parsed.data.id, userId, streamId, false);
+
+    if (env.REDIS_URL) {
+      try {
+        redisSession = await createRedisStreamSession({
+          redisUrl: env.REDIS_URL,
+          waitUntil: (promise) => c.executionCtx.waitUntil(promise),
+          onError: (error) => logRedisError(error, requestId),
+        });
+        await redisSession.subscribeToCancellation(streamId, () => {
+          producerAbortController.abort();
+        });
+      } catch (error) {
+        logRedisError(error, requestId);
+        await redisSession?.close();
+        redisSession = null;
+      }
+    }
+
+    streamClaimed = await claimChatStream(
+      db,
+      parsed.data.id,
+      userId,
+      streamId,
+      redisSession !== null,
+    );
     if (!streamClaimed) {
+      await redisSession?.close();
       return c.json(
         errorResponse('chat_busy', 'This chat is already generating a response.', requestId, true),
         409,
@@ -189,6 +418,7 @@ chat.post('/', async (c) => {
     );
     if (!messages) {
       await clearChatStream(db, parsed.data.id, userId, streamId);
+      await redisSession?.close();
       streamClaimed = false;
       return c.json(
         errorResponse(
@@ -214,7 +444,7 @@ chat.post('/', async (c) => {
       model: openai.responses(MODEL_ID),
       system: FINORA_SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-      abortSignal: c.req.raw.signal,
+      abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,
       maxOutputTokens: 2_048,
       maxRetries: 2,
       timeout: {
@@ -244,19 +474,20 @@ chat.post('/', async (c) => {
       onEnd: ({ messages: generatedMessages }) => {
         const persistence = (async () => {
           try {
-            await replaceChatMessages(
+            await finalizeChatStream(
               db,
               parsed.data.id,
               userId,
+              streamId,
               generatedMessagesForPersistence(generatedMessages, messages),
             );
           } catch (error) {
             logPersistenceError(error, requestId);
-          }
-          try {
-            await clearChatStream(db, parsed.data.id, userId, streamId);
-          } catch (error) {
-            logPersistenceError(error, requestId);
+            try {
+              await clearChatStream(db, parsed.data.id, userId, streamId);
+            } catch (clearError) {
+              logPersistenceError(clearError, requestId);
+            }
           }
         })();
         c.executionCtx.waitUntil(persistence);
@@ -264,11 +495,24 @@ chat.post('/', async (c) => {
       },
     });
 
-    return createUIMessageStreamResponse({
+    let resumableStart: Promise<unknown> | undefined;
+    const response = createUIMessageStreamResponse({
       stream,
-      headers: { 'x-request-id': requestId },
+      headers: {
+        'x-request-id': requestId,
+        ...(redisSession ? { [RESUMABLE_STREAM_ID_HEADER]: streamId } : {}),
+      },
+      consumeSseStream: redisSession
+        ? ({ stream: sseStream }) => {
+            resumableStart = redisSession!.createNewResumableStream(streamId, sseStream);
+          }
+        : undefined,
     });
+    await resumableStart;
+    return response;
   } catch (error) {
+    producerAbortController.abort();
+    await redisSession?.close();
     if (streamClaimed) {
       try {
         await clearChatStream(db, parsed.data.id, userId, streamId);

@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-import { and, asc, eq, isNull, lt, or } from 'drizzle-orm';
+import { and, asc, eq, isNull, lt, or, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -93,6 +93,52 @@ export async function clearChatStream(
         eq(aiChats.activeStreamId, streamId),
       ),
     );
+}
+
+export async function finalizeChatStream(
+  db: Database,
+  chatId: string,
+  clerkUserId: string,
+  streamId: string,
+  messages: UIMessage[],
+) {
+  const messageRows = messages.map((message, position) => ({
+    messageId: message.id,
+    position,
+    role: message.role === 'user' ? ('user' as const) : ('assistant' as const),
+    payload: message,
+  }));
+
+  await db.execute(sql`
+    with active_chat as (
+      select ${aiChats.id} as id
+      from ${aiChats}
+      where ${aiChats.id} = ${chatId}
+        and ${aiChats.clerkUserId} = ${clerkUserId}
+        and ${aiChats.activeStreamId} = ${streamId}
+      for update
+    ), deleted_messages as (
+      delete from ${aiChatMessages}
+      where ${aiChatMessages.chatId} in (select id from active_chat)
+    ), inserted_messages as (
+      insert into ${aiChatMessages} (chat_id, message_id, position, role, payload)
+      select
+        active_chat.id,
+        message.value ->> 'messageId',
+        (message.value ->> 'position')::integer,
+        (message.value ->> 'role')::ai_chat_message_role,
+        message.value -> 'payload'
+      from active_chat
+      cross join jsonb_array_elements(${JSON.stringify(messageRows)}::jsonb) as message(value)
+    )
+    update ${aiChats}
+    set
+      active_stream_id = null,
+      active_stream_started_at = null,
+      active_stream_resumable = false,
+      updated_at = now()
+    where ${aiChats.id} in (select id from active_chat)
+  `);
 }
 
 export async function replaceChatMessages(

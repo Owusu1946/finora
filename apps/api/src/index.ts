@@ -21,6 +21,7 @@ app.use('*', async (c, next) => {
       CLERK_SECRET_KEY: c.env.CLERK_SECRET_KEY,
       CLERK_PUBLISHABLE_KEY: c.env.CLERK_PUBLISHABLE_KEY,
       OPENAI_API_KEY: c.env.OPENAI_API_KEY,
+      REDIS_URL: c.env.REDIS_URL,
       WEWIRE_API_KEY: c.env.WEWIRE_API_KEY,
       WEWIRE_WEBHOOK_SECRET: c.env.WEWIRE_WEBHOOK_SECRET,
     }),
@@ -34,7 +35,7 @@ app.use(
     origin: '*',
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    exposeHeaders: ['X-Request-Id'],
+    exposeHeaders: ['X-Request-Id', 'X-Resumable-Stream-Id'],
   }),
 );
 
