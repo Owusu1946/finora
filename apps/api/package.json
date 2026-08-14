@@ -14,11 +14,14 @@
     "dev:lan": "node ./scripts/lan-proxy.mjs"
   },
   "dependencies": {
+    "@ai-sdk/openai": "4.0.41",
+    "@ai-sdk/provider": "4.0.7",
     "@clerk/hono": "^0.1.64",
     "@finora/env": "workspace:*",
     "@finora/shared": "workspace:*",
     "@finora/wewire": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
+    "ai": "7.0.65",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.1",
     "zod": "4.4.3"

@@ -29,3 +29,5 @@ minimumReleaseAgeExclude:
   - assistant-stream@0.3.33
   - '@mhaadi/thinking-orbs-native@0.1.1'
   - '@legendapp/list@3.3.5'
+  - '@ai-sdk/gateway@4.0.52'
+  - ai@7.0.65
