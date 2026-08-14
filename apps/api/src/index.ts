@@ -1,19 +1,14 @@
 import { clerkMiddleware } from '@clerk/hono';
-import { createApiEnv, type ApiEnv } from '@finora/env/api';
+import { createApiEnv } from '@finora/env/api';
 import { TOOL_NAMES } from '@finora/shared';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
-import { requireSession } from './auth';
-import { v1 } from './routes/v1';
+import type { AppEnv } from './types';
 
-type AppEnv = {
-  Bindings: Env;
-  Variables: {
-    auth: import('./auth').AuthenticatedUser;
-    env: ApiEnv;
-  };
-};
+import { requireSession } from './auth';
+import { chat } from './routes/chat';
+import { v1 } from './routes/v1';
 
 const app = new Hono<AppEnv>();
 
@@ -25,6 +20,8 @@ app.use('*', async (c, next) => {
       DATABASE_URL: c.env.DATABASE_URL,
       CLERK_SECRET_KEY: c.env.CLERK_SECRET_KEY,
       CLERK_PUBLISHABLE_KEY: c.env.CLERK_PUBLISHABLE_KEY,
+      OPENAI_API_KEY: c.env.OPENAI_API_KEY,
+      REDIS_URL: c.env.REDIS_URL,
       WEWIRE_API_KEY: c.env.WEWIRE_API_KEY,
       WEWIRE_WEBHOOK_SECRET: c.env.WEWIRE_WEBHOOK_SECRET,
     }),
@@ -38,6 +35,7 @@ app.use(
     origin: '*',
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    exposeHeaders: ['X-Request-Id', 'X-Resumable-Stream-Id'],
   }),
 );
 
@@ -61,6 +59,7 @@ app.post('/v1/webhooks/wewire', async (c) => {
 
 app.use('/v1/*', clerkMiddleware());
 app.use('/v1/*', requireSession);
+app.route('/v1/chat', chat);
 app.route('/v1', v1);
 
 export default app;

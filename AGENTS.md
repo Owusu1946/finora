@@ -49,6 +49,7 @@ When adding a financial flow, prefer the established `prepare_*` and `execute_ap
 - Do not start dev or build processes unless explicitly stated or needed to verify changes you have made.
 - Do not kill dev or build processes that were not started by you unless explicitly asked to do so.
 - This is a pnpm workspace. Use pnpm for package management and package execution. Use npx only when pnpm dlx or pnpm do not work.
+- Do not generate or commit Drizzle migrations. Apply schema changes with the existing `db:push` workflow when explicitly requested.
 - Run `check` and `check-types` on every change before committing or pushing. Only push when asked.
 - Commit frequently so changes are tracked with low risk of losing work.
 - Keep commits small and atomic, using conventional commit syntax.
