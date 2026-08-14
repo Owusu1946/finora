@@ -181,6 +181,9 @@ importers:
       '@shopify/react-native-skia':
         specifier: 2.2.12
         version: 2.2.12(fe7f686fcf44bc32b88b464593665f9a)
+      ai:
+        specifier: 7.0.65
+        version: 7.0.65(zod@4.4.3)
       assistant-cloud:
         specifier: ^0.1.39
         version: 0.1.39

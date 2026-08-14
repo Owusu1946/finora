@@ -12,7 +12,7 @@ import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -58,6 +58,7 @@ import { useSplashGate } from '@/components/splash/useSplashGate';
 import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
+import { getApiUrl } from '@/lib/api-url';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { finoraChatAdapter } from '@/lib/chat-adapter';
@@ -65,6 +66,7 @@ import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
+import { createRemoteChatAdapter } from '@/lib/remote-chat-adapter';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
 import { useProfileSync } from '@/lib/use-profile-sync';
@@ -137,7 +139,7 @@ function RootNavigator() {
 }
 
 function RootApp() {
-  const { isLoaded: clerkLoaded, userId } = useAuth();
+  const { getToken, isLoaded: clerkLoaded, userId } = useAuth();
   const [fontsLoaded] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
@@ -152,7 +154,13 @@ function RootApp() {
   const bootReady = fontsLoaded && clerkLoaded && boot !== null;
   const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
     useSplashGate(bootReady);
-  const runtime = useLocalRuntime(finoraChatAdapter as never);
+  const remoteChatAdapter = useMemo(() => {
+    const apiUrl = getApiUrl();
+    if (env.EXPO_PUBLIC_REMOTE_CHAT_ENABLED !== 'true' || !apiUrl || !userId) return null;
+    const chatId = `mobile_${userId.replaceAll(/[^A-Za-z0-9_-]/g, '_')}`;
+    return createRemoteChatAdapter({ apiUrl, chatId, getToken });
+  }, [getToken, userId]);
+  const runtime = useLocalRuntime((remoteChatAdapter ?? finoraChatAdapter) as never);
 
   useEffect(() => {
     let cancelled = false;
