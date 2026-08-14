@@ -1,4 +1,9 @@
-import { AssistantRuntimeProvider, useLocalRuntime } from '@assistant-ui/react-native';
+import {
+  AssistantRuntimeProvider,
+  useLocalRuntime,
+  type ChatModelAdapter,
+  type ThreadMessageLike,
+} from '@assistant-ui/react-native';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import {
@@ -12,7 +17,7 @@ import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -66,12 +71,22 @@ import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
-import { createRemoteChatAdapter } from '@/lib/remote-chat-adapter';
+import {
+  createRemoteChatAdapter,
+  createRemoteChatResumeStream,
+  loadRemoteChatBootstrap,
+} from '@/lib/remote-chat-adapter';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
 import { useProfileSync } from '@/lib/use-profile-sync';
 
 const publishableKey = env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+type RemoteChatRuntime = {
+  adapter: ChatModelAdapter;
+  initialMessages: ThreadMessageLike[];
+  resumeStream: ReturnType<typeof createRemoteChatResumeStream> | null;
+};
 
 export const unstable_settings = {
   anchor: '(app)',
@@ -138,6 +153,60 @@ function RootNavigator() {
   );
 }
 
+function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime | null }) {
+  const runtime = useLocalRuntime((remoteChat?.adapter ?? finoraChatAdapter) as never, {
+    initialMessages: remoteChat?.initialMessages,
+  });
+  const resumeStarted = useRef(false);
+
+  useEffect(() => {
+    if (!remoteChat?.resumeStream || resumeStarted.current) return;
+    resumeStarted.current = true;
+    runtime.thread.resumeRun({
+      parentId: remoteChat.initialMessages.at(-1)?.id ?? null,
+      stream: remoteChat.resumeStream,
+    });
+  }, [remoteChat, runtime]);
+
+  return (
+    <AssistantRuntimeProvider runtime={runtime}>
+      <PreparePaymentToolUI />
+      <FundAccountToolUI />
+      <ListReceiveMethodsToolUI />
+      <CreatePaymentRequestToolUI />
+      <GeneratePaymentLinkToolUI />
+      <GetBalancesToolUI />
+      <PrepareConversionToolUI />
+      <PrepareInternalTransferToolUI />
+      <ListInvoicesToolUI />
+      <ListCalendarDuesToolUI />
+      <ListSmsRequestsToolUI />
+      <ListEmployeesToolUI />
+      <ListSuppliersToolUI />
+      <ListBeneficiariesToolUI />
+      <ListPoliciesToolUI />
+      <ListAutomationsToolUI />
+      <ListExpensesToolUI />
+      <ListVirtualAccountsToolUI />
+      <TreasuryOverviewToolUI />
+      <FinancialReportToolUI />
+      <PreparePayrollToolUI />
+      <PrepareSupplierPaymentToolUI />
+      <PrepareEmployeePaymentToolUI />
+      <CreateEmployeeToolUI />
+      <PrepareRecurringToolUI />
+      <SchedulePaymentWizardToolUI />
+      <ResolveSendToolUI />
+      <CreateFinancialPlanToolUI />
+      <CreateVirtualCardToolUI />
+      <ListVirtualCardsToolUI />
+      <GetVirtualCardToolUI />
+      <RootNavigator />
+      <VirtualCardIssuedPopup />
+    </AssistantRuntimeProvider>
+  );
+}
+
 function RootApp() {
   const { getToken, isLoaded: clerkLoaded, userId } = useAuth();
   const [fontsLoaded] = useFonts({
@@ -150,24 +219,39 @@ function RootApp() {
     onboardingCompleted: boolean;
     tagConfigured: boolean;
     userId: string | null;
+    remoteChat: RemoteChatRuntime | null;
   } | null>(null);
-  const bootReady = fontsLoaded && clerkLoaded && boot !== null;
+  const bootReady = fontsLoaded && clerkLoaded && boot !== null && boot.userId === (userId ?? null);
   const { showOverlay, reducedMotion, progress, overlayOpacity, onOverlayLayout } =
     useSplashGate(bootReady);
-  const remoteChatAdapter = useMemo(() => {
-    const apiUrl = getApiUrl();
-    if (env.EXPO_PUBLIC_REMOTE_CHAT_ENABLED !== 'true' || !apiUrl || !userId) return null;
-    const chatId = `mobile_${userId.replaceAll(/[^A-Za-z0-9_-]/g, '_')}`;
-    return createRemoteChatAdapter({ apiUrl, chatId, getToken });
-  }, [getToken, userId]);
-  const runtime = useLocalRuntime((remoteChatAdapter ?? finoraChatAdapter) as never);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [onboarding, tagConfigured] = await Promise.all([
+      const remoteChatPromise = (async (): Promise<RemoteChatRuntime | null> => {
+        const apiUrl = getApiUrl();
+        if (env.EXPO_PUBLIC_REMOTE_CHAT_ENABLED !== 'true' || !apiUrl || !userId) return null;
+
+        const chatId = `mobile_${userId.replaceAll(/[^A-Za-z0-9_-]/g, '_')}`;
+        const config = { apiUrl, chatId, getToken };
+        const adapter = createRemoteChatAdapter(config);
+        try {
+          const bootstrap = await loadRemoteChatBootstrap(config);
+          return {
+            adapter,
+            initialMessages: bootstrap.initialMessages,
+            resumeStream: bootstrap.activeStreamId
+              ? createRemoteChatResumeStream(config, bootstrap.activeStreamId)
+              : null,
+          };
+        } catch {
+          return { adapter, initialMessages: [], resumeStream: null };
+        }
+      })();
+      const [onboarding, tagConfigured, remoteChat] = await Promise.all([
         getOnboardingState(),
         getTagConfigured(userId),
+        remoteChatPromise,
       ]);
       if (cancelled) return;
       if (onboarding.accountType) setAccountType(onboarding.accountType);
@@ -175,12 +259,13 @@ function RootApp() {
         onboardingCompleted: onboarding.completed,
         tagConfigured,
         userId: userId ?? null,
+        remoteChat,
       });
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [getToken, userId]);
 
   // Keep a stable root so the splash overlay can mount + lay out before native hide.
   return (
@@ -193,41 +278,10 @@ function RootApp() {
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
               <PhoneGateProvider key={boot.userId ?? 'signed-out'}>
                 <ProfileSyncBridge />
-                <AssistantRuntimeProvider runtime={runtime}>
-                  <PreparePaymentToolUI />
-                  <FundAccountToolUI />
-                  <ListReceiveMethodsToolUI />
-                  <CreatePaymentRequestToolUI />
-                  <GeneratePaymentLinkToolUI />
-                  <GetBalancesToolUI />
-                  <PrepareConversionToolUI />
-                  <PrepareInternalTransferToolUI />
-                  <ListInvoicesToolUI />
-                  <ListCalendarDuesToolUI />
-                  <ListSmsRequestsToolUI />
-                  <ListEmployeesToolUI />
-                  <ListSuppliersToolUI />
-                  <ListBeneficiariesToolUI />
-                  <ListPoliciesToolUI />
-                  <ListAutomationsToolUI />
-                  <ListExpensesToolUI />
-                  <ListVirtualAccountsToolUI />
-                  <TreasuryOverviewToolUI />
-                  <FinancialReportToolUI />
-                  <PreparePayrollToolUI />
-                  <PrepareSupplierPaymentToolUI />
-                  <PrepareEmployeePaymentToolUI />
-                  <CreateEmployeeToolUI />
-                  <PrepareRecurringToolUI />
-                  <SchedulePaymentWizardToolUI />
-                  <ResolveSendToolUI />
-                  <CreateFinancialPlanToolUI />
-                  <CreateVirtualCardToolUI />
-                  <ListVirtualCardsToolUI />
-                  <GetVirtualCardToolUI />
-                  <RootNavigator />
-                  <VirtualCardIssuedPopup />
-                </AssistantRuntimeProvider>
+                <FinoraAssistantRuntime
+                  key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
+                  remoteChat={boot.remoteChat}
+                />
               </PhoneGateProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>
