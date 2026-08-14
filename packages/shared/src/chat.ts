@@ -17,6 +17,9 @@ export const ChatRequestSchema = z
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 
 export const ChatErrorCodeSchema = z.enum([
+  'chat_busy',
+  'chat_conflict',
+  'chat_not_found',
   'invalid_request',
   'model_not_configured',
   'model_auth_failed',
@@ -36,3 +39,12 @@ export const ChatErrorResponseSchema = z.object({
   }),
 });
 export type ChatErrorResponse = z.infer<typeof ChatErrorResponseSchema>;
+
+export const ChatStateResponseSchema = z.object({
+  id: ChatIdSchema,
+  messages: z.array(z.unknown()),
+  active: z.boolean(),
+  activeStreamId: z.string().nullable(),
+  resumable: z.boolean(),
+});
+export type ChatStateResponse = z.infer<typeof ChatStateResponseSchema>;
