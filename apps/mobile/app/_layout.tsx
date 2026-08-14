@@ -13,6 +13,7 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
+import * as Crypto from 'expo-crypto';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -154,7 +155,7 @@ function RootNavigator() {
 }
 
 function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime | null }) {
-  const runtime = useLocalRuntime((remoteChat?.adapter ?? finoraChatAdapter) as never, {
+  const runtime = useLocalRuntime(remoteChat?.adapter ?? finoraChatAdapter, {
     initialMessages: remoteChat?.initialMessages,
   });
   const resumeStarted = useRef(false);
@@ -162,10 +163,12 @@ function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime 
   useEffect(() => {
     if (!remoteChat?.resumeStream || resumeStarted.current) return;
     resumeStarted.current = true;
-    runtime.thread.resumeRun({
-      parentId: remoteChat.initialMessages.at(-1)?.id ?? null,
-      stream: remoteChat.resumeStream,
-    });
+    void Promise.resolve(
+      runtime.thread.resumeRun({
+        parentId: remoteChat.initialMessages.at(-1)?.id ?? null,
+        stream: remoteChat.resumeStream,
+      }),
+    ).catch(() => undefined);
   }, [remoteChat, runtime]);
 
   return (
@@ -232,7 +235,11 @@ function RootApp() {
         const apiUrl = getApiUrl();
         if (env.EXPO_PUBLIC_REMOTE_CHAT_ENABLED !== 'true' || !apiUrl || !userId) return null;
 
-        const chatId = `mobile_${userId.replaceAll(/[^A-Za-z0-9_-]/g, '_')}`;
+        const directChatId = `mobile_${userId}`;
+        const chatId =
+          directChatId.length <= 128 && /^[A-Za-z0-9_-]+$/.test(directChatId)
+            ? directChatId
+            : `mobile_${await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, userId)}`;
         const config = { apiUrl, chatId, getToken };
         const adapter = createRemoteChatAdapter(config);
         try {

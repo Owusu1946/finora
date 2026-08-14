@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-import { and, asc, eq, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, isNull, lt, or } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -25,20 +25,17 @@ export async function ensureChat(db: Database, chatId: string, clerkUserId: stri
 }
 
 export async function loadChat(db: Database, chatId: string, clerkUserId: string) {
-  const [chat] = await db
-    .select()
-    .from(aiChats)
-    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
-    .limit(1);
-  if (!chat) return null;
-
   const rows = await db
-    .select({ payload: aiChatMessages.payload })
-    .from(aiChatMessages)
-    .where(eq(aiChatMessages.chatId, chatId))
+    .select({ ...getTableColumns(aiChats), payload: aiChatMessages.payload })
+    .from(aiChats)
+    .leftJoin(aiChatMessages, eq(aiChatMessages.chatId, aiChats.id))
+    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
     .orderBy(asc(aiChatMessages.position));
+  const first = rows[0];
+  if (!first) return null;
 
-  return { ...chat, messages: rows.map((row) => row.payload) };
+  const { payload: _payload, ...chat } = first;
+  return { ...chat, messages: rows.flatMap((row) => (row.payload ? [row.payload] : [])) };
 }
 
 export async function claimChatStream(
@@ -109,36 +106,44 @@ export async function finalizeChatStream(
     payload: message,
   }));
 
-  await db.execute(sql`
-    with active_chat as (
-      select ${aiChats.id} as id
-      from ${aiChats}
-      where ${aiChats.id} = ${chatId}
-        and ${aiChats.clerkUserId} = ${clerkUserId}
-        and ${aiChats.activeStreamId} = ${streamId}
-      for update
-    ), deleted_messages as (
-      delete from ${aiChatMessages}
-      where ${aiChatMessages.chatId} in (select id from active_chat)
-    ), inserted_messages as (
-      insert into ${aiChatMessages} (chat_id, message_id, position, role, payload)
-      select
-        active_chat.id,
-        message.value ->> 'messageId',
-        (message.value ->> 'position')::integer,
-        (message.value ->> 'role')::ai_chat_message_role,
-        message.value -> 'payload'
-      from active_chat
-      cross join jsonb_array_elements(${JSON.stringify(messageRows)}::jsonb) as message(value)
-    )
-    update ${aiChats}
-    set
-      active_stream_id = null,
-      active_stream_started_at = null,
-      active_stream_resumable = false,
-      updated_at = now()
-    where ${aiChats.id} in (select id from active_chat)
-  `);
+  await db.$client.transaction((tx) => [
+    tx.query(
+      `select id from ai_chats
+       where id = $1 and clerk_user_id = $2 and active_stream_id = $3
+       for update`,
+      [chatId, clerkUserId, streamId],
+    ),
+    tx.query(
+      `delete from ai_chat_messages
+       where chat_id in (
+         select id from ai_chats
+         where id = $1 and clerk_user_id = $2 and active_stream_id = $3
+       )`,
+      [chatId, clerkUserId, streamId],
+    ),
+    tx.query(
+      `insert into ai_chat_messages (chat_id, message_id, position, role, payload)
+       select
+         chat.id,
+         message.value ->> 'messageId',
+         (message.value ->> 'position')::integer,
+         (message.value ->> 'role')::ai_chat_message_role,
+         message.value -> 'payload'
+       from ai_chats as chat
+       cross join jsonb_array_elements($4::jsonb) as message(value)
+       where chat.id = $1 and chat.clerk_user_id = $2 and chat.active_stream_id = $3`,
+      [chatId, clerkUserId, streamId, JSON.stringify(messageRows)],
+    ),
+    tx.query(
+      `update ai_chats
+       set active_stream_id = null,
+           active_stream_started_at = null,
+           active_stream_resumable = false,
+           updated_at = now()
+       where id = $1 and clerk_user_id = $2 and active_stream_id = $3`,
+      [chatId, clerkUserId, streamId],
+    ),
+  ]);
 }
 
 export async function replaceChatMessages(

@@ -44,6 +44,8 @@ const MODEL_ID = 'gpt-5.6-luna';
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
+const RESUME_INITIALIZATION_GRACE_MS = 10_000;
+const RESUME_RETRY_DELAYS_MS = [0, 100, 200, 400] as const;
 
 const FINORA_SYSTEM_PROMPT = `You are Finora, a financial operations assistant.
 
@@ -82,6 +84,18 @@ function logRedisError(error: unknown, requestId: string) {
     requestId,
     errorName: error instanceof Error ? error.name : typeof error,
   });
+}
+
+async function resumeExistingStream(
+  context: Awaited<ReturnType<typeof createRedisStreamSession>>['context'],
+  streamId: string,
+) {
+  for (const delayMs of RESUME_RETRY_DELAYS_MS) {
+    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    const stream = await context.resumeExistingStream(streamId);
+    if (stream) return stream;
+  }
+  return null;
 }
 
 chat.get('/:id/stream', async (c) => {
@@ -143,10 +157,13 @@ chat.get('/:id/stream', async (c) => {
     }
 
     try {
-      const resumedStream = await redisSession.context.resumeExistingStream(activeStreamId);
+      const resumedStream = await resumeExistingStream(redisSession.context, activeStreamId);
       if (!resumedStream) {
         await redisSession.close();
-        await clearChatStream(db, parsedId.data, userId, activeStreamId);
+        const streamStartedAt = stored.activeStreamStartedAt?.getTime() ?? 0;
+        if (streamStartedAt < Date.now() - RESUME_INITIALIZATION_GRACE_MS) {
+          await clearChatStream(db, parsedId.data, userId, activeStreamId);
+        }
         return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
       }
 
@@ -431,7 +448,11 @@ chat.post('/', async (c) => {
         { 'x-request-id': requestId },
       );
     }
-    await replaceChatMessages(db, parsed.data.id, userId, messages);
+    const fallbackMessages =
+      parsed.data.trigger === 'regenerate-message' ? stored.messages : messages;
+    if (parsed.data.trigger === 'submit-message') {
+      await replaceChatMessages(db, parsed.data.id, userId, messages);
+    }
 
     let errorLogged = false;
     const reportError = (error: unknown) => {
@@ -479,7 +500,7 @@ chat.post('/', async (c) => {
               parsed.data.id,
               userId,
               streamId,
-              generatedMessagesForPersistence(generatedMessages, messages),
+              generatedMessagesForPersistence(generatedMessages, fallbackMessages),
             );
           } catch (error) {
             logPersistenceError(error, requestId);

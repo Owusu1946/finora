@@ -18,6 +18,10 @@ function apiCallError(error: unknown) {
   return null;
 }
 
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === 'AbortError';
+}
+
 function isTimeoutError(error: unknown) {
   if (error instanceof DOMException && error.name === 'TimeoutError') return true;
   if (error instanceof Error && /timeout|timed out/i.test(error.message)) return true;
@@ -36,6 +40,9 @@ function publicError(
 }
 
 export function toPublicChatError(error: unknown, requestId: string): PublicChatError {
+  if (isAbortError(error)) {
+    return publicError(requestId, 'invalid_request', 400, 'The chat request was cancelled.', false);
+  }
   if (
     InvalidDataContentError.isInstance(error) ||
     InvalidMessageRoleError.isInstance(error) ||
@@ -130,6 +137,7 @@ export function toPublicChatError(error: unknown, requestId: string): PublicChat
 }
 
 export function logChatError(error: unknown, requestId: string) {
+  if (isAbortError(error)) return;
   const publicChatError = toPublicChatError(error, requestId);
   console.error('[chat]', {
     requestId,

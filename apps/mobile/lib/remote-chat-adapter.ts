@@ -126,7 +126,8 @@ function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
     });
     if (response.status === 404) return null;
     if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
-    const parsed = ChatStateResponseSchema.safeParse(await response.json());
+    const json: unknown = await response.json().catch(() => null);
+    const parsed = ChatStateResponseSchema.safeParse(json);
     if (!parsed.success) throw new RemoteChatError('Finora returned an invalid chat response.');
     return parsed.data;
   }
@@ -151,12 +152,12 @@ function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
         const url =
           typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         const response = await fetch(url, init as Parameters<typeof fetch>[1]);
+        if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
         const streamId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
         if (streamId) {
-          await persistActiveStreamId(chatId, streamId);
+          await persistActiveStreamId(chatId, streamId).catch(() => undefined);
           onStreamId(streamId);
         }
-        if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
         return response;
       },
     });
@@ -249,14 +250,6 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
 
   return {
     async *run({ messages, abortSignal }) {
-      const uiMessages = messages.filter((message) => message.role !== 'system').map(toUIMessage);
-      const state = await api.getState();
-      const storedMessages = state ? await validateStateMessages(state.messages) : [];
-      const requestMessages = canonicalizeHistory(storedMessages, uiMessages);
-      const trigger =
-        requestMessages.length === storedMessages.length + 1
-          ? ('submit-message' as const)
-          : ('regenerate-message' as const);
       let activeStreamId: string | null = null;
       const transport = api.transport((streamId) => {
         activeStreamId = streamId;
@@ -265,6 +258,14 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
       abortSignal.addEventListener('abort', onAbort, { once: true });
 
       try {
+        const uiMessages = messages.filter((message) => message.role !== 'system').map(toUIMessage);
+        const state = await api.getState(abortSignal);
+        const storedMessages = state ? await validateStateMessages(state.messages) : [];
+        const requestMessages = canonicalizeHistory(storedMessages, uiMessages);
+        const trigger =
+          requestMessages.length === storedMessages.length + 1
+            ? ('submit-message' as const)
+            : ('regenerate-message' as const);
         const stream = await transport.sendMessages({
           abortSignal,
           chatId: config.chatId,

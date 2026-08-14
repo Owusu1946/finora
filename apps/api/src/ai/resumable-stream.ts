@@ -2,6 +2,14 @@ import { createClient } from 'redis';
 import { createResumableStreamContext } from 'resumable-stream';
 
 const REDIS_KEY_PREFIX = 'finora:chat-streams';
+const REDIS_CONNECT_TIMEOUT_MS = 5_000;
+
+function createRedisClient(redisUrl: string) {
+  return createClient({
+    url: redisUrl,
+    socket: { connectTimeout: REDIS_CONNECT_TIMEOUT_MS, reconnectStrategy: false },
+  });
+}
 
 function cancellationChannel(streamId: string) {
   return `${REDIS_KEY_PREFIX}:cancel:${streamId}`;
@@ -16,7 +24,7 @@ export async function createRedisStreamSession({
   waitUntil: (promise: Promise<unknown>) => void;
   onError: (error: unknown) => void;
 }) {
-  const publisher = createClient({ url: redisUrl });
+  const publisher = createRedisClient(redisUrl);
   const subscriber = publisher.duplicate();
   publisher.on('error', onError);
   subscriber.on('error', onError);
@@ -86,7 +94,7 @@ export async function publishStreamCancellation(
   streamId: string,
   onError: (error: unknown) => void,
 ) {
-  const publisher = createClient({ url: redisUrl });
+  const publisher = createRedisClient(redisUrl);
   publisher.on('error', onError);
 
   try {
