@@ -7,8 +7,8 @@ import {
   type TextMessagePartComponent,
 } from '@assistant-ui/react-native';
 import { ThinkingOrb } from '@mhaadi/thinking-orbs-native';
-import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { memo, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded } from '@/constants/theme';
@@ -24,9 +24,50 @@ import { AssistantMarkdownText } from './markdown-text';
 import { MessageActionBar } from './message-action-bar';
 import { MessageBranchPicker } from './message-branch-picker';
 
+const USER_MESSAGE_COLLAPSED_LINES = 6;
+const USER_MESSAGE_COLLAPSED_CHARACTERS = 240;
+
 const UserText: TextMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
-  return <Text style={[styles.userText, { color: colors.foreground }]}>{text}</Text>;
+  const likelyLong =
+    text.length > USER_MESSAGE_COLLAPSED_CHARACTERS ||
+    text.split('\n').length > USER_MESSAGE_COLLAPSED_LINES;
+  const [isCollapsible, setIsCollapsible] = useState(likelyLong);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setIsCollapsible(likelyLong);
+    setExpanded(false);
+  }, [likelyLong, text]);
+
+  return (
+    <View style={styles.userTextContent}>
+      <Text
+        selectable
+        numberOfLines={isCollapsible && !expanded ? USER_MESSAGE_COLLAPSED_LINES : undefined}
+        onTextLayout={(event) => {
+          if (event.nativeEvent.lines.length > USER_MESSAGE_COLLAPSED_LINES) {
+            setIsCollapsible(true);
+          }
+        }}
+        style={[styles.userText, { color: colors.foreground }]}
+      >
+        {text}
+      </Text>
+      {isCollapsible ? (
+        <Pressable
+          accessibilityLabel={expanded ? 'Show less of this message' : 'Show all of this message'}
+          hitSlop={8}
+          onPress={() => setExpanded((current) => !current)}
+          style={({ pressed }) => [styles.expandButton, pressed && styles.expandButtonPressed]}
+        >
+          <Text style={[styles.expandLabel, { color: colors.mutedForeground }]}>
+            {expanded ? 'Show less' : 'Show more'}
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
 };
 
 function TypingIndicator() {
@@ -80,7 +121,9 @@ function UserMessage() {
     <MessagePrimitive.Root style={styles.userContainer}>
       {/* Normal view (not editing) */}
       <AuiIf condition={(s) => !s.message.composer.isEditing}>
-        <View style={[styles.userBubble, { backgroundColor: colors.muted }]}>
+        <View
+          style={[styles.userBubble, { backgroundColor: colors.muted, borderColor: colors.border }]}
+        >
           <MessagePrimitive.Parts components={{ Text: UserText }} />
         </View>
         {/* User message attachments */}
@@ -177,10 +220,12 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     ...Rounded,
-    maxWidth: '85%',
+    maxWidth: '82%',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.lg,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: Radius.bubble,
+    paddingVertical: 12,
+    overflow: 'hidden',
   },
   editContainer: {
     width: '100%',
@@ -200,7 +245,27 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     lineHeight: 22,
-    letterSpacing: -0.2,
+    letterSpacing: 0,
+  },
+  userTextContent: {
+    maxWidth: '100%',
+    alignItems: 'flex-start',
+    gap: 7,
+  },
+  expandButton: {
+    minHeight: 24,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  expandButtonPressed: {
+    opacity: 0.55,
+  },
+  expandLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    letterSpacing: 0,
   },
   typing: {
     flexDirection: 'row',
