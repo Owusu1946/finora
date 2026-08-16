@@ -89,17 +89,10 @@ function toUIMessage(message: ThreadMessage): UIMessage {
 }
 
 function canonicalizeHistory(stored: UIMessage[], local: UIMessage[]) {
-  let commonLength = 0;
-  while (
-    commonLength < stored.length &&
-    commonLength < local.length &&
-    stored[commonLength]?.role === local[commonLength]?.role &&
-    JSON.stringify(stored[commonLength]!.parts) === JSON.stringify(local[commonLength]!.parts)
-  ) {
-    commonLength += 1;
-  }
-
-  const addedUserMessages = local.slice(commonLength).filter((message) => message.role === 'user');
+  const storedIds = new Set(stored.map((message) => message.id));
+  const addedUserMessages = local.filter(
+    (message) => message.role === 'user' && !storedIds.has(message.id),
+  );
   return [...stored, ...addedUserMessages];
 }
 

@@ -32,12 +32,6 @@ function sanitizeToolPart(part: UIMessagePart): DynamicToolPart | null {
     toolCallId: value.toolCallId,
   };
 
-  if (value.state === 'input-streaming') {
-    return { ...base, state: 'input-streaming', input: value.input };
-  }
-  if (value.state === 'input-available') {
-    return { ...base, state: 'input-available', input: value.input ?? {} };
-  }
   if (value.state === 'output-available') {
     return {
       ...base,

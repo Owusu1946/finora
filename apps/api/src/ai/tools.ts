@@ -226,6 +226,20 @@ export function createChatAgentTools() {
         'Prepare a payroll run for review and human approval. This never pays employees by itself.',
       inputSchema: zodSchema(PreparePayrollInputSchema),
       execute: async (input) => {
+        if (input.employeeIds?.length) {
+          const employeeData = await callPlatform('/employees');
+          const employees = Array.isArray(employeeData.employees) ? employeeData.employees : [];
+          const employeeIds = new Set(
+            employees.flatMap((entry) =>
+              typeof entry === 'object' && entry !== null && 'id' in entry
+                ? [String(entry.id)]
+                : [],
+            ),
+          );
+          if (input.employeeIds.some((employeeId) => !employeeIds.has(employeeId))) {
+            throw new Error('employees_not_found');
+          }
+        }
         const result = await callPlatform('/payroll/prepare', { method: 'POST', body: input });
         const payload =
           typeof result.payload === 'object' && result.payload !== null ? result.payload : {};
@@ -243,17 +257,22 @@ export function createChatAgentTools() {
         'Prepare a supplier payment for review and human approval. This never moves money by itself.',
       inputSchema: zodSchema(PrepareSupplierPaymentInputSchema),
       execute: async (input) => {
+        const supplierName = input.supplierName?.trim();
+        if (!input.supplierId && !supplierName) throw new Error('supplier_required');
+
         const suppliers = await callPlatform('/suppliers');
         const supplierList = Array.isArray(suppliers.suppliers) ? suppliers.suppliers : [];
         const supplier = supplierList.find((entry) => {
           if (typeof entry !== 'object' || entry === null) return false;
           if (input.supplierId && 'id' in entry && entry.id === input.supplierId) return true;
           return (
-            input.supplierName !== undefined &&
+            supplierName !== undefined &&
             'name' in entry &&
-            String(entry.name).toLowerCase().includes(input.supplierName.toLowerCase())
+            String(entry.name).toLowerCase().includes(supplierName.toLowerCase())
           );
         });
+        if (!supplier) throw new Error('supplier_not_found');
+
         const result = await callPlatform('/suppliers/prepare-payment', {
           method: 'POST',
           body: input,
@@ -272,7 +291,17 @@ export function createChatAgentTools() {
         'Create a multi-item financial plan for a single human review and approval. This never executes any plan item.',
       inputSchema: zodSchema(CreateFinancialPlanInputSchema),
       execute: async (input) => {
-        const result = await callPlatform('/plans', { method: 'POST', body: input });
+        const result = await callPlatform('/plans', {
+          method: 'POST',
+          body: {
+            ...input,
+            items: input.items?.map((item) => ({
+              ...item,
+              amount: item.amount?.amount,
+              currency: item.amount?.currency ?? item.currency,
+            })),
+          },
+        });
         const plan = typeof result.plan === 'object' && result.plan !== null ? result.plan : {};
         return {
           ...result,
