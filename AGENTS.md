@@ -23,13 +23,13 @@ WeWire provides the underlying financial rails. Much of the current product is s
 
 The landing app lives in `apps/web` (`@finora/web`). Use Next.js 16 docs shipped with the installed package (`node_modules/next/dist/docs/`, or the package-local `AGENTS.md`). Run `pnpm run dev:web` from the repo root for `next dev` on port 3000.
 
-React stays pinned to `19.1.0` via workspace overrides (same as mobile). Do not bump React only for the web app without checking Expo compatibility.
+The web app may use a different React version from mobile. Keep `react` and `react-dom` aligned with each other and compatible with the installed Next.js version; do not add a workspace-wide React override.
 
 ## Expo
 
 The mobile app uses Expo SDK 54. Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before writing any mobile code.
 
-React is pinned to `19.1.0` via root `overrides`. After `pnpm install`, `scripts/link-mobile-deps.mjs` junctions `react` / `react-dom` / `react-native` into `apps/mobile/node_modules` so Metro does not hit an invalid-hook / duplicate-React error.
+While the app remains on Expo SDK 54, keep `react` and `react-dom` pinned to `19.1.0` in both `apps/mobile/package.json` and the root `package.json`. The root dependencies provide the exact runtime used by `scripts/link-mobile-deps.mjs`, which junctions `react` / `react-dom` / `react-native` into `apps/mobile/node_modules` after `pnpm install` so Metro does not hit an invalid-hook / duplicate-React error. Web may use its own React version; do not reintroduce workspace-wide React overrides.
 
 Mobile UI uses NativeWind v5 + `@assistant-ui/react-native` (not the web `@assistant-ui/react` package).
 
