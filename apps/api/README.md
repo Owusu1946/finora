@@ -9,7 +9,7 @@ from the repository root.
 
 | Command                                 | Expected result                                                                          |
 | --------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `pnpm dev:api`                          | Starts the local API Worker on `http://127.0.0.1:8787` and keeps running.                |
+| `pnpm dev:api`                          | Starts the API on `http://127.0.0.1:8787` with DevTools on port `9230`.                  |
 | `pnpm dev:lan`                          | Starts the phone-facing proxy on `http://0.0.0.0:8788`; the API must already be running. |
 | `pnpm build:api`                        | Bundles and validates the Worker with `wrangler deploy --dry-run`; nothing is published. |
 | `pnpm deploy:api`                       | Publishes the API Worker and its configured bindings to Cloudflare.                      |

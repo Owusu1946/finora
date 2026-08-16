@@ -8,7 +8,7 @@ Run commands from the repository root:
 
 | Command                                 | Expected result                                                                          |
 | --------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `pnpm dev:mcp`                          | Starts the local MCP Worker on `http://127.0.0.1:8789` and keeps running.                |
+| `pnpm dev:mcp`                          | Starts MCP on `http://127.0.0.1:8789` with DevTools on port `9231`.                      |
 | `pnpm build:mcp`                        | Bundles and validates the Worker with `wrangler deploy --dry-run`; nothing is published. |
 | `pnpm deploy:mcp`                       | Publishes the MCP Worker to Cloudflare.                                                  |
 | `pnpm --filter @finora/mcp cf-typegen`  | Regenerates Cloudflare Worker types.                                                     |

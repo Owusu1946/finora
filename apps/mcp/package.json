@@ -8,7 +8,7 @@
     "cf-typegen": "wrangler types",
     "check-types": "tsc --noEmit",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev --ip 127.0.0.1 --port 8789"
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8789 --inspector-port 9231"
   },
   "dependencies": {
     "@clerk/backend": "3.16.3",

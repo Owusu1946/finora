@@ -10,7 +10,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "dev": "wrangler dev --ip 127.0.0.1 --port 8787 --inspector-port 9230",
     "dev:lan": "node ./scripts/lan-proxy.mjs",
     "test": "vitest run"
   },
