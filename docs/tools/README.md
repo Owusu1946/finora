@@ -97,6 +97,22 @@ If a tool is `platform` only and you don’t see an MCP catalog entry or a mobil
 
 ---
 
+## Run the tool surfaces locally
+
+From the repository root:
+
+| Command           | Surface                                    | Expected result                                                               |
+| ----------------- | ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `pnpm dev:api`    | Platform HTTP API                          | Wrangler listens on `http://127.0.0.1:8787`.                                  |
+| `pnpm dev:mcp`    | Curated external-agent tools               | Wrangler listens on `http://127.0.0.1:8789` and calls the API on port `8787`. |
+| `pnpm dev:mobile` | Human app and mobile-local tools           | Metro normally listens on port `8081`.                                        |
+| `pnpm dev`        | All application surfaces plus the web site | Turbo keeps API, MCP, mobile, and web running together.                       |
+
+For a physical phone, also run `pnpm dev:lan`. It proxies the loopback API from port `8787` to
+the computer's LAN interfaces on port `8788`. It does not start the API itself.
+
+---
+
 ## Where to change things
 
 | Change                    | Edit                                                                |
