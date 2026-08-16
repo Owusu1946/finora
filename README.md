@@ -25,7 +25,7 @@ packages/wewire Server-only WeWire client
 - A Clerk application with Native API enabled
 - A Neon PostgreSQL database for API persistence
 - Cloudflare Wrangler authenticated to the account that owns the Workers
-- Resend and AgooSMS accounts for production email and SMS
+- Resend, AgooSMS, and Deepgram accounts for production email, SMS, and voice transcription
 
 Install dependencies from the repository root:
 
@@ -58,6 +58,7 @@ Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars` and fill in the values
 CLERK_SECRET_KEY=sk_test_your_key
 CLERK_PUBLISHABLE_KEY=pk_test_your_key
 CLERK_WEBHOOK_SIGNING_SECRET=whsec_your_clerk_endpoint_secret
+DEEPGRAM_API_KEY=your_deepgram_key
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 DATABASE_URL_UNPOOLED=postgresql://user:password@host/database?sslmode=require
 AGOO_SMS_API_KEY=your_agoosms_key
@@ -136,6 +137,7 @@ Set production secrets interactively:
 ```bash
 pnpm --filter @finora/api exec wrangler secret put CLERK_SECRET_KEY
 pnpm --filter @finora/api exec wrangler secret put CLERK_WEBHOOK_SIGNING_SECRET
+pnpm --filter @finora/api exec wrangler secret put DEEPGRAM_API_KEY
 pnpm --filter @finora/api exec wrangler secret put DATABASE_URL
 pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_API_KEY
 pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_SENDER_ID
@@ -218,6 +220,11 @@ pnpm build
 For a welcome-email smoke test, create one email/password user and one social-login user. Verify
 the Clerk webhook attempt succeeds, one Neon delivery row exists per Clerk user, the queue has
 processed the message, and Resend shows the provider event. Never use real customer data in tests.
+
+For voice transcription, set `DEEPGRAM_API_KEY`, run the API and LAN proxy, then tap the composer
+microphone button in Expo Go. Tap again to stop and verify the transcript is inserted for review
+without sending the message. Recordings are limited to 45 seconds, are not persisted by Finora,
+and are deleted from the device after transcription, failure, or cancellation.
 
 ## Contribution rules
 

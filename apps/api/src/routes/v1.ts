@@ -34,6 +34,7 @@ import {
   upsertUserProfile,
 } from '../db/user-profiles';
 import { createPreparation, mockStore, newId } from '../mock/store';
+import { transcriptions } from './transcriptions';
 
 type AppEnv = {
   Bindings: Env;
@@ -45,6 +46,8 @@ type AppEnv = {
  * Shape matches future live WeWire-backed handlers so MCP/mobile can stay stable.
  */
 export const v1 = new Hono<AppEnv>();
+
+v1.route('/transcriptions', transcriptions);
 
 const RECOVERY_TTL_MS = 10 * 60_000;
 const PHONE_VERIFICATION_TTL_MS = 10 * 60_000;

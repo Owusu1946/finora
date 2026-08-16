@@ -13,6 +13,7 @@ import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -64,6 +65,8 @@ import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { PasscodeGateProvider, usePasscodeGate } from '@/lib/passcode-gate';
+import { hasPasscode } from '@/lib/passcode-storage';
 import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
@@ -83,6 +86,7 @@ function RootNavigator() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { status: phoneStatus } = usePhoneGate();
   const { tagConfigured } = useAuthGate();
+  const { locked: passcodeLocked } = usePasscodeGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const segments = useSegments();
   const { isDark, colors } = useTheme();
@@ -91,6 +95,12 @@ function RootNavigator() {
     (String(segments[1]) === 'add-phone' ||
       String(segments[1]) === 'create-passcode' ||
       String(segments[1]) === 'enter-passcode');
+  const isEnterPasscodeScreen = segments[0] === 'auth' && String(segments[1]) === 'enter-passcode';
+  const requiresPasscode =
+    onboardingCompleted && authLoaded && isSignedIn && tagConfigured && passcodeLocked;
+  const concealProtectedContent =
+    Boolean(isSignedIn) &&
+    ((requiresPasscode && !isEnterPasscodeScreen) || (!tagConfigured && phoneStatus === 'loading'));
   useDrainPendingPaymentLink();
   const base = isDark ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
@@ -128,12 +138,22 @@ function RootNavigator() {
       {onboardingCompleted && isSignedIn && phoneStatus === 'verified' && !tagConfigured ? (
         <Redirect href={'/auth/choose-tag' as Href} />
       ) : null}
+      {requiresPasscode && !isEnterPasscodeScreen ? (
+        <Redirect href={'/auth/enter-passcode' as Href} />
+      ) : null}
       {onboardingCompleted &&
       isSignedIn &&
       tagConfigured &&
+      !passcodeLocked &&
       segments[0] === 'auth' &&
       !isAuthSubScreen ? (
         <Redirect href={'/(app)' as Href} />
+      ) : null}
+      {concealProtectedContent ? (
+        <View
+          pointerEvents='auto'
+          style={[styles.securityCover, { backgroundColor: colors.background }]}
+        />
       ) : null}
       <StatusBar style='auto' />
     </ThemeProvider>
@@ -151,6 +171,7 @@ function RootApp() {
   const [boot, setBoot] = useState<{
     onboardingCompleted: boolean;
     tagConfigured: boolean;
+    passcodeExists: boolean;
     userId: string | null;
   } | null>(null);
   const bootReady = fontsLoaded && clerkLoaded && boot !== null;
@@ -161,15 +182,17 @@ function RootApp() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [onboarding, tagConfigured] = await Promise.all([
+      const [onboarding, tagConfigured, passcodeExists] = await Promise.all([
         getOnboardingState(),
         getTagConfigured(userId),
+        hasPasscode(),
       ]);
       if (cancelled) return;
       if (onboarding.accountType) setAccountType(onboarding.accountType);
       setBoot({
         onboardingCompleted: onboarding.completed,
         tagConfigured,
+        passcodeExists,
         userId: userId ?? null,
       });
     })();
@@ -188,42 +211,49 @@ function RootApp() {
           <AuthGateProvider tagConfigured={boot.tagConfigured}>
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
               <PhoneGateProvider key={boot.userId ?? 'signed-out'}>
-                <ProfileSyncBridge />
-                <AssistantRuntimeProvider runtime={runtime}>
-                  <PreparePaymentToolUI />
-                  <FundAccountToolUI />
-                  <ListReceiveMethodsToolUI />
-                  <CreatePaymentRequestToolUI />
-                  <GeneratePaymentLinkToolUI />
-                  <GetBalancesToolUI />
-                  <PrepareConversionToolUI />
-                  <PrepareInternalTransferToolUI />
-                  <ListInvoicesToolUI />
-                  <ListCalendarDuesToolUI />
-                  <ListSmsRequestsToolUI />
-                  <ListEmployeesToolUI />
-                  <ListSuppliersToolUI />
-                  <ListBeneficiariesToolUI />
-                  <ListPoliciesToolUI />
-                  <ListAutomationsToolUI />
-                  <ListExpensesToolUI />
-                  <ListVirtualAccountsToolUI />
-                  <TreasuryOverviewToolUI />
-                  <FinancialReportToolUI />
-                  <PreparePayrollToolUI />
-                  <PrepareSupplierPaymentToolUI />
-                  <PrepareEmployeePaymentToolUI />
-                  <CreateEmployeeToolUI />
-                  <PrepareRecurringToolUI />
-                  <SchedulePaymentWizardToolUI />
-                  <ResolveSendToolUI />
-                  <CreateFinancialPlanToolUI />
-                  <CreateVirtualCardToolUI />
-                  <ListVirtualCardsToolUI />
-                  <GetVirtualCardToolUI />
-                  <RootNavigator />
-                  <VirtualCardIssuedPopup />
-                </AssistantRuntimeProvider>
+                <PasscodeGateProvider
+                  key={boot.userId ?? 'signed-out'}
+                  initiallyLocked={Boolean(
+                    boot.userId && boot.tagConfigured && boot.passcodeExists,
+                  )}
+                >
+                  <ProfileSyncBridge />
+                  <AssistantRuntimeProvider runtime={runtime}>
+                    <PreparePaymentToolUI />
+                    <FundAccountToolUI />
+                    <ListReceiveMethodsToolUI />
+                    <CreatePaymentRequestToolUI />
+                    <GeneratePaymentLinkToolUI />
+                    <GetBalancesToolUI />
+                    <PrepareConversionToolUI />
+                    <PrepareInternalTransferToolUI />
+                    <ListInvoicesToolUI />
+                    <ListCalendarDuesToolUI />
+                    <ListSmsRequestsToolUI />
+                    <ListEmployeesToolUI />
+                    <ListSuppliersToolUI />
+                    <ListBeneficiariesToolUI />
+                    <ListPoliciesToolUI />
+                    <ListAutomationsToolUI />
+                    <ListExpensesToolUI />
+                    <ListVirtualAccountsToolUI />
+                    <TreasuryOverviewToolUI />
+                    <FinancialReportToolUI />
+                    <PreparePayrollToolUI />
+                    <PrepareSupplierPaymentToolUI />
+                    <PrepareEmployeePaymentToolUI />
+                    <CreateEmployeeToolUI />
+                    <PrepareRecurringToolUI />
+                    <SchedulePaymentWizardToolUI />
+                    <ResolveSendToolUI />
+                    <CreateFinancialPlanToolUI />
+                    <CreateVirtualCardToolUI />
+                    <ListVirtualCardsToolUI />
+                    <GetVirtualCardToolUI />
+                    <RootNavigator />
+                    <VirtualCardIssuedPopup />
+                  </AssistantRuntimeProvider>
+                </PasscodeGateProvider>
               </PhoneGateProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>
@@ -242,6 +272,14 @@ function RootApp() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  securityCover: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 90,
+    elevation: 90,
+  },
+});
 
 function ProfileSyncBridge() {
   useProfileSync();

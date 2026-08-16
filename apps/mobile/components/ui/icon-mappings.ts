@@ -31,6 +31,7 @@ import {
   Loading01Icon,
   MenuTwoLineIcon,
   MessageAdd01Icon,
+  Mic01Icon,
   QrCodeIcon,
   QuoteDownIcon,
   RefreshIcon,
@@ -62,6 +63,7 @@ export type IconName =
   | 'chevron-right'
   | 'chevron-down'
   | 'menu'
+  | 'mic'
   | 'brain'
   | 'tool'
   | 'wallet'
@@ -120,6 +122,7 @@ export const HUGE_ICONS = {
   'chevron-right': ArrowRight01Icon,
   'chevron-down': ArrowDown01Icon,
   menu: MenuTwoLineIcon,
+  mic: Mic01Icon,
   brain: AiBrain01Icon,
   tool: Wrench01Icon,
   wallet: Wallet01Icon,

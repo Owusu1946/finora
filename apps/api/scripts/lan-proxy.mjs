@@ -29,13 +29,12 @@ const HOP_BY_HOP = new Set([
 
 function sanitizeHeaders(raw) {
   const out = {};
+  // Preserve upstream content codings so native clients can decompress bodies.
   for (const [key, value] of Object.entries(raw)) {
     if (value == null) continue;
     if (HOP_BY_HOP.has(key.toLowerCase())) continue;
     out[key] = value;
   }
-  // Expo AI SDK guide: prevent transparent decoding issues on device.
-  out['content-encoding'] = 'none';
   out['cache-control'] = 'no-cache, no-transform';
   out['x-accel-buffering'] = 'no';
   return out;

@@ -47,7 +47,7 @@ app.post('/v1/webhooks/wewire', async (c) => {
   return c.json({ received: true, mode: 'mock' });
 });
 
-app.use('/v1/*', clerkMiddleware());
+app.use('/v1/*', clerkMiddleware({ clockSkewInMs: 30_000 }));
 app.use('/v1/*', requireSession);
 app.route('/v1', v1);
 

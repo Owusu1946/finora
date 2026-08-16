@@ -11,6 +11,7 @@ export function createApiEnv(runtimeEnv: RuntimeEnv) {
       CLERK_SECRET_KEY: z.string().min(1),
       CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
       CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
+      DEEPGRAM_API_KEY: z.string().min(1).optional(),
       RESEND_API_KEY: z.string().min(1).optional(),
       RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
       WELCOME_EMAIL_MODE: z.enum(['disabled', 'redirect', 'live']).default('disabled'),

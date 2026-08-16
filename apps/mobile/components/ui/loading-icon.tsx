@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
-
-import { Icon } from '@/components/ui/icon';
+import { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, type StyleProp, type ViewStyle } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 export function LoadingIcon({
   color,
@@ -12,27 +11,82 @@ export function LoadingIcon({
   size?: number | 'small' | 'large';
   style?: StyleProp<ViewStyle>;
 }) {
-  const rotation = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(0)).current;
+  const [reducedMotion, setReducedMotion] = useState(false);
   const resolvedSize = size === 'small' ? 16 : size === 'large' ? 24 : size;
+  const strokeWidth = Math.max(2, resolvedSize * 0.12);
+  const radius = (resolvedSize - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 900,
-        easing: Easing.linear,
-        useNativeDriver: true,
-        isInteraction: false,
-      }),
+    let mounted = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) setReducedMotion(enabled);
+    });
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReducedMotion,
     );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    progress.setValue(0);
+
+    const animation = reducedMotion
+      ? Animated.loop(
+          Animated.sequence([
+            Animated.timing(progress, {
+              toValue: 1,
+              duration: 700,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+              isInteraction: false,
+            }),
+            Animated.timing(progress, {
+              toValue: 0,
+              duration: 700,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+              isInteraction: false,
+            }),
+          ]),
+        )
+      : Animated.loop(
+          Animated.timing(progress, {
+            toValue: 1,
+            duration: 700,
+            easing: Easing.linear,
+            useNativeDriver: true,
+            isInteraction: false,
+          }),
+        );
+
     animation.start();
     return () => animation.stop();
-  }, [rotation]);
+  }, [progress, reducedMotion]);
 
-  const rotate = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const animatedStyle = reducedMotion
+    ? {
+        opacity: progress.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.45, 1],
+        }),
+      }
+    : {
+        transform: [
+          {
+            rotate: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0deg', '360deg'],
+            }),
+          },
+        ],
+      };
 
   return (
     <Animated.View
@@ -44,16 +98,28 @@ export function LoadingIcon({
           width: resolvedSize,
           height: resolvedSize,
           alignSelf: 'center',
-          transform: [{ rotate }],
         },
+        animatedStyle,
         style,
       ]}
     >
-      <Icon
-        name='loading'
-        size={resolvedSize}
-        color={color}
-      />
+      <Svg
+        width={resolvedSize}
+        height={resolvedSize}
+        viewBox={`0 0 ${resolvedSize} ${resolvedSize}`}
+      >
+        <Circle
+          cx={resolvedSize / 2}
+          cy={resolvedSize / 2}
+          r={radius}
+          fill='none'
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap='round'
+          strokeDasharray={`${circumference * 0.28} ${circumference * 0.72}`}
+          transform={`rotate(-90 ${resolvedSize / 2} ${resolvedSize / 2})`}
+        />
+      </Svg>
     </Animated.View>
   );
 }

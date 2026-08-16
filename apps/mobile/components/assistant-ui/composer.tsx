@@ -1,10 +1,19 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
+import { useAuth } from '@clerk/expo';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   View,
+  AppState,
   Platform,
   ActionSheetIOS,
   Alert,
@@ -19,6 +28,7 @@ import {
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -28,6 +38,7 @@ import {
   type FinoraTagSuggestion,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
+import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
 
 import {
   ComposerImageAttachment,
@@ -280,17 +291,211 @@ function ScanButton() {
   );
 }
 
-function SendButton() {
+type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing';
+
+const MAX_RECORDING_SECONDS = 45;
+
+function VoiceButton({
+  composerText,
+  onComposerTextChange,
+}: {
+  composerText: string;
+  onComposerTextChange: (text: string) => void;
+}) {
   const { colors } = useTheme();
-  const canSend = useAuiState((s) => s.composer.canSend);
+  const { getToken } = useAuth();
+  const aui = useAui();
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder, 200);
+  const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+  const voiceStateRef = useRef<VoiceState>('idle');
+  const composerTextRef = useRef(composerText);
+  const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  voiceStateRef.current = voiceState;
+  composerTextRef.current = composerText;
+
+  const clearStopTimer = () => {
+    if (!stopTimerRef.current) return;
+    clearTimeout(stopTimerRef.current);
+    stopTimerRef.current = null;
+  };
+
+  const stopRecording = async (discard = false) => {
+    if (voiceStateRef.current !== 'recording') return;
+    voiceStateRef.current = discard ? 'idle' : 'transcribing';
+    if (mountedRef.current) setVoiceState(discard ? 'idle' : 'transcribing');
+    clearStopTimer();
+
+    let uri: string | null = null;
+    try {
+      await recorder.stop();
+      uri = recorder.uri;
+      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+
+      if (!uri || discard) {
+        deleteRecording(uri);
+        return;
+      }
+
+      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4';
+      const result = await transcribeRecording(uri, contentType, getToken);
+      if (!mountedRef.current) return;
+
+      const existing = composerTextRef.current.trimEnd();
+      const nextText = existing ? `${existing} ${result.transcript}` : result.transcript;
+      const threadComposer = aui.thread.composer();
+      threadComposer.setText(nextText);
+      onComposerTextChange(nextText);
+      haptics.success();
+    } catch (error) {
+      if (!discard && mountedRef.current) {
+        haptics.error();
+        Alert.alert(
+          'Could not transcribe',
+          error instanceof Error ? error.message : 'Please try recording again.',
+        );
+      }
+    } finally {
+      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+      if (discard) deleteRecording(uri);
+      voiceStateRef.current = 'idle';
+      if (mountedRef.current) setVoiceState('idle');
+    }
+  };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active' && voiceStateRef.current === 'recording') {
+        void stopRecording(true);
+      }
+    });
+
+    return () => subscription.remove();
+  });
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      clearStopTimer();
+      if (voiceStateRef.current === 'recording') {
+        void recorder.stop().then(() => deleteRecording(recorder.uri));
+      }
+    };
+  }, [recorder]);
+
+  const startRecording = async () => {
+    if (voiceStateRef.current !== 'idle') return;
+    voiceStateRef.current = 'requesting_permission';
+    setVoiceState('requesting_permission');
+    haptics.selection();
+
+    try {
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Microphone access needed',
+          'Allow microphone access in Settings to dictate messages to Finora.',
+        );
+        return;
+      }
+
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      voiceStateRef.current = 'recording';
+      setVoiceState('recording');
+      haptics.light();
+      stopTimerRef.current = setTimeout(
+        () => void stopRecording(false),
+        MAX_RECORDING_SECONDS * 1000,
+      );
+    } catch (error) {
+      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+      Alert.alert(
+        'Could not start recording',
+        error instanceof Error ? error.message : 'Please try again.',
+      );
+    } finally {
+      if (voiceStateRef.current === 'requesting_permission') {
+        voiceStateRef.current = 'idle';
+        setVoiceState('idle');
+      }
+    }
+  };
+
+  const elapsedSeconds = Math.min(
+    MAX_RECORDING_SECONDS,
+    Math.floor(recorderState.durationMillis / 1000),
+  );
+  const elapsed = `0:${String(elapsedSeconds).padStart(2, '0')}`;
+  const isBusy = voiceState === 'requesting_permission' || voiceState === 'transcribing';
+
+  return (
+    <Pressable
+      accessibilityLabel={voiceState === 'recording' ? 'Stop and transcribe' : 'Dictate message'}
+      accessibilityState={{ busy: isBusy, disabled: isBusy }}
+      disabled={isBusy}
+      hitSlop={8}
+      onLongPress={() => {
+        if (voiceState === 'recording') void stopRecording(true);
+      }}
+      onPress={() => {
+        if (voiceState === 'recording') void stopRecording(false);
+        else void startRecording();
+      }}
+      style={({ pressed }) => [
+        styles.voiceButton,
+        {
+          backgroundColor:
+            voiceState === 'recording'
+              ? colors.destructive
+              : pressed
+                ? colors.muted
+                : 'transparent',
+        },
+      ]}
+    >
+      {isBusy ? (
+        <LoadingIcon
+          size={18}
+          color={colors.mutedForeground}
+        />
+      ) : (
+        <>
+          <Icon
+            name={voiceState === 'recording' ? 'stop' : 'mic'}
+            size={voiceState === 'recording' ? 13 : 20}
+            color={
+              voiceState === 'recording' ? colors.destructiveForeground : colors.mutedForeground
+            }
+          />
+          {voiceState === 'recording' ? (
+            <Text style={[styles.recordingTime, { color: colors.destructiveForeground }]}>
+              {elapsed}
+            </Text>
+          ) : null}
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+function SendButton({ draftText, onSend }: { draftText: string; onSend: () => void }) {
+  const { colors } = useTheme();
+  const runtimeCanSend = useAuiState((s) => s.thread.composer.canSend);
+  const canSend = runtimeCanSend || draftText.trim().length > 0;
 
   return (
     <ComposerPrimitive.Send
       accessibilityLabel='Send message'
+      disabled={!canSend}
       onPressIn={() => {
         if (!canSend) return;
         haptics.success();
         Keyboard.dismiss();
+        onSend();
       }}
       style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
@@ -321,11 +526,19 @@ function CancelButton() {
 }
 
 /** Local buffer avoids RN cursor jumps from store-controlled TextInput. */
-function ComposerInput(props: TextInputProps) {
+function ComposerInput({
+  draftText,
+  onDraftTextChange,
+  ...props
+}: TextInputProps & {
+  draftText: string;
+  onDraftTextChange: (text: string) => void;
+}) {
   const { colors, isDark } = useTheme();
   const aui = useAui();
-  const storeText = useAuiState((s) => s.composer.text);
-  const [localText, setLocalText] = useState(storeText);
+  const storeText = useAuiState((s) => s.thread.composer.text);
+  const localText = draftText;
+  const previousStoreTextRef = useRef(storeText);
   const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
   const [directoryLoaded, setDirectoryLoaded] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -334,8 +547,10 @@ function ComposerInput(props: TextInputProps) {
   const useHighlightOverlay = localText.length > 0;
 
   useEffect(() => {
-    setLocalText((prev) => (prev !== storeText ? storeText : prev));
-  }, [storeText]);
+    if (previousStoreTextRef.current === storeText) return;
+    previousStoreTextRef.current = storeText;
+    onDraftTextChange(storeText);
+  }, [onDraftTextChange, storeText]);
 
   const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
   const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
@@ -361,8 +576,8 @@ function ComposerInput(props: TextInputProps) {
     if (!mentionMatch || mentionQuery === null) return;
     const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
     const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
-    setLocalText(next);
-    aui.composer.setText(next);
+    onDraftTextChange(next);
+    aui.thread.composer().setText(next);
     haptics.selection();
     requestAnimationFrame(() => inputRef.current?.focus());
   };
@@ -471,8 +686,8 @@ function ComposerInput(props: TextInputProps) {
           ]}
           selectionColor={tagColor}
           onChangeText={(text) => {
-            setLocalText(text);
-            aui.composer.setText(text);
+            onDraftTextChange(text);
+            aui.thread.composer().setText(text);
           }}
         />
       </View>
@@ -482,6 +697,8 @@ function ComposerInput(props: TextInputProps) {
 
 export function Composer() {
   const { colors } = useTheme();
+  const storeText = useAuiState((s) => s.thread.composer.text);
+  const [draftText, setDraftText] = useState(storeText);
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
     [colors.foreground],
@@ -495,6 +712,8 @@ export function Composer() {
         <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
 
         <ComposerInput
+          draftText={draftText}
+          onDraftTextChange={setDraftText}
           style={inputStyle}
           placeholder='Ask Finora… use @ to tag'
           placeholderTextColor={colors.mutedForeground}
@@ -506,8 +725,15 @@ export function Composer() {
           <AttachButton />
           <ScanButton />
           <View style={styles.spacer} />
+          <VoiceButton
+            composerText={draftText}
+            onComposerTextChange={setDraftText}
+          />
           <AuiIf condition={(s) => !s.thread.isRunning}>
-            <SendButton />
+            <SendButton
+              draftText={draftText}
+              onSend={() => setDraftText('')}
+            />
           </AuiIf>
           <AuiIf condition={(s) => s.thread.isRunning}>
             <CancelButton />
@@ -635,5 +861,20 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  voiceButton: {
+    width: 64,
+    height: 38,
+    borderRadius: Radius.pill,
+    flexDirection: 'row',
+    gap: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordingTime: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
   },
 });

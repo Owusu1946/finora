@@ -3,6 +3,7 @@ import { createApiEnv } from '@finora/env/api';
 export function getApiEnv(bindings: Env) {
   const optionalBindings = bindings as Env & {
     CLERK_WEBHOOK_SIGNING_SECRET?: string;
+    DEEPGRAM_API_KEY?: string;
     RESEND_WEBHOOK_SECRET?: string;
     WELCOME_EMAIL_REDIRECT_TO?: string;
   };
@@ -13,6 +14,7 @@ export function getApiEnv(bindings: Env) {
     CLERK_SECRET_KEY: bindings.CLERK_SECRET_KEY,
     CLERK_PUBLISHABLE_KEY: bindings.CLERK_PUBLISHABLE_KEY,
     CLERK_WEBHOOK_SIGNING_SECRET: optionalBindings.CLERK_WEBHOOK_SIGNING_SECRET,
+    DEEPGRAM_API_KEY: optionalBindings.DEEPGRAM_API_KEY,
     RESEND_API_KEY: bindings.RESEND_API_KEY,
     RESEND_WEBHOOK_SECRET: optionalBindings.RESEND_WEBHOOK_SECRET,
     WELCOME_EMAIL_MODE: bindings.WELCOME_EMAIL_MODE,
