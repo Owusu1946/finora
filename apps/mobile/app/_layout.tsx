@@ -86,7 +86,11 @@ function RootNavigator() {
   const { completed: onboardingCompleted } = useOnboardingGate();
   const segments = useSegments();
   const { isDark, colors } = useTheme();
-  const isPhoneSetup = segments[0] === 'auth' && String(segments[1]) === 'add-phone';
+  const isAuthSubScreen =
+    segments[0] === 'auth' &&
+    (String(segments[1]) === 'add-phone' ||
+      String(segments[1]) === 'create-passcode' ||
+      String(segments[1]) === 'enter-passcode');
   useDrainPendingPaymentLink();
   const base = isDark ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
@@ -118,7 +122,7 @@ function RootNavigator() {
       phoneStatus !== 'loading' &&
       !tagConfigured &&
       phoneStatus === 'required' &&
-      !isPhoneSetup ? (
+      !isAuthSubScreen ? (
         <Redirect href={'/auth/add-phone' as Href} />
       ) : null}
       {onboardingCompleted && isSignedIn && phoneStatus === 'verified' && !tagConfigured ? (
@@ -128,7 +132,7 @@ function RootNavigator() {
       isSignedIn &&
       tagConfigured &&
       segments[0] === 'auth' &&
-      !isPhoneSetup ? (
+      !isAuthSubScreen ? (
         <Redirect href={'/(app)' as Href} />
       ) : null}
       <StatusBar style='auto' />

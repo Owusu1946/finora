@@ -1,95 +1,230 @@
-# finora
+# Finora
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack.
+Finora is a TypeScript monorepo for a financial operating system for people and AI agents.
+The mobile app is an Expo client, the API is Hono on Cloudflare Workers, and the MCP server
+exposes a curated set of backend capabilities. The API is the source of truth; clients never
+call WeWire directly.
 
-## Features
+## Repository layout
 
-- **TypeScript** - For type safety and improved developer experience
-- **Turborepo** - Optimized monorepo build system
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
+```text
+apps/mobile  Expo SDK 54 React Native app
+apps/web     Next.js marketing site and public assets
+apps/api     Hono API, Neon/Postgres, Clerk webhooks, queues, Resend
+apps/mcp     Cloudflare MCP server
+packages/env Shared environment validation
+packages/shared Shared schemas, types, and capability registry
+packages/wewire Server-only WeWire client
+```
 
-## Getting Started
+## Prerequisites
 
-First, install the dependencies:
+- Node.js 20 or newer
+- pnpm 11 (`corepack enable` is recommended)
+- An Expo Go client for mobile development, or an Expo development build for native-only work
+- A Clerk application with Native API enabled
+- A Neon PostgreSQL database for API persistence
+- Cloudflare Wrangler authenticated to the account that owns the Workers
+- Resend and AgooSMS accounts for production email and SMS
+
+Install dependencies from the repository root:
 
 ```bash
 pnpm install
 ```
 
-Then, run the development server:
+Never commit `.env`, `.dev.vars`, API keys, database URLs, or webhook signing secrets.
+The example files contain placeholders only.
 
-```bash
-pnpm run dev
+## Environment configuration
+
+### Mobile
+
+Copy `apps/mobile/.env.example` to `apps/mobile/.env`:
+
+```env
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key
+EXPO_PUBLIC_API_URL=https://your-api-domain.example.com
 ```
 
-### Running the mobile app against the local API
+`EXPO_PUBLIC_API_URL` is required for production builds. During local Expo development the app
+derives the LAN API URL from Metro and uses port `8788`.
 
-Expo Go on a physical device cannot reach the API through `127.0.0.1`. Use two terminals for the
-normal development workflow:
+### API
+
+Copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars` and fill in the values:
+
+```env
+CLERK_SECRET_KEY=sk_test_your_key
+CLERK_PUBLISHABLE_KEY=pk_test_your_key
+CLERK_WEBHOOK_SIGNING_SECRET=whsec_your_clerk_endpoint_secret
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+DATABASE_URL_UNPOOLED=postgresql://user:password@host/database?sslmode=require
+AGOO_SMS_API_KEY=your_agoosms_key
+AGOO_SMS_SENDER_ID=VENTRAPOS
+RESEND_API_KEY=re_your_key
+RESEND_WEBHOOK_SECRET=your_resend_webhook_secret
+WELCOME_EMAIL_MODE=disabled
+WELCOME_EMAIL_REDIRECT_TO=
+WEWIRE_API_KEY=your_wewire_key
+WEWIRE_WEBHOOK_SECRET=your_wewire_webhook_secret
+```
+
+`WELCOME_EMAIL_MODE` is one of `disabled`, `redirect`, or `live`. Use `redirect` plus
+`WELCOME_EMAIL_REDIRECT_TO` while testing delivery. Do not put secrets in `wrangler.toml`.
+The non-secret production values (`WELCOME_EMAIL_FROM`, reply-to, CTA URL, and queue bindings)
+are configured there.
+
+### MCP
+
+Copy `apps/mcp/.dev.vars.example` to `apps/mcp/.dev.vars`:
+
+```env
+CLERK_SECRET_KEY=sk_test_your_key
+```
+
+For local MCP development, `apps/mcp/wrangler.toml` points at
+`http://127.0.0.1:8787`. Set `FINORA_API_URL` to the deployed API URL in a preview or production
+Worker configuration.
+
+## Clerk setup
+
+1. Create a Clerk application and enable the Native API.
+2. Copy the publishable key to the mobile `.env` and the secret key to API/MCP secrets.
+3. Enable the authentication methods used by the app: email/password, Google, and Apple.
+4. Configure the mobile OAuth application identifiers and redirect settings to match
+   `apps/mobile/app.json` (`scheme: finora`).
+5. After deploying the API, create a Clerk webhook endpoint at:
+   `https://YOUR_API_HOST/webhooks/clerk`
+6. Subscribe to `user.created` and `user.updated`.
+7. Copy that endpoint's signing secret to `CLERK_WEBHOOK_SIGNING_SECRET`.
+
+The webhook creates the asynchronous welcome-email delivery record. Profile synchronization via
+`/v1/auth/me` is separate and does not prove that the webhook is working.
+
+## Neon and database migrations
+
+Use the unpooled Neon URL for Drizzle schema operations when Neon provides both URLs:
 
 ```bash
-# Terminal 1 — start the workspace, including API and mobile
+pnpm --filter @finora/api exec drizzle-kit generate
+pnpm db:push
+```
+
+Review generated SQL before applying it. The API runtime uses `DATABASE_URL`. Do not run schema
+pushes against production without reviewing the generated migration and taking the normal backup/
+rollback precautions.
+
+## Cloudflare resources and secrets
+
+Authenticate Wrangler once:
+
+```bash
+pnpm --filter @finora/api exec wrangler login
+```
+
+Create the email queues once per Cloudflare account:
+
+```bash
+pnpm --filter @finora/api exec wrangler queues create finora-transactional-email
+pnpm --filter @finora/api exec wrangler queues create finora-transactional-email-dlq
+pnpm --filter @finora/api cf-typegen
+```
+
+Set production secrets interactively:
+
+```bash
+pnpm --filter @finora/api exec wrangler secret put CLERK_SECRET_KEY
+pnpm --filter @finora/api exec wrangler secret put CLERK_WEBHOOK_SIGNING_SECRET
+pnpm --filter @finora/api exec wrangler secret put DATABASE_URL
+pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_API_KEY
+pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_SENDER_ID
+pnpm --filter @finora/api exec wrangler secret put RESEND_API_KEY
+pnpm --filter @finora/api exec wrangler secret put RESEND_WEBHOOK_SECRET
+pnpm --filter @finora/api exec wrangler secret put WEWIRE_API_KEY
+pnpm --filter @finora/api exec wrangler secret put WEWIRE_WEBHOOK_SECRET
+```
+
+`WELCOME_EMAIL_MODE` is a normal Wrangler variable, not a secret. Change it in `wrangler.toml`
+and redeploy. To update an existing secret, run the same `wrangler secret put NAME` command again.
+
+Deploy the API with:
+
+```bash
+pnpm --filter @finora/api deploy
+```
+
+## Resend welcome email setup
+
+The delivery path is:
+
+```text
+Clerk webhook -> Hono API -> Neon delivery ledger -> Cloudflare Queue -> Resend
+```
+
+1. Verify `mail.askorin.app` in Resend.
+2. Add the exact DKIM, SPF/return-path, and MX records Resend provides at the authoritative DNS
+   provider. Do not invent record values.
+3. Use `Finora <welcome@mail.askorin.app>` as the verified sender.
+4. Configure `hello@askorin.app` as the reply-to address and route it to the support inbox.
+5. Create a Resend webhook at `https://YOUR_API_HOST/webhooks/resend` and subscribe to sent,
+   delivered, delayed, bounced, complained, suppressed, and failed events.
+6. Store the Resend webhook signing secret as `RESEND_WEBHOOK_SECRET`.
+7. Deploy the web app before the API so this email logo is publicly available:
+   `https://YOUR_VERCEL_HOST/images/finora/email-logo.png`
+
+For staging, use `WELCOME_EMAIL_MODE=redirect`; use `live` only after DNS, webhook, and queue
+checks pass.
+
+## Local development
+
+Run the complete workspace:
+
+```bash
 pnpm dev
 ```
 
-```bash
-# Terminal 2 — expose the API to the local network
-pnpm --filter @finora/api dev:lan
-```
-
-The proxy should report:
-
-```text
-[lan-proxy] http://0.0.0.0:8788 → http://127.0.0.1:8787
-```
-
-In Expo development, Finora derives the current LAN host from Metro and uses port `8788`
-automatically. You do not need to update the API URL whenever the computer changes networks.
-
-`EXPO_PUBLIC_API_URL` is still required for production builds:
-
-```env
-EXPO_PUBLIC_API_URL=https://api.example.com
-```
-
-Keep the computer and mobile device on the same network. For focused development, you can start
-only the API, LAN proxy, and mobile app in three separate terminals instead:
+For a physical phone, use separate terminals so the API is reachable over the LAN:
 
 ```bash
+# Terminal 1
 pnpm dev:api
-```
 
-```bash
+# Terminal 2
 pnpm --filter @finora/api dev:lan
-```
 
-```bash
+# Terminal 3
 pnpm dev:mobile
 ```
 
-Restart Expo after changing production environment values. If Metro has cached a previous value, use:
+The LAN proxy exposes `http://YOUR_COMPUTER_LAN_IP:8788` and the mobile app detects it from
+Metro. Keep the phone and computer on the same network. If ports `8081` or `3001` are already in
+use, stop the process you started or run that app on another port.
+
+Run the web app alone with `pnpm dev:web`. Run MCP alone with
+`pnpm --filter @finora/mcp dev`.
+
+## Verification and quality checks
+
+Before opening a pull request:
 
 ```bash
-pnpm --filter @finora/mobile exec expo start --clear
+pnpm check
+pnpm check-types
+pnpm --filter @finora/api test
+pnpm build
 ```
 
-## Git Hooks and Formatting
+For a welcome-email smoke test, create one email/password user and one social-login user. Verify
+the Clerk webhook attempt succeeds, one Neon delivery row exists per Clerk user, the queue has
+processed the message, and Resend shows the provider event. Never use real customer data in tests.
 
-- Run checks: `pnpm run check`
+## Contribution rules
 
-## Project Structure
-
-```
-finora/
-├── apps/
-```
-
-## Available Scripts
-
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm dev:api`: Start the Hono API on `127.0.0.1:8787`
-- `pnpm --filter @finora/api dev:lan`: Expose the local API on LAN port `8788`
-- `pnpm dev:mobile`: Start the Expo mobile application
-- `pnpm run build`: Build all applications
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run check`: Run Oxlint and Oxfmt
+- Keep financial execution behind prepare -> policy check -> human approval -> PIN/biometrics ->
+  execute -> audit.
+- Mobile and MCP must call the API; they must never call WeWire directly.
+- Keep shared schemas and capability names in `packages/shared`.
+- Do not expose credentials, passcodes, or execution endpoints through MCP.
+- Keep commits small and use conventional commit messages.
+- Do not commit directly to `main` unless explicitly authorized.

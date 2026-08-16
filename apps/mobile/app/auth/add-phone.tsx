@@ -83,7 +83,11 @@ export default function AddPhoneScreen() {
       setStep('code');
       haptics.success();
     } catch (caught) {
-      haptics.impact();
+      if (caught instanceof PhoneVerificationError && caught.code === 'phone_number_in_use') {
+        haptics.error();
+      } else {
+        haptics.impact();
+      }
       setError(
         caught instanceof PhoneVerificationError
           ? caught.message
@@ -106,7 +110,11 @@ export default function AddPhoneScreen() {
       haptics.success();
       finish();
     } catch (caught) {
-      haptics.impact();
+      if (caught instanceof PhoneVerificationError && caught.code === 'phone_number_in_use') {
+        haptics.error();
+      } else {
+        haptics.impact();
+      }
       setError(
         caught instanceof PhoneVerificationError
           ? caught.message
@@ -128,7 +136,11 @@ export default function AddPhoneScreen() {
       setCooldown(RESEND_SECONDS);
       haptics.success();
     } catch (caught) {
-      haptics.impact();
+      if (caught instanceof PhoneVerificationError && caught.code === 'phone_number_in_use') {
+        haptics.error();
+      } else {
+        haptics.impact();
+      }
       setError(
         caught instanceof PhoneVerificationError
           ? caught.message
