@@ -11,6 +11,17 @@ import {
 } from 'drizzle-orm/pg-core';
 
 export const accountTypeEnum = pgEnum('account_type', ['personal', 'business']);
+export const transactionalEmailStatusEnum = pgEnum('transactional_email_status', [
+  'queued',
+  'sending',
+  'sent',
+  'delivered',
+  'delayed',
+  'bounced',
+  'complained',
+  'suppressed',
+  'failed',
+]);
 
 export const userProfiles = pgTable(
   'user_profiles',
@@ -72,3 +83,35 @@ export const phoneVerificationChallenges = pgTable(
   },
   (table) => [uniqueIndex('phone_verification_challenges_user_unique').on(table.clerkUserId)],
 );
+
+export const transactionalEmailDeliveries = pgTable(
+  'transactional_email_deliveries',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    recipientEmail: text('recipient_email').notNull(),
+    recipientName: text('recipient_name'),
+    emailKind: text('email_kind').notNull(),
+    status: transactionalEmailStatusEnum('status').notNull().default('queued'),
+    resendEmailId: text('resend_email_id'),
+    attemptCount: integer('attempt_count').notNull().default(0),
+    lastErrorCode: text('last_error_code'),
+    queuedAt: timestamp('queued_at', { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('transactional_email_deliveries_user_kind_unique').on(
+      table.clerkUserId,
+      table.emailKind,
+    ),
+    uniqueIndex('transactional_email_deliveries_resend_id_unique').on(table.resendEmailId),
+    index('transactional_email_deliveries_status_index').on(table.status),
+  ],
+);
+
+export type TransactionalEmailDeliveryRow = typeof transactionalEmailDeliveries.$inferSelect;

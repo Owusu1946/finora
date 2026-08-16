@@ -1,0 +1,26 @@
+import { createApiEnv } from '@finora/env/api';
+
+export function getApiEnv(bindings: Env) {
+  const optionalBindings = bindings as Env & {
+    CLERK_WEBHOOK_SIGNING_SECRET?: string;
+    RESEND_WEBHOOK_SECRET?: string;
+    WELCOME_EMAIL_REDIRECT_TO?: string;
+  };
+
+  return createApiEnv({
+    ENVIRONMENT: bindings.ENVIRONMENT,
+    DATABASE_URL: bindings.DATABASE_URL,
+    CLERK_SECRET_KEY: bindings.CLERK_SECRET_KEY,
+    CLERK_PUBLISHABLE_KEY: bindings.CLERK_PUBLISHABLE_KEY,
+    CLERK_WEBHOOK_SIGNING_SECRET: optionalBindings.CLERK_WEBHOOK_SIGNING_SECRET,
+    RESEND_API_KEY: bindings.RESEND_API_KEY,
+    RESEND_WEBHOOK_SECRET: optionalBindings.RESEND_WEBHOOK_SECRET,
+    WELCOME_EMAIL_MODE: bindings.WELCOME_EMAIL_MODE,
+    WELCOME_EMAIL_REDIRECT_TO: optionalBindings.WELCOME_EMAIL_REDIRECT_TO,
+    WELCOME_EMAIL_FROM: bindings.WELCOME_EMAIL_FROM,
+    WELCOME_EMAIL_REPLY_TO: bindings.WELCOME_EMAIL_REPLY_TO,
+    WELCOME_EMAIL_CTA_URL: bindings.WELCOME_EMAIL_CTA_URL,
+    WEWIRE_API_KEY: bindings.WEWIRE_API_KEY,
+    WEWIRE_WEBHOOK_SECRET: bindings.WEWIRE_WEBHOOK_SECRET,
+  });
+}

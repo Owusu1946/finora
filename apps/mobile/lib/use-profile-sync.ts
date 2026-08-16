@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
-import { getTagConfigured } from '@/lib/auth-storage';
+import { getTagConfigured, setTagConfigured } from '@/lib/auth-storage';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { usePhoneGate } from '@/lib/phone-gate';
 import { getUserProfile, updateUserProfile } from '@/lib/profile-api';
@@ -27,6 +27,9 @@ export function useProfileSync() {
         ]);
         if (cancelled) return;
         setFromProfile(remote.phoneVerifiedAt);
+        if (remote.finoraTag && !tagConfigured) {
+          await setTagConfigured(userId);
+        }
 
         const settings = tagConfigured ? await getSettings() : null;
         const updates = {

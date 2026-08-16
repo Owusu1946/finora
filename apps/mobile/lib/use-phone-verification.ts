@@ -25,7 +25,7 @@ export class PhoneVerificationError extends Error {
 
 function errorMessage(code: string | undefined) {
   if (code === 'invalid_phone_number') return 'Enter a valid Ghana phone number.';
-  if (code === 'phone_number_in_use') return 'That phone number is already linked to an account.';
+  if (code === 'phone_number_in_use') return 'This phone number is already linked to another account.';
   if (code === 'sms_rate_limited') return 'A code was just sent. Wait a moment before resending.';
   if (code === 'verification_code_expired') return 'That code has expired. Request a new one.';
   if (code === 'invalid_code') return 'That verification code is incorrect.';
