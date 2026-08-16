@@ -75,6 +75,19 @@ Agents should use this small set (internally mapped to rich `/v1` routes):
 ## Local try
 
 ```bash
-pnpm --filter @finora/api dev
-pnpm --filter @finora/mcp dev
+pnpm dev:api # API on http://127.0.0.1:8787
+pnpm dev:mcp # MCP on http://127.0.0.1:8789
 ```
+
+Run those commands in separate terminals, or use `pnpm dev` to start API, MCP, web, and mobile
+together. The MCP Worker calls the API through `FINORA_API_URL`; it does not use its own port as
+the backend URL.
+
+Validate shared schemas and registry types with:
+
+```bash
+pnpm --filter @finora/shared check-types
+```
+
+The root `pnpm check-types` command includes this package automatically. It has no standalone dev
+server or build output.

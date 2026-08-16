@@ -6,14 +6,24 @@ Next.js App Router landing site for Finora.
 
 ```bash
 # from monorepo root
-pnpm run dev:web      # next dev on :3000
-pnpm --filter @finora/web build
+pnpm dev:web
+pnpm build:web
+pnpm preview:web
 pnpm --filter @finora/web check-types
 ```
 
+| Command                                 | Expected result                                                             |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| `pnpm dev:web`                          | Starts the Turbopack development server on `http://localhost:3000`.         |
+| `pnpm build:web`                        | Runs TypeScript and creates the optimized production build in `.next`.      |
+| `pnpm preview:web`                      | Serves the existing production build on port `3000`; run `build:web` first. |
+| `pnpm --filter @finora/web check-types` | Runs TypeScript without emitting application files.                         |
+
+`dev:web` is included in the root `pnpm dev` session.
+
 ## Stack
 
-- Next.js 16 (Turbopack) + React 19.1 (workspace override)
+- Next.js 16 (Turbopack) + package-local React 19.2
 - Tailwind CSS v4
 - React Compiler enabled
 

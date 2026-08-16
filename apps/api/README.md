@@ -4,20 +4,33 @@ Finora backend on Cloudflare Workers (Hono).
 
 Owns auth, approvals, WeWire access, and webhooks.
 
-```bash
-# from repo root
-cp apps/api/.dev.vars.example apps/api/.dev.vars
-pnpm --filter @finora/api dev
-```
+Copy `.dev.vars.example` to `.dev.vars`, fill in the required values, then use the scripts below
+from the repository root.
 
-Database schema changes use Drizzle's direct push workflow (Option 2). Update
-`src/db/schema.ts`, generate and review the SQL artifact, then apply the reviewed
-schema diff:
+| Command                                 | Expected result                                                                          |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm dev:api`                          | Starts the local API Worker on `http://127.0.0.1:8787` and keeps running.                |
+| `pnpm dev:lan`                          | Starts the phone-facing proxy on `http://0.0.0.0:8788`; the API must already be running. |
+| `pnpm build:api`                        | Bundles and validates the Worker with `wrangler deploy --dry-run`; nothing is published. |
+| `pnpm deploy:api`                       | Publishes the API Worker and its configured bindings to Cloudflare.                      |
+| `pnpm db:push`                          | Pushes `src/db/schema.ts` directly to the database selected by `DATABASE_URL`.           |
+| `pnpm --filter @finora/api db:studio`   | Opens Drizzle Studio for the configured database.                                        |
+| `pnpm --filter @finora/api cf-typegen`  | Regenerates `worker-configuration.d.ts` from Wrangler bindings.                          |
+| `pnpm --filter @finora/api test`        | Runs the API Vitest suite once.                                                          |
+| `pnpm --filter @finora/api check-types` | Runs TypeScript without emitting files.                                                  |
+
+`dev:api` is also included in the root `pnpm dev` session. `dev:lan` is intentionally separate
+because it exposes the API to physical devices on the local network.
+
+Database schema changes use Drizzle's direct push workflow. Update `src/db/schema.ts`, confirm
+that `DATABASE_URL` targets the intended database, then inspect and approve the schema diff shown
+by Drizzle:
 
 ```bash
-pnpm --filter @finora/api exec drizzle-kit generate
 pnpm db:push
 ```
+
+Do not generate or commit Drizzle migration artifacts for this repository.
 
 ## Transactional welcome email
 

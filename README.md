@@ -13,6 +13,7 @@ apps/web     Next.js marketing site and public assets
 apps/api     Hono API, Neon/Postgres, Clerk webhooks, queues, Resend
 apps/mcp     Cloudflare MCP server
 packages/env Shared environment validation
+packages/config Shared TypeScript configuration
 packages/shared Shared schemas, types, and capability registry
 packages/wewire Server-only WeWire client
 ```
@@ -119,30 +120,30 @@ The API runtime uses `DATABASE_URL`.
 Authenticate Wrangler once:
 
 ```bash
-pnx --filter @finora/api wrangler login
+pnpm --filter @finora/api exec wrangler login
 ```
 
 Create the email queues once per Cloudflare account:
 
 ```bash
-pnx --filter @finora/api wrangler queues create finora-transactional-email
-pnx --filter @finora/api wrangler queues create finora-transactional-email-dlq
+pnpm --filter @finora/api exec wrangler queues create finora-transactional-email
+pnpm --filter @finora/api exec wrangler queues create finora-transactional-email-dlq
 pnpm --filter @finora/api cf-typegen
 ```
 
 Set production secrets interactively:
 
 ```bash
-pnx --filter @finora/api wrangler secret put CLERK_SECRET_KEY
-pnx --filter @finora/api wrangler secret put CLERK_WEBHOOK_SIGNING_SECRET
-pnx --filter @finora/api wrangler secret put DEEPGRAM_API_KEY
-pnx --filter @finora/api wrangler secret put DATABASE_URL
-pnx --filter @finora/api wrangler secret put AGOO_SMS_API_KEY
-pnx --filter @finora/api wrangler secret put AGOO_SMS_SENDER_ID
-pnx --filter @finora/api wrangler secret put RESEND_API_KEY
-pnx --filter @finora/api wrangler secret put RESEND_WEBHOOK_SECRET
-pnx --filter @finora/api wrangler secret put WEWIRE_API_KEY
-pnx --filter @finora/api wrangler secret put WEWIRE_WEBHOOK_SECRET
+pnpm --filter @finora/api exec wrangler secret put CLERK_SECRET_KEY
+pnpm --filter @finora/api exec wrangler secret put CLERK_WEBHOOK_SIGNING_SECRET
+pnpm --filter @finora/api exec wrangler secret put DEEPGRAM_API_KEY
+pnpm --filter @finora/api exec wrangler secret put DATABASE_URL
+pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_API_KEY
+pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_SENDER_ID
+pnpm --filter @finora/api exec wrangler secret put RESEND_API_KEY
+pnpm --filter @finora/api exec wrangler secret put RESEND_WEBHOOK_SECRET
+pnpm --filter @finora/api exec wrangler secret put WEWIRE_API_KEY
+pnpm --filter @finora/api exec wrangler secret put WEWIRE_WEBHOOK_SECRET
 ```
 
 `WELCOME_EMAIL_MODE` is a normal Wrangler variable, not a secret. Change it in `wrangler.toml`
@@ -151,7 +152,7 @@ and redeploy. To update an existing secret, run the same `wrangler secret put NA
 Deploy the API with:
 
 ```bash
-pnpm --filter @finora/api deploy
+pnpm deploy:api
 ```
 
 ## Resend welcome email setup
@@ -178,31 +179,69 @@ checks pass.
 
 ## Local development
 
-Run the complete workspace:
+Run all applications in one Turbo session:
 
 ```bash
 pnpm dev
 ```
 
-For a physical phone, use separate terminals so the API is reachable over the LAN:
+This starts the four packages that define a `dev` script:
+
+| Service | Address                 | Expected result                                                         |
+| ------- | ----------------------- | ----------------------------------------------------------------------- |
+| API     | `http://127.0.0.1:8787` | Wrangler reports the API Worker ready.                                  |
+| MCP     | `http://127.0.0.1:8789` | Wrangler reports the MCP Worker ready; `/mcp` and `/sse` are available. |
+| Web     | `http://localhost:3000` | Next.js reports the landing site ready.                                 |
+| Mobile  | `exp://<LAN_IP>:8081`   | Metro prints a QR code and waits for Expo Go or a development build.    |
+
+Turbo lists every workspace package as in scope, but packages without a `dev` script do not start
+a process. Stop the full session with `Ctrl+C`.
+
+The full session does not start the phone-facing LAN proxy. For a physical phone, run it in a
+second terminal:
 
 ```bash
 # Terminal 1
-pnpm dev:api
+pnpm dev
 
 # Terminal 2
 pnpm dev:lan
-
-# Terminal 3
-pnpm dev:mobile
 ```
 
-The LAN proxy exposes `http://YOUR_COMPUTER_LAN_IP:8788` and the mobile app detects it from
-Metro. Keep the phone and computer on the same network. If ports `8081` or `3001` are already in
-use, stop the process you started or run that app on another port.
+`dev:lan` only starts the proxy; it expects the API to already be running on `127.0.0.1:8787`.
+The proxy exposes `http://YOUR_COMPUTER_LAN_IP:8788`, and the mobile app derives that URL from
+Metro. Keep the phone and computer on the same network.
 
-Run the web app alone with `pnpm dev:web`. Run MCP alone with
-`pnpm --filter @finora/mcp dev`.
+To run only the phone-facing path, use three terminals with `pnpm dev:api`, `pnpm dev:lan`, and
+`pnpm dev:mobile`.
+
+### Root script reference
+
+Run these commands from the repository root:
+
+| Command            | What it runs                                                | What to expect                                                                           |
+| ------------------ | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm dev`         | API, MCP, mobile, and web dev servers through Turbo         | Persistent Turbo session on ports `8787`, `8789`, `8081`, and `3000`.                    |
+| `pnpm dev:api`     | `@finora/api` development Worker                            | Persistent Wrangler server on `127.0.0.1:8787`.                                          |
+| `pnpm dev:mcp`     | `@finora/mcp` development Worker                            | Persistent Wrangler server on `127.0.0.1:8789`; API calls target port `8787`.            |
+| `pnpm dev:web`     | `@finora/web` Next.js development server                    | Persistent site on `localhost:3000`.                                                     |
+| `pnpm dev:mobile`  | `@finora/mobile` Expo server                                | Persistent Metro server, normally on port `8081`, with a QR code.                        |
+| `pnpm dev:lan`     | API LAN proxy                                               | Persistent proxy on `0.0.0.0:8788`; requires `dev:api` or `dev`.                         |
+| `pnpm android`     | Expo Android launcher                                       | Starts Metro and opens or prompts for an Android target.                                 |
+| `pnpm ios`         | Expo iOS launcher                                           | Starts Metro and opens an iOS simulator when supported.                                  |
+| `pnpm build`       | API and MCP Wrangler dry runs plus the web production build | Validates both Workers without deploying and writes `apps/web/.next`.                    |
+| `pnpm build:api`   | API Wrangler deploy dry run                                 | Bundles and validates the API Worker; does not publish it.                               |
+| `pnpm build:mcp`   | MCP Wrangler deploy dry run                                 | Bundles and validates the MCP Worker; does not publish it.                               |
+| `pnpm build:web`   | Web TypeScript and Next.js production build                 | Writes the production output to `apps/web/.next`.                                        |
+| `pnpm preview:web` | Built Next.js site                                          | Persistent production server on `localhost:3000`; run `pnpm build:web` first.            |
+| `pnpm check`       | Oxlint followed by Oxfmt                                    | Reports lint errors and rewrites files to the configured format.                         |
+| `pnpm check-types` | Every workspace `check-types` script                        | Runs TypeScript checks without emitting application code.                                |
+| `pnpm db:push`     | API Drizzle schema push                                     | Applies the current schema directly to the configured database; review the target first. |
+| `pnpm deploy:api`  | API Wrangler deploy                                         | Publishes the API Worker to Cloudflare.                                                  |
+| `pnpm deploy:mcp`  | MCP Wrangler deploy                                         | Publishes the MCP Worker to Cloudflare.                                                  |
+
+`postinstall` runs automatically after `pnpm install` to link the mobile React and React Native
+runtime dependencies. It normally should not be invoked manually.
 
 ## Verification and quality checks
 
