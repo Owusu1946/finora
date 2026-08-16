@@ -15,6 +15,9 @@ import { appendAgentFollowUp, conversionDoneFollowUp } from '@/lib/agent-follow-
 import { haptics } from '@/lib/haptics';
 
 type PrepareConversionArgs = {
+  from?: string;
+  to?: string;
+  amount?: number;
   fromCurrency?: string;
   toCurrency?: string;
   fromAmount?: number;
@@ -27,17 +30,24 @@ type PrepareConversionArgs = {
 type PrepareConversionResult = {
   status?: ConversionStatus | 'pending' | 'confirmed';
   conversionId?: string;
+  fromCurrency?: string;
+  toCurrency?: string;
+  fromAmount?: number;
+  toAmount?: number;
+  rate?: number;
+  fee?: number;
+  feeCurrency?: string;
 };
 
-function asQuote(args: PrepareConversionArgs): ConversionQuote {
+function asQuote(args: PrepareConversionArgs, result?: PrepareConversionResult): ConversionQuote {
   return {
-    fromCurrency: args.fromCurrency ?? 'USD',
-    toCurrency: args.toCurrency ?? 'GHS',
-    fromAmount: args.fromAmount ?? 0,
-    toAmount: args.toAmount ?? 0,
-    rate: args.rate ?? 0,
-    fee: args.fee,
-    feeCurrency: args.feeCurrency,
+    fromCurrency: result?.fromCurrency ?? args.fromCurrency ?? args.from ?? 'USD',
+    toCurrency: result?.toCurrency ?? args.toCurrency ?? args.to ?? 'GHS',
+    fromAmount: result?.fromAmount ?? args.fromAmount ?? args.amount ?? 0,
+    toAmount: result?.toAmount ?? args.toAmount ?? 0,
+    rate: result?.rate ?? args.rate ?? 0,
+    fee: result?.fee ?? args.fee,
+    feeCurrency: result?.feeCurrency ?? args.feeCurrency,
   };
 }
 
@@ -167,7 +177,7 @@ export const PrepareConversionToolUI = makeAssistantToolUI<
 
     return (
       <PrepareConversionConfirm
-        quote={asQuote(args ?? {})}
+        quote={asQuote(args ?? {}, result)}
         resultStatus={result?.status}
         resultConversionId={result?.conversionId}
         onFinished={({ conversionId, status: next }) => {

@@ -1,12 +1,79 @@
 import type { UIMessage } from 'ai';
 
+import { isChatAgentToolName } from './tools';
+
 const MAX_CHAT_TEXT_LENGTH = 120_000;
+
+type UIMessagePart = UIMessage['parts'][number];
+type DynamicToolPart = Extract<UIMessagePart, { type: 'dynamic-tool' }>;
+
+function asToolPart(part: UIMessagePart) {
+  if (part.type === 'dynamic-tool') {
+    return { name: part.toolName, part };
+  }
+  if (!part.type.startsWith('tool-')) return null;
+  return { name: part.type.slice('tool-'.length), part };
+}
+
+function sanitizeToolPart(part: UIMessagePart): DynamicToolPart | null {
+  const tool = asToolPart(part);
+  if (!tool || !isChatAgentToolName(tool.name)) return null;
+
+  const value = tool.part as UIMessagePart & {
+    toolCallId: string;
+    state: string;
+    input?: unknown;
+    output?: unknown;
+    errorText?: string;
+  };
+  const base = {
+    type: 'dynamic-tool' as const,
+    toolName: tool.name,
+    toolCallId: value.toolCallId,
+  };
+
+  if (value.state === 'input-streaming') {
+    return { ...base, state: 'input-streaming', input: value.input };
+  }
+  if (value.state === 'input-available') {
+    return { ...base, state: 'input-available', input: value.input ?? {} };
+  }
+  if (value.state === 'output-available') {
+    return {
+      ...base,
+      state: 'output-available',
+      input: value.input ?? {},
+      output: value.output ?? null,
+    };
+  }
+  if (value.state === 'output-error') {
+    return {
+      ...base,
+      state: 'output-error',
+      input: value.input ?? {},
+      errorText: value.errorText ?? 'Tool execution failed.',
+    };
+  }
+  if (value.state === 'output-denied') {
+    return {
+      ...base,
+      state: 'output-denied',
+      input: value.input ?? {},
+      approval: { id: value.toolCallId, approved: false },
+    };
+  }
+  return null;
+}
 
 function sanitizeMessage(message: UIMessage): UIMessage {
   const parts: UIMessage['parts'] = [];
   for (const part of message.parts) {
     if (part.type === 'text') parts.push({ type: 'text', text: part.text });
     if (part.type === 'step-start') parts.push({ type: 'step-start' });
+    if (message.role === 'assistant') {
+      const toolPart = sanitizeToolPart(part);
+      if (toolPart) parts.push(toolPart);
+    }
   }
 
   return {
@@ -26,17 +93,21 @@ export function sanitizeIncomingMessages(messages: UIMessage[]) {
     if (message.role !== 'user' && message.role !== 'assistant') return null;
     if (message.metadata !== undefined) return null;
 
-    let hasText = false;
+    let hasContent = false;
     for (const part of message.parts) {
       if (part.type === 'text') {
         textLength += part.text.length;
-        hasText ||= part.text.trim().length > 0;
+        hasContent ||= part.text.trim().length > 0;
         continue;
       }
       if (message.role === 'assistant' && part.type === 'step-start') continue;
+      if (message.role === 'assistant' && sanitizeToolPart(part)) {
+        hasContent = true;
+        continue;
+      }
       return null;
     }
-    if (!hasText) return null;
+    if (!hasContent) return null;
   }
 
   if (messages.at(-1)?.role !== 'user' || textLength > MAX_CHAT_TEXT_LENGTH) return null;
@@ -51,14 +122,9 @@ function messagesMatch(left: UIMessage, right: UIMessage) {
   ) {
     return false;
   }
-  return left.parts.every((leftPart, index) => {
-    const rightPart = right.parts[index];
-    if (leftPart.type !== rightPart?.type) return false;
-    if (leftPart.type === 'text' && rightPart.type === 'text') {
-      return leftPart.text === rightPart.text;
-    }
-    return leftPart.type === 'step-start';
-  });
+  return left.parts.every(
+    (leftPart, index) => JSON.stringify(leftPart) === JSON.stringify(right.parts[index]),
+  );
 }
 
 function isStoredPrefix(stored: UIMessage[], incoming: UIMessage[]) {
@@ -92,8 +158,11 @@ export function generatedMessagesForPersistence(
 ) {
   const sanitized = generated.map(sanitizeMessage);
   const lastMessage = sanitized.at(-1);
-  const hasAssistantText =
+  const hasAssistantContent =
     lastMessage?.role === 'assistant' &&
-    lastMessage.parts.some((part) => part.type === 'text' && part.text.trim().length > 0);
-  return hasAssistantText ? sanitized : originalMessages;
+    lastMessage.parts.some(
+      (part) =>
+        (part.type === 'text' && part.text.trim().length > 0) || part.type === 'dynamic-tool',
+    );
+  return hasAssistantContent ? sanitized : originalMessages;
 }

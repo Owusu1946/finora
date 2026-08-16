@@ -23,7 +23,13 @@ type CreateFinancialPlanArgs = {
   intent?: string;
   currency?: string;
   total?: number;
-  items?: FinancialPlanItem[];
+  items?: Array<
+    Omit<FinancialPlanItem, 'amount' | 'currency' | 'label'> & {
+      amount?: number | { amount: number; currency: string };
+      currency?: string;
+      label?: string;
+    }
+  >;
   planId?: string;
 };
 
@@ -36,16 +42,25 @@ type CreateFinancialPlanResult = {
 
 function asPlan(args: CreateFinancialPlanArgs): FinancialPlanPayload {
   if (args.items && args.items.length > 0) {
+    const items: FinancialPlanItem[] = args.items.map((item) => ({
+      ...item,
+      label: item.label ?? item.kind,
+      amount: typeof item.amount === 'object' ? item.amount.amount : (item.amount ?? 0),
+      currency:
+        typeof item.amount === 'object'
+          ? item.amount.currency
+          : (item.currency ?? args.currency ?? 'USD'),
+    }));
     const total =
       typeof args.total === 'number'
         ? args.total
-        : args.items.reduce((s, i) => s + Number(i.amount ?? 0), 0);
+        : items.reduce((sum, item) => sum + item.amount, 0);
     return {
       planId: args.planId ?? `plan_${Date.now()}`,
       intent: args.intent ?? 'Financial plan',
       currency: args.currency ?? 'USD',
       total,
-      items: args.items,
+      items,
     };
   }
   return {

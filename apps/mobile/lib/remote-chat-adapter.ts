@@ -41,17 +41,51 @@ class RemoteChatError extends Error {
 }
 
 function toUIMessage(message: ThreadMessage): UIMessage {
+  const parts: UIMessage['parts'] = [];
+  for (const part of message.content) {
+    if (part.type === 'text') {
+      parts.push({ type: 'text', text: part.text });
+      continue;
+    }
+    if (message.role !== 'assistant' || part.type !== 'tool-call') continue;
+
+    const input = part.args ?? {};
+    if (part.isError) {
+      parts.push({
+        type: 'dynamic-tool',
+        toolName: part.toolName,
+        toolCallId: part.toolCallId,
+        state: 'output-error',
+        input,
+        errorText: typeof part.result === 'string' ? part.result : 'Tool execution failed.',
+      });
+      continue;
+    }
+    if (part.result !== undefined) {
+      parts.push({
+        type: 'dynamic-tool',
+        toolName: part.toolName,
+        toolCallId: part.toolCallId,
+        state: 'output-available',
+        input,
+        output: part.result,
+      });
+      continue;
+    }
+    parts.push({
+      type: 'dynamic-tool',
+      toolName: part.toolName,
+      toolCallId: part.toolCallId,
+      state: 'input-available',
+      input,
+    });
+  }
+
   return {
     id: message.id,
     role: message.role === 'user' ? 'user' : 'assistant',
-    parts: message.content.flatMap((part) =>
-      part.type === 'text' ? [{ type: 'text' as const, text: part.text }] : [],
-    ),
+    parts,
   };
-}
-
-function messageText(message: UIMessage) {
-  return message.parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
 }
 
 function canonicalizeHistory(stored: UIMessage[], local: UIMessage[]) {
@@ -60,21 +94,70 @@ function canonicalizeHistory(stored: UIMessage[], local: UIMessage[]) {
     commonLength < stored.length &&
     commonLength < local.length &&
     stored[commonLength]?.role === local[commonLength]?.role &&
-    messageText(stored[commonLength]!) === messageText(local[commonLength]!)
+    JSON.stringify(stored[commonLength]!.parts) === JSON.stringify(local[commonLength]!.parts)
   ) {
     commonLength += 1;
   }
 
-  return [...stored.slice(0, commonLength), ...local.slice(commonLength)];
+  const addedUserMessages = local.slice(commonLength).filter((message) => message.role === 'user');
+  return [...stored, ...addedUserMessages];
+}
+
+type AssistantContent = NonNullable<ChatModelRunResult['content']>;
+type ToolCallContent = Extract<AssistantContent[number], { type: 'tool-call' }>;
+
+function asToolArgs(input: unknown): ToolCallContent['args'] {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) return {};
+  return input as ToolCallContent['args'];
+}
+
+function toAssistantContent(message: UIMessage): AssistantContent {
+  const content: AssistantContent[number][] = [];
+  for (const part of message.parts) {
+    if (part.type === 'text') {
+      content.push({ type: 'text', text: part.text });
+      continue;
+    }
+
+    const isDynamic = part.type === 'dynamic-tool';
+    if (!isDynamic && !part.type.startsWith('tool-')) continue;
+    const value = part as typeof part & {
+      toolName?: string;
+      toolCallId: string;
+      state: string;
+      input?: unknown;
+      output?: unknown;
+      errorText?: string;
+    };
+    const toolName = isDynamic ? value.toolName : part.type.slice('tool-'.length);
+    if (!toolName) continue;
+
+    const toolCall: ToolCallContent = {
+      type: 'tool-call',
+      toolCallId: value.toolCallId,
+      toolName,
+      args: asToolArgs(value.input),
+      argsText: JSON.stringify(value.input ?? {}),
+      ...(value.state === 'output-available' ? { result: value.output } : {}),
+      ...(value.state === 'output-error'
+        ? { result: value.errorText ?? 'Tool execution failed.', isError: true }
+        : {}),
+    };
+    content.push(toolCall);
+  }
+  return content;
 }
 
 function toThreadMessage(message: UIMessage): ThreadMessageLike {
   return {
     id: message.id,
     role: message.role,
-    content: message.parts.flatMap((part) =>
-      part.type === 'text' ? [{ type: 'text' as const, text: part.text }] : [],
-    ),
+    content:
+      message.role === 'assistant'
+        ? toAssistantContent(message)
+        : message.parts.flatMap((part) =>
+            part.type === 'text' ? [{ type: 'text' as const, text: part.text }] : [],
+          ),
     status: message.role === 'assistant' ? { type: 'complete', reason: 'stop' } : undefined,
   };
 }
@@ -178,7 +261,7 @@ async function* assistantResults(
   let currentMessage: UIMessage | undefined;
   for await (const message of readUIMessageStream({ stream, terminateOnError: true })) {
     currentMessage = message;
-    yield { content: [{ type: 'text', text: messageText(message) }] };
+    yield { content: toAssistantContent(message) };
   }
   return currentMessage;
 }
