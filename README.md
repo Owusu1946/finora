@@ -187,12 +187,12 @@ pnpm dev
 
 This starts the four packages that define a `dev` script:
 
-| Service | Address                 | Expected result                                                         |
-| ------- | ----------------------- | ----------------------------------------------------------------------- |
-| API     | `http://127.0.0.1:8787` | Wrangler reports the API Worker ready.                                  |
-| MCP     | `http://127.0.0.1:8789` | Wrangler reports the MCP Worker ready; `/mcp` and `/sse` are available. |
-| Web     | `http://localhost:3000` | Next.js reports the landing site ready.                                 |
-| Mobile  | `exp://<LAN_IP>:8081`   | Metro prints a QR code and waits for Expo Go or a development build.    |
+| Service | Address                 | Expected result                                                      |
+| ------- | ----------------------- | -------------------------------------------------------------------- |
+| API     | `http://127.0.0.1:8787` | Wrangler reports the API Worker ready; DevTools uses port `9230`.    |
+| MCP     | `http://127.0.0.1:8789` | Wrangler reports the MCP Worker ready; DevTools uses port `9231`.    |
+| Web     | `http://localhost:3000` | Next.js reports the landing site ready.                              |
+| Mobile  | `exp://<LAN_IP>:8081`   | Metro prints a QR code and waits for Expo Go or a development build. |
 
 Turbo lists every workspace package as in scope, but packages without a `dev` script do not start
 a process. Stop the full session with `Ctrl+C`.

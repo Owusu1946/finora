@@ -1,5 +1,6 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
+import { ThinkingOrb } from '@mhaadi/thinking-orbs-native';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -10,7 +11,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   View,
   AppState,
@@ -20,15 +21,13 @@ import {
   Keyboard,
   StyleSheet,
   Pressable,
+  ScrollView,
   TextInput,
-  Text as RNText,
-  type TextStyle,
   type TextInputProps,
 } from 'react-native';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
-import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -53,74 +52,10 @@ const COMPOSER_ATTACHMENT_COMPONENTS = {
   Attachment: ComposerAttachmentChip,
 };
 
-const TAG_TOKEN_RE = /@[a-z][a-z0-9_]{0,23}/gi;
 const TAG_ACCENT = {
   light: '#0F766E',
   dark: '#2DD4BF',
 } as const;
-
-/**
- * Overlay must use the same font metrics as TextInput.
- * Color-only tagging — never change weight/family, or the caret drifts.
- * Use RN Text (not AppText) so larger-text scaling cannot desync the layers.
- */
-function ComposerHighlightedText({
-  text,
-  textStyle,
-  foreground,
-  tagColor,
-}: {
-  text: string;
-  textStyle: TextStyle;
-  foreground: string;
-  tagColor: string;
-}) {
-  const nodes: ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  TAG_TOKEN_RE.lastIndex = 0;
-  while ((match = TAG_TOKEN_RE.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(
-        <RNText
-          key={`plain-${lastIndex}`}
-          style={{ color: foreground }}
-        >
-          {text.slice(lastIndex, match.index)}
-        </RNText>,
-      );
-    }
-    nodes.push(
-      <RNText
-        key={`tag-${match.index}`}
-        style={{ color: tagColor }}
-      >
-        {match[0]}
-      </RNText>,
-    );
-    lastIndex = match.index + match[0].length;
-  }
-  if (lastIndex < text.length || nodes.length === 0) {
-    nodes.push(
-      <RNText
-        key={`plain-${lastIndex}`}
-        style={{ color: foreground }}
-      >
-        {text.slice(lastIndex)}
-      </RNText>,
-    );
-  }
-
-  return (
-    <RNText
-      pointerEvents='none'
-      style={[textStyle, styles.highlightLayer]}
-    >
-      {nodes}
-      {text.endsWith('\n') ? '\n' : null}
-    </RNText>
-  );
-}
 
 function AttachButton() {
   const { colors } = useTheme();
@@ -294,27 +229,31 @@ function ScanButton() {
 type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing';
 
 const MAX_RECORDING_SECONDS = 45;
+const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
+const TRAILING_SILENCE_TIMEOUT_MS = 2_500;
+const VOICE_ACTIVITY_THRESHOLD_DB = -42;
+const VOICE_ACTIVITY_SAMPLES_REQUIRED = 2;
+const VOICE_RECORDING_OPTIONS = {
+  ...RecordingPresets.HIGH_QUALITY,
+  isMeteringEnabled: true,
+};
 
-function VoiceButton({
-  composerText,
-  onComposerTextChange,
-}: {
-  composerText: string;
-  onComposerTextChange: (text: string) => void;
-}) {
-  const { colors } = useTheme();
+function useVoiceComposer() {
   const { getToken } = useAuth();
   const aui = useAui();
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const voiceStateRef = useRef<VoiceState>('idle');
-  const composerTextRef = useRef(composerText);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const draftBeforeRecordingRef = useRef('');
+  const voiceSessionRef = useRef(0);
+  const speechDetectedRef = useRef(false);
+  const voiceActivitySamplesRef = useRef(0);
+  const lastVoiceActivityAtRef = useRef(0);
 
   voiceStateRef.current = voiceState;
-  composerTextRef.current = composerText;
 
   const clearStopTimer = () => {
     if (!stopTimerRef.current) return;
@@ -322,10 +261,15 @@ function VoiceButton({
     stopTimerRef.current = null;
   };
 
+  const updateVoiceState = (next: VoiceState) => {
+    voiceStateRef.current = next;
+    if (mountedRef.current) setVoiceState(next);
+  };
+
   const stopRecording = async (discard = false) => {
     if (voiceStateRef.current !== 'recording') return;
-    voiceStateRef.current = discard ? 'idle' : 'transcribing';
-    if (mountedRef.current) setVoiceState(discard ? 'idle' : 'transcribing');
+    const sessionId = voiceSessionRef.current;
+    updateVoiceState(discard ? 'idle' : 'transcribing');
     clearStopTimer();
 
     let uri: string | null = null;
@@ -341,16 +285,15 @@ function VoiceButton({
 
       const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4';
       const result = await transcribeRecording(uri, contentType, getToken);
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
-      const existing = composerTextRef.current.trimEnd();
-      const nextText = existing ? `${existing} ${result.transcript}` : result.transcript;
-      const threadComposer = aui.thread.composer();
-      threadComposer.setText(nextText);
-      onComposerTextChange(nextText);
+      const transcript = result.transcript.trim();
+      if (!transcript) return;
+      const existing = draftBeforeRecordingRef.current.trimEnd();
+      aui.thread.composer().setText(existing ? `${existing} ${transcript}` : transcript);
       haptics.success();
     } catch (error) {
-      if (!discard && mountedRef.current) {
+      if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
         haptics.error();
         Alert.alert(
           'Could not transcribe',
@@ -358,10 +301,7 @@ function VoiceButton({
         );
       }
     } finally {
-      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
-      if (discard) deleteRecording(uri);
-      voiceStateRef.current = 'idle';
-      if (mountedRef.current) setVoiceState('idle');
+      if (voiceSessionRef.current === sessionId) updateVoiceState('idle');
     }
   };
 
@@ -376,6 +316,32 @@ function VoiceButton({
   });
 
   useEffect(() => {
+    if (voiceState !== 'recording' || typeof recorderState.metering !== 'number') return;
+
+    const now = Date.now();
+    if (recorderState.metering >= VOICE_ACTIVITY_THRESHOLD_DB) {
+      voiceActivitySamplesRef.current += 1;
+      lastVoiceActivityAtRef.current = now;
+      if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
+        speechDetectedRef.current = true;
+      }
+      return;
+    }
+
+    voiceActivitySamplesRef.current = 0;
+    if (!speechDetectedRef.current) {
+      if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
+        void stopRecording(true);
+      }
+      return;
+    }
+
+    if (now - lastVoiceActivityAtRef.current >= TRAILING_SILENCE_TIMEOUT_MS) {
+      void stopRecording(false);
+    }
+  }, [recorderState.durationMillis, recorderState.metering, voiceState]);
+
+  useEffect(() => {
     return () => {
       mountedRef.current = false;
       clearStopTimer();
@@ -387,8 +353,13 @@ function VoiceButton({
 
   const startRecording = async () => {
     if (voiceStateRef.current !== 'idle') return;
-    voiceStateRef.current = 'requesting_permission';
-    setVoiceState('requesting_permission');
+    const sessionId = voiceSessionRef.current + 1;
+    voiceSessionRef.current = sessionId;
+    draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+    speechDetectedRef.current = false;
+    voiceActivitySamplesRef.current = 0;
+    lastVoiceActivityAtRef.current = 0;
+    updateVoiceState('requesting_permission');
     haptics.selection();
 
     try {
@@ -400,92 +371,129 @@ function VoiceButton({
         );
         return;
       }
+      if (voiceSessionRef.current !== sessionId) return;
 
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
+      if (voiceSessionRef.current !== sessionId) {
+        if (voiceStateRef.current === 'idle') {
+          await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+        }
+        return;
+      }
       recorder.record();
-      voiceStateRef.current = 'recording';
-      setVoiceState('recording');
+      updateVoiceState('recording');
       haptics.light();
       stopTimerRef.current = setTimeout(
         () => void stopRecording(false),
         MAX_RECORDING_SECONDS * 1000,
       );
     } catch (error) {
-      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
-      Alert.alert(
-        'Could not start recording',
-        error instanceof Error ? error.message : 'Please try again.',
-      );
+      if (voiceSessionRef.current === sessionId || voiceStateRef.current === 'idle') {
+        await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+      }
+      if (voiceSessionRef.current === sessionId) {
+        Alert.alert(
+          'Could not start recording',
+          error instanceof Error ? error.message : 'Please try again.',
+        );
+      }
     } finally {
-      if (voiceStateRef.current === 'requesting_permission') {
-        voiceStateRef.current = 'idle';
-        setVoiceState('idle');
+      if (
+        voiceSessionRef.current === sessionId &&
+        (voiceStateRef.current as VoiceState) === 'requesting_permission'
+      ) {
+        updateVoiceState('idle');
       }
     }
   };
 
-  const elapsedSeconds = Math.min(
-    MAX_RECORDING_SECONDS,
-    Math.floor(recorderState.durationMillis / 1000),
-  );
-  const elapsed = `0:${String(elapsedSeconds).padStart(2, '0')}`;
-  const isBusy = voiceState === 'requesting_permission' || voiceState === 'transcribing';
+  const handleOrbPress = () => {
+    if (voiceStateRef.current === 'recording') {
+      haptics.light();
+      void stopRecording(false);
+      return;
+    }
+    if (voiceStateRef.current === 'requesting_permission') {
+      haptics.selection();
+      voiceSessionRef.current += 1;
+      updateVoiceState('idle');
+      return;
+    }
+    if (voiceStateRef.current === 'transcribing') {
+      haptics.selection();
+      voiceSessionRef.current += 1;
+      updateVoiceState('idle');
+    }
+  };
 
+  return { voiceState, startRecording, handleOrbPress };
+}
+
+function MicButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
   return (
     <Pressable
-      accessibilityLabel={voiceState === 'recording' ? 'Stop and transcribe' : 'Dictate message'}
-      accessibilityState={{ busy: isBusy, disabled: isBusy }}
-      disabled={isBusy}
+      accessibilityLabel='Dictate message'
       hitSlop={8}
-      onLongPress={() => {
-        if (voiceState === 'recording') void stopRecording(true);
-      }}
-      onPress={() => {
-        if (voiceState === 'recording') void stopRecording(false);
-        else void startRecording();
-      }}
+      onPress={onPress}
       style={({ pressed }) => [
-        styles.voiceButton,
-        {
-          backgroundColor:
-            voiceState === 'recording'
-              ? colors.destructive
-              : pressed
-                ? colors.muted
-                : 'transparent',
-        },
+        styles.actionButton,
+        { backgroundColor: pressed ? colors.muted : 'transparent' },
       ]}
     >
-      {isBusy ? (
-        <LoadingIcon
-          size={18}
-          color={colors.mutedForeground}
-        />
-      ) : (
-        <>
-          <Icon
-            name={voiceState === 'recording' ? 'stop' : 'mic'}
-            size={voiceState === 'recording' ? 13 : 20}
-            color={
-              voiceState === 'recording' ? colors.destructiveForeground : colors.mutedForeground
-            }
-          />
-          {voiceState === 'recording' ? (
-            <Text style={[styles.recordingTime, { color: colors.destructiveForeground }]}>
-              {elapsed}
-            </Text>
-          ) : null}
-        </>
-      )}
+      <Icon
+        name='mic'
+        size={20}
+        color={colors.mutedForeground}
+      />
     </Pressable>
   );
 }
 
-function SendButton({ draftText, onSend }: { draftText: string; onSend: () => void }) {
+function PrimaryComposerAction({ onStartVoice }: { onStartVoice: () => void }) {
+  const canSend = useAuiState((s) => s.thread.composer.canSend);
+  return canSend ? <SendButton /> : <MicButton onPress={onStartVoice} />;
+}
+
+function VoiceComposer({ state, onPress }: { state: VoiceState; onPress: () => void }) {
+  const { colors, isDark } = useTheme();
+  const label =
+    state === 'recording'
+      ? 'Listening. Tap to stop and transcribe.'
+      : state === 'transcribing'
+        ? 'Transcribing. Tap to cancel.'
+        : 'Starting voice input. Tap to cancel.';
+
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole='button'
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.voiceShell,
+        {
+          backgroundColor: colors.composer,
+          borderColor: colors.border,
+          opacity: pressed ? 0.72 : 1,
+        },
+      ]}
+    >
+      <ThinkingOrb
+        state={state === 'transcribing' ? 'solving' : 'composing'}
+        size={64}
+        speed={1.2}
+        theme={isDark ? 'dark' : 'light'}
+        accessibilityLabel={label}
+      />
+    </Pressable>
+  );
+}
+
+function SendButton() {
   const { colors } = useTheme();
   const runtimeCanSend = useAuiState((s) => s.thread.composer.canSend);
-  const canSend = runtimeCanSend || draftText.trim().length > 0;
+  const canSend = runtimeCanSend;
 
   return (
     <ComposerPrimitive.Send
@@ -495,7 +503,6 @@ function SendButton({ draftText, onSend }: { draftText: string; onSend: () => vo
         if (!canSend) return;
         haptics.success();
         Keyboard.dismiss();
-        onSend();
       }}
       style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
@@ -525,221 +532,234 @@ function CancelButton() {
   );
 }
 
-/** Local buffer avoids RN cursor jumps from store-controlled TextInput. */
-function ComposerInput({
-  draftText,
-  onDraftTextChange,
-  ...props
-}: TextInputProps & {
-  draftText: string;
-  onDraftTextChange: (text: string) => void;
-}) {
-  const { colors, isDark } = useTheme();
-  const aui = useAui();
-  const storeText = useAuiState((s) => s.thread.composer.text);
-  const localText = draftText;
-  const previousStoreTextRef = useRef(storeText);
-  const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
-  const [directoryLoaded, setDirectoryLoaded] = useState(false);
-  const inputRef = useRef<TextInput>(null);
-  const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
-  // Keep overlay mode stable while editing so deleting a tag never remounts styles.
-  const useHighlightOverlay = localText.length > 0;
+/**
+ * Keep the native text field authoritative while typing. The assistant store
+ * still receives every edit, but never controls the native value prop, which
+ * avoids selection reconciliation and caret jumps during deletes.
+ */
+type ComposerInputHandle = {
+  blur: () => void;
+};
 
-  useEffect(() => {
-    if (previousStoreTextRef.current === storeText) return;
-    previousStoreTextRef.current = storeText;
-    onDraftTextChange(storeText);
-  }, [onDraftTextChange, storeText]);
+const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
+  function ComposerInput(props, ref) {
+    const { colors, isDark } = useTheme();
+    const aui = useAui();
+    const storeText = useAuiState((s) => s.thread.composer.text);
+    const [localText, setLocalText] = useState(storeText);
+    const nativeTextRef = useRef(storeText);
+    const initialTextRef = useRef(storeText);
+    const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
+    const [directoryLoaded, setDirectoryLoaded] = useState(false);
+    const inputRef = useRef<TextInput>(null);
+    const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
 
-  const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
-  const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+    useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
 
-  useEffect(() => {
-    if (mentionQuery === null) {
-      setDirectoryLoaded(false);
-      setTagProfiles([]);
-      return;
-    }
-    let active = true;
-    void searchFinoraTags(mentionQuery).then((next) => {
-      if (!active) return;
-      setTagProfiles(next);
-      setDirectoryLoaded(true);
-    });
-    return () => {
-      active = false;
+    useEffect(() => {
+      if (nativeTextRef.current === storeText) return;
+      nativeTextRef.current = storeText;
+      setLocalText(storeText);
+      if (storeText) inputRef.current?.setNativeProps({ text: storeText });
+      else inputRef.current?.clear();
+    }, [storeText]);
+
+    const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
+    const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+
+    useEffect(() => {
+      if (mentionQuery === null) {
+        setDirectoryLoaded(false);
+        setTagProfiles([]);
+        return;
+      }
+      let active = true;
+      void searchFinoraTags(mentionQuery).then((next) => {
+        if (!active) return;
+        setTagProfiles(next);
+        setDirectoryLoaded(true);
+      });
+      return () => {
+        active = false;
+      };
+    }, [mentionQuery]);
+
+    const selectTag = (profile: FinoraTagSuggestion) => {
+      if (!mentionMatch || mentionQuery === null) return;
+      const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
+      const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
+      nativeTextRef.current = next;
+      setLocalText(next);
+      inputRef.current?.setNativeProps({ text: next });
+      aui.thread.composer().setText(next);
+      haptics.selection();
+      requestAnimationFrame(() => inputRef.current?.focus());
     };
-  }, [mentionQuery]);
 
-  const selectTag = (profile: FinoraTagSuggestion) => {
-    if (!mentionMatch || mentionQuery === null) return;
-    const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
-    const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
-    onDraftTextChange(next);
-    aui.thread.composer().setText(next);
-    haptics.selection();
-    requestAnimationFrame(() => inputRef.current?.focus());
-  };
+    const emptyHint =
+      mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
+        ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
+        : 'No recent match. Type the exact Finora Tag to send.';
 
-  const emptyHint =
-    mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
-      ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
-      : 'No recent match. Type the exact Finora Tag to send.';
-
-  const { style: inputStyleProp, ...inputProps } = props;
-  const flatInputStyle = StyleSheet.flatten(inputStyleProp) ?? {};
-  const overlayTextStyle: TextStyle = {
-    fontFamily: flatInputStyle.fontFamily,
-    fontSize: flatInputStyle.fontSize,
-    lineHeight: flatInputStyle.lineHeight,
-    fontWeight: flatInputStyle.fontWeight,
-    letterSpacing: flatInputStyle.letterSpacing,
-    paddingHorizontal: flatInputStyle.paddingHorizontal,
-    paddingTop: flatInputStyle.paddingTop,
-    paddingBottom: flatInputStyle.paddingBottom,
-    paddingLeft: flatInputStyle.paddingLeft,
-    paddingRight: flatInputStyle.paddingRight,
-    padding: flatInputStyle.padding,
-    textAlign: flatInputStyle.textAlign,
-    ...Platform.select({
-      android: { includeFontPadding: false, textAlignVertical: 'top' as const },
-      default: {},
-    }),
-  };
-
-  return (
-    <View style={styles.inputWrap}>
-      {mentionQuery !== null && directoryLoaded && (
-        <View
-          style={[
-            styles.mentionMenu,
-            { backgroundColor: colors.background, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.mentionEyebrow, { color: colors.mutedForeground }]}>
-            Recent Finora Tags
-          </Text>
-          {tagProfiles.length ? (
-            tagProfiles.map((profile, index) => (
-              <Pressable
-                key={profile.accountId}
-                accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
-                onPress={() => selectTag(profile)}
-                style={({ pressed }) => [
-                  styles.mentionRow,
-                  pressed && { backgroundColor: colors.muted },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.mentionAvatar,
-                    { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+    return (
+      <View style={styles.inputWrap}>
+        {mentionQuery !== null && directoryLoaded && (
+          <View
+            style={[
+              styles.mentionMenu,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.mentionEyebrow, { color: colors.mutedForeground }]}>
+              Recent Finora Tags
+            </Text>
+            {tagProfiles.length ? (
+              tagProfiles.map((profile, index) => (
+                <Pressable
+                  key={profile.accountId}
+                  accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
+                  onPress={() => selectTag(profile)}
+                  style={({ pressed }) => [
+                    styles.mentionRow,
+                    pressed && { backgroundColor: colors.muted },
                   ]}
                 >
-                  <Text style={styles.mentionInitials}>{profile.initials}</Text>
-                </View>
-                <View style={styles.mentionMeta}>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.mentionName, { color: colors.foreground }]}
+                  <View
+                    style={[
+                      styles.mentionAvatar,
+                      { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+                    ]}
                   >
-                    {profile.displayName}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.mentionHandle, { color: colors.mutedForeground }]}
-                  >
-                    @{profile.tag} · {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
-                  </Text>
-                </View>
-              </Pressable>
-            ))
-          ) : (
-            <Text style={[styles.mentionEmpty, { color: colors.mutedForeground }]}>
-              {emptyHint}
-            </Text>
-          )}
-        </View>
-      )}
-      <View style={styles.highlightWrap}>
-        {useHighlightOverlay ? (
-          <ComposerHighlightedText
-            text={localText}
-            textStyle={overlayTextStyle}
-            foreground={colors.foreground}
-            tagColor={tagColor}
-          />
-        ) : null}
+                    <Text style={styles.mentionInitials}>{profile.initials}</Text>
+                  </View>
+                  <View style={styles.mentionMeta}>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.mentionName, { color: colors.foreground }]}
+                    >
+                      {profile.displayName}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.mentionHandle, { color: colors.mutedForeground }]}
+                    >
+                      @{profile.tag} ·{' '}
+                      {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))
+            ) : (
+              <Text style={[styles.mentionEmpty, { color: colors.mutedForeground }]}>
+                {emptyHint}
+              </Text>
+            )}
+          </View>
+        )}
         <TextInput
-          {...inputProps}
+          {...props}
           ref={inputRef}
-          value={localText}
-          style={[
-            inputStyleProp,
-            useHighlightOverlay && styles.transparentInput,
-            Platform.select({
-              android: { includeFontPadding: false, textAlignVertical: 'top' },
-              web: useHighlightOverlay ? ({ caretColor: colors.foreground } as object) : undefined,
-              default: {},
-            }),
-          ]}
+          defaultValue={initialTextRef.current}
           selectionColor={tagColor}
           onChangeText={(text) => {
-            onDraftTextChange(text);
+            nativeTextRef.current = text;
+            setLocalText(text);
             aui.thread.composer().setText(text);
           }}
         />
       </View>
-    </View>
-  );
-}
+    );
+  },
+);
 
 export function Composer() {
   const { colors } = useTheme();
-  const storeText = useAuiState((s) => s.thread.composer.text);
-  const [draftText, setDraftText] = useState(storeText);
+  const inputRef = useRef<ComposerInputHandle>(null);
+  const [inputFocused, setInputFocused] = useState(false);
+  const { voiceState, startRecording, handleOrbPress } = useVoiceComposer();
+  const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
     [colors.foreground],
   );
 
+  useEffect(() => {
+    const subscription = Keyboard.addListener('keyboardDidHide', () => {
+      inputRef.current?.blur();
+      setInputFocused(false);
+    });
+    return () => subscription.remove();
+  }, []);
+
   return (
     <View style={styles.container}>
-      <View
-        style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
-      >
-        <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
-
-        <ComposerInput
-          draftText={draftText}
-          onDraftTextChange={setDraftText}
-          style={inputStyle}
-          placeholder='Ask Finora… use @ to tag'
-          placeholderTextColor={colors.mutedForeground}
-          multiline
-          maxLength={4000}
+      {voiceState !== 'idle' ? (
+        <VoiceComposer
+          state={voiceState}
+          onPress={handleOrbPress}
         />
+      ) : (
+        <View
+          style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
+        >
+          {hasAttachments ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.attachmentsScroller}
+              contentContainerStyle={styles.attachmentsRow}
+              keyboardShouldPersistTaps='handled'
+            >
+              <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+            </ScrollView>
+          ) : null}
 
-        <View style={styles.actionRow}>
-          <AttachButton />
-          <ScanButton />
-          <View style={styles.spacer} />
-          <VoiceButton
-            composerText={draftText}
-            onComposerTextChange={setDraftText}
+          <ComposerInput
+            ref={inputRef}
+            style={inputStyle}
+            placeholder='Ask Finora… use @ to tag'
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            maxLength={4000}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
           />
-          <AuiIf condition={(s) => !s.thread.isRunning}>
-            <SendButton
-              draftText={draftText}
-              onSend={() => setDraftText('')}
-            />
-          </AuiIf>
-          <AuiIf condition={(s) => s.thread.isRunning}>
-            <CancelButton />
-          </AuiIf>
+
+          <View style={styles.actionRow}>
+            <AttachButton />
+            <ScanButton />
+            <View style={styles.spacer} />
+            {inputFocused ? (
+              <Pressable
+                accessibilityLabel='Hide keyboard'
+                hitSlop={8}
+                onPress={() => {
+                  inputRef.current?.blur();
+                  Keyboard.dismiss();
+                }}
+                style={({ pressed }) => [
+                  styles.doneButton,
+                  { backgroundColor: pressed ? colors.muted : 'transparent' },
+                ]}
+              >
+                <Text style={[styles.doneButtonText, { color: colors.foreground }]}>Done</Text>
+              </Pressable>
+            ) : null}
+            <AuiIf condition={(s) => !s.thread.isRunning}>
+              <PrimaryComposerAction
+                onStartVoice={() => {
+                  inputRef.current?.blur();
+                  Keyboard.dismiss();
+                  void startRecording();
+                }}
+              />
+            </AuiIf>
+            <AuiIf condition={(s) => s.thread.isRunning}>
+              <CancelButton />
+            </AuiIf>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -779,16 +799,6 @@ const styles = StyleSheet.create({
   },
   inputWrap: {
     width: '100%',
-  },
-  highlightWrap: {
-    position: 'relative',
-    width: '100%',
-  },
-  highlightLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  transparentInput: {
-    color: 'transparent',
   },
   mentionMenu: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -852,6 +862,18 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingTop: 2,
   },
+  attachmentsScroller: {
+    maxHeight: 84,
+    flexGrow: 0,
+  },
+  attachmentsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
   spacer: {
     flex: 1,
   },
@@ -862,19 +884,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  voiceButton: {
-    width: 64,
+  doneButton: {
+    minWidth: 48,
     height: 38,
     borderRadius: Radius.pill,
-    flexDirection: 'row',
-    gap: 5,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
-  recordingTime: {
+  doneButtonText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  voiceShell: {
+    ...Rounded,
+    width: '38%',
+    minWidth: 104,
+    maxWidth: 144,
+    height: 80,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    padding: 8,
   },
 });

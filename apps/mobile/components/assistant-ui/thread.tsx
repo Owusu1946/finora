@@ -135,8 +135,10 @@ export function Thread() {
     }
 
     setKeyboardVisible(Keyboard.isVisible());
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
 
     return () => {
       showSub.remove();
@@ -151,7 +153,9 @@ export function Thread() {
         // Android `height` resizes the whole tree when the picker/keyboard
         // dismisses and feels like a full reload — leave avoidance to insets.
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={headerHeight}
+        // This route uses a transparent overlay header, so the scene occupies
+        // the full window and must avoid the full keyboard height.
+        keyboardVerticalOffset={0}
         enabled={isFocused && Platform.OS === 'ios'}
       >
         <View style={styles.flex}>
@@ -159,7 +163,7 @@ export function Thread() {
         </View>
         <View
           style={{
-            paddingBottom: keyboardVisible ? 2 : insets.bottom + 6,
+            paddingBottom: keyboardVisible ? 8 : insets.bottom + 6,
           }}
         >
           <Composer />
