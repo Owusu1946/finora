@@ -39,13 +39,30 @@ type PrepareConversionResult = {
   feeCurrency?: string;
 };
 
-function asQuote(args: PrepareConversionArgs, result?: PrepareConversionResult): ConversionQuote {
+function asQuote(args: PrepareConversionArgs, result?: PrepareConversionResult) {
+  const fromCurrency = result?.fromCurrency ?? args.fromCurrency ?? args.from;
+  const toCurrency = result?.toCurrency ?? args.toCurrency ?? args.to;
+  const fromAmount = result?.fromAmount ?? args.fromAmount ?? args.amount;
+  const toAmount = result?.toAmount ?? args.toAmount;
+  const rate = result?.rate ?? args.rate;
+  if (
+    !fromCurrency ||
+    !toCurrency ||
+    fromAmount === undefined ||
+    toAmount === undefined ||
+    rate === undefined ||
+    fromAmount <= 0 ||
+    toAmount <= 0 ||
+    rate <= 0
+  ) {
+    return null;
+  }
   return {
-    fromCurrency: result?.fromCurrency ?? args.fromCurrency ?? args.from ?? 'USD',
-    toCurrency: result?.toCurrency ?? args.toCurrency ?? args.to ?? 'GHS',
-    fromAmount: result?.fromAmount ?? args.fromAmount ?? args.amount ?? 0,
-    toAmount: result?.toAmount ?? args.toAmount ?? 0,
-    rate: result?.rate ?? args.rate ?? 0,
+    fromCurrency,
+    toCurrency,
+    fromAmount,
+    toAmount,
+    rate,
     fee: result?.fee ?? args.fee,
     feeCurrency: result?.feeCurrency ?? args.feeCurrency,
   };
@@ -170,14 +187,12 @@ export const PrepareConversionToolUI = makeAssistantToolUI<
   toolName: 'prepare_conversion',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
-    const hasArgs = args != null && (args.fromAmount != null || args.rate != null);
-    if (status.type === 'running' && !hasArgs) {
-      return <PreparingCard />;
-    }
+    const quote = asQuote(args ?? {}, result);
+    if (!quote) return status.type === 'running' ? <PreparingCard /> : null;
 
     return (
       <PrepareConversionConfirm
-        quote={asQuote(args ?? {}, result)}
+        quote={quote}
         resultStatus={result?.status}
         resultConversionId={result?.conversionId}
         onFinished={({ conversionId, status: next }) => {

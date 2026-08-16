@@ -246,6 +246,11 @@ export const CreateFinancialPlanToolUI = makeAssistantToolUI<
   toolName: 'create_financial_plan',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
+    const requiresPlatformPreparation = args?.items?.some(
+      (item) => typeof item.amount === 'object' && item.amount !== null,
+    );
+    if (requiresPlatformPreparation && !result?.planId) return <PreparingCard />;
+
     const hasArgs =
       args != null &&
       (Boolean(args.intent) || (Array.isArray(args.items) && args.items.length > 0));

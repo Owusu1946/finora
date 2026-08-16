@@ -1445,6 +1445,7 @@ v1.get('/transfers/pending', (c) => {
 v1.post('/plans', async (c) => {
   const body = await c.req.json<{
     intent: string;
+    currency?: string;
     items?: Array<Record<string, unknown>>;
   }>();
   const items =
@@ -1475,7 +1476,7 @@ v1.post('/plans', async (c) => {
     status: 'pending_approval' as const,
     items,
     total,
-    currency: 'USD',
+    currency: body.currency ?? String(items[0]?.currency ?? 'USD'),
     createdAt: new Date().toISOString(),
   };
   mockStore.plans.unshift(plan);

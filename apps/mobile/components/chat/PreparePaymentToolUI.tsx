@@ -218,6 +218,9 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
   toolName: 'prepare_payment',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
+    const requiresPlatformPreparation = typeof args?.amount === 'object' && args.amount !== null;
+    if (requiresPlatformPreparation && !result?.preparationId) return <PreparingCard />;
+
     const hasArgs =
       args != null &&
       (args.amount != null ||

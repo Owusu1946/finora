@@ -75,6 +75,70 @@ function walletName(currency: string) {
   return `${currency} wallet`;
 }
 
+function asRecord(value: unknown) {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
+}
+
+function maskIdentifier(value: unknown) {
+  const identifier = String(value ?? '');
+  if (!identifier || identifier.includes('•')) return identifier;
+  const compact = identifier.replaceAll(' ', '');
+  return compact.length <= 4 ? '••••' : `•••• ${compact.slice(-4)}`;
+}
+
+function publicDestination(value: unknown) {
+  const destination = asRecord(value);
+  return {
+    kind: String(destination?.kind ?? 'bank_account'),
+    label: String(destination?.label ?? 'Payout method'),
+    value: maskIdentifier(destination?.value),
+    rail: destination?.rail === undefined ? undefined : String(destination.rail),
+  };
+}
+
+function publicEmployee(value: unknown) {
+  const employee = asRecord(value);
+  if (!employee || employee.id === undefined || employee.name === undefined) return null;
+  return {
+    id: String(employee.id),
+    name: String(employee.name),
+    role: String(employee.role ?? ''),
+    salary: Number(employee.salary ?? 0),
+    currency: String(employee.currency ?? 'USD'),
+    destination: publicDestination(employee.destination),
+    status: employee.status === 'inactive' ? 'inactive' : 'active',
+  };
+}
+
+function publicSupplier(value: unknown) {
+  const supplier = asRecord(value);
+  if (!supplier || supplier.id === undefined || supplier.name === undefined) return null;
+  return {
+    id: String(supplier.id),
+    name: String(supplier.name),
+    currency: String(supplier.currency ?? 'USD'),
+    defaultAmount:
+      supplier.defaultAmount === undefined ? undefined : Number(supplier.defaultAmount),
+    destination: publicDestination(supplier.destination),
+    notes: supplier.notes === undefined ? undefined : String(supplier.notes),
+  };
+}
+
+function publicBeneficiary(value: unknown) {
+  const beneficiary = asRecord(value);
+  if (!beneficiary || beneficiary.id === undefined || beneficiary.name === undefined) return null;
+  return {
+    id: String(beneficiary.id),
+    name: String(beneficiary.name),
+    method: String(beneficiary.method ?? 'bank'),
+    identifier: maskIdentifier(beneficiary.identifier),
+    currency: String(beneficiary.currency ?? 'USD'),
+    country: beneficiary.country === undefined ? undefined : String(beneficiary.country),
+    verified: beneficiary.verified === true,
+    rail: beneficiary.rail === undefined ? undefined : String(beneficiary.rail),
+  };
+}
+
 export function createChatAgentTools() {
   return {
     get_balances: tool({
@@ -165,17 +229,32 @@ export function createChatAgentTools() {
     list_employees: tool({
       description: 'List the employees currently available for Finora payroll operations.',
       inputSchema: zodSchema(ListEmployeesInputSchema),
-      execute: async () => callPlatform('/employees'),
+      execute: async () => {
+        const data = await callPlatform('/employees');
+        const employees = Array.isArray(data.employees) ? data.employees : [];
+        return { mode: data.mode, employees: employees.map(publicEmployee).filter(Boolean) };
+      },
     }),
     list_suppliers: tool({
       description: 'List suppliers saved in Finora, including their payout details and defaults.',
       inputSchema: zodSchema(ListSuppliersInputSchema),
-      execute: async () => callPlatform('/suppliers'),
+      execute: async () => {
+        const data = await callPlatform('/suppliers');
+        const suppliers = Array.isArray(data.suppliers) ? data.suppliers : [];
+        return { mode: data.mode, suppliers: suppliers.map(publicSupplier).filter(Boolean) };
+      },
     }),
     list_beneficiaries: tool({
       description: 'List verified and unverified payout beneficiaries saved in Finora.',
       inputSchema: zodSchema(ListBeneficiariesInputSchema),
-      execute: async () => callPlatform('/beneficiaries'),
+      execute: async () => {
+        const data = await callPlatform('/beneficiaries');
+        const beneficiaries = Array.isArray(data.beneficiaries) ? data.beneficiaries : [];
+        return {
+          mode: data.mode,
+          beneficiaries: beneficiaries.map(publicBeneficiary).filter(Boolean),
+        };
+      },
     }),
     list_policies: tool({
       description: "List the user's Finora approval and payment policies.",
@@ -205,8 +284,7 @@ export function createChatAgentTools() {
           method: 'POST',
           body: input,
         });
-        const payload =
-          typeof result.payload === 'object' && result.payload !== null ? result.payload : {};
+        const payload = asRecord(result.payload) ?? {};
         return {
           ...result,
           status: 'pending',
@@ -241,12 +319,12 @@ export function createChatAgentTools() {
           }
         }
         const result = await callPlatform('/payroll/prepare', { method: 'POST', body: input });
-        const payload =
-          typeof result.payload === 'object' && result.payload !== null ? result.payload : {};
+        const payload = asRecord(result.payload) ?? {};
+        const employees = Array.isArray(payload.employees) ? payload.employees : [];
         return {
           ...result,
           period: input.period,
-          employees: 'employees' in payload ? payload.employees : [],
+          employees: employees.map(publicEmployee).filter(Boolean),
           total: Number('total' in payload ? payload.total : 0),
           currency: String('currency' in payload ? payload.currency : 'USD'),
         };
@@ -268,7 +346,7 @@ export function createChatAgentTools() {
           return (
             supplierName !== undefined &&
             'name' in entry &&
-            String(entry.name).toLowerCase().includes(supplierName.toLowerCase())
+            String(entry.name).toLowerCase() === supplierName.toLowerCase()
           );
         });
         if (!supplier) throw new Error('supplier_not_found');
@@ -279,7 +357,7 @@ export function createChatAgentTools() {
         });
         return {
           ...result,
-          supplier,
+          supplier: publicSupplier(supplier),
           amount: input.amount.amount,
           currency: input.amount.currency,
           reference: input.reference,
@@ -288,23 +366,35 @@ export function createChatAgentTools() {
     }),
     create_financial_plan: tool({
       description:
-        'Create a multi-item financial plan for a single human review and approval. This never executes any plan item.',
+        'Create a single-currency, multi-item financial plan for human review and approval. Every item must include an amount. This never executes any plan item.',
       inputSchema: zodSchema(CreateFinancialPlanInputSchema),
       execute: async (input) => {
+        if (!input.items?.length) throw new Error('plan_items_required');
+        if (input.items.some((item) => item.amount === undefined)) {
+          throw new Error('plan_item_amount_required');
+        }
+        const currencies = new Set(input.items.map((item) => item.amount!.currency));
+        if (currencies.size !== 1) throw new Error('plan_currency_mismatch');
+        const currency = currencies.values().next().value as string;
+        const items = input.items.map((item) => ({
+          ...item,
+          amount: item.amount!.amount,
+          currency: item.amount!.currency,
+        }));
+        const total = items.reduce((sum, item) => sum + item.amount, 0);
         const result = await callPlatform('/plans', {
           method: 'POST',
           body: {
             ...input,
-            items: input.items?.map((item) => ({
-              ...item,
-              amount: item.amount?.amount,
-              currency: item.amount?.currency ?? item.currency,
-            })),
+            currency,
+            items,
           },
         });
-        const plan = typeof result.plan === 'object' && result.plan !== null ? result.plan : {};
+        const platformPlan = asRecord(result.plan) ?? {};
+        const plan = { ...platformPlan, currency, items, total };
         return {
           ...result,
+          plan,
           status: 'pending',
           planId: String('id' in plan ? plan.id : ''),
         };

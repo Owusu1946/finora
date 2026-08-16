@@ -48,14 +48,6 @@ function sanitizeToolPart(part: UIMessagePart): DynamicToolPart | null {
       errorText: value.errorText ?? 'Tool execution failed.',
     };
   }
-  if (value.state === 'output-denied') {
-    return {
-      ...base,
-      state: 'output-denied',
-      input: value.input ?? {},
-      approval: { id: value.toolCallId, approved: false },
-    };
-  }
   return null;
 }
 
@@ -151,12 +143,22 @@ export function generatedMessagesForPersistence(
   originalMessages: UIMessage[],
 ) {
   const sanitized = generated.map(sanitizeMessage);
-  const lastMessage = sanitized.at(-1);
-  const hasAssistantContent =
-    lastMessage?.role === 'assistant' &&
-    lastMessage.parts.some(
-      (part) =>
-        (part.type === 'text' && part.text.trim().length > 0) || part.type === 'dynamic-tool',
+  let lastUserIndex = -1;
+  for (let index = sanitized.length - 1; index >= 0; index -= 1) {
+    if (sanitized[index]?.role === 'user') {
+      lastUserIndex = index;
+      break;
+    }
+  }
+  const hasAssistantContent = sanitized
+    .slice(lastUserIndex + 1)
+    .some(
+      (message) =>
+        message.role === 'assistant' &&
+        message.parts.some(
+          (part) =>
+            (part.type === 'text' && part.text.trim().length > 0) || part.type === 'dynamic-tool',
+        ),
     );
   return hasAssistantContent ? sanitized : originalMessages;
 }
