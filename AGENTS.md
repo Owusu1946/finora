@@ -50,9 +50,10 @@ When adding a financial flow, prefer the established `prepare_*` and `execute_ap
 - Do not kill dev or build processes that were not started by you unless explicitly asked to do so.
 - This is a pnpm workspace. Use pnpm for package management and package execution. Use npx only when pnpm dlx or pnpm do not work.
 - Do not generate or commit Drizzle migrations. Apply schema changes with the existing `db:push` workflow when explicitly requested.
-- Run `check` and `check-types` on every change before committing or pushing. Only push when asked.
-- Commit completed work proactively and frequently without waiting for the user to ask. Do not leave finished changes uncommitted. Keep commits small and atomic, use conventional commit syntax, and commit on the current branch unless the user asks for a different branch or commit strategy.
-- Only open a pull request when asked; keep the PR description minimal.
+- Run `check` and `check-types` on every change before committing or pushing.
+- Commit completed work proactively and frequently without waiting for the user to ask. Do not leave finished changes uncommitted. Keep commits small and atomic, and use conventional commit syntax.
+- For small, focused changes, commit on the current branch and only push when asked.
+- For large, significant, or bulk changes, proactively create a dedicated branch before implementation. When the work is complete and verified, push the branch and open a pull request without waiting for the user to ask.
 - If a task is too large to execute at once, you may spin off subagents and delegate focused subtasks. Provide only the context each subagent needs while maintaining the top-level context.
 - Explore alternatives when useful, but work efficiently and avoid circling or spiraling.
 - Write TypeScript as TypeScript, not Python. Avoid explicit return types and `any` unless absolutely necessary.
