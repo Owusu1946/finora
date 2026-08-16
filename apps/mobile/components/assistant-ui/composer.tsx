@@ -1,11 +1,11 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
+import { ThinkingOrb } from '@mhaadi/thinking-orbs-native';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
-  useAudioRecorderState,
 } from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,7 +26,6 @@ import {
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
-import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -229,16 +228,16 @@ type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing
 
 const MAX_RECORDING_SECONDS = 45;
 
-function VoiceButton() {
-  const { colors } = useTheme();
+function useVoiceComposer() {
   const { getToken } = useAuth();
   const aui = useAui();
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const voiceStateRef = useRef<VoiceState>('idle');
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
+  const draftBeforeRecordingRef = useRef('');
+  const voiceSessionRef = useRef(0);
 
   voiceStateRef.current = voiceState;
 
@@ -248,10 +247,15 @@ function VoiceButton() {
     stopTimerRef.current = null;
   };
 
+  const updateVoiceState = (next: VoiceState) => {
+    voiceStateRef.current = next;
+    if (mountedRef.current) setVoiceState(next);
+  };
+
   const stopRecording = async (discard = false) => {
     if (voiceStateRef.current !== 'recording') return;
-    voiceStateRef.current = discard ? 'idle' : 'transcribing';
-    if (mountedRef.current) setVoiceState(discard ? 'idle' : 'transcribing');
+    const sessionId = voiceSessionRef.current;
+    updateVoiceState(discard ? 'idle' : 'transcribing');
     clearStopTimer();
 
     let uri: string | null = null;
@@ -267,15 +271,15 @@ function VoiceButton() {
 
       const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4';
       const result = await transcribeRecording(uri, contentType, getToken);
-      if (!mountedRef.current) return;
+      if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
-      const existing = aui.thread.composer().getState().text.trimEnd();
-      const nextText = existing ? `${existing} ${result.transcript}` : result.transcript;
-      const threadComposer = aui.thread.composer();
-      threadComposer.setText(nextText);
+      const transcript = result.transcript.trim();
+      if (!transcript) return;
+      const existing = draftBeforeRecordingRef.current.trimEnd();
+      aui.thread.composer().setText(existing ? `${existing} ${transcript}` : transcript);
       haptics.success();
     } catch (error) {
-      if (!discard && mountedRef.current) {
+      if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
         haptics.error();
         Alert.alert(
           'Could not transcribe',
@@ -283,10 +287,7 @@ function VoiceButton() {
         );
       }
     } finally {
-      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
-      if (discard) deleteRecording(uri);
-      voiceStateRef.current = 'idle';
-      if (mountedRef.current) setVoiceState('idle');
+      if (voiceSessionRef.current === sessionId) updateVoiceState('idle');
     }
   };
 
@@ -312,8 +313,10 @@ function VoiceButton() {
 
   const startRecording = async () => {
     if (voiceStateRef.current !== 'idle') return;
-    voiceStateRef.current = 'requesting_permission';
-    setVoiceState('requesting_permission');
+    const sessionId = voiceSessionRef.current + 1;
+    voiceSessionRef.current = sessionId;
+    draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+    updateVoiceState('requesting_permission');
     haptics.selection();
 
     try {
@@ -325,84 +328,121 @@ function VoiceButton() {
         );
         return;
       }
+      if (voiceSessionRef.current !== sessionId) return;
 
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
+      if (voiceSessionRef.current !== sessionId) {
+        if (voiceStateRef.current === 'idle') {
+          await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+        }
+        return;
+      }
       recorder.record();
-      voiceStateRef.current = 'recording';
-      setVoiceState('recording');
+      updateVoiceState('recording');
       haptics.light();
       stopTimerRef.current = setTimeout(
         () => void stopRecording(false),
         MAX_RECORDING_SECONDS * 1000,
       );
     } catch (error) {
-      await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
-      Alert.alert(
-        'Could not start recording',
-        error instanceof Error ? error.message : 'Please try again.',
-      );
+      if (voiceSessionRef.current === sessionId || voiceStateRef.current === 'idle') {
+        await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+      }
+      if (voiceSessionRef.current === sessionId) {
+        Alert.alert(
+          'Could not start recording',
+          error instanceof Error ? error.message : 'Please try again.',
+        );
+      }
     } finally {
-      if (voiceStateRef.current === 'requesting_permission') {
-        voiceStateRef.current = 'idle';
-        setVoiceState('idle');
+      if (
+        voiceSessionRef.current === sessionId &&
+        (voiceStateRef.current as VoiceState) === 'requesting_permission'
+      ) {
+        updateVoiceState('idle');
       }
     }
   };
 
-  const elapsedSeconds = Math.min(
-    MAX_RECORDING_SECONDS,
-    Math.floor(recorderState.durationMillis / 1000),
+  const handleOrbPress = () => {
+    if (voiceStateRef.current === 'recording') {
+      haptics.light();
+      void stopRecording(false);
+      return;
+    }
+    if (voiceStateRef.current === 'requesting_permission') {
+      haptics.selection();
+      voiceSessionRef.current += 1;
+      updateVoiceState('idle');
+      return;
+    }
+    if (voiceStateRef.current === 'transcribing') {
+      haptics.selection();
+      voiceSessionRef.current += 1;
+      updateVoiceState('idle');
+    }
+  };
+
+  return { voiceState, startRecording, handleOrbPress };
+}
+
+function MicButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityLabel='Dictate message'
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionButton,
+        { backgroundColor: pressed ? colors.muted : 'transparent' },
+      ]}
+    >
+      <Icon
+        name='mic'
+        size={20}
+        color={colors.mutedForeground}
+      />
+    </Pressable>
   );
-  const elapsed = `0:${String(elapsedSeconds).padStart(2, '0')}`;
-  const isBusy = voiceState === 'requesting_permission' || voiceState === 'transcribing';
+}
+
+function PrimaryComposerAction({ onStartVoice }: { onStartVoice: () => void }) {
+  const canSend = useAuiState((s) => s.thread.composer.canSend);
+  return canSend ? <SendButton /> : <MicButton onPress={onStartVoice} />;
+}
+
+function VoiceComposer({ state, onPress }: { state: VoiceState; onPress: () => void }) {
+  const { colors, isDark } = useTheme();
+  const label =
+    state === 'recording'
+      ? 'Listening. Tap to stop and transcribe.'
+      : state === 'transcribing'
+        ? 'Transcribing. Tap to cancel.'
+        : 'Starting voice input. Tap to cancel.';
 
   return (
     <Pressable
-      accessibilityLabel={voiceState === 'recording' ? 'Stop and transcribe' : 'Dictate message'}
-      accessibilityState={{ busy: isBusy, disabled: isBusy }}
-      disabled={isBusy}
-      hitSlop={8}
-      onLongPress={() => {
-        if (voiceState === 'recording') void stopRecording(true);
-      }}
-      onPress={() => {
-        if (voiceState === 'recording') void stopRecording(false);
-        else void startRecording();
-      }}
+      accessibilityLabel={label}
+      accessibilityRole='button'
+      onPress={onPress}
       style={({ pressed }) => [
-        styles.voiceButton,
+        styles.voiceShell,
         {
-          backgroundColor:
-            voiceState === 'recording'
-              ? colors.destructive
-              : pressed
-                ? colors.muted
-                : 'transparent',
+          backgroundColor: colors.composer,
+          borderColor: colors.border,
+          opacity: pressed ? 0.72 : 1,
         },
       ]}
     >
-      {isBusy ? (
-        <LoadingIcon
-          size={18}
-          color={colors.mutedForeground}
-        />
-      ) : (
-        <>
-          <Icon
-            name={voiceState === 'recording' ? 'stop' : 'mic'}
-            size={voiceState === 'recording' ? 13 : 20}
-            color={
-              voiceState === 'recording' ? colors.destructiveForeground : colors.mutedForeground
-            }
-          />
-          {voiceState === 'recording' ? (
-            <Text style={[styles.recordingTime, { color: colors.destructiveForeground }]}>
-              {elapsed}
-            </Text>
-          ) : null}
-        </>
-      )}
+      <ThinkingOrb
+        state='composing'
+        size={64}
+        speed={1.2}
+        theme={isDark ? 'dark' : 'light'}
+        accessibilityLabel={label}
+      />
     </Pressable>
   );
 }
@@ -593,6 +633,7 @@ export function Composer() {
   const { colors } = useTheme();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
+  const { voiceState, startRecording, handleOrbPress } = useVoiceComposer();
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
     [colors.foreground],
@@ -600,51 +641,63 @@ export function Composer() {
 
   return (
     <View style={styles.container}>
-      <View
-        style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
-      >
-        <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
-
-        <ComposerInput
-          ref={inputRef}
-          style={inputStyle}
-          placeholder='Ask Finora… use @ to tag'
-          placeholderTextColor={colors.mutedForeground}
-          multiline
-          maxLength={4000}
-          onFocus={() => setInputFocused(true)}
-          onBlur={() => setInputFocused(false)}
+      {voiceState !== 'idle' ? (
+        <VoiceComposer
+          state={voiceState}
+          onPress={handleOrbPress}
         />
+      ) : (
+        <View
+          style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
+        >
+          <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
 
-        <View style={styles.actionRow}>
-          <AttachButton />
-          <ScanButton />
-          <View style={styles.spacer} />
-          <VoiceButton />
-          {inputFocused ? (
-            <Pressable
-              accessibilityLabel='Hide keyboard'
-              hitSlop={8}
-              onPress={() => {
-                inputRef.current?.blur();
-                Keyboard.dismiss();
-              }}
-              style={({ pressed }) => [
-                styles.doneButton,
-                { backgroundColor: pressed ? colors.muted : 'transparent' },
-              ]}
-            >
-              <Text style={[styles.doneButtonText, { color: colors.foreground }]}>Done</Text>
-            </Pressable>
-          ) : null}
-          <AuiIf condition={(s) => !s.thread.isRunning}>
-            <SendButton />
-          </AuiIf>
-          <AuiIf condition={(s) => s.thread.isRunning}>
-            <CancelButton />
-          </AuiIf>
+          <ComposerInput
+            ref={inputRef}
+            style={inputStyle}
+            placeholder='Ask Finora… use @ to tag'
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            maxLength={4000}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
+          />
+
+          <View style={styles.actionRow}>
+            <AttachButton />
+            <ScanButton />
+            <View style={styles.spacer} />
+            {inputFocused ? (
+              <Pressable
+                accessibilityLabel='Hide keyboard'
+                hitSlop={8}
+                onPress={() => {
+                  inputRef.current?.blur();
+                  Keyboard.dismiss();
+                }}
+                style={({ pressed }) => [
+                  styles.doneButton,
+                  { backgroundColor: pressed ? colors.muted : 'transparent' },
+                ]}
+              >
+                <Text style={[styles.doneButtonText, { color: colors.foreground }]}>Done</Text>
+              </Pressable>
+            ) : null}
+            <AuiIf condition={(s) => !s.thread.isRunning}>
+              <PrimaryComposerAction
+                onStartVoice={() => {
+                  inputRef.current?.blur();
+                  Keyboard.dismiss();
+                  void startRecording();
+                }}
+              />
+            </AuiIf>
+            <AuiIf condition={(s) => s.thread.isRunning}>
+              <CancelButton />
+            </AuiIf>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -770,19 +823,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  voiceButton: {
-    width: 64,
-    height: 38,
-    borderRadius: Radius.pill,
-    flexDirection: 'row',
-    gap: 5,
+  voiceShell: {
+    ...Rounded,
+    minHeight: 98,
+    borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  recordingTime: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '700',
   },
 });
