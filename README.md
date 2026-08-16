@@ -20,7 +20,7 @@ packages/wewire Server-only WeWire client
 ## Prerequisites
 
 - Node.js 20 or newer
-- pnpm 11 (`corepack enable` is recommended)
+- pnpm 11 (`corepack enable` is not recommended)
 - An Expo Go client for mobile development, or an Expo development build for native-only work
 - A Clerk application with Native API enabled
 - A Neon PostgreSQL database for API persistence
@@ -105,46 +105,44 @@ The webhook creates the asynchronous welcome-email delivery record. Profile sync
 
 ## Neon and database migrations
 
-Use the unpooled Neon URL for Drizzle schema operations when Neon provides both URLs:
+This repository does not use database migrations as they are considered an anti-pattern for typescript devs.
+Rather, we leave migrations to drizzle and push schema changes directly to the database (Neon) with the command below to apply changes:
 
 ```bash
-pnpm --filter @finora/api exec drizzle-kit generate
 pnpm db:push
 ```
 
-Review generated SQL before applying it. The API runtime uses `DATABASE_URL`. Do not run schema
-pushes against production without reviewing the generated migration and taking the normal backup/
-rollback precautions.
+The API runtime uses `DATABASE_URL`.
 
 ## Cloudflare resources and secrets
 
 Authenticate Wrangler once:
 
 ```bash
-pnpm --filter @finora/api exec wrangler login
+pnx --filter @finora/api wrangler login
 ```
 
 Create the email queues once per Cloudflare account:
 
 ```bash
-pnpm --filter @finora/api exec wrangler queues create finora-transactional-email
-pnpm --filter @finora/api exec wrangler queues create finora-transactional-email-dlq
+pnx --filter @finora/api wrangler queues create finora-transactional-email
+pnx --filter @finora/api wrangler queues create finora-transactional-email-dlq
 pnpm --filter @finora/api cf-typegen
 ```
 
 Set production secrets interactively:
 
 ```bash
-pnpm --filter @finora/api exec wrangler secret put CLERK_SECRET_KEY
-pnpm --filter @finora/api exec wrangler secret put CLERK_WEBHOOK_SIGNING_SECRET
-pnpm --filter @finora/api exec wrangler secret put DEEPGRAM_API_KEY
-pnpm --filter @finora/api exec wrangler secret put DATABASE_URL
-pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_API_KEY
-pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_SENDER_ID
-pnpm --filter @finora/api exec wrangler secret put RESEND_API_KEY
-pnpm --filter @finora/api exec wrangler secret put RESEND_WEBHOOK_SECRET
-pnpm --filter @finora/api exec wrangler secret put WEWIRE_API_KEY
-pnpm --filter @finora/api exec wrangler secret put WEWIRE_WEBHOOK_SECRET
+pnx --filter @finora/api wrangler secret put CLERK_SECRET_KEY
+pnx --filter @finora/api wrangler secret put CLERK_WEBHOOK_SIGNING_SECRET
+pnx --filter @finora/api wrangler secret put DEEPGRAM_API_KEY
+pnx --filter @finora/api wrangler secret put DATABASE_URL
+pnx --filter @finora/api wrangler secret put AGOO_SMS_API_KEY
+pnx --filter @finora/api wrangler secret put AGOO_SMS_SENDER_ID
+pnx --filter @finora/api wrangler secret put RESEND_API_KEY
+pnx --filter @finora/api wrangler secret put RESEND_WEBHOOK_SECRET
+pnx --filter @finora/api wrangler secret put WEWIRE_API_KEY
+pnx --filter @finora/api wrangler secret put WEWIRE_WEBHOOK_SECRET
 ```
 
 `WELCOME_EMAIL_MODE` is a normal Wrangler variable, not a secret. Change it in `wrangler.toml`
@@ -193,7 +191,7 @@ For a physical phone, use separate terminals so the API is reachable over the LA
 pnpm dev:api
 
 # Terminal 2
-pnpm --filter @finora/api dev:lan
+pnpm dev:lan
 
 # Terminal 3
 pnpm dev:mobile

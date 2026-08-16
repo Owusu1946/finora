@@ -15,6 +15,7 @@
     "deploy:mcp": "turbo run deploy --filter=@finora/mcp",
     "dev": "turbo run dev",
     "dev:api": "turbo run dev --filter=@finora/api",
+    "dev:lan": "turbo run dev --filter=@finora/api dev:lan",
     "dev:mcp": "turbo run dev --filter=@finora/mcp",
     "dev:mobile": "turbo run dev --filter=@finora/mobile",
     "dev:web": "turbo run dev --filter=@finora/web",
@@ -31,11 +32,13 @@
     "@types/node": "^26.2.0",
     "oxfmt": "^0.62.0",
     "oxlint": "^1.77.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "turbo": "^2.10.9",
     "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@11.20.0"
+  "packageManager": "pnpm@11.21.0"
 }

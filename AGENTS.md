@@ -23,13 +23,13 @@ WeWire provides the underlying financial rails. Much of the current product is s
 
 The landing app lives in `apps/web` (`@finora/web`). Use Next.js 16 docs shipped with the installed package (`node_modules/next/dist/docs/`, or the package-local `AGENTS.md`). Run `pnpm run dev:web` from the repo root for `next dev` on port 3000.
 
-React stays pinned to `19.1.0` via workspace overrides (same as mobile). Do not bump React only for the web app without checking Expo compatibility.
+The web app may use a different React version from mobile. Keep `react` and `react-dom` aligned with each other and compatible with the installed Next.js version; do not add a workspace-wide React override.
 
 ## Expo
 
 The mobile app uses Expo SDK 54. Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before writing any mobile code.
 
-React is pinned to `19.1.0` via root `overrides`. After `pnpm install`, `scripts/link-mobile-deps.mjs` junctions `react` / `react-dom` / `react-native` into `apps/mobile/node_modules` so Metro does not hit an invalid-hook / duplicate-React error.
+While the app remains on Expo SDK 54, keep `react` and `react-dom` pinned to `19.1.0` in both `apps/mobile/package.json` and the root `package.json`. The root dependencies provide the exact runtime used by `scripts/link-mobile-deps.mjs`, which junctions `react` / `react-dom` / `react-native` into `apps/mobile/node_modules` after `pnpm install` so Metro does not hit an invalid-hook / duplicate-React error. Web may use its own React version; do not reintroduce workspace-wide React overrides.
 
 Mobile UI uses NativeWind v5 + `@assistant-ui/react-native` (not the web `@assistant-ui/react` package).
 
@@ -50,10 +50,11 @@ When adding a financial flow, prefer the established `prepare_*` and `execute_ap
 - Do not kill dev or build processes that were not started by you unless explicitly asked to do so.
 - This is a pnpm workspace. Use pnpm for package management and package execution. Use npx only when pnpm dlx or pnpm do not work.
 - Do not generate or commit Drizzle migrations. Apply schema changes with the existing `db:push` workflow when explicitly requested.
-- Run `check` and `check-types` on every change before committing or pushing. Only push when asked.
-- Commit frequently so changes are tracked with low risk of losing work.
-- Keep commits small and atomic, using conventional commit syntax.
-- Do not commit to `main` unless asked. Work on a separate branch and open a pull request afterward; keep the PR description minimal.
+- Run `check` and `check-types` on every change before committing or pushing.
+- Commit completed work proactively and frequently without waiting for the user to ask. Do not leave finished changes uncommitted. Keep commits small and atomic, and use conventional commit syntax.
+- For small, focused changes, commit on the current branch and only push when asked.
+- For large, significant, or bulk changes, proactively create a dedicated branch before implementation. When the work is complete and verified, push the branch and open a pull request without waiting for the user to ask.
+- If pull request target is not defined, open against origin.
 - If a task is too large to execute at once, you may spin off subagents and delegate focused subtasks. Provide only the context each subagent needs while maintaining the top-level context.
 - Explore alternatives when useful, but work efficiently and avoid circling or spiraling.
 - Write TypeScript as TypeScript, not Python. Avoid explicit return types and `any` unless absolutely necessary.

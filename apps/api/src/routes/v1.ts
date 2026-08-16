@@ -1445,6 +1445,7 @@ v1.get('/transfers/pending', (c) => {
 v1.post('/plans', async (c) => {
   const body = await c.req.json<{
     intent: string;
+    currency?: string;
     items?: Array<Record<string, unknown>>;
   }>();
   const items =
@@ -1468,6 +1469,17 @@ v1.post('/plans', async (c) => {
             refId: 'sup-2',
           },
         ];
+  if (body.items?.length) {
+    const itemCurrencyValues = items.map((item) => String(item.currency ?? ''));
+    const itemCurrencies = new Set(itemCurrencyValues);
+    if (itemCurrencyValues.some((currency) => !currency) || itemCurrencies.size !== 1) {
+      return c.json({ error: 'plan_currency_mismatch' }, 400);
+    }
+    const itemCurrency = itemCurrencies.values().next().value;
+    if (body.currency && body.currency !== itemCurrency) {
+      return c.json({ error: 'plan_currency_mismatch' }, 400);
+    }
+  }
   const total = items.reduce((s, i) => s + Number(i.amount ?? 0), 0);
   const plan = {
     id: newId('plan'),
@@ -1475,7 +1487,7 @@ v1.post('/plans', async (c) => {
     status: 'pending_approval' as const,
     items,
     total,
-    currency: 'USD',
+    currency: body.currency ?? String(items[0]?.currency ?? 'USD'),
     createdAt: new Date().toISOString(),
   };
   mockStore.plans.unshift(plan);
@@ -1484,6 +1496,7 @@ v1.post('/plans', async (c) => {
     intent: plan.intent,
     items: plan.items,
     total: plan.total,
+    currency: plan.currency,
   });
   return c.json({ mode: 'mock', plan, ...prep }, 201);
 });

@@ -16,8 +16,8 @@ import { findContactByIdentifier, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
-type PreparePaymentArgs = SendMoneySeed & {
-  amount?: number;
+type PreparePaymentArgs = Omit<SendMoneySeed, 'amount'> & {
+  amount?: number | { amount: number; currency: string };
   currency?: string;
   recipientName?: string;
   destinationKind?: 'mobile_money' | 'bank_account' | 'crypto_wallet';
@@ -66,6 +66,15 @@ function resolveStatus(
   if (resultStatus === 'failed') return 'failed';
   if (resultStatus === 'confirmed') return 'sending';
   return 'pending';
+}
+
+function normalizeSeed(args: PreparePaymentArgs): SendMoneySeed {
+  if (typeof args.amount !== 'object' || args.amount === null) return args as SendMoneySeed;
+  return {
+    ...args,
+    amount: args.amount.amount,
+    currency: args.amount.currency,
+  };
 }
 
 function PreparePaymentFlow({
@@ -209,6 +218,9 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
   toolName: 'prepare_payment',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
+    const requiresPlatformPreparation = typeof args?.amount === 'object' && args.amount !== null;
+    if (requiresPlatformPreparation && !result?.preparationId) return <PreparingCard />;
+
     const hasArgs =
       args != null &&
       (args.amount != null ||
@@ -219,7 +231,7 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
       return <PreparingCard />;
     }
 
-    const seed: SendMoneySeed = { ...args };
+    const seed = normalizeSeed(args ?? {});
     const preparationId = result?.preparationId ?? `prep_${Date.now()}`;
 
     return (

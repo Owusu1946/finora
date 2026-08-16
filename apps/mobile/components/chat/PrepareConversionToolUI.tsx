@@ -15,6 +15,9 @@ import { appendAgentFollowUp, conversionDoneFollowUp } from '@/lib/agent-follow-
 import { haptics } from '@/lib/haptics';
 
 type PrepareConversionArgs = {
+  from?: string;
+  to?: string;
+  amount?: number;
   fromCurrency?: string;
   toCurrency?: string;
   fromAmount?: number;
@@ -27,17 +30,41 @@ type PrepareConversionArgs = {
 type PrepareConversionResult = {
   status?: ConversionStatus | 'pending' | 'confirmed';
   conversionId?: string;
+  fromCurrency?: string;
+  toCurrency?: string;
+  fromAmount?: number;
+  toAmount?: number;
+  rate?: number;
+  fee?: number;
+  feeCurrency?: string;
 };
 
-function asQuote(args: PrepareConversionArgs): ConversionQuote {
+function asQuote(args: PrepareConversionArgs, result?: PrepareConversionResult) {
+  const fromCurrency = result?.fromCurrency ?? args.fromCurrency ?? args.from;
+  const toCurrency = result?.toCurrency ?? args.toCurrency ?? args.to;
+  const fromAmount = result?.fromAmount ?? args.fromAmount ?? args.amount;
+  const toAmount = result?.toAmount ?? args.toAmount;
+  const rate = result?.rate ?? args.rate;
+  if (
+    !fromCurrency ||
+    !toCurrency ||
+    fromAmount === undefined ||
+    toAmount === undefined ||
+    rate === undefined ||
+    fromAmount <= 0 ||
+    toAmount <= 0 ||
+    rate <= 0
+  ) {
+    return null;
+  }
   return {
-    fromCurrency: args.fromCurrency ?? 'USD',
-    toCurrency: args.toCurrency ?? 'GHS',
-    fromAmount: args.fromAmount ?? 0,
-    toAmount: args.toAmount ?? 0,
-    rate: args.rate ?? 0,
-    fee: args.fee,
-    feeCurrency: args.feeCurrency,
+    fromCurrency,
+    toCurrency,
+    fromAmount,
+    toAmount,
+    rate,
+    fee: result?.fee ?? args.fee,
+    feeCurrency: result?.feeCurrency ?? args.feeCurrency,
   };
 }
 
@@ -160,14 +187,12 @@ export const PrepareConversionToolUI = makeAssistantToolUI<
   toolName: 'prepare_conversion',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
-    const hasArgs = args != null && (args.fromAmount != null || args.rate != null);
-    if (status.type === 'running' && !hasArgs) {
-      return <PreparingCard />;
-    }
+    const quote = asQuote(args ?? {}, result);
+    if (!quote) return status.type === 'running' ? <PreparingCard /> : null;
 
     return (
       <PrepareConversionConfirm
-        quote={asQuote(args ?? {})}
+        quote={quote}
         resultStatus={result?.status}
         resultConversionId={result?.conversionId}
         onFinished={({ conversionId, status: next }) => {

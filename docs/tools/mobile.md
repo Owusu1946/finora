@@ -2,7 +2,12 @@
 
 Vision: the Expo app is **ChatGPT for money** — a client of the Finora platform, not the platform itself.
 
-Chat uses the on-device mock adapter ([`chat-adapter.ts`](../../apps/mobile/lib/chat-adapter.ts)) via `useLocalRuntime` — no LLM / Gemini. Assistant text renders as markdown ([`markdown-text.tsx`](../../apps/mobile/components/assistant-ui/markdown-text.tsx)). Tool UIs stay on-device (`makeAssistantToolUI`).
+Chat supports two runtime modes:
+
+- The local demo uses the on-device mock adapter ([`chat-adapter.ts`](../../apps/mobile/lib/chat-adapter.ts)) via `useLocalRuntime` — no LLM / Gemini.
+- The signed-in remote mode uses [`remote-chat-adapter.ts`](../../apps/mobile/lib/remote-chat-adapter.ts) and the API chat gateway backed by `gpt-5.6-luna`. The gateway exposes only the curated Finora tools listed below; it has no shell, web, image, or general-purpose provider tools.
+
+Both modes render assistant text as markdown ([`markdown-text.tsx`](../../apps/mobile/components/assistant-ui/markdown-text.tsx)) and keep tool UIs on-device (`makeAssistantToolUI`). Remote tools can read data or prepare an action for review. They never execute money movement; approval, PIN/biometric confirmation, execution, and audit remain explicit human/platform steps.
 
 ### Scan QR → pay
 
@@ -22,6 +27,10 @@ Receive / payment-request cards encode real QRs ([`MockQrCode.tsx`](../../apps/m
 ---
 
 ## Tools the chat UI actually handles
+
+The local demo supports the broader mock catalog below. The remote agent is intentionally narrower and can call only these API-backed tools:
+
+`get_balances`, `list_receive_methods`, `list_virtual_accounts`, `list_invoices`, `list_employees`, `list_suppliers`, `list_beneficiaries`, `list_policies`, `prepare_payment`, `prepare_conversion`, `prepare_payroll`, `prepare_supplier_payment`, and `create_financial_plan`.
 
 | toolName                      | UI                                                  | Trigger examples (mock)                              |
 | ----------------------------- | --------------------------------------------------- | ---------------------------------------------------- |

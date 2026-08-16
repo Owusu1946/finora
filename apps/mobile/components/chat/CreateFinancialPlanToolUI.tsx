@@ -19,39 +19,68 @@ import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { recordSentPayment } from '@/lib/transactions-storage';
 
-type CreateFinancialPlanArgs = {
+type FinancialPlanItemInput = Omit<FinancialPlanItem, 'amount' | 'currency' | 'label'> & {
+  amount?: number | { amount: number; currency: string };
+  currency?: string;
+  label?: string;
+};
+
+type FinancialPlanInput = {
   intent?: string;
   currency?: string;
   total?: number;
-  items?: FinancialPlanItem[];
+  items?: FinancialPlanItemInput[];
   planId?: string;
 };
+
+type CreateFinancialPlanArgs = FinancialPlanInput;
 
 type CreateFinancialPlanResult = {
   status?: PaymentConfirmationStatus | 'pending' | 'confirmed';
   planId?: string;
   preparationId?: string;
   transactionId?: string;
+  plan?: Omit<FinancialPlanInput, 'planId'> & { id?: string };
 };
 
-function asPlan(args: CreateFinancialPlanArgs): FinancialPlanPayload {
-  if (args.items && args.items.length > 0) {
+function asPlan(
+  args: CreateFinancialPlanArgs,
+  result?: CreateFinancialPlanResult,
+): FinancialPlanPayload {
+  const resultPlan = result?.plan;
+  const source = {
+    ...args,
+    ...resultPlan,
+    planId: result?.planId ?? resultPlan?.id ?? args.planId,
+    items: resultPlan?.items ?? args.items,
+  };
+
+  if (source.items && source.items.length > 0) {
+    const items: FinancialPlanItem[] = source.items.map((item) => ({
+      ...item,
+      label: item.label ?? item.kind,
+      amount: typeof item.amount === 'object' ? item.amount.amount : (item.amount ?? 0),
+      currency:
+        typeof item.amount === 'object'
+          ? item.amount.currency
+          : (item.currency ?? source.currency ?? 'USD'),
+    }));
     const total =
-      typeof args.total === 'number'
-        ? args.total
-        : args.items.reduce((s, i) => s + Number(i.amount ?? 0), 0);
+      typeof source.total === 'number'
+        ? source.total
+        : items.reduce((sum, item) => sum + item.amount, 0);
     return {
-      planId: args.planId ?? `plan_${Date.now()}`,
-      intent: args.intent ?? 'Financial plan',
-      currency: args.currency ?? 'USD',
+      planId: source.planId ?? `plan_${Date.now()}`,
+      intent: source.intent ?? 'Financial plan',
+      currency: source.currency ?? 'USD',
       total,
-      items: args.items,
+      items,
     };
   }
   return {
     ...MOCK_BUSINESS_PLAN,
-    intent: args.intent ?? MOCK_BUSINESS_PLAN.intent,
-    planId: args.planId ?? MOCK_BUSINESS_PLAN.planId,
+    intent: source.intent ?? MOCK_BUSINESS_PLAN.intent,
+    planId: source.planId ?? MOCK_BUSINESS_PLAN.planId,
   };
 }
 
@@ -217,6 +246,11 @@ export const CreateFinancialPlanToolUI = makeAssistantToolUI<
   toolName: 'create_financial_plan',
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
+    const requiresPlatformPreparation = args?.items?.some(
+      (item) => typeof item.amount === 'object' && item.amount !== null,
+    );
+    if (requiresPlatformPreparation && !result?.planId) return <PreparingCard />;
+
     const hasArgs =
       args != null &&
       (Boolean(args.intent) || (Array.isArray(args.items) && args.items.length > 0));
@@ -224,7 +258,7 @@ export const CreateFinancialPlanToolUI = makeAssistantToolUI<
       return <PreparingCard />;
     }
 
-    const plan = asPlan(args ?? {});
+    const plan = asPlan(args ?? {}, result);
     const preparationId = result?.preparationId ?? `prep_${plan.planId}`;
 
     return (
