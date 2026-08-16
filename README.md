@@ -215,6 +215,12 @@ Metro. Keep the phone and computer on the same network.
 To run only the phone-facing path, use three terminals with `pnpm dev:api`, `pnpm dev:lan`, and
 `pnpm dev:mobile`.
 
+Dev scripts will often be preferred to be ran without the `web` dev server. For that use the script below:
+
+```bash
+pnpm dev --filter='!@finora/web'
+```
+
 ### Root script reference
 
 Run these commands from the repository root:
