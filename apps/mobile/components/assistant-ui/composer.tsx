@@ -21,6 +21,7 @@ import {
   Keyboard,
   StyleSheet,
   Pressable,
+  ScrollView,
   TextInput,
   type TextInputProps,
 } from 'react-native';
@@ -676,10 +677,19 @@ export function Composer() {
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const { voiceState, startRecording, handleOrbPress } = useVoiceComposer();
+  const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
     [colors.foreground],
   );
+
+  useEffect(() => {
+    const subscription = Keyboard.addListener('keyboardDidHide', () => {
+      inputRef.current?.blur();
+      setInputFocused(false);
+    });
+    return () => subscription.remove();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -692,7 +702,17 @@ export function Composer() {
         <View
           style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
         >
-          <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+          {hasAttachments ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.attachmentsScroller}
+              contentContainerStyle={styles.attachmentsRow}
+              keyboardShouldPersistTaps='handled'
+            >
+              <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+            </ScrollView>
+          ) : null}
 
           <ComposerInput
             ref={inputRef}
@@ -842,6 +862,18 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingTop: 2,
   },
+  attachmentsScroller: {
+    maxHeight: 84,
+    flexGrow: 0,
+  },
+  attachmentsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
   spacer: {
     flex: 1,
   },
@@ -867,10 +899,15 @@ const styles = StyleSheet.create({
   },
   voiceShell: {
     ...Rounded,
-    minHeight: 98,
-    borderRadius: Radius.composer,
+    width: '38%',
+    minWidth: 104,
+    maxWidth: 144,
+    height: 80,
+    borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
+    padding: 8,
   },
 });
