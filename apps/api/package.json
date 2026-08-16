@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "wrangler deploy --dry-run",
-    "cf-typegen": "wrangler types --include-runtime=false",
+    "cf-typegen": "wrangler types --include-runtime=false --env-file .dev.vars.example --strict-vars=false",
     "check-types": "tsc --noEmit",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

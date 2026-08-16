@@ -22,6 +22,10 @@ from the repository root.
 `dev:api` is also included in the root `pnpm dev` session. `dev:lan` is intentionally separate
 because it exposes the API to physical devices on the local network.
 
+`cf-typegen` reads variable names from `.dev.vars.example` and emits all variables as `string`.
+The generated declaration contains binding names and types, never values from the ignored local
+`.dev.vars` file.
+
 Database schema changes use Drizzle's direct push workflow. Update `src/db/schema.ts`, confirm
 that `DATABASE_URL` targets the intended database, then inspect and approve the schema diff shown
 by Drizzle:
