@@ -42,10 +42,7 @@ export async function getTagConfigured(userId: string | null | undefined): Promi
 }
 
 export async function setTagConfigured(userId: string): Promise<void> {
-  await Promise.all([
-    setItem(TAG_CONFIGURED_KEY, '1'),
-    setItem(TAG_CONFIGURED_USER_KEY, userId),
-  ]);
+  await Promise.all([setItem(TAG_CONFIGURED_KEY, '1'), setItem(TAG_CONFIGURED_USER_KEY, userId)]);
 }
 
 export async function clearTagConfigured(): Promise<void> {

@@ -6,11 +6,30 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 ENVIRONMENT = "development"
 CLERK_PUBLISHABLE_KEY = "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA"
+WELCOME_EMAIL_MODE = "live"
+WELCOME_EMAIL_FROM = "Finora <welcome@mail.askorin.app>"
+WELCOME_EMAIL_REPLY_TO = "hello@askorin.app"
+WELCOME_EMAIL_CTA_URL = "https://askorin.app"
 
+[[queues.producers]]
+queue = "finora-transactional-email"
+binding = "TRANSACTIONAL_EMAIL_QUEUE"
+
+[[queues.consumers]]
+queue = "finora-transactional-email"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 5
+retry_delay = 30
+dead_letter_queue = "finora-transactional-email-dlq"
 # Secrets (set via `wrangler secret put` or local `.dev.vars`):
 # WEWIRE_API_KEY
 # CLERK_SECRET_KEY
-# DATABASE_URL
+# CLERK_WEBHOOK_SIGNING_SECRET
+# DEEPGRAM_API_KEY
 # OPENAI_API_KEY
-# REDIS_URL (optional, enables resumable chat streams)
+# REDIS_URL
+# DATABASE_URL
+# RESEND_API_KEY
+# RESEND_WEBHOOK_SECRET
 # WEWIRE_WEBHOOK_SECRET

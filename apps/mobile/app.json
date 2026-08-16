@@ -81,8 +81,8 @@
       [
         "expo-audio",
         {
-          "microphonePermission": false,
-          "recordAudioAndroid": false
+          "microphonePermission": "Allow Finora to turn your voice into text in the composer.",
+          "recordAudioAndroid": true
         }
       ]
     ],

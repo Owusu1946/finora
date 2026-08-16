@@ -10,8 +10,8 @@ import {
 import { useColorScheme as useSystemColorScheme } from 'react-native';
 
 import { Colors, type Palette } from '@/constants/theme';
-import { t, type TranslationKey } from './i18n';
 
+import { t, type TranslationKey } from './i18n';
 import {
   DEFAULT_SETTINGS,
   getSettings,

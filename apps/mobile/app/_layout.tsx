@@ -19,6 +19,7 @@ import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -71,6 +72,8 @@ import { finoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { PasscodeGateProvider, usePasscodeGate } from '@/lib/passcode-gate';
+import { hasPasscode } from '@/lib/passcode-storage';
 import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import {
   createRemoteChatAdapter,
@@ -101,10 +104,21 @@ function RootNavigator() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const { status: phoneStatus } = usePhoneGate();
   const { tagConfigured } = useAuthGate();
+  const { locked: passcodeLocked } = usePasscodeGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
   const segments = useSegments();
   const { isDark, colors } = useTheme();
-  const isPhoneSetup = segments[0] === 'auth' && String(segments[1]) === 'add-phone';
+  const isAuthSubScreen =
+    segments[0] === 'auth' &&
+    (String(segments[1]) === 'add-phone' ||
+      String(segments[1]) === 'create-passcode' ||
+      String(segments[1]) === 'enter-passcode');
+  const isEnterPasscodeScreen = segments[0] === 'auth' && String(segments[1]) === 'enter-passcode';
+  const requiresPasscode =
+    onboardingCompleted && authLoaded && isSignedIn && tagConfigured && passcodeLocked;
+  const concealProtectedContent =
+    Boolean(isSignedIn) &&
+    ((requiresPasscode && !isEnterPasscodeScreen) || (!tagConfigured && phoneStatus === 'loading'));
   useDrainPendingPaymentLink();
   const base = isDark ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
@@ -136,18 +150,27 @@ function RootNavigator() {
       phoneStatus !== 'loading' &&
       !tagConfigured &&
       phoneStatus === 'required' &&
-      !isPhoneSetup ? (
+      !isAuthSubScreen ? (
         <Redirect href={'/auth/add-phone' as Href} />
       ) : null}
       {onboardingCompleted && isSignedIn && phoneStatus === 'verified' && !tagConfigured ? (
         <Redirect href={'/auth/choose-tag' as Href} />
       ) : null}
+      {requiresPasscode && !isEnterPasscodeScreen ? (
+        <Redirect href={'/auth/enter-passcode' as Href} />
+      ) : null}
       {onboardingCompleted &&
       isSignedIn &&
       tagConfigured &&
       segments[0] === 'auth' &&
-      !isPhoneSetup ? (
+      !isAuthSubScreen ? (
         <Redirect href={'/(app)' as Href} />
+      ) : null}
+      {concealProtectedContent ? (
+        <View
+          pointerEvents='auto'
+          style={[styles.securityCover, { backgroundColor: colors.background }]}
+        />
       ) : null}
       <StatusBar style='auto' />
     </ThemeProvider>
@@ -221,6 +244,7 @@ function RootApp() {
   const [boot, setBoot] = useState<{
     onboardingCompleted: boolean;
     tagConfigured: boolean;
+    passcodeExists: boolean;
     userId: string | null;
     remoteChat: RemoteChatRuntime | null;
   } | null>(null);
@@ -255,9 +279,10 @@ function RootApp() {
           return { adapter, initialMessages: [], resumeStream: null };
         }
       })();
-      const [onboarding, tagConfigured, remoteChat] = await Promise.all([
+      const [onboarding, tagConfigured, passcodeExists, remoteChat] = await Promise.all([
         getOnboardingState(),
         getTagConfigured(userId),
+        hasPasscode(),
         remoteChatPromise,
       ]);
       if (cancelled) return;
@@ -265,6 +290,7 @@ function RootApp() {
       setBoot({
         onboardingCompleted: onboarding.completed,
         tagConfigured,
+        passcodeExists,
         userId: userId ?? null,
         remoteChat,
       });
@@ -284,11 +310,18 @@ function RootApp() {
           <AuthGateProvider tagConfigured={boot.tagConfigured}>
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
               <PhoneGateProvider key={boot.userId ?? 'signed-out'}>
-                <ProfileSyncBridge />
-                <FinoraAssistantRuntime
-                  key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
-                  remoteChat={boot.remoteChat}
-                />
+                <PasscodeGateProvider
+                  key={boot.userId ?? 'signed-out'}
+                  initiallyLocked={Boolean(
+                    boot.userId && boot.tagConfigured && boot.passcodeExists,
+                  )}
+                >
+                  <ProfileSyncBridge />
+                  <FinoraAssistantRuntime
+                    key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
+                    remoteChat={boot.remoteChat}
+                  />
+                </PasscodeGateProvider>
               </PhoneGateProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>
@@ -307,6 +340,14 @@ function RootApp() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  securityCover: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 90,
+    elevation: 90,
+  },
+});
 
 function ProfileSyncBridge() {
   useProfileSync();

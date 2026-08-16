@@ -8,7 +8,7 @@ import { haptics } from '@/lib/haptics';
 import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
 
 export function useAppleAuth() {
-  const clerk = useClerk();
+  const { setActive, client, session } = useClerk();
   const { startSSOFlow } = useSSO();
   const postAuthNavigate = usePostAuthNavigate();
   const [loading, setLoading] = useState(false);
@@ -23,13 +23,15 @@ export function useAppleAuth() {
     try {
       const result = await startSSOFlow({ strategy: 'oauth_apple' });
       if (!result.createdSessionId) return;
+      if (setActive) {
+        await setActive({ session: result.createdSessionId });
+      }
 
       haptics.success();
       const authenticatedUserId =
         result.signUp?.createdUserId ??
-        clerk?.client?.sessions?.find((session) => session.id === result.createdSessionId)?.user
-          ?.id ??
-        clerk?.session?.user?.id;
+        client?.sessions?.find((s) => s.id === result.createdSessionId)?.user?.id ??
+        session?.user?.id;
       await postAuthNavigate(authenticatedUserId);
     } catch (caught) {
       haptics.impact();
@@ -37,7 +39,7 @@ export function useAppleAuth() {
     } finally {
       setLoading(false);
     }
-  }, [clerk, loading, postAuthNavigate, startSSOFlow]);
+  }, [client, loading, postAuthNavigate, session, setActive, startSSOFlow]);
 
   return { startAppleAuth, loading, error, clearError: () => setError(null) };
 }

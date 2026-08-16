@@ -19,6 +19,7 @@ import {
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
 import { getOnboardingState } from '@/lib/onboarding-storage';
+import { hasPasscode } from '@/lib/passcode-storage';
 import { ProfileApiError, updateUserProfile } from '@/lib/profile-api';
 import { saveSettings } from '@/lib/settings-storage';
 
@@ -113,9 +114,14 @@ export default function ChooseTagScreen() {
         email,
       });
       clearPendingAuthProfile();
-      markTagConfigured();
       haptics.success();
-      router.replace('/(app)' as Href);
+      const hasPin = await hasPasscode();
+      if (!hasPin) {
+        router.replace('/auth/create-passcode' as Href);
+      } else {
+        markTagConfigured();
+        router.replace('/(app)' as Href);
+      }
     } catch (error) {
       haptics.impact();
       if (error instanceof ProfileApiError) {
