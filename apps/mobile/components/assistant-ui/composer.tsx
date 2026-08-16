@@ -10,7 +10,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   View,
   AppState,
@@ -21,8 +21,6 @@ import {
   StyleSheet,
   Pressable,
   TextInput,
-  Text as RNText,
-  type TextStyle,
   type TextInputProps,
 } from 'react-native';
 
@@ -53,74 +51,10 @@ const COMPOSER_ATTACHMENT_COMPONENTS = {
   Attachment: ComposerAttachmentChip,
 };
 
-const TAG_TOKEN_RE = /@[a-z][a-z0-9_]{0,23}/gi;
 const TAG_ACCENT = {
   light: '#0F766E',
   dark: '#2DD4BF',
 } as const;
-
-/**
- * Overlay must use the same font metrics as TextInput.
- * Color-only tagging — never change weight/family, or the caret drifts.
- * Use RN Text (not AppText) so larger-text scaling cannot desync the layers.
- */
-function ComposerHighlightedText({
-  text,
-  textStyle,
-  foreground,
-  tagColor,
-}: {
-  text: string;
-  textStyle: TextStyle;
-  foreground: string;
-  tagColor: string;
-}) {
-  const nodes: ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  TAG_TOKEN_RE.lastIndex = 0;
-  while ((match = TAG_TOKEN_RE.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(
-        <RNText
-          key={`plain-${lastIndex}`}
-          style={{ color: foreground }}
-        >
-          {text.slice(lastIndex, match.index)}
-        </RNText>,
-      );
-    }
-    nodes.push(
-      <RNText
-        key={`tag-${match.index}`}
-        style={{ color: tagColor }}
-      >
-        {match[0]}
-      </RNText>,
-    );
-    lastIndex = match.index + match[0].length;
-  }
-  if (lastIndex < text.length || nodes.length === 0) {
-    nodes.push(
-      <RNText
-        key={`plain-${lastIndex}`}
-        style={{ color: foreground }}
-      >
-        {text.slice(lastIndex)}
-      </RNText>,
-    );
-  }
-
-  return (
-    <RNText
-      pointerEvents='none'
-      style={[textStyle, styles.highlightLayer]}
-    >
-      {nodes}
-      {text.endsWith('\n') ? '\n' : null}
-    </RNText>
-  );
-}
 
 function AttachButton() {
   const { colors } = useTheme();
@@ -295,13 +229,7 @@ type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing
 
 const MAX_RECORDING_SECONDS = 45;
 
-function VoiceButton({
-  composerText,
-  onComposerTextChange,
-}: {
-  composerText: string;
-  onComposerTextChange: (text: string) => void;
-}) {
+function VoiceButton() {
   const { colors } = useTheme();
   const { getToken } = useAuth();
   const aui = useAui();
@@ -309,12 +237,10 @@ function VoiceButton({
   const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const voiceStateRef = useRef<VoiceState>('idle');
-  const composerTextRef = useRef(composerText);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
   voiceStateRef.current = voiceState;
-  composerTextRef.current = composerText;
 
   const clearStopTimer = () => {
     if (!stopTimerRef.current) return;
@@ -343,11 +269,10 @@ function VoiceButton({
       const result = await transcribeRecording(uri, contentType, getToken);
       if (!mountedRef.current) return;
 
-      const existing = composerTextRef.current.trimEnd();
+      const existing = aui.thread.composer().getState().text.trimEnd();
       const nextText = existing ? `${existing} ${result.transcript}` : result.transcript;
       const threadComposer = aui.thread.composer();
       threadComposer.setText(nextText);
-      onComposerTextChange(nextText);
       haptics.success();
     } catch (error) {
       if (!discard && mountedRef.current) {
@@ -482,10 +407,10 @@ function VoiceButton({
   );
 }
 
-function SendButton({ draftText, onSend }: { draftText: string; onSend: () => void }) {
+function SendButton() {
   const { colors } = useTheme();
   const runtimeCanSend = useAuiState((s) => s.thread.composer.canSend);
-  const canSend = runtimeCanSend || draftText.trim().length > 0;
+  const canSend = runtimeCanSend;
 
   return (
     <ComposerPrimitive.Send
@@ -495,7 +420,6 @@ function SendButton({ draftText, onSend }: { draftText: string; onSend: () => vo
         if (!canSend) return;
         haptics.success();
         Keyboard.dismiss();
-        onSend();
       }}
       style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
     >
@@ -525,180 +449,150 @@ function CancelButton() {
   );
 }
 
-/** Local buffer avoids RN cursor jumps from store-controlled TextInput. */
-function ComposerInput({
-  draftText,
-  onDraftTextChange,
-  ...props
-}: TextInputProps & {
-  draftText: string;
-  onDraftTextChange: (text: string) => void;
-}) {
-  const { colors, isDark } = useTheme();
-  const aui = useAui();
-  const storeText = useAuiState((s) => s.thread.composer.text);
-  const localText = draftText;
-  const previousStoreTextRef = useRef(storeText);
-  const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
-  const [directoryLoaded, setDirectoryLoaded] = useState(false);
-  const inputRef = useRef<TextInput>(null);
-  const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
-  // Keep overlay mode stable while editing so deleting a tag never remounts styles.
-  const useHighlightOverlay = localText.length > 0;
+/**
+ * Keep the native text field authoritative while typing. The assistant store
+ * still receives every edit, but never controls the native value prop, which
+ * avoids selection reconciliation and caret jumps during deletes.
+ */
+type ComposerInputHandle = {
+  blur: () => void;
+};
 
-  useEffect(() => {
-    if (previousStoreTextRef.current === storeText) return;
-    previousStoreTextRef.current = storeText;
-    onDraftTextChange(storeText);
-  }, [onDraftTextChange, storeText]);
+const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
+  function ComposerInput(props, ref) {
+    const { colors, isDark } = useTheme();
+    const aui = useAui();
+    const storeText = useAuiState((s) => s.thread.composer.text);
+    const [localText, setLocalText] = useState(storeText);
+    const nativeTextRef = useRef(storeText);
+    const initialTextRef = useRef(storeText);
+    const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
+    const [directoryLoaded, setDirectoryLoaded] = useState(false);
+    const inputRef = useRef<TextInput>(null);
+    const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
 
-  const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
-  const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+    useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
 
-  useEffect(() => {
-    if (mentionQuery === null) {
-      setDirectoryLoaded(false);
-      setTagProfiles([]);
-      return;
-    }
-    let active = true;
-    void searchFinoraTags(mentionQuery).then((next) => {
-      if (!active) return;
-      setTagProfiles(next);
-      setDirectoryLoaded(true);
-    });
-    return () => {
-      active = false;
+    useEffect(() => {
+      if (nativeTextRef.current === storeText) return;
+      nativeTextRef.current = storeText;
+      setLocalText(storeText);
+      if (storeText) inputRef.current?.setNativeProps({ text: storeText });
+      else inputRef.current?.clear();
+    }, [storeText]);
+
+    const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
+    const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+
+    useEffect(() => {
+      if (mentionQuery === null) {
+        setDirectoryLoaded(false);
+        setTagProfiles([]);
+        return;
+      }
+      let active = true;
+      void searchFinoraTags(mentionQuery).then((next) => {
+        if (!active) return;
+        setTagProfiles(next);
+        setDirectoryLoaded(true);
+      });
+      return () => {
+        active = false;
+      };
+    }, [mentionQuery]);
+
+    const selectTag = (profile: FinoraTagSuggestion) => {
+      if (!mentionMatch || mentionQuery === null) return;
+      const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
+      const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
+      nativeTextRef.current = next;
+      setLocalText(next);
+      inputRef.current?.setNativeProps({ text: next });
+      aui.thread.composer().setText(next);
+      haptics.selection();
+      requestAnimationFrame(() => inputRef.current?.focus());
     };
-  }, [mentionQuery]);
 
-  const selectTag = (profile: FinoraTagSuggestion) => {
-    if (!mentionMatch || mentionQuery === null) return;
-    const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
-    const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
-    onDraftTextChange(next);
-    aui.thread.composer().setText(next);
-    haptics.selection();
-    requestAnimationFrame(() => inputRef.current?.focus());
-  };
+    const emptyHint =
+      mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
+        ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
+        : 'No recent match. Type the exact Finora Tag to send.';
 
-  const emptyHint =
-    mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
-      ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
-      : 'No recent match. Type the exact Finora Tag to send.';
-
-  const { style: inputStyleProp, ...inputProps } = props;
-  const flatInputStyle = StyleSheet.flatten(inputStyleProp) ?? {};
-  const overlayTextStyle: TextStyle = {
-    fontFamily: flatInputStyle.fontFamily,
-    fontSize: flatInputStyle.fontSize,
-    lineHeight: flatInputStyle.lineHeight,
-    fontWeight: flatInputStyle.fontWeight,
-    letterSpacing: flatInputStyle.letterSpacing,
-    paddingHorizontal: flatInputStyle.paddingHorizontal,
-    paddingTop: flatInputStyle.paddingTop,
-    paddingBottom: flatInputStyle.paddingBottom,
-    paddingLeft: flatInputStyle.paddingLeft,
-    paddingRight: flatInputStyle.paddingRight,
-    padding: flatInputStyle.padding,
-    textAlign: flatInputStyle.textAlign,
-    ...Platform.select({
-      android: { includeFontPadding: false, textAlignVertical: 'top' as const },
-      default: {},
-    }),
-  };
-
-  return (
-    <View style={styles.inputWrap}>
-      {mentionQuery !== null && directoryLoaded && (
-        <View
-          style={[
-            styles.mentionMenu,
-            { backgroundColor: colors.background, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.mentionEyebrow, { color: colors.mutedForeground }]}>
-            Recent Finora Tags
-          </Text>
-          {tagProfiles.length ? (
-            tagProfiles.map((profile, index) => (
-              <Pressable
-                key={profile.accountId}
-                accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
-                onPress={() => selectTag(profile)}
-                style={({ pressed }) => [
-                  styles.mentionRow,
-                  pressed && { backgroundColor: colors.muted },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.mentionAvatar,
-                    { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+    return (
+      <View style={styles.inputWrap}>
+        {mentionQuery !== null && directoryLoaded && (
+          <View
+            style={[
+              styles.mentionMenu,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.mentionEyebrow, { color: colors.mutedForeground }]}>
+              Recent Finora Tags
+            </Text>
+            {tagProfiles.length ? (
+              tagProfiles.map((profile, index) => (
+                <Pressable
+                  key={profile.accountId}
+                  accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
+                  onPress={() => selectTag(profile)}
+                  style={({ pressed }) => [
+                    styles.mentionRow,
+                    pressed && { backgroundColor: colors.muted },
                   ]}
                 >
-                  <Text style={styles.mentionInitials}>{profile.initials}</Text>
-                </View>
-                <View style={styles.mentionMeta}>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.mentionName, { color: colors.foreground }]}
+                  <View
+                    style={[
+                      styles.mentionAvatar,
+                      { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+                    ]}
                   >
-                    {profile.displayName}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.mentionHandle, { color: colors.mutedForeground }]}
-                  >
-                    @{profile.tag} · {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
-                  </Text>
-                </View>
-              </Pressable>
-            ))
-          ) : (
-            <Text style={[styles.mentionEmpty, { color: colors.mutedForeground }]}>
-              {emptyHint}
-            </Text>
-          )}
-        </View>
-      )}
-      <View style={styles.highlightWrap}>
-        {useHighlightOverlay ? (
-          <ComposerHighlightedText
-            text={localText}
-            textStyle={overlayTextStyle}
-            foreground={colors.foreground}
-            tagColor={tagColor}
-          />
-        ) : null}
+                    <Text style={styles.mentionInitials}>{profile.initials}</Text>
+                  </View>
+                  <View style={styles.mentionMeta}>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.mentionName, { color: colors.foreground }]}
+                    >
+                      {profile.displayName}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.mentionHandle, { color: colors.mutedForeground }]}
+                    >
+                      @{profile.tag} ·{' '}
+                      {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))
+            ) : (
+              <Text style={[styles.mentionEmpty, { color: colors.mutedForeground }]}>
+                {emptyHint}
+              </Text>
+            )}
+          </View>
+        )}
         <TextInput
-          {...inputProps}
+          {...props}
           ref={inputRef}
-          value={localText}
-          style={[
-            inputStyleProp,
-            useHighlightOverlay && styles.transparentInput,
-            Platform.select({
-              android: { includeFontPadding: false, textAlignVertical: 'top' },
-              web: useHighlightOverlay ? ({ caretColor: colors.foreground } as object) : undefined,
-              default: {},
-            }),
-          ]}
+          defaultValue={initialTextRef.current}
           selectionColor={tagColor}
           onChangeText={(text) => {
-            onDraftTextChange(text);
+            nativeTextRef.current = text;
+            setLocalText(text);
             aui.thread.composer().setText(text);
           }}
         />
       </View>
-    </View>
-  );
-}
+    );
+  },
+);
 
 export function Composer() {
   const { colors } = useTheme();
-  const storeText = useAuiState((s) => s.thread.composer.text);
-  const [draftText, setDraftText] = useState(storeText);
+  const inputRef = useRef<ComposerInputHandle>(null);
+  const [inputFocused, setInputFocused] = useState(false);
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
     [colors.foreground],
@@ -712,28 +606,39 @@ export function Composer() {
         <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
 
         <ComposerInput
-          draftText={draftText}
-          onDraftTextChange={setDraftText}
+          ref={inputRef}
           style={inputStyle}
           placeholder='Ask Finora… use @ to tag'
           placeholderTextColor={colors.mutedForeground}
           multiline
           maxLength={4000}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
         />
 
         <View style={styles.actionRow}>
           <AttachButton />
           <ScanButton />
           <View style={styles.spacer} />
-          <VoiceButton
-            composerText={draftText}
-            onComposerTextChange={setDraftText}
-          />
+          <VoiceButton />
+          {inputFocused ? (
+            <Pressable
+              accessibilityLabel='Hide keyboard'
+              hitSlop={8}
+              onPress={() => {
+                inputRef.current?.blur();
+                Keyboard.dismiss();
+              }}
+              style={({ pressed }) => [
+                styles.doneButton,
+                { backgroundColor: pressed ? colors.muted : 'transparent' },
+              ]}
+            >
+              <Text style={[styles.doneButtonText, { color: colors.foreground }]}>Done</Text>
+            </Pressable>
+          ) : null}
           <AuiIf condition={(s) => !s.thread.isRunning}>
-            <SendButton
-              draftText={draftText}
-              onSend={() => setDraftText('')}
-            />
+            <SendButton />
           </AuiIf>
           <AuiIf condition={(s) => s.thread.isRunning}>
             <CancelButton />
@@ -779,16 +684,6 @@ const styles = StyleSheet.create({
   },
   inputWrap: {
     width: '100%',
-  },
-  highlightWrap: {
-    position: 'relative',
-    width: '100%',
-  },
-  highlightLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  transparentInput: {
-    color: 'transparent',
   },
   mentionMenu: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -861,6 +756,19 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  doneButton: {
+    minWidth: 48,
+    height: 38,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  doneButtonText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
   },
   voiceButton: {
     width: 64,
