@@ -42,7 +42,8 @@ import {
 } from '../db/chat-store';
 import { createDb } from '../db/client';
 
-const MODEL_ID = 'gpt-5.6-luna';
+const DEFAULT_OPENROUTER_MODEL = 'openai/gpt-5-mini';
+const DEFAULT_OPENAI_MODEL = 'gpt-5-mini';
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
@@ -347,7 +348,8 @@ chat.get('/:id', async (c) => {
 chat.post('/', async (c) => {
   const requestId = crypto.randomUUID();
   const env = c.get('env');
-  if (!env.OPENAI_API_KEY) {
+  const modelApiKey = env.OPENROUTER_API_KEY ?? env.OPENAI_API_KEY;
+  if (!modelApiKey) {
     return c.json(
       errorResponse('model_not_configured', 'The AI service is not configured.', requestId, false),
       503,
@@ -466,9 +468,23 @@ chat.post('/', async (c) => {
       errorLogged = true;
       logChatError(error, requestId);
     };
-    const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
+    const openai = createOpenAI({
+      apiKey: modelApiKey,
+      ...(env.OPENROUTER_API_KEY
+        ? {
+            baseURL: 'https://openrouter.ai/api/v1',
+            headers: {
+              'HTTP-Referer': env.WELCOME_EMAIL_CTA_URL,
+              'X-Title': 'Finora',
+            },
+          }
+        : {}),
+    });
+    const modelId = env.OPENROUTER_API_KEY
+      ? (env.OPENROUTER_MODEL ?? DEFAULT_OPENROUTER_MODEL)
+      : DEFAULT_OPENAI_MODEL;
     const result = streamText({
-      model: openai.responses(MODEL_ID),
+      model: openai.chat(modelId),
       system: FINORA_SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
       tools: createChatAgentTools(),
@@ -480,14 +496,18 @@ chat.post('/', async (c) => {
         firstChunkMs: FIRST_CHUNK_TIMEOUT_MS,
         totalMs: TOTAL_TIMEOUT_MS,
       },
-      providerOptions: {
-        openai: {
-          reasoningEffort: 'low',
-          textVerbosity: 'low',
-          store: false,
-          safetyIdentifier: await safetyIdentifier(userId),
-        },
-      },
+      ...(env.OPENROUTER_API_KEY
+        ? {}
+        : {
+            providerOptions: {
+              openai: {
+                reasoningEffort: 'low',
+                textVerbosity: 'low',
+                store: false,
+                safetyIdentifier: await safetyIdentifier(userId),
+              },
+            },
+          }),
       onError: ({ error }) => reportError(error),
     });
 
