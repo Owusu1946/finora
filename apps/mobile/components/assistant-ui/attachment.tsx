@@ -220,8 +220,7 @@ const styles = StyleSheet.create({
   /* Composer Image */
   imageChipContainer: {
     position: 'relative',
-    marginRight: 6,
-    marginVertical: 4,
+    flexShrink: 0,
   },
   imageChip: {
     width: 64,
@@ -255,14 +254,15 @@ const styles = StyleSheet.create({
   /* Composer Document */
   chip: {
     flexDirection: 'row',
+    flexShrink: 0,
     alignItems: 'center',
+    maxWidth: 220,
     borderRadius: Radius.attachment,
     borderWidth: StyleSheet.hairlineWidth,
     paddingLeft: 10,
     paddingRight: 4,
     paddingVertical: 6,
     gap: 6,
-    marginVertical: 4,
   },
   chipContent: {
     flexDirection: 'row',
