@@ -471,10 +471,7 @@
     "public.account_type": {
       "name": "account_type",
       "schema": "public",
-      "values": [
-        "personal",
-        "business"
-      ]
+      "values": ["personal", "business"]
     },
     "public.transactional_email_status": {
       "name": "transactional_email_status",

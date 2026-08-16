@@ -1,4 +1,5 @@
 export * from './account';
+export * from './chat';
 export * from './corridors';
 export * from './enums';
 export * from './finora-tag';

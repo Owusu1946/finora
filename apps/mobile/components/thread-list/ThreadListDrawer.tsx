@@ -12,6 +12,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';
+import type { TranslationKey } from '@/lib/i18n';
 
 import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
@@ -21,7 +22,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
-import type { TranslationKey } from '@/lib/i18n';
 import { useSettings } from '@/lib/settings-context';
 import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
@@ -37,7 +37,9 @@ const MONEY_ITEMS_BASE: NavItem[] = [
   { href: '/activity', key: 'nav_activity', icon: 'activity' },
 ];
 
-const MONEY_ITEMS_BUSINESS: NavItem[] = [{ href: '/treasury', key: 'nav_treasury', icon: 'wallet' }];
+const MONEY_ITEMS_BUSINESS: NavItem[] = [
+  { href: '/treasury', key: 'nav_treasury', icon: 'wallet' },
+];
 
 const PAY_ITEMS_BASE: NavItem[] = [
   { href: '/approvals', key: 'nav_approvals', icon: 'shield' },

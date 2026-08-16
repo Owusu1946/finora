@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -59,21 +59,24 @@ export function PasscodeView({
   );
   const keypadWidth = keySize * 3 + 36;
 
-  const triggerFailure = useCallback((msg: string) => {
-    setError(msg);
-    setValue('');
-    submittingRef.current = false;
-    haptics.error();
-    shakeX.value = withSequence(
-      withTiming(-12, { duration: 36 }),
-      withTiming(12, { duration: 36 }),
-      withTiming(-10, { duration: 36 }),
-      withTiming(10, { duration: 36 }),
-      withTiming(-6, { duration: 36 }),
-      withTiming(6, { duration: 36 }),
-      withTiming(0, { duration: 36 }),
-    );
-  }, [shakeX]);
+  const triggerFailure = useCallback(
+    (msg: string) => {
+      setError(msg);
+      setValue('');
+      submittingRef.current = false;
+      haptics.error();
+      shakeX.value = withSequence(
+        withTiming(-12, { duration: 36 }),
+        withTiming(12, { duration: 36 }),
+        withTiming(-10, { duration: 36 }),
+        withTiming(10, { duration: 36 }),
+        withTiming(-6, { duration: 36 }),
+        withTiming(6, { duration: 36 }),
+        withTiming(0, { duration: 36 }),
+      );
+    },
+    [shakeX],
+  );
 
   const shakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeX.value }],

@@ -1,7 +1,11 @@
+import type { UIMessage } from 'ai';
+
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -11,6 +15,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 export const accountTypeEnum = pgEnum('account_type', ['personal', 'business']);
+export const aiChatMessageRoleEnum = pgEnum('ai_chat_message_role', ['user', 'assistant']);
 export const transactionalEmailStatusEnum = pgEnum('transactional_email_status', [
   'queued',
   'sending',
@@ -82,6 +87,44 @@ export const phoneVerificationChallenges = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('phone_verification_challenges_user_unique').on(table.clerkUserId)],
+);
+
+export const aiChats = pgTable(
+  'ai_chats',
+  {
+    id: text('id').primaryKey(),
+    clerkUserId: text('clerk_user_id').notNull(),
+    activeStreamId: text('active_stream_id'),
+    activeStreamStartedAt: timestamp('active_stream_started_at', { withTimezone: true }),
+    activeStreamResumable: boolean('active_stream_resumable').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('ai_chats_clerk_user_updated_index').on(table.clerkUserId, table.updatedAt),
+    uniqueIndex('ai_chats_active_stream_unique').on(table.activeStreamId),
+  ],
+);
+
+export const aiChatMessages = pgTable(
+  'ai_chat_messages',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    chatId: text('chat_id')
+      .notNull()
+      .references(() => aiChats.id, { onDelete: 'cascade' }),
+    messageId: text('message_id').notNull(),
+    position: integer('position').notNull(),
+    role: aiChatMessageRoleEnum('role').notNull(),
+    payload: jsonb('payload').$type<UIMessage>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('ai_chat_messages_chat_message_unique').on(table.chatId, table.messageId),
+    uniqueIndex('ai_chat_messages_chat_position_unique').on(table.chatId, table.position),
+  ],
 );
 
 export const transactionalEmailDeliveries = pgTable(

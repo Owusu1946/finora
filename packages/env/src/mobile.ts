@@ -9,6 +9,7 @@ export function createMobileEnv(runtimeEnv: RuntimeEnv) {
     client: {
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
       EXPO_PUBLIC_API_URL: z.url().optional(),
+      EXPO_PUBLIC_REMOTE_CHAT_ENABLED: z.enum(['true', 'false']).optional(),
     },
     runtimeEnv,
     emptyStringAsUndefined: true,

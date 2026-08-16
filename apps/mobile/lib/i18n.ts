@@ -114,7 +114,8 @@ const en = {
   settings_sign_out_confirm: 'You\u2019ll need to sign in again to use Finora.',
   settings_reset_label: 'Reset Finora data',
   settings_reset_detail: 'Auth, onboarding, passcode, local mocks',
-  settings_reset_confirm: 'Clears auth, onboarding, passcode, and local demo data. This cannot be undone.',
+  settings_reset_confirm:
+    'Clears auth, onboarding, passcode, and local demo data. This cannot be undone.',
   settings_reset_title: 'Reset Finora',
   settings_dev_footer: 'Only visible in development builds.',
   settings_theme_follows: 'System follows your device appearance.',
@@ -213,7 +214,8 @@ const fr: Record<TranslationKey, string> = {
 
   // Phone verification
   phone_title: 'V\u00e9rification du t\u00e9l\u00e9phone',
-  phone_subtitle: 'Entrez votre num\u00e9ro pour recevoir un code de v\u00e9rification \u00e0 6 chiffres.',
+  phone_subtitle:
+    'Entrez votre num\u00e9ro pour recevoir un code de v\u00e9rification \u00e0 6 chiffres.',
   phone_enter_code: 'V\u00e9rifiez votre t\u00e9l\u00e9phone',
   phone_code_sent: 'Entrez le code \u00e0 6 chiffres envoy\u00e9 au',
   phone_invalid: 'Veuillez entrer un num\u00e9ro de t\u00e9l\u00e9phone valide.',
@@ -221,7 +223,8 @@ const fr: Record<TranslationKey, string> = {
 
   // Passcode modal
   passcode_create_title: 'Cr\u00e9er un code secret',
-  passcode_create_sub: 'Vous l\u2019utiliserez pour approuver les op\u00e9rations financi\u00e8res.',
+  passcode_create_sub:
+    'Vous l\u2019utiliserez pour approuver les op\u00e9rations financi\u00e8res.',
   passcode_confirm_title: 'Confirmer le code secret',
   passcode_confirm_sub: 'Saisissez \u00e0 nouveau le m\u00eame code secret.',
   passcode_enter_title: 'Entrer le code secret',
@@ -229,7 +232,8 @@ const fr: Record<TranslationKey, string> = {
   passcode_forgot_title: 'V\u00e9rifiez votre t\u00e9l\u00e9phone',
   passcode_forgot_sub: 'Entrez le code \u00e0 6 chiffres envoy\u00e9 par SMS.',
   passcode_phone_req_title: 'Ajouter un t\u00e9l\u00e9phone de r\u00e9cup\u00e9ration',
-  passcode_phone_req_sub: 'V\u00e9rifiez d\u2019abord un num\u00e9ro pour recevoir vos codes de r\u00e9initialisation.',
+  passcode_phone_req_sub:
+    'V\u00e9rifiez d\u2019abord un num\u00e9ro pour recevoir vos codes de r\u00e9initialisation.',
   passcode_incorrect: 'Code secret incorrect. R\u00e9essayez.',
   passcode_forgot_btn: 'Code secret oubli\u00e9\u00a0?',
   passcode_new_title: 'Nouveau code secret',
@@ -267,7 +271,8 @@ const fr: Record<TranslationKey, string> = {
   settings_sign_out_confirm: 'Vous devrez vous reconnecter pour utiliser Finora.',
   settings_reset_label: 'R\u00e9initialiser Finora',
   settings_reset_detail: 'Auth, onboarding, code secret, donn\u00e9es locales',
-  settings_reset_confirm: 'Efface l\u2019authentification, l\u2019onboarding, le code secret et les donn\u00e9es locales. Irr\u00e9versible.',
+  settings_reset_confirm:
+    'Efface l\u2019authentification, l\u2019onboarding, le code secret et les donn\u00e9es locales. Irr\u00e9versible.',
   settings_reset_title: 'R\u00e9initialiser Finora',
   settings_dev_footer: 'Visible uniquement en mode d\u00e9veloppement.',
   settings_theme_follows: 'Syst\u00e8me suit l\u2019apparence de votre appareil.',
@@ -285,7 +290,8 @@ const fr: Record<TranslationKey, string> = {
   sec_passcode_detail_none: 'Requis avant le premier envoi',
   sec_biometrics: 'Biom\u00e9trie',
   sec_biometrics_detail: 'Face ID / Empreinte (bient\u00f4t disponible)',
-  sec_footer_passcode: 'Le code secret et la biom\u00e9trie prot\u00e8gent les approbations avant d\u2019ex\u00e9cuter un paiement.',
+  sec_footer_passcode:
+    'Le code secret et la biom\u00e9trie prot\u00e8gent les approbations avant d\u2019ex\u00e9cuter un paiement.',
   sec_trusted_devices: 'Appareils de confiance',
   sec_trusted_footer: 'R\u00e9voquez un appareil pour demander une nouvelle connexion.',
   sec_this_device: 'Cet appareil',
@@ -297,12 +303,14 @@ const fr: Record<TranslationKey, string> = {
 
   // Account screen
   account_type_title: 'Type de compte',
-  account_type_footer: 'Le choix entre personnel ou entreprise modifie l\u2019affichage de vos portefeuilles.',
+  account_type_footer:
+    'Le choix entre personnel ou entreprise modifie l\u2019affichage de vos portefeuilles.',
   account_type_personal: 'Personnel',
   account_type_business: 'Entreprise',
 
   // Notifications screen
-  notif_footer: 'Les approbations pr\u00e9par\u00e9es par l\u2019agent arrivent toujours dans Approbations, m\u00eame si les alertes sont d\u00e9sactiv\u00e9es.',
+  notif_footer:
+    'Les approbations pr\u00e9par\u00e9es par l\u2019agent arrivent toujours dans Approbations, m\u00eame si les alertes sont d\u00e9sactiv\u00e9es.',
   notif_approvals_detail: 'Lorsqu\u2019un agent pr\u00e9pare un paiement ou un plan',
   notif_payments_detail: 'Transferts envoy\u00e9s, re\u00e7us et \u00e9chou\u00e9s',
   notif_invoices_detail: 'Nouvelles factures fournisseurs depuis Gmail',

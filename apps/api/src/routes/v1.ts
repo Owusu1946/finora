@@ -77,7 +77,10 @@ async function sendAgooSms(env: Env, to: string, message: string) {
   if (!env.AGOO_SMS_API_KEY) throw new Error('SMS provider is not configured.');
   const senderId = env.AGOO_SMS_SENDER_ID ?? 'VENTRAPOS';
   const requestBody = { to, message, senderId };
-  console.log('[Agoo SMS] Sending:', JSON.stringify({ to, senderId, messageLength: message.length }));
+  console.log(
+    '[Agoo SMS] Sending:',
+    JSON.stringify({ to, senderId, messageLength: message.length }),
+  );
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
   let response: Response;
@@ -94,7 +97,9 @@ async function sendAgooSms(env: Env, to: string, message: string) {
   } catch (error) {
     clearTimeout(timeout);
     console.error('[Agoo SMS] Network/fetch error:', error);
-    throw new Error(`SMS provider network error: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `SMS provider network error: ${error instanceof Error ? error.message : String(error)}`,
+    );
   } finally {
     clearTimeout(timeout);
   }
@@ -249,8 +254,8 @@ v1.post('/auth/phone-verification/verify', async (c) => {
     if (!profile) {
       const user = await c.get('clerk').users.getUser(userId);
       const primaryEmail =
-        user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
-        user.emailAddresses[0]?.emailAddress;
+        user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)
+          ?.emailAddress ?? user.emailAddresses[0]?.emailAddress;
       if (!primaryEmail) return c.json({ error: 'profile_email_missing' }, 422);
       profile = await upsertUserProfile(db, {
         clerkUserId: user.id,

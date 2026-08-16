@@ -4,6 +4,8 @@ export function getApiEnv(bindings: Env) {
   const optionalBindings = bindings as Env & {
     CLERK_WEBHOOK_SIGNING_SECRET?: string;
     DEEPGRAM_API_KEY?: string;
+    OPENAI_API_KEY?: string;
+    REDIS_URL?: string;
     RESEND_WEBHOOK_SECRET?: string;
     WELCOME_EMAIL_REDIRECT_TO?: string;
   };
@@ -15,6 +17,8 @@ export function getApiEnv(bindings: Env) {
     CLERK_PUBLISHABLE_KEY: bindings.CLERK_PUBLISHABLE_KEY,
     CLERK_WEBHOOK_SIGNING_SECRET: optionalBindings.CLERK_WEBHOOK_SIGNING_SECRET,
     DEEPGRAM_API_KEY: optionalBindings.DEEPGRAM_API_KEY,
+    OPENAI_API_KEY: optionalBindings.OPENAI_API_KEY,
+    REDIS_URL: optionalBindings.REDIS_URL,
     RESEND_API_KEY: bindings.RESEND_API_KEY,
     RESEND_WEBHOOK_SECRET: optionalBindings.RESEND_WEBHOOK_SECRET,
     WELCOME_EMAIL_MODE: bindings.WELCOME_EMAIL_MODE,

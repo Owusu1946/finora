@@ -1,4 +1,9 @@
-import type { ThreadMessage } from '@assistant-ui/react-native';
+import type {
+  ChatModelAdapter,
+  ChatModelRunResult,
+  ThreadMessage,
+  ToolCallMessagePart,
+} from '@assistant-ui/react-native';
 
 import type { BalanceWallet } from '@/components/chat/BalancesCard';
 import type { ConversionQuote } from '@/components/chat/ConversionCard';
@@ -48,7 +53,8 @@ function lastUserText(messages: readonly ThreadMessage[]) {
   );
 }
 
-const SEND_RE = /\b(send|pay|transfer|payout|envoyer|payer|transférer|virement)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
+const SEND_RE =
+  /\b(send|pay|transfer|payout|envoyer|payer|transférer|virement)\b|\bsend money\b|\bpay\s+[a-z0-9]/i;
 const FUND_RE =
   /\b(deposit|fund|top\s*up|add money|add funds|load (?:my )?(?:wallet|account)|charge my momo|déposer|recharger)\b/i;
 const RECEIVE_RE =
@@ -75,7 +81,8 @@ const LIST_EMPLOYEES_RE =
   /\b(show|list|my|view)\b.{0,20}\b(employees?|team|roster)\b|\b(team roster|employees?|employés?|salariés?)\b/i;
 const LIST_SUPPLIERS_RE =
   /\b(show|list|my|view)\b.{0,16}\bsuppliers?\b|\bsuppliers?\s+directory\b|\bfournisseurs?\b/i;
-const CREATE_EMPLOYEE_RE = /\b(add|create|hire)\s+(?:an?\s+)?employee\b|\bajouter\s+un\s+employé\b/i;
+const CREATE_EMPLOYEE_RE =
+  /\b(add|create|hire)\s+(?:an?\s+)?employee\b|\bajouter\s+un\s+employé\b/i;
 const LIST_BENEFICIARIES_RE =
   /\b(show|list|my|view)\b.{0,16}\bbeneficiar(?:y|ies)\b|\bbeneficiar(?:y|ies)\b|\bbénéficiaires?\b/i;
 const LIST_POLICIES_RE =
@@ -90,7 +97,8 @@ const FINANCIAL_REPORT_RE =
   /\b(financial (report|insights?|summary)|cash flow|spending (summary|report)|business report|rapport|flux\s+de\s+trésorerie)\b/i;
 const CREATE_CARD_RE =
   /\b(create|issue|make|new)\b.{0,24}\b(virtual\s+)?card\b|\bvirtual\s+card\s+for\b|\bcard\s+for\s+(netflix|meta|aws|travel)\b|\bcréer\s+une\s+carte\b/i;
-const LIST_CARDS_RE = /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b|\bcartes?\b/i;
+const LIST_CARDS_RE =
+  /\b(show|list|my|view)\b.{0,16}\b(virtual\s+)?cards?\b|\bvirtual\s+cards?\b|\bcartes?\b/i;
 const MANAGE_CARD_RE =
   /\b(freeze|unfreeze|cancel)\b.{0,24}\bcard\b|\bcard\b.{0,24}\b(freeze|unfreeze|cancel|details|limit)\b|\bbloquer|débloquer\b/i;
 
@@ -578,9 +586,9 @@ function countryFromIban(iban: string): string | undefined {
 
 function enrichPrepareArgs(
   prompt: string,
-  base: Record<string, unknown>,
+  base: ToolCallMessagePart['args'],
   destination: PaymentConfirmation['destination'] | null,
-): Record<string, unknown> {
+): ToolCallMessagePart['args'] {
   const country =
     parseDestinationCountry(prompt) ??
     (destination?.kind === 'bank_account' && /^[A-Z]{2}\d{2}/i.test(destination.value)
@@ -779,7 +787,7 @@ function buildMockConversion(prompt: string): ConversionQuote {
 }
 
 /** Local mock model — streams reasoning + tool calls so CoT UI is visible. */
-export const finoraChatAdapter = {
+const finoraMockAdapter = {
   async *run({
     messages,
     abortSignal,
@@ -1074,7 +1082,7 @@ export const finoraChatAdapter = {
         amountUsd != null
           ? simulatePolicy(policies, amountUsd, isNewRecipient || /\bnew\b/i.test(prompt))
           : undefined;
-      const args = { amountUsd, isNewRecipient };
+      const args = { ...(amountUsd == null ? {} : { amountUsd }), isNewRecipient };
       const argsText = JSON.stringify(args);
       const reasoning = 'Approval policies requested.\nLoading rules…';
       yield { content: [{ type: 'reasoning', text: reasoning }] };
@@ -1106,7 +1114,7 @@ export const finoraChatAdapter = {
             toolName: 'list_policies',
             args,
             argsText,
-            result: { policies, simulation },
+            result: simulation ? { policies, simulation } : { policies },
           },
           {
             type: 'text',
@@ -2438,9 +2446,15 @@ export const finoraChatAdapter = {
                 destinationLabel: dest.label,
                 destinationValue: dest.value,
                 reference: `To ${contact.name}`,
-                destinationCountry: fromContact.destinationCountry,
-                settlementMethod: fromContact.settlementMethod,
-                fundingCurrency: fromContact.fundingCurrency,
+                ...(fromContact.destinationCountry
+                  ? { destinationCountry: fromContact.destinationCountry }
+                  : {}),
+                ...(fromContact.settlementMethod
+                  ? { settlementMethod: fromContact.settlementMethod }
+                  : {}),
+                ...(fromContact.fundingCurrency
+                  ? { fundingCurrency: fromContact.fundingCurrency }
+                  : {}),
               },
               dest,
             );
@@ -2548,7 +2562,7 @@ export const finoraChatAdapter = {
           destinationKind: payment.destination.kind,
           destinationLabel: payment.destination.label,
           destinationValue: payment.destination.value,
-          reference: payment.reference,
+          ...(payment.reference ? { reference: payment.reference } : {}),
         },
         payment.destination,
       );
@@ -2688,6 +2702,14 @@ export const finoraChatAdapter = {
           },
         ],
       };
+    }
+  },
+};
+
+export const finoraChatAdapter: ChatModelAdapter = {
+  async *run(options) {
+    for await (const result of finoraMockAdapter.run(options)) {
+      yield JSON.parse(JSON.stringify(result)) as ChatModelRunResult;
     }
   },
 };

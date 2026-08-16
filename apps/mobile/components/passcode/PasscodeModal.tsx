@@ -106,8 +106,6 @@ export function PasscodeModal({
     );
   }, [failureSignal, shakeX, visible]);
 
-
-
   const copy = useMemo(() => {
     if (title && subtitle) return { title, subtitle };
     if (mode === 'setup') {
@@ -125,9 +123,7 @@ export function PasscodeModal({
     if (mode === 'forgot-otp') {
       return {
         title: t('passcode_forgot_title'),
-        subtitle: forgotHint
-          ? `${t('phone_code_sent')} ${forgotHint}.`
-          : t('passcode_forgot_sub'),
+        subtitle: forgotHint ? `${t('phone_code_sent')} ${forgotHint}.` : t('passcode_forgot_sub'),
       };
     }
     if (mode === 'phone-required') {
