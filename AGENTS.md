@@ -54,6 +54,7 @@ When adding a financial flow, prefer the established `prepare_*` and `execute_ap
 - Commit completed work proactively and frequently without waiting for the user to ask. Do not leave finished changes uncommitted. Keep commits small and atomic, and use conventional commit syntax.
 - For small, focused changes, commit on the current branch and only push when asked.
 - For large, significant, or bulk changes, proactively create a dedicated branch before implementation. When the work is complete and verified, push the branch and open a pull request without waiting for the user to ask.
+- If pull request target is not defined, open against origin.
 - If a task is too large to execute at once, you may spin off subagents and delegate focused subtasks. Provide only the context each subagent needs while maintaining the top-level context.
 - Explore alternatives when useful, but work efficiently and avoid circling or spiraling.
 - Write TypeScript as TypeScript, not Python. Avoid explicit return types and `any` unless absolutely necessary.
