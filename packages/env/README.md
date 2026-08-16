@@ -9,3 +9,14 @@ Shared T3 Env schemas for Finora's different runtimes.
 
 Each app passes its runtime values explicitly. This keeps server secrets out of
 client bundles and avoids treating non-string Cloudflare bindings as variables.
+
+## Verification
+
+From the repository root, run:
+
+```bash
+pnpm --filter @finora/env check-types
+```
+
+This package has no dev server or build output. The root `pnpm check-types` command includes it
+automatically.
