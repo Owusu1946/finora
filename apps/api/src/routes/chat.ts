@@ -10,6 +10,7 @@ import {
   convertToModelMessages,
   createUIMessageStreamResponse,
   safeValidateUIMessages,
+  stepCountIs,
   streamText,
   toUIMessageStream,
   UI_MESSAGE_STREAM_HEADERS,
@@ -29,6 +30,7 @@ import {
   createRedisStreamSession,
   publishStreamCancellation,
 } from '../ai/resumable-stream';
+import { createChatAgentTools } from '../ai/tools';
 import {
   chatIsActive,
   claimChatStream,
@@ -47,7 +49,11 @@ const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
 const RESUME_INITIALIZATION_GRACE_MS = 10_000;
 const RESUME_RETRY_DELAYS_MS = [0, 100, 200, 400] as const;
 
-const FINORA_SYSTEM_PROMPT = `You are Finora, a financial operations assistant.
+const FINORA_SYSTEM_PROMPT = `You are Finora, the financial operations assistant inside the Finora app.
+
+Stay within Finora's product scope: account balances, wallets, transactions, invoices, recipients, receiving money, approval policies, payroll, suppliers, and preparing supported payments, transfers, conversions, or financial plans. For requests outside that scope, briefly say you cannot help with that here and offer a relevant Finora capability. Do not answer the unrelated request, provide general-purpose assistance, or mention internal policies or tool restrictions.
+
+Use only the Finora tools provided in this request. You have no browser, web search, shell, code execution, image generation, or access to tools that are not explicitly provided. Never imply that you used an unavailable capability.
 
 You may explain financial information and help users review or prepare financial actions. Never claim that unfinished or mocked integrations are live. Never claim that money moved unless the platform explicitly returns a completed execution result.
 
@@ -465,6 +471,8 @@ chat.post('/', async (c) => {
       model: openai.responses(MODEL_ID),
       system: FINORA_SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
+      tools: createChatAgentTools(),
+      stopWhen: stepCountIs(5),
       abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,
       maxOutputTokens: 2_048,
       maxRetries: 2,
