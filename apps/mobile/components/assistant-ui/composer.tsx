@@ -6,6 +6,7 @@ import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
+  useAudioRecorderState,
 } from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -227,17 +228,29 @@ function ScanButton() {
 type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing';
 
 const MAX_RECORDING_SECONDS = 45;
+const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
+const TRAILING_SILENCE_TIMEOUT_MS = 2_500;
+const VOICE_ACTIVITY_THRESHOLD_DB = -42;
+const VOICE_ACTIVITY_SAMPLES_REQUIRED = 2;
+const VOICE_RECORDING_OPTIONS = {
+  ...RecordingPresets.HIGH_QUALITY,
+  isMeteringEnabled: true,
+};
 
 function useVoiceComposer() {
   const { getToken } = useAuth();
   const aui = useAui();
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
+  const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const voiceStateRef = useRef<VoiceState>('idle');
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const draftBeforeRecordingRef = useRef('');
   const voiceSessionRef = useRef(0);
+  const speechDetectedRef = useRef(false);
+  const voiceActivitySamplesRef = useRef(0);
+  const lastVoiceActivityAtRef = useRef(0);
 
   voiceStateRef.current = voiceState;
 
@@ -302,6 +315,32 @@ function useVoiceComposer() {
   });
 
   useEffect(() => {
+    if (voiceState !== 'recording' || typeof recorderState.metering !== 'number') return;
+
+    const now = Date.now();
+    if (recorderState.metering >= VOICE_ACTIVITY_THRESHOLD_DB) {
+      voiceActivitySamplesRef.current += 1;
+      lastVoiceActivityAtRef.current = now;
+      if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
+        speechDetectedRef.current = true;
+      }
+      return;
+    }
+
+    voiceActivitySamplesRef.current = 0;
+    if (!speechDetectedRef.current) {
+      if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
+        void stopRecording(true);
+      }
+      return;
+    }
+
+    if (now - lastVoiceActivityAtRef.current >= TRAILING_SILENCE_TIMEOUT_MS) {
+      void stopRecording(false);
+    }
+  }, [recorderState.durationMillis, recorderState.metering, voiceState]);
+
+  useEffect(() => {
     return () => {
       mountedRef.current = false;
       clearStopTimer();
@@ -316,6 +355,9 @@ function useVoiceComposer() {
     const sessionId = voiceSessionRef.current + 1;
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+    speechDetectedRef.current = false;
+    voiceActivitySamplesRef.current = 0;
+    lastVoiceActivityAtRef.current = 0;
     updateVoiceState('requesting_permission');
     haptics.selection();
 
@@ -437,7 +479,7 @@ function VoiceComposer({ state, onPress }: { state: VoiceState; onPress: () => v
       ]}
     >
       <ThinkingOrb
-        state='composing'
+        state={state === 'transcribing' ? 'solving' : 'composing'}
         size={64}
         speed={1.2}
         theme={isDark ? 'dark' : 'light'}
