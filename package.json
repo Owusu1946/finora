@@ -15,6 +15,7 @@
     "deploy:mcp": "turbo run deploy --filter=@finora/mcp",
     "dev": "turbo run dev",
     "dev:api": "turbo run dev --filter=@finora/api",
+    "dev:lan": "turbo run dev --filter=@finora/api dev:lan",
     "dev:mcp": "turbo run dev --filter=@finora/mcp",
     "dev:mobile": "turbo run dev --filter=@finora/mobile",
     "dev:web": "turbo run dev --filter=@finora/web",
