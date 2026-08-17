@@ -1,5 +1,5 @@
 import { clerkMiddleware } from '@clerk/hono';
-import { TOOL_NAMES } from '@finora/shared';
+import { PLATFORM_TOOL_NAMES } from '@finora/shared';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
@@ -33,7 +33,7 @@ app.get('/', (c) =>
     name: 'finora-api',
     status: 'ok',
     mode: 'mock',
-    tools: TOOL_NAMES,
+    tools: PLATFORM_TOOL_NAMES,
     docs: 'Money-moving routes return pending_approval; humans resolve via /v1/approvals/:id/resolve',
   }),
 );
