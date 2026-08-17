@@ -126,8 +126,21 @@ export function reconcileChatMessages(
   if (stored.length === 0) return incoming.length === 1 ? incoming : null;
 
   if (trigger === 'submit-message') {
-    if (incoming.length !== stored.length + 1) return null;
-    return isStoredPrefix(stored, incoming) ? incoming : null;
+    const pendingMessage = incoming.at(-1);
+    if (!pendingMessage || pendingMessage.role !== 'user') return null;
+    if (stored.some((message) => message.id === pendingMessage.id)) return null;
+
+    const incomingBase = incoming.slice(0, -1);
+    if (incomingBase.length === stored.length && isStoredPrefix(stored, incomingBase)) {
+      return incoming;
+    }
+
+    // The previous stream can finish persisting between the client's state read and submit.
+    // Preserve the newer server history and append only the pending user turn.
+    if (incomingBase.length <= stored.length && isStoredPrefix(incomingBase, stored)) {
+      return [...stored, pendingMessage];
+    }
+    return null;
   }
 
   if (incoming.length > stored.length || !isStoredPrefix(incoming, stored)) return null;
