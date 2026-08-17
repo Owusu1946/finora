@@ -1,3 +1,4 @@
+import { useClerk, useUser } from '@clerk/expo';
 import { normalizeGhanaPhoneNumber } from '@finora/shared';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -26,6 +27,8 @@ function getSafeReturnTo(value: string | string[] | undefined) {
 
 export default function AddPhoneScreen() {
   const router = useRouter();
+  const { signOut } = useClerk();
+  const { user } = useUser();
   const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
   const returnTo = getSafeReturnTo(params.returnTo);
   const { colors } = useTheme();
@@ -39,8 +42,10 @@ export default function AddPhoneScreen() {
   const [normalizedPhone, setNormalizedPhone] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<PhoneVerificationError['code'] | null>(null);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
   const finish = useCallback(() => {
@@ -64,11 +69,41 @@ export default function AddPhoneScreen() {
 
   const parsedPhone = useMemo(() => normalizeGhanaPhoneNumber(phoneInput), [phoneInput]);
 
+  const showError = useCallback((caught: unknown, fallback: string) => {
+    const verificationError = caught instanceof PhoneVerificationError ? caught : null;
+    setErrorCode(verificationError?.code ?? 'request_failed');
+    setError(verificationError?.message ?? fallback);
+    if (verificationError?.code === 'phone_number_in_use') haptics.error();
+    else haptics.impact();
+  }, []);
+
+  const returnToSignIn = useCallback(async () => {
+    if (leaving) return;
+    setLeaving(true);
+    setError(null);
+    setErrorCode(null);
+    const email = user?.primaryEmailAddress?.emailAddress;
+    try {
+      await signOut();
+      haptics.selection();
+      router.replace({
+        pathname: '/auth/login',
+        ...(email ? { params: { email } } : {}),
+      });
+    } catch {
+      haptics.impact();
+      setError('Could not return to sign in. Try again.');
+      setErrorCode('request_failed');
+      setLeaving(false);
+    }
+  }, [leaving, router, signOut, user?.primaryEmailAddress?.emailAddress]);
+
   const sendCode = useCallback(async () => {
     if (submittingRef.current || loading || !parsedPhone) return;
     submittingRef.current = true;
     setLoading(true);
     setError(null);
+    setErrorCode(null);
     try {
       const result = await phoneVerification.request(parsedPhone, { force: true });
       if (result?.verified) {
@@ -83,73 +118,48 @@ export default function AddPhoneScreen() {
       setStep('code');
       haptics.success();
     } catch (caught) {
-      if (caught instanceof PhoneVerificationError && caught.code === 'phone_number_in_use') {
-        haptics.error();
-      } else {
-        haptics.impact();
-      }
-      setError(
-        caught instanceof PhoneVerificationError
-          ? caught.message
-          : 'Could not send a verification code. Check the number and try again.',
-      );
+      showError(caught, 'Could not send a verification code. Check the number and try again.');
     } finally {
       setLoading(false);
       submittingRef.current = false;
     }
-  }, [finish, loading, markVerified, parsedPhone, phoneVerification]);
+  }, [finish, loading, markVerified, parsedPhone, phoneVerification, showError]);
 
   const verifyCode = useCallback(async () => {
     if (submittingRef.current || loading || code.length !== AUTH_OTP_LENGTH) return;
     submittingRef.current = true;
     setLoading(true);
     setError(null);
+    setErrorCode(null);
     try {
       await phoneVerification.verify(code);
       markVerified();
       haptics.success();
       finish();
     } catch (caught) {
-      if (caught instanceof PhoneVerificationError && caught.code === 'phone_number_in_use') {
-        haptics.error();
-      } else {
-        haptics.impact();
-      }
-      setError(
-        caught instanceof PhoneVerificationError
-          ? caught.message
-          : 'That code is invalid or expired.',
-      );
+      showError(caught, 'That code is invalid or expired.');
     } finally {
       setLoading(false);
       submittingRef.current = false;
     }
-  }, [code, finish, loading, markVerified, phoneVerification]);
+  }, [code, finish, loading, markVerified, phoneVerification, showError]);
 
   const resendCode = useCallback(async () => {
     if (!normalizedPhone || resending || cooldown > 0) return;
     setResending(true);
     setError(null);
+    setErrorCode(null);
     try {
       await phoneVerification.request(normalizedPhone, { force: true });
       setCode('');
       setCooldown(RESEND_SECONDS);
       haptics.success();
     } catch (caught) {
-      if (caught instanceof PhoneVerificationError && caught.code === 'phone_number_in_use') {
-        haptics.error();
-      } else {
-        haptics.impact();
-      }
-      setError(
-        caught instanceof PhoneVerificationError
-          ? caught.message
-          : 'Could not resend the verification code.',
-      );
+      showError(caught, 'Could not resend the verification code.');
     } finally {
       setResending(false);
     }
-  }, [cooldown, normalizedPhone, phoneVerification, resending]);
+  }, [cooldown, normalizedPhone, phoneVerification, resending, showError]);
 
   return (
     <AuthShell
@@ -165,17 +175,47 @@ export default function AddPhoneScreen() {
             }
           />
           {step === 'code' ? (
+            <View style={styles.codeActions}>
+              <Pressable
+                disabled={cooldown > 0 || resending}
+                onPress={() => void resendCode()}
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+              >
+                <Text style={[styles.link, { color: colors.mutedForeground }]}>
+                  {cooldown > 0
+                    ? `Resend code in ${cooldown}s`
+                    : resending
+                      ? 'Sending…'
+                      : 'Resend code'}
+                </Text>
+              </Pressable>
+              <Pressable
+                disabled={loading || resending}
+                onPress={() => {
+                  haptics.selection();
+                  setStep('phone');
+                  setCode('');
+                  setError(null);
+                  setErrorCode(null);
+                }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+              >
+                <Text style={[styles.link, { color: colors.mutedForeground }]}>Change number</Text>
+              </Pressable>
+            </View>
+          ) : null}
+          {!returnTo ? (
             <Pressable
-              disabled={cooldown > 0 || resending}
-              onPress={() => void resendCode()}
+              disabled={loading || resending || leaving}
+              onPress={() => void returnToSignIn()}
               style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
             >
-              <Text style={[styles.resend, { color: colors.mutedForeground }]}>
-                {cooldown > 0
-                  ? `Resend code in ${cooldown}s`
-                  : resending
-                    ? 'Sending…'
-                    : 'Resend code'}
+              <Text style={[styles.signInLink, { color: colors.foreground }]}>
+                {leaving
+                  ? 'Returning to sign in…'
+                  : errorCode === 'phone_number_in_use'
+                    ? 'Sign in to the existing account'
+                    : 'Back to sign in'}
               </Text>
             </Pressable>
           ) : null}
@@ -212,6 +252,7 @@ export default function AddPhoneScreen() {
             value={phoneInput}
             onChangeText={(value) => {
               setError(null);
+              setErrorCode(null);
               setPhoneInput(value);
             }}
             keyboardType='phone-pad'
@@ -241,6 +282,7 @@ export default function AddPhoneScreen() {
           value={code}
           onChange={(value) => {
             setError(null);
+            setErrorCode(null);
             setCode(value);
           }}
           error={error ?? undefined}
@@ -299,10 +341,20 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'stretch',
   },
-  resend: {
+  codeActions: {
+    gap: 4,
+  },
+  link: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,
     fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
+  signInLink: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
     textAlign: 'center',
     paddingVertical: 4,
   },
