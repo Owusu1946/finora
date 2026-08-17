@@ -19,6 +19,7 @@ import { Hono } from 'hono';
 
 import type { AppEnv } from '../types';
 
+import { fallbackChatTitle, generateAndPersistChatTitle } from '../ai/chat-title';
 import { logChatError, toPublicChatError } from '../ai/errors';
 import {
   generatedMessagesForPersistence,
@@ -40,6 +41,7 @@ import {
   finalizeChatStream,
   loadChat,
   replaceChatMessages,
+  setFallbackChatTitle,
 } from '../db/chat-store';
 import { createDb } from '../db/client';
 
@@ -324,6 +326,8 @@ chat.get('/:id', async (c) => {
         active,
         activeStreamId: active && stored.activeStreamResumable ? stored.activeStreamId : null,
         resumable: active && stored.activeStreamResumable,
+        title: stored.title,
+        titleStatus: stored.titleStatus,
       } satisfies ChatStateResponse,
       200,
       { 'x-request-id': requestId },
@@ -457,8 +461,13 @@ chat.post('/', async (c) => {
     }
     const fallbackMessages =
       parsed.data.trigger === 'regenerate-message' ? stored.messages : messages;
+    const shouldGenerateTitle =
+      parsed.data.trigger === 'submit-message' && stored.messages.length === 0;
     if (parsed.data.trigger === 'submit-message') {
       await replaceChatMessages(db, parsed.data.id, userId, messages);
+      if (shouldGenerateTitle) {
+        await setFallbackChatTitle(db, parsed.data.id, userId, fallbackChatTitle(messages));
+      }
     }
 
     let errorLogged = false;
@@ -536,6 +545,22 @@ chat.post('/', async (c) => {
           }
         })();
         c.executionCtx.waitUntil(persistence);
+        if (shouldGenerateTitle) {
+          c.executionCtx.waitUntil(
+            persistence
+              .then(() =>
+                generateAndPersistChatTitle({
+                  db,
+                  chatId: parsed.data.id,
+                  userId,
+                  messages: generatedMessages,
+                  provider,
+                  referer: env.WELCOME_EMAIL_CTA_URL,
+                }),
+              )
+              .catch((error) => logPersistenceError(error, requestId)),
+          );
+        }
         return persistence;
       },
     });

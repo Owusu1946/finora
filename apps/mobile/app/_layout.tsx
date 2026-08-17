@@ -1,8 +1,8 @@
 import {
   AssistantRuntimeProvider,
   useLocalRuntime,
-  type ChatModelAdapter,
-  type ThreadMessageLike,
+  useRemoteThreadListRuntime,
+  useAuiState,
 } from '@assistant-ui/react-native';
 import { ClerkProvider, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
@@ -13,12 +13,11 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
-import * as Crypto from 'expo-crypto';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -76,21 +75,17 @@ import { PasscodeGateProvider, usePasscodeGate } from '@/lib/passcode-gate';
 import { hasPasscode } from '@/lib/passcode-storage';
 import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import {
-  createRemoteChatAdapter,
-  createRemoteChatResumeStream,
-  loadRemoteChatBootstrap,
-} from '@/lib/remote-chat-adapter';
+  createRemoteThreadAdapter,
+  createRemoteThreadRuntimeAdapters,
+  type RemoteThreadConfig,
+} from '@/lib/remote-thread-adapter';
 import { SettingsProvider } from '@/lib/settings-context';
 import { useDrainPendingPaymentLink } from '@/lib/use-drain-pending-payment-link';
 import { useProfileSync } from '@/lib/use-profile-sync';
 
 const publishableKey = env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-type RemoteChatRuntime = {
-  adapter: ChatModelAdapter;
-  initialMessages: ThreadMessageLike[];
-  resumeStream: ReturnType<typeof createRemoteChatResumeStream> | null;
-};
+type RemoteChatRuntime = RemoteThreadConfig;
 
 export const unstable_settings = {
   anchor: '(app)',
@@ -177,23 +172,7 @@ function RootNavigator() {
   );
 }
 
-function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime | null }) {
-  const runtime = useLocalRuntime(remoteChat?.adapter ?? finoraChatAdapter, {
-    initialMessages: remoteChat?.initialMessages,
-  });
-  const resumeStarted = useRef(false);
-
-  useEffect(() => {
-    if (!remoteChat?.resumeStream || resumeStarted.current) return;
-    resumeStarted.current = true;
-    void Promise.resolve(
-      runtime.thread.resumeRun({
-        parentId: remoteChat.initialMessages.at(-1)?.id ?? null,
-        stream: remoteChat.resumeStream,
-      }),
-    ).catch(() => undefined);
-  }, [remoteChat, runtime]);
-
+function FinoraRuntimeContent({ runtime }: { runtime: ReturnType<typeof useLocalRuntime> }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <PreparePaymentToolUI />
@@ -233,6 +212,38 @@ function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime 
   );
 }
 
+function LocalFinoraAssistantRuntime() {
+  const runtime = useLocalRuntime(finoraChatAdapter);
+  return <FinoraRuntimeContent runtime={runtime} />;
+}
+
+function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime }) {
+  const threadListAdapter = useMemo(
+    () => createRemoteThreadAdapter(config),
+    [config.apiUrl, config.getToken, config.userId],
+  );
+  const runtime = useRemoteThreadListRuntime({
+    adapter: threadListAdapter,
+    runtimeHook: function RemoteThreadRuntimeHook() {
+      const remoteId = useAuiState((state) => state.threadListItem.remoteId);
+      const adapters = useMemo(
+        () => createRemoteThreadRuntimeAdapters(config, remoteId ?? 'pending'),
+        [remoteId],
+      );
+      return useLocalRuntime(adapters.chatModel, { adapters: { history: adapters.history } });
+    },
+  });
+  return <FinoraRuntimeContent runtime={runtime} />;
+}
+
+function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime | null }) {
+  return remoteChat ? (
+    <RemoteFinoraAssistantRuntime config={remoteChat} />
+  ) : (
+    <LocalFinoraAssistantRuntime />
+  );
+}
+
 function RootApp() {
   const { getToken, isLoaded: clerkLoaded, userId } = useAuth();
   const [fontsLoaded] = useFonts({
@@ -258,26 +269,7 @@ function RootApp() {
       const remoteChatPromise = (async (): Promise<RemoteChatRuntime | null> => {
         const apiUrl = getApiUrl();
         if (env.EXPO_PUBLIC_REMOTE_CHAT_ENABLED !== 'true' || !apiUrl || !userId) return null;
-
-        const directChatId = `mobile_${userId}`;
-        const chatId =
-          directChatId.length <= 128 && /^[A-Za-z0-9_-]+$/.test(directChatId)
-            ? directChatId
-            : `mobile_${await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, userId)}`;
-        const config = { apiUrl, chatId, getToken };
-        const adapter = createRemoteChatAdapter(config);
-        try {
-          const bootstrap = await loadRemoteChatBootstrap(config);
-          return {
-            adapter,
-            initialMessages: bootstrap.initialMessages,
-            resumeStream: bootstrap.activeStreamId
-              ? createRemoteChatResumeStream(config, bootstrap.activeStreamId)
-              : null,
-          };
-        } catch {
-          return { adapter, initialMessages: [], resumeStream: null };
-        }
+        return { apiUrl, userId, getToken };
       })();
       const [onboarding, tagConfigured, passcodeExists, remoteChat] = await Promise.all([
         getOnboardingState(),
