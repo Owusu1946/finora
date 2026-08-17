@@ -4,7 +4,7 @@ import { getApiUrl } from '@/lib/api-url';
 
 type GetToken = () => Promise<string | null>;
 
-const PROFILE_REQUEST_TIMEOUT_MS = 12_000;
+const PROFILE_REQUEST_TIMEOUT_MS = 30_000;
 
 export class ProfileApiError extends Error {
   constructor(
