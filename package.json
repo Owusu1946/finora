@@ -17,7 +17,7 @@
     "dev:api": "turbo run dev --filter=@finora/api",
     "dev:lan": "turbo run dev:lan --filter=@finora/api",
     "dev:mcp": "turbo run dev --filter=@finora/mcp",
-    "dev:mobile": "turbo run dev --filter=@finora/mobile",
+    "dev:mobile": "turbo run dev --filter=@finora/mobile -- --clear",
     "dev:web": "turbo run dev --filter=@finora/web",
     "ios": "turbo run ios --filter=@finora/mobile",
     "postinstall": "node scripts/link-mobile-deps.mjs",
