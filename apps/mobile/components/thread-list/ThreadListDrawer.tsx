@@ -112,11 +112,12 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
 
   useEffect(() => {
     if (drawerStatus !== 'open') return;
+    void aui.threads.reload();
     const nextBusiness = isBusinessAccount();
     setBusiness(nextBusiness);
     void countPendingApprovals().then(setPendingApprovals);
     setActiveTab(tabForPathname(pathname, buildNavTabs(nextBusiness)));
-  }, [drawerStatus, pathname]);
+  }, [aui, drawerStatus, pathname]);
 
   useEffect(() => {
     const refreshUnreadCards = () => void hasUnreadVirtualCards().then(setUnreadCards);

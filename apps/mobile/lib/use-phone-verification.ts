@@ -3,7 +3,9 @@ import { useCallback, useMemo } from 'react';
 
 import { getApiUrl } from '@/lib/api-url';
 
-const REQUEST_TIMEOUT_MS = 15_000;
+// Social sign-up may require a cold Clerk + Neon profile sync before AgooSMS
+// is contacted. Keep enough headroom for that first request to complete.
+const REQUEST_TIMEOUT_MS = 30_000;
 
 export type PhoneVerificationErrorCode =
   | 'invalid_phone_number'

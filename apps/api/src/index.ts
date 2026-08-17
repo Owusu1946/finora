@@ -9,6 +9,7 @@ import { requireSession } from './auth';
 import { consumeTransactionalEmailQueue } from './email/consumer';
 import { getApiEnv } from './env';
 import { chat } from './routes/chat';
+import { chats } from './routes/chats';
 import { emailWebhooks } from './routes/email-webhooks';
 import { v1 } from './routes/v1';
 
@@ -51,6 +52,7 @@ app.post('/v1/webhooks/wewire', async (c) => {
 app.use('/v1/*', clerkMiddleware({ clockSkewInMs: 30_000 }));
 app.use('/v1/*', requireSession);
 app.route('/v1/chat', chat);
+app.route('/v1/chats', chats);
 app.route('/v1', v1);
 
 export default {

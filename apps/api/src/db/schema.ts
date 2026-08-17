@@ -16,6 +16,11 @@ import {
 
 export const accountTypeEnum = pgEnum('account_type', ['personal', 'business']);
 export const aiChatMessageRoleEnum = pgEnum('ai_chat_message_role', ['user', 'assistant']);
+export const aiChatTitleStatusEnum = pgEnum('ai_chat_title_status', [
+  'pending',
+  'generated',
+  'fallback',
+]);
 export const transactionalEmailStatusEnum = pgEnum('transactional_email_status', [
   'queued',
   'sending',
@@ -94,6 +99,9 @@ export const aiChats = pgTable(
   {
     id: text('id').primaryKey(),
     clerkUserId: text('clerk_user_id').notNull(),
+    title: text('title'),
+    titleStatus: aiChatTitleStatusEnum('title_status').notNull().default('pending'),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
     activeStreamId: text('active_stream_id'),
     activeStreamStartedAt: timestamp('active_stream_started_at', { withTimezone: true }),
     activeStreamResumable: boolean('active_stream_resumable').notNull().default(false),

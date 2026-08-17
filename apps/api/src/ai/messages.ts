@@ -123,12 +123,16 @@ export function reconcileChatMessages(
   trigger: 'submit-message' | 'regenerate-message',
   messageId?: string,
 ) {
-  if (stored.length === 0) return incoming.length === 1 ? incoming : null;
-
   if (trigger === 'submit-message') {
-    if (incoming.length !== stored.length + 1) return null;
-    return isStoredPrefix(stored, incoming) ? incoming : null;
+    const pendingMessage = incoming.at(-1);
+    if (!pendingMessage || pendingMessage.role !== 'user') return null;
+    if (stored.some((message) => message.id === pendingMessage.id)) return null;
+    // Stored history is authoritative. Client runtimes can assign different IDs
+    // or omit transport-only parts when reconstructing assistant messages.
+    return [...stored, pendingMessage];
   }
+
+  if (stored.length === 0) return null;
 
   if (incoming.length > stored.length || !isStoredPrefix(incoming, stored)) return null;
   if (messageId !== undefined) {

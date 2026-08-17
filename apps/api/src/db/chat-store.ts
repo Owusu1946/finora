@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-import { and, asc, eq, getTableColumns, isNull, lt, or } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, getTableColumns, isNull, lt, or } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -24,6 +24,117 @@ export async function ensureChat(db: Database, chatId: string, clerkUserId: stri
   return existing?.clerkUserId === clerkUserId;
 }
 
+export async function listChats(
+  db: Database,
+  clerkUserId: string,
+  options: { limit: number; cursor?: { updatedAt: Date; id: string } },
+) {
+  const cursorCondition = options.cursor
+    ? or(
+        lt(aiChats.updatedAt, options.cursor.updatedAt),
+        and(eq(aiChats.updatedAt, options.cursor.updatedAt), lt(aiChats.id, options.cursor.id)),
+      )
+    : undefined;
+  return db
+    .select({
+      id: aiChats.id,
+      title: aiChats.title,
+      titleStatus: aiChats.titleStatus,
+      archivedAt: aiChats.archivedAt,
+      updatedAt: aiChats.updatedAt,
+    })
+    .from(aiChats)
+    .where(
+      and(
+        eq(aiChats.clerkUserId, clerkUserId),
+        exists(
+          db
+            .select({ id: aiChatMessages.id })
+            .from(aiChatMessages)
+            .where(eq(aiChatMessages.chatId, aiChats.id))
+            .limit(1),
+        ),
+        cursorCondition,
+      ),
+    )
+    .orderBy(desc(aiChats.updatedAt), desc(aiChats.id))
+    .limit(options.limit + 1);
+}
+
+export async function getChatMetadata(db: Database, chatId: string, clerkUserId: string) {
+  const [chat] = await db
+    .select({
+      id: aiChats.id,
+      title: aiChats.title,
+      titleStatus: aiChats.titleStatus,
+      archivedAt: aiChats.archivedAt,
+      updatedAt: aiChats.updatedAt,
+    })
+    .from(aiChats)
+    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .limit(1);
+  return chat ?? null;
+}
+
+export async function updateChatMetadata(
+  db: Database,
+  chatId: string,
+  clerkUserId: string,
+  values: { title?: string; archived?: boolean },
+) {
+  const [chat] = await db
+    .update(aiChats)
+    .set({
+      ...(values.title !== undefined
+        ? { title: values.title, titleStatus: 'generated' as const }
+        : {}),
+      ...(values.archived !== undefined ? { archivedAt: values.archived ? new Date() : null } : {}),
+    })
+    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .returning({ id: aiChats.id });
+  return chat !== undefined;
+}
+
+export async function deleteChat(db: Database, chatId: string, clerkUserId: string) {
+  const deleted = await db
+    .delete(aiChats)
+    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .returning({ id: aiChats.id });
+  return deleted.length > 0;
+}
+
+export async function setFallbackChatTitle(
+  db: Database,
+  chatId: string,
+  clerkUserId: string,
+  title: string,
+) {
+  await db
+    .update(aiChats)
+    .set({ title, titleStatus: 'fallback' })
+    .where(
+      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.title)),
+    );
+}
+
+export async function setGeneratedChatTitle(
+  db: Database,
+  chatId: string,
+  clerkUserId: string,
+  title: string,
+) {
+  await db
+    .update(aiChats)
+    .set({ title, titleStatus: 'generated' })
+    .where(
+      and(
+        eq(aiChats.id, chatId),
+        eq(aiChats.clerkUserId, clerkUserId),
+        eq(aiChats.titleStatus, 'fallback'),
+      ),
+    );
+}
+
 export async function loadChat(db: Database, chatId: string, clerkUserId: string) {
   const rows = await db
     .select({ ...getTableColumns(aiChats), payload: aiChatMessages.payload })
@@ -35,7 +146,10 @@ export async function loadChat(db: Database, chatId: string, clerkUserId: string
   if (!first) return null;
 
   const { payload: _payload, ...chat } = first;
-  return { ...chat, messages: rows.flatMap((row) => (row.payload ? [row.payload] : [])) };
+  return {
+    ...chat,
+    messages: rows.flatMap((row) => (row.payload ? [row.payload] : [])),
+  };
 }
 
 export async function claimChatStream(

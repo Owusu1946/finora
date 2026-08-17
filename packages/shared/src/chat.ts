@@ -54,5 +54,36 @@ export const ChatStateResponseSchema = z.object({
   active: z.boolean(),
   activeStreamId: ChatStreamIdSchema.nullable(),
   resumable: z.boolean(),
+  title: z.string().nullable().optional(),
+  titleStatus: z.enum(['pending', 'generated', 'fallback']).optional(),
 });
 export type ChatStateResponse = z.infer<typeof ChatStateResponseSchema>;
+
+export const ChatListItemSchema = z.object({
+  id: ChatIdSchema,
+  title: z.string().nullable(),
+  titleStatus: z.enum(['pending', 'generated', 'fallback']),
+  status: z.enum(['regular', 'archived']),
+  lastMessageAt: z.string().datetime(),
+});
+export type ChatListItem = z.infer<typeof ChatListItemSchema>;
+
+export const ChatListResponseSchema = z.object({
+  chats: z.array(ChatListItemSchema),
+  nextCursor: z.string().nullable(),
+});
+export type ChatListResponse = z.infer<typeof ChatListResponseSchema>;
+
+export const CreateChatRequestSchema = z
+  .object({
+    id: ChatIdSchema,
+  })
+  .strict();
+
+export const UpdateChatRequestSchema = z
+  .object({
+    title: z.string().trim().min(1).max(80).optional(),
+    archived: z.boolean().optional(),
+  })
+  .strict()
+  .refine((value) => value.title !== undefined || value.archived !== undefined);
