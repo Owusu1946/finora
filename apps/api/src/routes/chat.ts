@@ -25,6 +25,7 @@ import {
   reconcileChatMessages,
   sanitizeIncomingMessages,
 } from '../ai/messages';
+import { getModelProviderConfig } from '../ai/model-provider';
 import {
   closeStreamWith,
   createRedisStreamSession,
@@ -42,8 +43,6 @@ import {
 } from '../db/chat-store';
 import { createDb } from '../db/client';
 
-const DEFAULT_OPENROUTER_MODEL = 'openai/gpt-5-mini';
-const DEFAULT_OPENAI_MODEL = 'gpt-5-mini';
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
@@ -348,8 +347,8 @@ chat.get('/:id', async (c) => {
 chat.post('/', async (c) => {
   const requestId = crypto.randomUUID();
   const env = c.get('env');
-  const modelApiKey = env.OPENROUTER_API_KEY ?? env.OPENAI_API_KEY;
-  if (!modelApiKey) {
+  const provider = getModelProviderConfig(env);
+  if (!provider) {
     return c.json(
       errorResponse('model_not_configured', 'The AI service is not configured.', requestId, false),
       503,
@@ -469,8 +468,8 @@ chat.post('/', async (c) => {
       logChatError(error, requestId);
     };
     const openai = createOpenAI({
-      apiKey: modelApiKey,
-      ...(env.OPENROUTER_API_KEY
+      apiKey: provider.apiKey,
+      ...(provider.isOpenRouter
         ? {
             baseURL: 'https://openrouter.ai/api/v1',
             headers: {
@@ -480,11 +479,8 @@ chat.post('/', async (c) => {
           }
         : {}),
     });
-    const modelId = env.OPENROUTER_API_KEY
-      ? (env.OPENROUTER_MODEL ?? DEFAULT_OPENROUTER_MODEL)
-      : DEFAULT_OPENAI_MODEL;
     const result = streamText({
-      model: openai.chat(modelId),
+      model: openai.chat(provider.modelId),
       system: FINORA_SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
       tools: createChatAgentTools(),
@@ -496,7 +492,7 @@ chat.post('/', async (c) => {
         firstChunkMs: FIRST_CHUNK_TIMEOUT_MS,
         totalMs: TOTAL_TIMEOUT_MS,
       },
-      ...(env.OPENROUTER_API_KEY
+      ...(provider.isOpenRouter
         ? {}
         : {
             providerOptions: {

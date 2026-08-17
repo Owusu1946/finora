@@ -18,6 +18,8 @@ import {
 } from 'ai';
 import { fetch } from 'expo/fetch';
 
+import { canonicalizeRemoteChatHistory } from './remote-chat-history';
+
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
 const BOOTSTRAP_TIMEOUT_MS = 5_000;
 
@@ -86,14 +88,6 @@ function toUIMessage(message: ThreadMessage): UIMessage {
     role: message.role === 'user' ? 'user' : 'assistant',
     parts,
   };
-}
-
-function canonicalizeHistory(stored: UIMessage[], local: UIMessage[]) {
-  const storedIds = new Set(stored.map((message) => message.id));
-  const addedUserMessages = local.filter(
-    (message) => message.role === 'user' && !storedIds.has(message.id),
-  );
-  return [...stored, ...addedUserMessages];
 }
 
 type AssistantContent = NonNullable<ChatModelRunResult['content']>;
@@ -337,7 +331,7 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
         const uiMessages = messages.filter((message) => message.role !== 'system').map(toUIMessage);
         const state = await api.getState(abortSignal);
         const storedMessages = state ? await validateStateMessages(state.messages) : [];
-        const requestMessages = canonicalizeHistory(storedMessages, uiMessages);
+        const requestMessages = canonicalizeRemoteChatHistory(storedMessages, uiMessages);
         const trigger =
           requestMessages.length === storedMessages.length + 1
             ? ('submit-message' as const)
