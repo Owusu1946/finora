@@ -29,7 +29,7 @@ describe('reconcileChatMessages', () => {
     ).toEqual([firstUser, firstAssistant, secondUser]);
   });
 
-  it('rejects a divergent history that is not a prefix of stored history', () => {
+  it('ignores a divergent client base and appends to authoritative stored history', () => {
     const divergentUser = textMessage('different-user', 'user', 'Different history');
     expect(
       reconcileChatMessages(
@@ -37,7 +37,14 @@ describe('reconcileChatMessages', () => {
         [divergentUser, secondUser],
         'submit-message',
       ),
-    ).toBeNull();
+    ).toEqual([firstUser, firstAssistant, secondUser]);
+  });
+
+  it('accepts the first user message even when the client includes local-only history', () => {
+    const localGreeting = textMessage('local-assistant', 'assistant', 'Welcome');
+    expect(reconcileChatMessages([], [localGreeting, firstUser], 'submit-message')).toEqual([
+      firstUser,
+    ]);
   });
 
   it('rejects replaying an already stored user message as a new turn', () => {
