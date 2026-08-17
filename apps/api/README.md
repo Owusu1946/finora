@@ -114,3 +114,30 @@ Use Resend's `delivered@resend.dev`, `bounced@resend.dev`, `complained@resend.de
 `suppressed@resend.dev` addresses for provider-state tests. For the final smoke test, create one
 email/password user, one Google user, and one Apple user, then confirm exactly one delivery row and
 one welcome email per Clerk user.
+
+## Gmail integration
+
+Enable the Gmail API in Google Cloud, configure the OAuth consent screen with `openid`, `email`,
+`profile`, and `https://www.googleapis.com/auth/gmail.readonly`, then create a Web application OAuth
+client. Its authorized redirect URI must exactly match:
+
+```text
+https://<api-domain>/oauth/google/callback
+```
+
+Configure `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`,
+`GOOGLE_OAUTH_REDIRECT_URI`, and a random `GOOGLE_TOKEN_ENCRYPTION_KEY` of at least 32 characters in
+`.dev.vars` and production Wrangler secrets. Create the sync queue and dead-letter queue before
+deployment:
+
+```bash
+pnpm --filter @finora/api exec wrangler queues create finora-gmail-sync
+pnpm --filter @finora/api exec wrangler queues create finora-gmail-sync-dlq
+pnpm --filter @finora/api cf-typegen
+pnpm db:push
+```
+
+OAuth uses one-time state, PKCE, and encrypted refresh-token storage. Tokens never reach mobile.
+The current sync stores only Gmail connection metadata and a bounded candidate count; it does not
+persist message bodies or attachments. The readonly Gmail scope is restricted and may require
+Google verification and a security assessment before public production use.

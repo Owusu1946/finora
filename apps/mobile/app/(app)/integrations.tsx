@@ -1,6 +1,11 @@
+import type { GmailIntegrationStatus } from '@finora/shared';
+
 import { useAui } from '@assistant-ui/react-native';
+import { useAuth } from '@clerk/expo';
+import * as Linking from 'expo-linking';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState, type ReactNode } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GmailLogo } from '@/components/integrations/gmail-logo';
@@ -11,18 +16,21 @@ import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
+import {
+  beginGmailConnection,
+  disconnectGmailIntegration,
+  getGmailIntegrationStatus,
+  syncGmailIntegration,
+} from '@/lib/gmail-integration-api';
 import { haptics } from '@/lib/haptics';
 import {
-  connectGmail,
   connectGoogleCalendar,
   connectSmsInbox,
-  disconnectGmail,
   disconnectGoogleCalendar,
   disconnectSmsInbox,
   getIntegrations,
   type IntegrationsState,
 } from '@/lib/integrations-storage';
-import { listDueInvoices } from '@/lib/invoices-storage';
 import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
 
 type IntegrationCardProps = {
@@ -112,27 +120,48 @@ function IntegrationCard({
 }
 
 export default function IntegrationsScreen() {
+  const { getToken } = useAuth();
   const { colors } = useTheme();
   const router = useRouter();
   const aui = useAui();
   const [state, setState] = useState<IntegrationsState | null>(null);
   const [busyKey, setBusyKey] = useState<'gmail' | 'calendar' | 'sms' | null>(null);
-  const [dueCount, setDueCount] = useState(0);
+  const [gmail, setGmail] = useState<GmailIntegrationStatus | null>(null);
+  const gmailRef = useRef<GmailIntegrationStatus | null>(null);
+  const [gmailStatusError, setGmailStatusError] = useState(false);
   const [calendarCount, setCalendarCount] = useState(0);
   const [smsCount, setSmsCount] = useState(0);
 
   const refresh = useCallback(async () => {
-    const [integrations, due, calendar, sms] = await Promise.all([
+    const [integrations, gmailResult, calendar, sms] = await Promise.all([
       getIntegrations(),
-      listDueInvoices(),
+      getGmailIntegrationStatus(getToken)
+        .then((value) => ({ value, failed: false as const }))
+        .catch((error) => {
+          console.error('[GmailIntegration] status refresh failed', {
+            name: error instanceof Error ? error.name : 'UnknownError',
+            message: error instanceof Error ? error.message : String(error),
+          });
+          return { value: null, failed: true as const };
+        }),
       listUpcomingCalendarMoneyEvents(),
       listOpenSmsPaymentRequests(),
     ]);
-    setState(integrations);
-    setDueCount(due.length);
+    const gmailStatus = gmailResult.value ?? gmailRef.current;
+    setState({
+      ...integrations,
+      gmailConnected: gmailStatus?.connected ?? false,
+      gmailEmail: gmailStatus?.email ?? undefined,
+      gmailConnectedAt: gmailStatus?.lastSyncedAt ?? undefined,
+    });
+    if (gmailResult.value) {
+      gmailRef.current = gmailResult.value;
+      setGmail(gmailResult.value);
+    }
+    setGmailStatusError(gmailResult.failed);
     setCalendarCount(calendar.length);
     setSmsCount(sms.length);
-  }, []);
+  }, [getToken]);
 
   useFocusEffect(
     useCallback(() => {
@@ -151,16 +180,73 @@ export default function IntegrationsScreen() {
     );
   }
 
-  const runConnect = async (
-    key: 'gmail' | 'calendar' | 'sms',
-    action: () => Promise<IntegrationsState>,
-  ) => {
+  const runConnect = async (key: 'calendar', action: () => Promise<IntegrationsState>) => {
     haptics.impact();
     setBusyKey(key);
     await new Promise((r) => setTimeout(r, 700));
     setState(await action());
     setBusyKey(null);
     haptics.success();
+  };
+
+  const runConnectGmail = async () => {
+    haptics.impact();
+    setBusyKey('gmail');
+    try {
+      const returnUrl = Linking.createURL('/integrations');
+      const returnUrlDetails = new URL(returnUrl);
+      console.info('[GmailIntegration] OAuth starting', {
+        returnProtocol: returnUrlDetails.protocol,
+        returnPath: returnUrlDetails.pathname,
+      });
+      const { authorizationUrl } = await beginGmailConnection(getToken, returnUrl);
+      const authorizationUrlDetails = new URL(authorizationUrl);
+      console.info('[GmailIntegration] authorization URL received', {
+        origin: authorizationUrlDetails.origin,
+        path: authorizationUrlDetails.pathname,
+      });
+      const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, returnUrl);
+      console.info('[GmailIntegration] OAuth browser completed', { type: result.type });
+      if (result.type !== 'success') {
+        console.warn('[GmailIntegration] OAuth browser did not return success', {
+          type: result.type,
+        });
+        return;
+      }
+      const oauthResult = new URL(result.url).searchParams.get('gmail');
+      console.info('[GmailIntegration] OAuth callback received', { oauthResult });
+      if (oauthResult !== 'connected') {
+        if (oauthResult === 'failed') Alert.alert('Could not connect Gmail', 'Try again.');
+        return;
+      }
+      await refresh();
+      haptics.success();
+    } catch (error) {
+      console.error('[GmailIntegration] OAuth flow failed', {
+        name: error instanceof Error ? error.name : 'UnknownError',
+        message: error instanceof Error ? error.message : String(error),
+      });
+      haptics.impact();
+      Alert.alert('Could not connect Gmail', error instanceof Error ? error.message : 'Try again.');
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const runDisconnectGmail = async () => {
+    haptics.selection();
+    setBusyKey('gmail');
+    try {
+      await disconnectGmailIntegration(getToken);
+      await refresh();
+    } catch (error) {
+      Alert.alert(
+        'Could not disconnect Gmail',
+        error instanceof Error ? error.message : 'Try again.',
+      );
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   const runConnectSms = async () => {
@@ -178,7 +264,7 @@ export default function IntegrationsScreen() {
   };
 
   const runDisconnect = async (
-    key: 'gmail' | 'calendar' | 'sms',
+    key: 'calendar' | 'sms',
     action: () => Promise<IntegrationsState>,
   ) => {
     haptics.selection();
@@ -202,20 +288,24 @@ export default function IntegrationsScreen() {
       <IntegrationCard
         title='Gmail'
         detail={
-          state.gmailConnected
-            ? `Connected as ${state.gmailEmail ?? 'account'}`
-            : 'Find unpaid invoices from suppliers'
+          gmailStatusError
+            ? 'Could not refresh Gmail status'
+            : state.gmailConnected
+              ? `Connected as ${state.gmailEmail ?? 'account'}`
+              : 'Find unpaid invoices from suppliers'
         }
         connected={state.gmailConnected}
         icon={<GmailLogo width={22} />}
         busy={busyKey === 'gmail'}
         connectLabel='Connect Gmail'
-        onConnect={() => void runConnect('gmail', () => connectGmail())}
-        onDisconnect={() => void runDisconnect('gmail', () => disconnectGmail())}
+        onConnect={() => void runConnectGmail()}
+        onDisconnect={() => void runDisconnectGmail()}
         connectedBody={
           <>
             <Text style={[styles.found, { color: colors.foreground }]}>
-              {dueCount} unpaid invoice{dueCount === 1 ? '' : 's'} ready to review
+              {gmail?.status === 'syncing'
+                ? 'Scanning recent messages for invoice candidates'
+                : `${gmail?.candidateCount ?? 0} invoice candidate${gmail?.candidateCount === 1 ? '' : 's'} found`}
             </Text>
             <Pressable
               onPress={() => {
@@ -234,6 +324,28 @@ export default function IntegrationsScreen() {
               ]}
             >
               <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setBusyKey('gmail');
+                void syncGmailIntegration(getToken)
+                  .then(refresh)
+                  .catch((error) =>
+                    Alert.alert(
+                      'Could not sync Gmail',
+                      error instanceof Error ? error.message : 'Try again.',
+                    ),
+                  )
+                  .finally(() => setBusyKey(null));
+              }}
+              disabled={busyKey === 'gmail'}
+              style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
+                { borderColor: colors.border, opacity: pressed || busyKey === 'gmail' ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Sync now</Text>
             </Pressable>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               In chat, say “Find unpaid invoices” or open Invoices in the drawer.

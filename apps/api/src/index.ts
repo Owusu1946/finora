@@ -8,9 +8,11 @@ import type { AppEnv } from './app-env';
 import { requireSession } from './auth';
 import { consumeTransactionalEmailQueue } from './email/consumer';
 import { getApiEnv } from './env';
+import { consumeGmailSyncQueue } from './integrations/gmail-consumer';
 import { chat } from './routes/chat';
 import { chats } from './routes/chats';
 import { emailWebhooks } from './routes/email-webhooks';
+import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
 import { v1 } from './routes/v1';
 
 const app = new Hono<AppEnv>();
@@ -42,6 +44,7 @@ app.get('/', (c) =>
 app.get('/health', (c) => c.json({ ok: true, mode: 'mock' }));
 
 app.route('/webhooks', emailWebhooks);
+app.route('/oauth/google', googleOAuth);
 
 app.post('/v1/webhooks/wewire', async (c) => {
   const payload = await c.req.json();
@@ -53,9 +56,15 @@ app.use('/v1/*', clerkMiddleware({ clockSkewInMs: 30_000 }));
 app.use('/v1/*', requireSession);
 app.route('/v1/chat', chat);
 app.route('/v1/chats', chats);
+app.route('/v1/integrations/gmail', gmailIntegrations);
 app.route('/v1', v1);
+
+async function consumeQueue(batch: MessageBatch<unknown>, env: Env) {
+  if (batch.queue === 'finora-gmail-sync') return consumeGmailSyncQueue(batch, env);
+  return consumeTransactionalEmailQueue(batch, env);
+}
 
 export default {
   fetch: app.fetch,
-  queue: consumeTransactionalEmailQueue,
+  queue: consumeQueue,
 } satisfies ExportedHandler<Env>;
