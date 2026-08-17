@@ -70,8 +70,12 @@ async function profileFetch(path: string, getToken: GetToken, init?: RequestInit
   }
 }
 
-async function requestProfile(path: string, getToken: GetToken): Promise<UserProfile> {
-  const response = await profileFetch(path, getToken);
+async function requestProfile(
+  path: string,
+  getToken: GetToken,
+  init?: RequestInit,
+): Promise<UserProfile> {
+  const response = await profileFetch(path, getToken, init);
   const payload: unknown = await response.json();
   const parsed = UserProfileSchema.safeParse(
     typeof payload === 'object' && payload !== null && 'profile' in payload
@@ -86,8 +90,8 @@ export function getUserProfile(getToken: GetToken) {
   return requestProfile('/v1/auth/me', getToken);
 }
 
-export async function updateUserProfile(getToken: GetToken, updates: UpdateUserProfile) {
-  await profileFetch('/v1/auth/me', getToken, {
+export function updateUserProfile(getToken: GetToken, updates: UpdateUserProfile) {
+  return requestProfile('/v1/auth/me', getToken, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
