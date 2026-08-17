@@ -1,10 +1,10 @@
 import { useClerk, useUser } from '@clerk/expo';
 import Constants from 'expo-constants';
-import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import {
   SettingsRow,
   SettingsScreen,
@@ -110,20 +110,15 @@ export default function SettingsHubScreen() {
           }}
           style={({ pressed }) => [styles.profile, pressed && { opacity: 0.7 }]}
         >
-          <View style={[styles.avatar, { backgroundColor: colors.muted }]}>
-            {user?.imageUrl ? (
-              <Image
-                source={user.imageUrl}
-                style={styles.avatarImage}
-                contentFit='cover'
-                transition={150}
-              />
-            ) : (
-              <Text style={[styles.avatarLetter, { color: colors.foreground }]}>
-                {settings.displayName.trim().charAt(0).toUpperCase() || 'F'}
-              </Text>
-            )}
-          </View>
+          <UserAvatar
+            accountType={accountType}
+            backgroundColor={colors.muted}
+            displayName={settings.displayName}
+            foregroundColor={colors.foreground}
+            imageUrl={user?.imageUrl}
+            seed={user?.id ?? settings.email}
+            size={52}
+          />
           <View style={styles.profileMeta}>
             <Text style={[styles.profileName, { color: colors.foreground }]}>
               {settings.displayName}
@@ -241,23 +236,6 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingHorizontal: 14,
     paddingVertical: 16,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarLetter: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 23,
-    fontWeight: '600',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 26,
   },
   profileMeta: {
     flex: 1,

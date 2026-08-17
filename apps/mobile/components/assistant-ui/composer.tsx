@@ -244,7 +244,9 @@ function useVoiceComposer() {
   const recorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
+  const [speechActive, setSpeechActive] = useState(false);
   const voiceStateRef = useRef<VoiceState>('idle');
+  const speechActiveRef = useRef(false);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const draftBeforeRecordingRef = useRef('');
@@ -266,9 +268,16 @@ function useVoiceComposer() {
     if (mountedRef.current) setVoiceState(next);
   };
 
+  const updateSpeechActive = (next: boolean) => {
+    if (speechActiveRef.current === next) return;
+    speechActiveRef.current = next;
+    if (mountedRef.current) setSpeechActive(next);
+  };
+
   const stopRecording = async (discard = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
+    updateSpeechActive(false);
     updateVoiceState(discard ? 'idle' : 'transcribing');
     clearStopTimer();
 
@@ -324,11 +333,13 @@ function useVoiceComposer() {
       lastVoiceActivityAtRef.current = now;
       if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
         speechDetectedRef.current = true;
+        updateSpeechActive(true);
       }
       return;
     }
 
     voiceActivitySamplesRef.current = 0;
+    updateSpeechActive(false);
     if (!speechDetectedRef.current) {
       if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
         void stopRecording(true);
@@ -357,6 +368,7 @@ function useVoiceComposer() {
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
     speechDetectedRef.current = false;
+    updateSpeechActive(false);
     voiceActivitySamplesRef.current = 0;
     lastVoiceActivityAtRef.current = 0;
     updateVoiceState('requesting_permission');
@@ -427,7 +439,7 @@ function useVoiceComposer() {
     }
   };
 
-  return { voiceState, startRecording, handleOrbPress };
+  return { voiceState, speechActive, startRecording, handleOrbPress };
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -456,7 +468,15 @@ function PrimaryComposerAction({ onStartVoice }: { onStartVoice: () => void }) {
   return canSend ? <SendButton /> : <MicButton onPress={onStartVoice} />;
 }
 
-function VoiceComposer({ state, onPress }: { state: VoiceState; onPress: () => void }) {
+function VoiceComposer({
+  state,
+  speechActive,
+  onPress,
+}: {
+  state: VoiceState;
+  speechActive: boolean;
+  onPress: () => void;
+}) {
   const { colors, isDark } = useTheme();
   const label =
     state === 'recording'
@@ -479,13 +499,22 @@ function VoiceComposer({ state, onPress }: { state: VoiceState; onPress: () => v
         },
       ]}
     >
-      <ThinkingOrb
-        state={state === 'transcribing' ? 'solving' : 'composing'}
-        size={64}
-        speed={1.2}
-        theme={isDark ? 'dark' : 'light'}
-        accessibilityLabel={label}
-      />
+      <View pointerEvents='none'>
+        <ThinkingOrb
+          state={
+            state === 'recording'
+              ? 'composing'
+              : state === 'transcribing'
+                ? 'solving'
+                : 'connecting'
+          }
+          size={64}
+          speed={state === 'requesting_permission' ? 1.2 : 1.5}
+          paused={state === 'recording' && !speechActive}
+          theme={isDark ? 'dark' : 'light'}
+          accessibilityLabel={label}
+        />
+      </View>
     </Pressable>
   );
 }
@@ -676,7 +705,7 @@ export function Composer() {
   const { colors } = useTheme();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, startRecording, handleOrbPress } = useVoiceComposer();
+  const { voiceState, speechActive, startRecording, handleOrbPress } = useVoiceComposer();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
@@ -696,6 +725,7 @@ export function Composer() {
       {voiceState !== 'idle' ? (
         <VoiceComposer
           state={voiceState}
+          speechActive={speechActive}
           onPress={handleOrbPress}
         />
       ) : (

@@ -203,6 +203,9 @@ importers:
       '@shopify/react-native-skia':
         specifier: 2.2.12
         version: 2.2.12(cd7b70f4fc2d5c35425602d7f5f70f08)
+      '@usenavii/react-native':
+        specifier: ^0.9.1
+        version: 0.9.1(react-native-svg@15.12.1(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)
       ai:
         specifier: 7.0.65
         version: 7.0.65(zod@4.4.3)
@@ -4551,6 +4554,18 @@ packages:
     resolution: {integrity: sha512-TQMCz2pFJMfpNxmSfX1VSfTjwUIFx/mL+p1bnfM1xjjdla7Z+KnGMW/EhFbpckp3LyWAH4PgOsMwOMnIN+MBFg==}
     peerDependencies:
       '@urql/core': ^5.0.0
+
+  '@usenavii/core@0.9.1':
+    resolution: {integrity: sha512-UIdsVKXxgkyeCRHkl7utsUcZ24ajub9063TIqVFz6y63wwd67VMcjLGL1fSFP267UN70d7WM9GXFA2Mph+mSFg==}
+    engines: {node: '>=18'}
+
+  '@usenavii/react-native@0.9.1':
+    resolution: {integrity: sha512-yM03wsfFxI3EBuX6fZlCSEF/KuDnR0vmPwkeOR9Nd96gSETofkhHoqRlZaxAJlvmHajZMkvgN8ztS95qKHvaHg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '>=18'
+      react-native: '>=0.73'
+      react-native-svg: '>=15'
 
   '@vercel/oidc@3.2.0':
     resolution: {integrity: sha512-UycprH3T6n3jH0k44NHMa7pnFHGu/N05MjojYr+Mc6I7obkoLIJujSWwin1pCvdy/eOxrI/l3uDLQsmcrOb4ug==}
@@ -13269,6 +13284,15 @@ snapshots:
     dependencies:
       '@urql/core': 5.2.0
       wonka: 6.3.6
+
+  '@usenavii/core@0.9.1': {}
+
+  '@usenavii/react-native@0.9.1(react-native-svg@15.12.1(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)':
+    dependencies:
+      '@usenavii/core': 0.9.1
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6)
+      react-native-svg: 15.12.1(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)
 
   '@vercel/oidc@3.2.0': {}
 

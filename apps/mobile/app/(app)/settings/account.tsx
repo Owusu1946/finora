@@ -1,9 +1,9 @@
-import { useClerk, useUser } from '@clerk/expo';
-import { Image } from 'expo-image';
+import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import {
   SettingsRow,
   SettingsScreen,
@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, setAccountType } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { completeOnboarding } from '@/lib/onboarding-storage';
+import { updateUserProfile } from '@/lib/profile-api';
 import { useSettings } from '@/lib/settings-context';
 
 export default function AccountSettingsScreen() {
@@ -22,6 +23,7 @@ export default function AccountSettingsScreen() {
   const router = useRouter();
   const { settings, loading, refresh, t } = useSettings();
   const { signOut } = useClerk();
+  const { getToken } = useAuth();
   const { user } = useUser();
   const [accountType, setAccountTypeLocal] = useState(getAccountType());
 
@@ -33,10 +35,19 @@ export default function AccountSettingsScreen() {
   );
 
   const handleAccountType = async (type: 'personal' | 'business') => {
+    if (type === accountType) return;
+
     setAccountType(type);
     setAccountTypeLocal(type);
     await completeOnboarding(type);
     haptics.selection();
+
+    try {
+      await updateUserProfile(getToken, { accountType: type });
+    } catch (error) {
+      // Keep the local selection usable; profile sync will retry it on the next session.
+      if (__DEV__) console.warn('Account type sync deferred.', error);
+    }
   };
 
   const handleSignOut = () => {
@@ -59,20 +70,15 @@ export default function AccountSettingsScreen() {
     <SettingsScreen loading={loading}>
       <SettingsSection>
         <View style={styles.profile}>
-          <View style={[styles.avatar, { backgroundColor: colors.muted }]}>
-            {user?.imageUrl ? (
-              <Image
-                source={user.imageUrl}
-                style={styles.avatarImage}
-                contentFit='cover'
-                transition={150}
-              />
-            ) : (
-              <Text style={[styles.avatarLetter, { color: colors.foreground }]}>
-                {settings.displayName.trim().charAt(0).toUpperCase() || 'F'}
-              </Text>
-            )}
-          </View>
+          <UserAvatar
+            accountType={accountType}
+            backgroundColor={colors.muted}
+            displayName={settings.displayName}
+            foregroundColor={colors.foreground}
+            imageUrl={user?.imageUrl}
+            seed={user?.id ?? settings.email}
+            size={52}
+          />
           <View style={styles.profileMeta}>
             <Text style={[styles.profileName, { color: colors.foreground }]}>
               {settings.displayName}
@@ -121,23 +127,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 16,
     alignItems: 'center',
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarLetter: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 23,
-    fontWeight: '600',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 26,
   },
   profileMeta: {
     flex: 1,

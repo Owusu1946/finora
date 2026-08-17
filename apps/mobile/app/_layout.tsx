@@ -137,7 +137,7 @@ function RootNavigator() {
         <Stack.Screen name='pay/r/[id]' />
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
-      {onboardingCompleted && authLoaded && !isSignedIn ? (
+      {onboardingCompleted && authLoaded && !isSignedIn && segments[0] !== 'auth' ? (
         <Redirect href={'/auth' as Href} />
       ) : null}
       {onboardingCompleted &&

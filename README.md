@@ -185,11 +185,12 @@ Run all applications in one Turbo session:
 pnpm dev
 ```
 
-This starts the four packages that define a `dev` script:
+This starts the four packages that define a `dev` script plus the phone-facing API proxy:
 
 | Service | Address                 | Expected result                                                      |
 | ------- | ----------------------- | -------------------------------------------------------------------- |
 | API     | `http://127.0.0.1:8787` | Wrangler reports the API Worker ready; DevTools uses port `9230`.    |
+| LAN API | `http://0.0.0.0:8788`   | Proxies physical-phone requests to the API Worker on loopback.       |
 | MCP     | `http://127.0.0.1:8789` | Wrangler reports the MCP Worker ready; DevTools uses port `9231`.    |
 | Web     | `http://localhost:3000` | Next.js reports the landing site ready.                              |
 | Mobile  | `exp://<LAN_IP>:8081`   | Metro prints a QR code and waits for Expo Go or a development build. |
@@ -197,20 +198,10 @@ This starts the four packages that define a `dev` script:
 Turbo lists every workspace package as in scope, but packages without a `dev` script do not start
 a process. Stop the full session with `Ctrl+C`.
 
-The full session does not start the phone-facing LAN proxy. For a physical phone, run it in a
-second terminal:
-
-```bash
-# Terminal 1
-pnpm dev
-
-# Terminal 2
-pnpm dev:lan
-```
-
-`dev:lan` only starts the proxy; it expects the API to already be running on `127.0.0.1:8787`.
-The proxy exposes `http://YOUR_COMPUTER_LAN_IP:8788`, and the mobile app derives that URL from
-Metro. Keep the phone and computer on the same network.
+The full session starts `dev:lan` automatically. The proxy exposes
+`http://YOUR_COMPUTER_LAN_IP:8788`, and the mobile app derives that URL from Metro. Keep the phone
+and computer on the same network. `pnpm dev:lan` remains available when the API and mobile app were
+started separately.
 
 To run only the phone-facing path, use three terminals with `pnpm dev:api`, `pnpm dev:lan`, and
 `pnpm dev:mobile`.
