@@ -35,20 +35,18 @@ export default function AccountSettingsScreen() {
   );
 
   const handleAccountType = async (type: 'personal' | 'business') => {
-    const previousType = accountType;
-    if (type === previousType) return;
+    if (type === accountType) return;
 
     setAccountType(type);
     setAccountTypeLocal(type);
+    await completeOnboarding(type);
+    haptics.selection();
+
     try {
       await updateUserProfile(getToken, { accountType: type });
-      await completeOnboarding(type);
-      haptics.selection();
-    } catch {
-      setAccountType(previousType);
-      setAccountTypeLocal(previousType);
-      haptics.impact();
-      Alert.alert('Could not update account type', 'Check your connection and try again.');
+    } catch (error) {
+      // Keep the local selection usable; profile sync will retry it on the next session.
+      if (__DEV__) console.warn('Account type sync deferred.', error);
     }
   };
 

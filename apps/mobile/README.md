@@ -22,7 +22,7 @@ Run commands from the repository root:
 | `pnpm --filter @finora/mobile lint`        | Runs Expo ESLint for the mobile package.                           |
 | `pnpm --filter @finora/mobile check-types` | Runs TypeScript without emitting files.                            |
 
-`dev:mobile` is included in the root `pnpm dev` session. For a physical phone that needs the
-local API, also run `pnpm dev:api` and `pnpm dev:lan`; the app derives
-`http://<COMPUTER_LAN_IP>:8788` from Metro. The API itself remains bound to loopback on port
-`8787`.
+`dev:mobile` is included in the root `pnpm dev` session, which also starts the phone-facing LAN
+proxy. The app derives `http://<COMPUTER_LAN_IP>:8788` from Metro while the API itself remains
+bound to loopback on port `8787`. When starting services individually, run `pnpm dev:api`,
+`pnpm dev:lan`, and `pnpm dev:mobile`.

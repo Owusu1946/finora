@@ -51,7 +51,7 @@ export function useProfileSync() {
 
           const settings = tagConfigured ? await getSettings() : null;
           const updates = {
-            ...(remote.accountType === null && local.accountType
+            ...(local.accountType && remote.accountType !== local.accountType
               ? { accountType: local.accountType }
               : {}),
             ...(remote.finoraTag === null && settings?.finoraTag
