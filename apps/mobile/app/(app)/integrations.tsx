@@ -137,7 +137,13 @@ export default function IntegrationsScreen() {
       getIntegrations(),
       getGmailIntegrationStatus(getToken)
         .then((value) => ({ value, failed: false as const }))
-        .catch(() => ({ value: null, failed: true as const })),
+        .catch((error) => {
+          console.error('[GmailIntegration] status refresh failed', {
+            name: error instanceof Error ? error.name : 'UnknownError',
+            message: error instanceof Error ? error.message : String(error),
+          });
+          return { value: null, failed: true as const };
+        }),
       listUpcomingCalendarMoneyEvents(),
       listOpenSmsPaymentRequests(),
     ]);
@@ -188,10 +194,27 @@ export default function IntegrationsScreen() {
     setBusyKey('gmail');
     try {
       const returnUrl = Linking.createURL('/integrations');
+      const returnUrlDetails = new URL(returnUrl);
+      console.info('[GmailIntegration] OAuth starting', {
+        returnProtocol: returnUrlDetails.protocol,
+        returnPath: returnUrlDetails.pathname,
+      });
       const { authorizationUrl } = await beginGmailConnection(getToken, returnUrl);
+      const authorizationUrlDetails = new URL(authorizationUrl);
+      console.info('[GmailIntegration] authorization URL received', {
+        origin: authorizationUrlDetails.origin,
+        path: authorizationUrlDetails.pathname,
+      });
       const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, returnUrl);
-      if (result.type !== 'success') return;
+      console.info('[GmailIntegration] OAuth browser completed', { type: result.type });
+      if (result.type !== 'success') {
+        console.warn('[GmailIntegration] OAuth browser did not return success', {
+          type: result.type,
+        });
+        return;
+      }
       const oauthResult = new URL(result.url).searchParams.get('gmail');
+      console.info('[GmailIntegration] OAuth callback received', { oauthResult });
       if (oauthResult !== 'connected') {
         if (oauthResult === 'failed') Alert.alert('Could not connect Gmail', 'Try again.');
         return;
@@ -199,6 +222,10 @@ export default function IntegrationsScreen() {
       await refresh();
       haptics.success();
     } catch (error) {
+      console.error('[GmailIntegration] OAuth flow failed', {
+        name: error instanceof Error ? error.name : 'UnknownError',
+        message: error instanceof Error ? error.message : String(error),
+      });
       haptics.impact();
       Alert.alert('Could not connect Gmail', error instanceof Error ? error.message : 'Try again.');
     } finally {
