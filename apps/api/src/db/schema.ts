@@ -32,6 +32,12 @@ export const transactionalEmailStatusEnum = pgEnum('transactional_email_status',
   'suppressed',
   'failed',
 ]);
+export const integrationStatusEnum = pgEnum('integration_status', [
+  'connected',
+  'syncing',
+  'error',
+  'reauthorization_required',
+]);
 
 export const userProfiles = pgTable(
   'user_profiles',
@@ -166,3 +172,53 @@ export const transactionalEmailDeliveries = pgTable(
 );
 
 export type TransactionalEmailDeliveryRow = typeof transactionalEmailDeliveries.$inferSelect;
+
+export const oauthConnectionAttempts = pgTable(
+  'oauth_connection_attempts',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    provider: text('provider').notNull(),
+    stateHash: text('state_hash').notNull(),
+    codeVerifierCiphertext: text('code_verifier_ciphertext').notNull(),
+    returnUrl: text('return_url').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('oauth_connection_attempts_state_unique').on(table.stateHash),
+    index('oauth_connection_attempts_user_index').on(table.clerkUserId, table.createdAt),
+  ],
+);
+
+export const gmailIntegrations = pgTable(
+  'gmail_integrations',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    googleSubject: text('google_subject').notNull(),
+    email: text('email').notNull(),
+    refreshTokenCiphertext: text('refresh_token_ciphertext').notNull(),
+    scopes: jsonb('scopes').$type<string[]>().notNull(),
+    status: integrationStatusEnum('status').notNull().default('connected'),
+    historyId: text('history_id'),
+    candidateCount: integer('candidate_count').notNull().default(0),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+    lastErrorCode: text('last_error_code'),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('gmail_integrations_user_unique').on(table.clerkUserId),
+    uniqueIndex('gmail_integrations_google_subject_unique').on(table.googleSubject),
+    index('gmail_integrations_status_index').on(table.status),
+  ],
+);
+
+export type GmailIntegrationRow = typeof gmailIntegrations.$inferSelect;

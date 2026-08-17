@@ -66,6 +66,10 @@ AGOO_SMS_API_KEY=your_agoosms_key
 AGOO_SMS_SENDER_ID=VENTRAPOS
 RESEND_API_KEY=re_your_key
 RESEND_WEBHOOK_SECRET=your_resend_webhook_secret
+GOOGLE_OAUTH_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_OAUTH_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_OAUTH_REDIRECT_URI=https://your-api-domain.example.com/oauth/google/callback
+GOOGLE_TOKEN_ENCRYPTION_KEY=at-least-32-random-characters
 WELCOME_EMAIL_MODE=disabled
 WELCOME_EMAIL_REDIRECT_TO=
 WEWIRE_API_KEY=your_wewire_key
@@ -123,11 +127,13 @@ Authenticate Wrangler once:
 pnpm --filter @finora/api exec wrangler login
 ```
 
-Create the email queues once per Cloudflare account:
+Create the email and Gmail sync queues once per Cloudflare account:
 
 ```bash
 pnpm --filter @finora/api exec wrangler queues create finora-transactional-email
 pnpm --filter @finora/api exec wrangler queues create finora-transactional-email-dlq
+pnpm --filter @finora/api exec wrangler queues create finora-gmail-sync
+pnpm --filter @finora/api exec wrangler queues create finora-gmail-sync-dlq
 pnpm --filter @finora/api cf-typegen
 ```
 
@@ -142,6 +148,10 @@ pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_API_KEY
 pnpm --filter @finora/api exec wrangler secret put AGOO_SMS_SENDER_ID
 pnpm --filter @finora/api exec wrangler secret put RESEND_API_KEY
 pnpm --filter @finora/api exec wrangler secret put RESEND_WEBHOOK_SECRET
+pnpm --filter @finora/api exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID
+pnpm --filter @finora/api exec wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET
+pnpm --filter @finora/api exec wrangler secret put GOOGLE_OAUTH_REDIRECT_URI
+pnpm --filter @finora/api exec wrangler secret put GOOGLE_TOKEN_ENCRYPTION_KEY
 pnpm --filter @finora/api exec wrangler secret put WEWIRE_API_KEY
 pnpm --filter @finora/api exec wrangler secret put WEWIRE_WEBHOOK_SECRET
 ```
@@ -154,6 +164,23 @@ Deploy the API with:
 ```bash
 pnpm deploy:api
 ```
+
+## Gmail integration setup
+
+1. In Google Cloud, create or select a project and enable the Gmail API.
+2. Configure the OAuth consent screen and add the app's support and developer contact details.
+3. Add `openid`, `email`, `profile`, and `https://www.googleapis.com/auth/gmail.readonly` to the consent screen.
+4. Create a Web application OAuth client.
+5. Add the deployed API callback as an exact authorized redirect URI:
+   `https://YOUR_API_HOST/oauth/google/callback`.
+6. Put the client ID, client secret, exact callback URL, and a cryptographically random encryption
+   key of at least 32 characters in `.dev.vars` locally and Wrangler secrets in production.
+7. Create both Gmail queues, run `pnpm db:push`, regenerate Worker types, and deploy the API.
+
+The API owns OAuth, encrypts refresh tokens with AES-GCM, and sends no Google token to mobile.
+Finora currently stores connection metadata and a bounded 90-day invoice-candidate count, not
+message bodies or attachments. Gmail readonly is a restricted Google scope; public production
+launch may require Google OAuth verification and an independent security assessment.
 
 ## Resend welcome email setup
 
