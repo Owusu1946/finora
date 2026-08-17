@@ -18,6 +18,8 @@ import {
   loadRemoteChatBootstrap,
 } from './remote-chat-adapter';
 
+const optimisticChatIds = new Set<string>();
+
 type GetToken = () => Promise<string | null>;
 
 export type RemoteThreadConfig = {
@@ -130,14 +132,9 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     },
 
     async initialize() {
-      const id = `chat_${Crypto.randomUUID().replaceAll('-', '')}`;
-      const response = await request('/v1/chats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
-      const metadata = toMetadata((await response.json()) as Parameters<typeof toMetadata>[0]);
-      return { remoteId: metadata.remoteId };
+      const remoteId = `chat_${Crypto.randomUUID().replaceAll('-', '')}`;
+      optimisticChatIds.add(remoteId);
+      return { remoteId };
     },
 
     async fetch(remoteId) {
@@ -185,6 +182,7 @@ export function createRemoteThreadRuntimeAdapters(config: RemoteThreadConfig, ch
   const history: ThreadHistoryAdapter = {
     async load() {
       if (chatId === 'pending') return { messages: [] };
+      if (optimisticChatIds.has(chatId)) return { messages: [] };
       const bootstrap = await loadRemoteChatBootstrap(chatConfig);
       return {
         ...ExportedMessageRepository.fromArray(bootstrap.initialMessages),
@@ -200,7 +198,11 @@ export function createRemoteThreadRuntimeAdapters(config: RemoteThreadConfig, ch
     async update() {},
   };
   return {
-    chatModel: createRemoteChatAdapter(chatConfig),
+    chatModel: createRemoteChatAdapter({
+      ...chatConfig,
+      isOptimistic: () => optimisticChatIds.has(chatId),
+      markPersisted: () => optimisticChatIds.delete(chatId),
+    }),
     history,
   };
 }

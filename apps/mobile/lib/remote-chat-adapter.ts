@@ -28,6 +28,8 @@ type RemoteChatConfig = {
   apiUrl: string;
   chatId: string;
   getToken: GetToken;
+  isOptimistic?: () => boolean;
+  markPersisted?: () => void;
 };
 
 export type RemoteChatBootstrap = {
@@ -329,7 +331,7 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
 
       try {
         const uiMessages = messages.filter((message) => message.role !== 'system').map(toUIMessage);
-        const state = await api.getState(abortSignal);
+        const state = config.isOptimistic?.() ? null : await api.getState(abortSignal);
         const storedMessages = state ? await validateStateMessages(state.messages) : [];
         const requestMessages = canonicalizeRemoteChatHistory(storedMessages, uiMessages);
         const trigger =
@@ -344,6 +346,7 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
           messageId: trigger === 'regenerate-message' ? requestMessages.at(-1)?.id : undefined,
           headers: await api.authHeaders(),
         });
+        config.markPersisted?.();
         const currentMessage = yield* assistantResults(stream);
 
         if (!currentMessage && !abortSignal.aborted) {
