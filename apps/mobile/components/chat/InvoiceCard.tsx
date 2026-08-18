@@ -32,7 +32,8 @@ function mockTransactionId() {
   return `WW-${n}`;
 }
 
-function formatDue(iso: string) {
+function formatDue(iso: string | null | undefined) {
+  if (!iso) return 'Not specified';
   return new Date(iso).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -86,6 +87,8 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
     if (phase !== 'sending') return;
     let cancelled = false;
     const run = async () => {
+      const destination = invoice.destination;
+      if (!destination) return;
       for (let step = 0; step < 3; step++) {
         if (cancelled) return;
         setSendingStep(step);
@@ -109,7 +112,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
           amount: invoice.amount,
           currency: invoice.currency,
           recipientName: invoice.vendor,
-          destination: invoice.destination,
+          destination,
           reference: invoice.invoiceNumber,
         },
         transactionId: txId,
@@ -200,11 +203,19 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
             value={formatDue(invoice.dueDate)}
             colors={colors}
           />
-          <Row
-            label={invoice.destination.label}
-            value={invoice.destination.value}
-            colors={colors}
-          />
+          {invoice.destination ? (
+            <Row
+              label={invoice.destination.label}
+              value={invoice.destination.value}
+              colors={colors}
+            />
+          ) : (
+            <Row
+              label='Payment details'
+              value='Not available from this invoice email'
+              colors={colors}
+            />
+          )}
           {invoice.description ? (
             <Row
               label='Memo'
@@ -271,7 +282,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
           </View>
         ) : null}
 
-        {due ? (
+        {due && invoice.destination ? (
           <View style={styles.actions}>
             <Pressable
               disabled={busy}
@@ -315,6 +326,10 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               </Text>
             </Pressable>
           </View>
+        ) : due ? (
+          <Text style={[styles.paymentNotice, { color: colors.mutedForeground }]}>
+            Add verified supplier payment details before preparing payment.
+          </Text>
         ) : null}
 
         {paid && (txRecordId || transactionId) ? (
@@ -451,6 +466,11 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 16,
     fontWeight: '600',
+  },
+  paymentNotice: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
   },
   steps: {
     gap: 10,
