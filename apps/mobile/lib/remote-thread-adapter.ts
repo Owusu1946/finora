@@ -125,6 +125,24 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     return response;
   }
 
+  async function loadNetworkList(query: string) {
+    const response = await request(`/v1/chats${query}`);
+    const payload = (await response.json()) as {
+      chats: Array<Parameters<typeof toMetadata>[0]>;
+      nextCursor: string | null;
+    };
+    const threads = payload.chats.map(toMetadata);
+    if (!query) {
+      cachedList = {
+        threads,
+        nextCursor: payload.nextCursor ?? undefined,
+        expiresAt: Date.now() + THREAD_LIST_CACHE_TTL_MS,
+      };
+      await AsyncStorage.setItem(threadCacheKey(config.userId), JSON.stringify(payload.chats));
+    }
+    return { threads, nextCursor: payload.nextCursor ?? undefined };
+  }
+
   return {
     async list(params) {
       const query = params?.after ? `?cursor=${encodeURIComponent(params.after)}` : '';
@@ -135,23 +153,21 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       const existing = inFlightLists.get(cacheKey);
       if (existing) return existing;
 
+      if (!params?.after) {
+        const persisted = await readCachedThreads(config.userId);
+        if (persisted.length > 0) {
+          cachedList = {
+            threads: persisted,
+            expiresAt: Date.now() + THREAD_LIST_CACHE_TTL_MS,
+          };
+          void loadNetworkList(query).catch(() => undefined);
+          return { threads: persisted };
+        }
+      }
+
       const load = (async () => {
         try {
-          const response = await request(`/v1/chats${query}`);
-          const payload = (await response.json()) as {
-            chats: Array<Parameters<typeof toMetadata>[0]>;
-            nextCursor: string | null;
-          };
-          const threads = payload.chats.map(toMetadata);
-          if (!params?.after) {
-            cachedList = {
-              threads,
-              nextCursor: payload.nextCursor ?? undefined,
-              expiresAt: Date.now() + THREAD_LIST_CACHE_TTL_MS,
-            };
-            await AsyncStorage.setItem(threadCacheKey(config.userId), JSON.stringify(payload.chats));
-          }
-          return { threads, nextCursor: payload.nextCursor ?? undefined };
+          return await loadNetworkList(query);
         } catch (error) {
           const cached = await readCachedThreads(config.userId);
           if (cached.length > 0) return { threads: cached };
@@ -210,8 +226,29 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       await AsyncStorage.removeItem(threadCacheKey(config.userId));
     },
 
-    async generateTitle(_remoteId, messages) {
-      return titleAssistantStream(fallbackTitle(messages));
+    async generateTitle(remoteId, messages) {
+      const title = fallbackTitle(messages);
+      if (cachedList) {
+        cachedList = {
+          ...cachedList,
+          threads: cachedList.threads.map((thread) =>
+            thread.remoteId === remoteId ? { ...thread, title, lastMessageAt: new Date() } : thread,
+          ),
+        };
+        void AsyncStorage.setItem(
+          threadCacheKey(config.userId),
+          JSON.stringify(
+            cachedList.threads.map((thread) => ({
+              id: thread.remoteId,
+              title: thread.title ?? null,
+              titleStatus: 'fallback',
+              status: thread.status,
+              lastMessageAt: thread.lastMessageAt?.toISOString() ?? new Date().toISOString(),
+            })),
+          ),
+        );
+      }
+      return titleAssistantStream(title);
     },
   };
 }
