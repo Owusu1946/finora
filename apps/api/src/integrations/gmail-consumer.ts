@@ -11,10 +11,25 @@ import { GmailSyncQueueMessageSchema } from './gmail-queue';
 import { listGmailInvoiceCandidates, refreshGoogleAccessToken } from './google-gmail';
 import { decryptSecret } from './secret-box';
 
-function extractInvoiceNumber(subject: string, snippet: string) {
-  return (
-    `${subject} ${snippet}`.match(/\b(?:invoice|inv|bill|receipt)[\s#:.-]*([A-Z0-9-]{3,})\b/i)?.[1] ??
-    subject.slice(0, 120)
+export function extractInvoiceNumber(subject: string, snippet: string) {
+  return `${subject} ${snippet}`.match(
+    /\b(?:invoice|inv(?:oice)?\s*(?:number|no|#)?|bill)[\s:#.-]*([A-Z0-9][A-Z0-9-]{2,})\b/i,
+  )?.[1] ?? null;
+}
+
+export function extractAmountMinor(subject: string, snippet: string) {
+  const value = `${subject} ${snippet}`;
+  const match = value.match(
+    /(?:amount\s+due|total\s+due|balance\s+due|amount\s+payable|total\s+payable|payment\s+due)[^\d]{0,24}(?:GHS|USD|EUR|GBP|\$|£|€)\s?([\d,]+(?:\.\d{1,2})?)/i,
+  ) ?? value.match(/(?:GHS|USD|EUR|GBP|\$|£|€)\s?([\d,]+(?:\.\d{1,2})?)/i);
+  if (!match?.[1]) return null;
+  const amount = Number(match[1].replaceAll(',', ''));
+  return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 100) : null;
+}
+
+export function hasInvoicePaymentEvidence(subject: string, snippet: string) {
+  return /(payment|payable|amount\s+due|total\s+due|balance\s+due|bank|transfer|card|account)/i.test(
+    `${subject} ${snippet}`,
   );
 }
 
@@ -77,17 +92,18 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
         const sender = (headers.get('from') ?? 'Unknown supplier').replace(/<.*>/, '').trim();
         const snippet = candidate.snippet ?? '';
         const amountMatch = snippet.match(/(?:GHS|USD|EUR|GBP|\$|£|€)\s?([\d,]+(?:\.\d{1,2})?)/i);
-        const amountMinor = amountMatch
-          ? Math.round(Number(amountMatch[1]!.replaceAll(',', '')) * 100)
-          : 0;
+        const amountMinor = extractAmountMinor(subject, snippet);
         const symbol = amountMatch?.[0] ?? '';
         const currency = /GHS/i.test(symbol) ? 'GHS' : /EUR|€/i.test(symbol) ? 'EUR' : /GBP|£/i.test(symbol) ? 'GBP' : 'USD';
+        const invoiceNumber = extractInvoiceNumber(subject, snippet);
+        const hasPaymentEvidence = hasInvoicePaymentEvidence(subject, snippet);
+        if (!invoiceNumber || !amountMinor || !hasPaymentEvidence || sender === 'Unknown supplier') continue;
         await upsertGmailInvoice(db, {
           clerkUserId: integration.clerkUserId,
           gmailMessageId: candidate.id,
           gmailThreadId: candidate.threadId,
           vendor: sender.slice(0, 160),
-          invoiceNumber: extractInvoiceNumber(subject, snippet),
+          invoiceNumber,
           amountMinor,
           currency,
           receivedAt: new Date(Number(candidate.internalDate ?? Date.now())),
@@ -95,7 +111,7 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
           status: 'due',
           description: snippet.slice(0, 500),
           hasAttachment: false,
-          confidence: amountMinor > 0 ? 70 : 35,
+          confidence: 80,
         });
       }
       if (candidates.nextPageToken) {

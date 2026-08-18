@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lt, or } from 'drizzle-orm';
+import { and, desc, eq, gte, gt, lt, ne, or } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -68,6 +68,9 @@ export async function listStoredInvoices(
     .where(
       and(
         eq(invoices.clerkUserId, clerkUserId),
+        gt(invoices.amountMinor, 0),
+        gte(invoices.confidence, 80),
+        ne(invoices.vendor, 'Unknown supplier'),
         gte(invoices.receivedAt, input.startDate),
         lt(invoices.receivedAt, input.endDateExclusive),
         cursorCondition,
