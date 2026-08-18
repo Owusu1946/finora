@@ -9,14 +9,11 @@ import { z } from 'zod';
 
 import type { AppEnv } from '../app-env';
 
-import { fallbackChatTitle } from '../ai/chat-title';
 import {
   deleteChat,
   ensureChat,
   getChatMetadata,
   listChats,
-  loadChat,
-  setFallbackChatTitle,
   updateChatMetadata,
 } from '../db/chat-store';
 import { createDb } from '../db/client';
@@ -78,18 +75,8 @@ chats.get('/', async (c) => {
   const hasMore = rows.length > query.data.limit;
   const page = rows.slice(0, query.data.limit);
   const last = page.at(-1);
-  const chatsWithTitles = await Promise.all(
-    page.map(async (chat) => {
-      if (chat.title) return chat;
-      const stored = await loadChat(db, chat.id, userId);
-      if (!stored || stored.messages.length === 0) return chat;
-      const title = fallbackChatTitle(stored.messages);
-      await setFallbackChatTitle(db, chat.id, userId, title);
-      return { ...chat, title, titleStatus: 'fallback' as const };
-    }),
-  );
   return c.json({
-    chats: chatsWithTitles.map(metadataResponse),
+    chats: page.map(metadataResponse),
     nextCursor: hasMore && last ? encodeCursor(last) : null,
   } satisfies ChatListResponse);
 });

@@ -2,15 +2,15 @@ import { InvoiceDateRangeSchema, InvoicePreferencesUpdateSchema } from '@finora/
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
+import type { GmailSyncQueueMessage } from '../integrations/gmail-queue';
 
+import { createDb } from '../db/client';
 import {
   getInvoicePreferences,
   getInvoiceSyncState,
   listStoredInvoices,
   updateInvoicePreferences,
 } from '../db/invoices';
-import { createDb } from '../db/client';
-import type { GmailSyncQueueMessage } from '../integrations/gmail-queue';
 
 const MAX_RANGE_DAYS = 365;
 
@@ -84,7 +84,10 @@ function preferenceResponse(row: Awaited<ReturnType<typeof getInvoicePreferences
 export const invoiceRoutes = new Hono<AppEnv>();
 
 invoiceRoutes.get('/preferences', async (c) => {
-  const row = await getInvoicePreferences(createDb(c.get('env').DATABASE_URL), c.get('auth').userId);
+  const row = await getInvoicePreferences(
+    createDb(c.get('env').DATABASE_URL),
+    c.get('auth').userId,
+  );
   return c.json(preferenceResponse(row));
 });
 
@@ -92,11 +95,15 @@ invoiceRoutes.put('/preferences', async (c) => {
   const body = InvoicePreferencesUpdateSchema.safeParse(await c.req.json().catch(() => null));
   const range = body.success ? parseInvoiceRange(body.data) : null;
   if (!range) return c.json({ error: 'invalid_invoice_date_range' }, 400);
-  const row = await updateInvoicePreferences(createDb(c.get('env').DATABASE_URL), c.get('auth').userId, {
-    startDate: range.startDate,
-    endDate: range.endDate,
-    timezone: range.timezone,
-  });
+  const row = await updateInvoicePreferences(
+    createDb(c.get('env').DATABASE_URL),
+    c.get('auth').userId,
+    {
+      startDate: range.startDate,
+      endDate: range.endDate,
+      timezone: range.timezone,
+    },
+  );
   return c.json(preferenceResponse(row));
 });
 
@@ -120,16 +127,23 @@ invoiceRoutes.get('/', async (c) => {
   const hasNext = rows.length > limit;
   const visible = rows.slice(0, limit);
   const integration = await getInvoiceSyncState(db, userId);
-  const syncStatus = !integration || integration.revokedAt
-    ? 'disconnected'
-    : integration.status === 'syncing'
-      ? 'syncing'
-      : integration.status === 'error' || integration.status === 'reauthorization_required'
-        ? 'error'
-        : integration.lastSyncedAt && Date.now() - integration.lastSyncedAt.getTime() < 10 * 60_000
-          ? 'fresh'
-          : 'stale';
-  if (syncStatus === 'stale' && integration) {
+  const needsInvoiceReconciliation = Boolean(
+    integration && integration.candidateCount > 0 && visible.length === 0,
+  );
+  const syncTimedOut =
+    integration?.status === 'syncing' && Date.now() - integration.updatedAt.getTime() > 2 * 60_000;
+  const syncStatus =
+    !integration || integration.revokedAt
+      ? 'disconnected'
+      : (integration.status === 'syncing' && !syncTimedOut) || needsInvoiceReconciliation
+        ? 'syncing'
+        : integration.status === 'error' || integration.status === 'reauthorization_required'
+          ? 'error'
+          : integration.lastSyncedAt &&
+              Date.now() - integration.lastSyncedAt.getTime() < 10 * 60_000
+            ? 'fresh'
+            : 'stale';
+  if ((syncStatus === 'stale' || needsInvoiceReconciliation) && integration) {
     c.executionCtx.waitUntil(
       c.env.GMAIL_SYNC_QUEUE.send({
         kind: 'gmail.initial-sync',

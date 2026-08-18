@@ -1,5 +1,6 @@
 import type { PaymentDestinationKind } from '@/components/chat/PaymentConfirmationCard';
 import type { SupportedCurrency } from '@/components/ui/currency-icon';
+import type { RemoteInvoice } from '@finora/shared';
 
 export type InvoiceStatus = 'due' | 'scheduled' | 'paid' | 'dismissed';
 export type InvoiceSource = 'gmail' | 'manual' | 'agent';
@@ -10,11 +11,11 @@ export type Invoice = {
   invoiceNumber: string;
   amount: number;
   currency: SupportedCurrency | string;
-  dueDate: string;
+  dueDate: string | null;
   status: InvoiceStatus;
   source: InvoiceSource;
   description?: string;
-  destination: {
+  destination?: {
     kind: PaymentDestinationKind;
     label: string;
     value: string;
@@ -22,6 +23,20 @@ export type Invoice = {
   paidAt?: string;
   transactionId?: string;
 };
+
+export function invoiceFromRemote(invoice: RemoteInvoice): Invoice {
+  return {
+    id: invoice.id,
+    vendor: invoice.vendor,
+    invoiceNumber: invoice.invoiceNumber,
+    amount: invoice.amount,
+    currency: invoice.currency,
+    dueDate: invoice.dueDate,
+    status: invoice.status,
+    source: invoice.source,
+    description: invoice.description ?? undefined,
+  };
+}
 
 export type InvoiceFilter = 'due' | 'paid' | 'scheduled' | 'all';
 

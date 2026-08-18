@@ -7,7 +7,7 @@ import {
 } from '@assistant-ui/react-native';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -104,6 +104,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const drawerStatus = useDrawerStatus();
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [unreadCards, setUnreadCards] = useState(false);
+  const didReloadForOpenRef = useRef(false);
   const [business, setBusiness] = useState(() => isBusinessAccount());
   const navTabs = useMemo(() => buildNavTabs(business), [business]);
   const [activeTab, setActiveTab] = useState<NavTab>(() =>
@@ -111,8 +112,14 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   );
 
   useEffect(() => {
-    if (drawerStatus !== 'open') return;
-    void aui.threads.reload();
+    if (drawerStatus === 'closed') {
+      didReloadForOpenRef.current = false;
+      return;
+    }
+    if (!didReloadForOpenRef.current) {
+      didReloadForOpenRef.current = true;
+      void aui.threads.reload();
+    }
     const nextBusiness = isBusinessAccount();
     setBusiness(nextBusiness);
     void countPendingApprovals().then(setPendingApprovals);

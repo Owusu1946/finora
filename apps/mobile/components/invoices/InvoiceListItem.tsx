@@ -16,7 +16,8 @@ const STATUS_COLOR: Record<Invoice['status'], string> = {
   dismissed: '#71717A',
 };
 
-function formatDue(iso: string) {
+function formatDue(iso: string | null) {
+  if (!iso) return 'not specified';
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 

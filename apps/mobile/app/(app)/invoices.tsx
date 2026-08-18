@@ -6,6 +6,7 @@ import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from 'react-nati
 import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
+import { invoiceFromRemote } from '@/components/invoices/types';
 import { InvoiceListItem } from '@/components/invoices/InvoiceListItem';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
@@ -43,18 +44,7 @@ export default function InvoicesScreen() {
     const mapRemote = (remote: Awaited<ReturnType<typeof getRemoteInvoices>>) => {
       setRange(remote.preferences);
       setSyncStatus(remote.syncStatus);
-      setItems(remote.invoices.map((invoice) => ({
-        id: invoice.id,
-        vendor: invoice.vendor,
-        invoiceNumber: invoice.invoiceNumber,
-        amount: invoice.amount,
-        currency: invoice.currency,
-        dueDate: invoice.dueDate ?? invoice.receivedAt,
-        status: invoice.status,
-        source: 'gmail' as const,
-        description: invoice.description ?? undefined,
-        destination: { kind: 'bank_account' as const, label: 'Gmail source', value: 'Review before paying' },
-      })));
+      setItems(remote.invoices.map(invoiceFromRemote));
     };
     const cached = await getCachedRemoteInvoices();
     if (cached) {

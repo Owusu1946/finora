@@ -130,6 +130,10 @@ export async function markGmailSyncFailed(
     .where(eq(gmailIntegrations.id, id));
 }
 
+export async function markGmailReauthorizationRequired(db: Database, id: string, errorCode: string) {
+  await markGmailSyncFailed(db, id, errorCode, true);
+}
+
 export async function revokeGmailIntegration(db: Database, clerkUserId: string) {
   const [integration] = await db
     .update(gmailIntegrations)

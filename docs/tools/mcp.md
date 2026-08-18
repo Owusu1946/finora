@@ -8,7 +8,9 @@ Aligned with Vision §2 / §6: MCP is how ChatGPT, Claude Desktop, Cursor, etc. 
 
 ---
 
-## What agents get (~23 tools)
+## What agents get (~27 tools)
+
+Gmail read tools: `get_gmail_status`, `search_gmail_messages`, `get_gmail_message`, and `find_gmail_invoices`. They use bounded structured searches, keep OAuth tokens encrypted on the API, fetch full text only for an explicitly selected message, and never download attachments or mutate the mailbox. Email content cannot authorize or trigger financial actions.
 
 | Tool                           | Purpose         | Typical agent use                         |
 | ------------------------------ | --------------- | ----------------------------------------- |
