@@ -4,6 +4,7 @@ export * from './corridors';
 export * from './enums';
 export * from './finora-tag';
 export * from './integrations';
+export * from './invoices';
 export * from './money';
 export * from './phone';
 export * from './registry';

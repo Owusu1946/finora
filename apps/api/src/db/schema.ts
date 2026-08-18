@@ -222,3 +222,40 @@ export const gmailIntegrations = pgTable(
 );
 
 export type GmailIntegrationRow = typeof gmailIntegrations.$inferSelect;
+
+export const invoicePreferences = pgTable(
+  'invoice_preferences',
+  {
+    clerkUserId: text('clerk_user_id').primaryKey(),
+    startDate: text('start_date').notNull(),
+    endDate: text('end_date').notNull(),
+    timezone: text('timezone').notNull().default('UTC'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    gmailMessageId: text('gmail_message_id').notNull(),
+    gmailThreadId: text('gmail_thread_id'),
+    vendor: text('vendor').notNull(),
+    invoiceNumber: text('invoice_number').notNull(),
+    amountMinor: integer('amount_minor').notNull().default(0),
+    currency: text('currency').notNull().default('USD'),
+    dueDate: timestamp('due_date', { withTimezone: true }),
+    receivedAt: timestamp('received_at', { withTimezone: true }).notNull(),
+    status: text('status').notNull().default('due'),
+    description: text('description'),
+    hasAttachment: boolean('has_attachment').notNull().default(false),
+    confidence: integer('confidence').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('invoices_user_gmail_message_unique').on(table.clerkUserId, table.gmailMessageId),
+    index('invoices_user_received_index').on(table.clerkUserId, table.receivedAt),
+  ],
+);
