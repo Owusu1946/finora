@@ -36,6 +36,9 @@ function isPrivateIpv4(host: string) {
 }
 
 export function getApiUrl() {
+  const configuredUrl = normalizeUrl(env.EXPO_PUBLIC_API_URL);
+  if (configuredUrl) return configuredUrl;
+
   if (__DEV__) {
     const metroHost = getMetroHost();
     if (metroHost && isPrivateIpv4(metroHost)) {
@@ -43,5 +46,5 @@ export function getApiUrl() {
     }
   }
 
-  return normalizeUrl(env.EXPO_PUBLIC_API_URL);
+  return null;
 }

@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/expo';
 import * as Linking from 'expo-linking';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GmailLogo } from '@/components/integrations/gmail-logo';
@@ -128,40 +128,55 @@ export default function IntegrationsScreen() {
   const [busyKey, setBusyKey] = useState<'gmail' | 'calendar' | 'sms' | null>(null);
   const [gmail, setGmail] = useState<GmailIntegrationStatus | null>(null);
   const gmailRef = useRef<GmailIntegrationStatus | null>(null);
+  const refreshInFlightRef = useRef(false);
+  const getTokenRef = useRef(getToken);
   const [gmailStatusError, setGmailStatusError] = useState(false);
   const [calendarCount, setCalendarCount] = useState(0);
   const [smsCount, setSmsCount] = useState(0);
 
-  const refresh = useCallback(async () => {
-    const [integrations, gmailResult, calendar, sms] = await Promise.all([
-      getIntegrations(),
-      getGmailIntegrationStatus(getToken)
-        .then((value) => ({ value, failed: false as const }))
-        .catch((error) => {
-          console.error('[GmailIntegration] status refresh failed', {
-            name: error instanceof Error ? error.name : 'UnknownError',
-            message: error instanceof Error ? error.message : String(error),
-          });
-          return { value: null, failed: true as const };
-        }),
-      listUpcomingCalendarMoneyEvents(),
-      listOpenSmsPaymentRequests(),
-    ]);
-    const gmailStatus = gmailResult.value ?? gmailRef.current;
-    setState({
-      ...integrations,
-      gmailConnected: gmailStatus?.connected ?? false,
-      gmailEmail: gmailStatus?.email ?? undefined,
-      gmailConnectedAt: gmailStatus?.lastSyncedAt ?? undefined,
-    });
-    if (gmailResult.value) {
-      gmailRef.current = gmailResult.value;
-      setGmail(gmailResult.value);
-    }
-    setGmailStatusError(gmailResult.failed);
-    setCalendarCount(calendar.length);
-    setSmsCount(sms.length);
+  useEffect(() => {
+    getTokenRef.current = getToken;
   }, [getToken]);
+
+  const refresh = useCallback(async () => {
+    if (refreshInFlightRef.current) {
+      console.info('[GmailIntegration] status refresh skipped', { reason: 'already_in_flight' });
+      return;
+    }
+    refreshInFlightRef.current = true;
+    try {
+      const [integrations, gmailResult, calendar, sms] = await Promise.all([
+        getIntegrations(),
+        getGmailIntegrationStatus(getTokenRef.current)
+          .then((value) => ({ value, failed: false as const }))
+          .catch((error) => {
+            console.error('[GmailIntegration] status refresh failed', {
+              name: error instanceof Error ? error.name : 'UnknownError',
+              message: error instanceof Error ? error.message : String(error),
+            });
+            return { value: null, failed: true as const };
+          }),
+        listUpcomingCalendarMoneyEvents(),
+        listOpenSmsPaymentRequests(),
+      ]);
+      const gmailStatus = gmailResult.value ?? gmailRef.current;
+      setState({
+        ...integrations,
+        gmailConnected: gmailStatus?.connected ?? false,
+        gmailEmail: gmailStatus?.email ?? undefined,
+        gmailConnectedAt: gmailStatus?.lastSyncedAt ?? undefined,
+      });
+      if (gmailResult.value) {
+        gmailRef.current = gmailResult.value;
+        setGmail(gmailResult.value);
+      }
+      setGmailStatusError(gmailResult.failed);
+      setCalendarCount(calendar.length);
+      setSmsCount(sms.length);
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
