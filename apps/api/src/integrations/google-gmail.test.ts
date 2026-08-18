@@ -67,4 +67,24 @@ describe('searchGmailMessages', () => {
     });
     expect(decodeURIComponent(String(fetchMock.mock.calls[0]?.[0]))).toContain('invoice');
   });
+
+  it('ignores model-invented wildcard filters and placeholder cursors', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ messages: [], resultSizeEstimate: 0 })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ messages: [], resultSizeEstimate: 0 })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await searchGmailMessages('access-token', {
+      from: '*',
+      keywords: '*',
+      cursor: 'start',
+      invoiceOnly: true,
+    });
+
+    const requestUrl = String(fetchMock.mock.calls[0]?.[0]);
+    expect(requestUrl).not.toContain('pageToken=');
+    expect(requestUrl).not.toContain('from%3A(');
+    expect(requestUrl).toContain('%7Binvoice%20%22amount%20due%22%20%22total%20due%22%20bill%7D');
+  });
 });

@@ -212,10 +212,22 @@ function gmailDate(value: string | undefined, fallback: string) {
   return value ? value.replaceAll('-', '/') : fallback;
 }
 
+function meaningfulFilter(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed && trimmed !== '*' ? trimmed : undefined;
+}
+
+function meaningfulPageToken(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed && !['start', 'first', 'initial'].includes(trimmed.toLowerCase())
+    ? trimmed
+    : undefined;
+}
+
 function buildGmailQuery(input: GmailSearchInput) {
   const clauses = [
-    input.keywords?.trim(),
-    input.from?.trim() ? `from:(${input.from.trim()})` : undefined,
+    meaningfulFilter(input.keywords),
+    meaningfulFilter(input.from) ? `from:(${meaningfulFilter(input.from)})` : undefined,
     input.startDate ? `after:${gmailDate(input.startDate, '')}` : undefined,
     input.endDate ? `before:${gmailDate(input.endDate, '')}` : undefined,
     input.hasAttachment ? 'has:attachment' : undefined,
@@ -231,12 +243,13 @@ function headerValue(headers: Array<{ name: string; value: string }> | undefined
 export async function searchGmailMessages(accessToken: string, input: GmailSearchInput) {
   const limit = Math.min(Math.max(input.limit ?? 10, 1), 20);
   const query = encodeURIComponent(buildGmailQuery(input));
+  const pageToken = meaningfulPageToken(input.cursor);
   const list = await googleRequest<{
     messages?: Array<{ id: string }>;
     resultSizeEstimate?: number;
     nextPageToken?: string;
   }>(
-    `${GMAIL_MESSAGES_URL}?q=${query}&maxResults=${limit}${input.cursor ? `&pageToken=${encodeURIComponent(input.cursor)}` : ''}`,
+    `${GMAIL_MESSAGES_URL}?q=${query}&maxResults=${limit}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
   const summaries: GmailMessageSummary[] = [];
