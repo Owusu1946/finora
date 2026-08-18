@@ -76,13 +76,15 @@ function publicStatus(
       errorCode: null,
     };
   }
+  const syncTimedOut =
+    integration.status === 'syncing' && Date.now() - integration.updatedAt.getTime() > 2 * 60_000;
   return {
-    connected: integration.status === 'connected' || integration.status === 'syncing',
+    connected: integration.status !== 'reauthorization_required',
     email: integration.email,
-    status: integration.status,
+    status: syncTimedOut ? 'error' : integration.status,
     lastSyncedAt: integration.lastSyncedAt?.toISOString() ?? null,
     candidateCount: integration.candidateCount,
-    errorCode: integration.lastErrorCode,
+    errorCode: syncTimedOut ? 'sync_timed_out' : integration.lastErrorCode,
   };
 }
 

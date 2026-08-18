@@ -43,6 +43,15 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
       continue;
     }
 
+    if (
+      !parsed.data.pageToken &&
+      integration.status === 'syncing' &&
+      Date.now() - integration.updatedAt.getTime() < 2 * 60_000
+    ) {
+      message.ack();
+      continue;
+    }
+
     await markGmailSyncing(db, integration.id);
     try {
       const refreshToken = await decryptSecret(
@@ -55,7 +64,11 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
         refreshToken,
       });
       const preferences = await getInvoicePreferences(db, integration.clerkUserId);
-      const candidates = await listGmailInvoiceCandidates(token.access_token!, preferences);
+      const candidates = await listGmailInvoiceCandidates(
+        token.access_token!,
+        preferences,
+        parsed.data.pageToken,
+      );
       for (const candidate of candidates.messages) {
         const headers = new Map(
           (candidate.payload?.headers ?? []).map((header) => [header.name.toLowerCase(), header.value]),
@@ -85,10 +98,18 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
           confidence: amountMinor > 0 ? 70 : 35,
         });
       }
-      await markGmailSynced(db, integration.id, {
-        historyId: integration.historyId ?? undefined,
-        candidateCount: candidates.estimate,
-      });
+      if (candidates.nextPageToken) {
+        await bindings.GMAIL_SYNC_QUEUE.send({
+          kind: 'gmail.initial-sync',
+          integrationId: integration.id,
+          pageToken: candidates.nextPageToken,
+        });
+      } else {
+        await markGmailSynced(db, integration.id, {
+          historyId: integration.historyId ?? undefined,
+          candidateCount: candidates.estimate,
+        });
+      }
       message.ack();
     } catch (error) {
       const errorCode =

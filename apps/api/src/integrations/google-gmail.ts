@@ -125,6 +125,7 @@ export async function getGmailProfile(accessToken: string) {
 export async function listGmailInvoiceCandidates(
   accessToken: string,
   range?: { startDate: string; endDate: string },
+  pageToken?: string,
 ) {
   const end = new Date();
   const start = new Date(end);
@@ -143,23 +144,34 @@ export async function listGmailInvoiceCandidates(
   const list = await googleRequest<{
     messages?: Array<{ id: string }>;
     resultSizeEstimate?: number;
-  }>(`${GMAIL_MESSAGES_URL}?q=${query}&maxResults=50`, {
+    nextPageToken?: string;
+  }>(`${GMAIL_MESSAGES_URL}?q=${query}&maxResults=20${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ''}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  const messages = await Promise.all(
-    (list.messages ?? []).slice(0, 50).map((message) =>
-      googleRequest<{
+  const messages: Array<{
+    id: string;
+    threadId?: string;
+    internalDate?: string;
+    snippet?: string;
+    payload?: { headers?: Array<{ name: string; value: string }> };
+  }> = [];
+  for (let index = 0; index < (list.messages ?? []).length; index += 5) {
+    const batch = await Promise.allSettled(
+      (list.messages ?? []).slice(index, index + 5).map((message) =>
+        googleRequest<{
         id: string;
         threadId?: string;
         internalDate?: string;
         snippet?: string;
         payload?: { headers?: Array<{ name: string; value: string }> };
-      }>(`${GMAIL_MESSAGES_URL}/${message.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }),
-    ),
-  );
-  return { messages, estimate: list.resultSizeEstimate ?? messages.length };
+        }>(`${GMAIL_MESSAGES_URL}/${message.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ),
+    );
+    for (const result of batch) if (result.status === 'fulfilled') messages.push(result.value);
+  }
+  return { messages, estimate: list.resultSizeEstimate ?? messages.length, nextPageToken: list.nextPageToken };
 }
 
 export async function revokeGoogleToken(token: string) {

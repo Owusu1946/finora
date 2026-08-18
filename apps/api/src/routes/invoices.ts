@@ -120,9 +120,11 @@ invoiceRoutes.get('/', async (c) => {
   const hasNext = rows.length > limit;
   const visible = rows.slice(0, limit);
   const integration = await getInvoiceSyncState(db, userId);
+  const syncTimedOut =
+    integration?.status === 'syncing' && Date.now() - integration.updatedAt.getTime() > 2 * 60_000;
   const syncStatus = !integration || integration.revokedAt
     ? 'disconnected'
-    : integration.status === 'syncing'
+    : integration.status === 'syncing' && !syncTimedOut
       ? 'syncing'
       : integration.status === 'error' || integration.status === 'reauthorization_required'
         ? 'error'
