@@ -1,19 +1,34 @@
-import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useAuth } from '@clerk/expo';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 
 import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
 import { InvoiceCard } from '@/components/chat/InvoiceCard';
-import { invoiceFromRemote } from '@/components/invoices/types';
 import { InvoiceListItem } from '@/components/invoices/InvoiceListItem';
+import { invoiceFromRemote } from '@/components/invoices/types';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import {
+  getCachedRemoteInvoices,
+  getRemoteInvoices,
+  queueInvoiceSync,
+  updateRemoteInvoicePreferences,
+} from '@/lib/invoices-api';
 import { listInvoices } from '@/lib/invoices-storage';
-import { getCachedRemoteInvoices, getRemoteInvoices, queueInvoiceSync, updateRemoteInvoicePreferences } from '@/lib/invoices-api';
 
 const FILTERS: { id: InvoiceFilter; label: string }[] = [
   { id: 'due', label: 'Due' },
@@ -111,31 +126,31 @@ export default function InvoicesScreen() {
         controls={
           <View style={styles.controls}>
             <View style={styles.filters}>
-            {FILTERS.map((item) => {
-              const active = filter === item.id;
-              return (
-                <Pressable
-                  key={item.id}
-                  onPress={() => {
-                    haptics.selection();
-                    setFilter(item.id);
-                  }}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: active ? colors.foreground : colors.muted },
-                  ]}
-                >
-                  <Text
+              {FILTERS.map((item) => {
+                const active = filter === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => {
+                      haptics.selection();
+                      setFilter(item.id);
+                    }}
                     style={[
-                      styles.chipLabel,
-                      { color: active ? colors.background : colors.foreground },
+                      styles.chip,
+                      { backgroundColor: active ? colors.foreground : colors.muted },
                     ]}
                   >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Text
+                      style={[
+                        styles.chipLabel,
+                        { color: active ? colors.background : colors.foreground },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
             <View style={styles.rangeRow}>
               {['30', '90', '365'].map((days) => (
@@ -159,14 +174,23 @@ export default function InvoicesScreen() {
                   }}
                   style={[styles.rangeButton, { borderColor: colors.border }]}
                 >
-                  <Text style={{ color: colors.foreground }}>{days === '365' ? 'This year' : `${days} days`}</Text>
+                  <Text style={{ color: colors.foreground }}>
+                    {days === '365' ? 'This year' : `${days} days`}
+                  </Text>
                 </Pressable>
               ))}
-              <Pressable onPress={() => setRangeModal(true)} style={[styles.rangeButton, { borderColor: colors.border }]}>
+              <Pressable
+                onPress={() => setRangeModal(true)}
+                style={[styles.rangeButton, { borderColor: colors.border }]}
+              >
                 <Text style={{ color: colors.foreground }}>Custom</Text>
               </Pressable>
             </View>
-            {syncStatus ? <Text style={[styles.syncStatus, { color: colors.mutedForeground }]}>Gmail: {syncStatus}</Text> : null}
+            {syncStatus ? (
+              <Text style={[styles.syncStatus, { color: colors.mutedForeground }]}>
+                Gmail: {syncStatus}
+              </Text>
+            ) : null}
           </View>
         }
         keyExtractor={(item) => item.id}
@@ -180,8 +204,17 @@ export default function InvoicesScreen() {
         renderItem={renderInvoice}
       />
 
-      <Modal visible={rangeModal} animationType='slide' transparent onRequestClose={() => setRangeModal(false)}>
-        <View style={[styles.rangeModal, { backgroundColor: colors.background }]}>
+      <SheetModal
+        visible={rangeModal}
+        onClose={() => setRangeModal(false)}
+        keyboardAvoiding
+      >
+        <ScrollView
+          contentContainerStyle={styles.rangeModal}
+          keyboardShouldPersistTaps='handled'
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={[styles.modalTitle, { color: colors.foreground }]}>Invoice date range</Text>
           <TextInput
             value={range.startDate}
@@ -202,15 +235,18 @@ export default function InvoicesScreen() {
                 .then(() => queueInvoiceSync(getTokenRef.current))
                 .then(refresh)
                 .catch((error) =>
-                  Alert.alert('Could not update date range', error instanceof Error ? error.message : 'Try again.'),
+                  Alert.alert(
+                    'Could not update date range',
+                    error instanceof Error ? error.message : 'Try again.',
+                  ),
                 );
             }}
             style={[styles.applyButton, { backgroundColor: colors.foreground }]}
           >
             <Text style={{ color: colors.background, fontWeight: '600' }}>Apply</Text>
           </Pressable>
-        </View>
-      </Modal>
+        </ScrollView>
+      </SheetModal>
 
       <Modal
         visible={selected != null}
