@@ -27,12 +27,12 @@ import {
   sanitizeIncomingMessages,
 } from '../ai/messages';
 import { getModelProviderConfig } from '../ai/model-provider';
-import { FINORA_SYSTEM_PROMPT } from '../ai/system-prompt';
 import {
   closeStreamWith,
   createRedisStreamSession,
   publishStreamCancellation,
 } from '../ai/resumable-stream';
+import { FINORA_SYSTEM_PROMPT } from '../ai/system-prompt';
 import { createChatAgentTools } from '../ai/tools';
 import {
   chatIsActive,
@@ -45,6 +45,7 @@ import {
   setFallbackChatTitle,
 } from '../db/chat-store';
 import { createDb } from '../db/client';
+import { createGmailReader, getGmailStatus } from '../integrations/gmail-reader';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
@@ -477,11 +478,16 @@ chat.post('/', async (c) => {
           }
         : {}),
     });
+    const gmail = createGmailReader(db, env, userId);
     const result = streamText({
       model: openai.chat(provider.modelId),
       system: FINORA_SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-      tools: createChatAgentTools(),
+      tools: createChatAgentTools({
+        status: () => getGmailStatus(db, userId),
+        search: gmail.search,
+        message: gmail.message,
+      }),
       stopWhen: stepCountIs(5),
       abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,
       maxOutputTokens: 2_048,

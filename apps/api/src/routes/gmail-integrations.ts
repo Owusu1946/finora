@@ -1,4 +1,8 @@
-import { GmailConnectRequestSchema, type GmailIntegrationStatus } from '@finora/shared';
+import {
+  GetGmailMessageInputSchema,
+  SearchGmailMessagesInputSchema,
+  GmailConnectRequestSchema,
+} from '@finora/shared';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
@@ -12,6 +16,7 @@ import {
   revokeGmailIntegration,
   upsertGmailIntegration,
 } from '../db/gmail-integrations';
+import { createGmailReader, getGmailStatus, publicGmailStatus } from '../integrations/gmail-reader';
 import {
   createGoogleAuthorizationUrl,
   exchangeGoogleCode,
@@ -63,40 +68,58 @@ function redirectResult(returnUrl: string, result: 'connected' | 'cancelled' | '
   return url.toString();
 }
 
-function publicStatus(
-  integration: Awaited<ReturnType<typeof getGmailIntegration>> | null,
-): GmailIntegrationStatus {
-  if (!integration || integration.revokedAt) {
-    return {
-      connected: false,
-      email: null,
-      status: 'disconnected',
-      lastSyncedAt: null,
-      candidateCount: 0,
-      errorCode: null,
-    };
-  }
-  const syncTimedOut =
-    integration.status === 'syncing' && Date.now() - integration.updatedAt.getTime() > 2 * 60_000;
-  return {
-    connected: integration.status !== 'reauthorization_required',
-    email: integration.email,
-    status: syncTimedOut ? 'error' : integration.status,
-    lastSyncedAt: integration.lastSyncedAt?.toISOString() ?? null,
-    candidateCount: integration.candidateCount,
-    errorCode: syncTimedOut ? 'sync_timed_out' : integration.lastErrorCode,
-  };
-}
-
 export const gmailIntegrations = new Hono<AppEnv>();
 
 gmailIntegrations.get('/status', async (c) => {
   c.header('Cache-Control', 'no-store');
-  const integration = await getGmailIntegration(
-    createDb(c.get('env').DATABASE_URL),
-    c.get('auth').userId,
-  );
-  return c.json(publicStatus(integration));
+  return c.json(await getGmailStatus(createDb(c.get('env').DATABASE_URL), c.get('auth').userId));
+});
+
+gmailIntegrations.get('/search', async (c) => {
+  const parsed = SearchGmailMessagesInputSchema.safeParse({
+    keywords: c.req.query('keywords'),
+    from: c.req.query('from'),
+    startDate: c.req.query('startDate'),
+    endDate: c.req.query('endDate'),
+    hasAttachment: c.req.query('hasAttachment') === 'true' ? true : undefined,
+    invoiceOnly: c.req.query('invoiceOnly') === 'true' ? true : undefined,
+    limit: c.req.query('limit') ? Number(c.req.query('limit')) : undefined,
+    cursor: c.req.query('cursor'),
+  });
+  if (!parsed.success) return c.json({ error: 'invalid_gmail_search' }, 400);
+  try {
+    const reader = createGmailReader(
+      createDb(c.get('env').DATABASE_URL),
+      c.get('env'),
+      c.get('auth').userId,
+    );
+    return c.json(await reader.search(parsed.data));
+  } catch (error) {
+    const code = error instanceof Error ? error.message : 'gmail_search_failed';
+    return c.json(
+      { error: code },
+      code === 'gmail_not_connected' ? 409 : code === 'gmail_not_configured' ? 503 : 502,
+    );
+  }
+});
+
+gmailIntegrations.get('/messages/:messageId', async (c) => {
+  const parsed = GetGmailMessageInputSchema.safeParse({ messageId: c.req.param('messageId') });
+  if (!parsed.success) return c.json({ error: 'invalid_gmail_message_id' }, 400);
+  try {
+    const reader = createGmailReader(
+      createDb(c.get('env').DATABASE_URL),
+      c.get('env'),
+      c.get('auth').userId,
+    );
+    return c.json(await reader.message(parsed.data.messageId));
+  } catch (error) {
+    const code = error instanceof Error ? error.message : 'gmail_message_failed';
+    return c.json(
+      { error: code },
+      code === 'gmail_not_connected' ? 409 : code === 'gmail_not_configured' ? 503 : 502,
+    );
+  }
 });
 
 gmailIntegrations.post('/connect', async (c) => {
@@ -132,7 +155,7 @@ gmailIntegrations.post('/disconnect', async (c) => {
   const config = googleConfig(c.get('env'));
   const db = createDb(c.get('env').DATABASE_URL);
   const integration = await getGmailIntegration(db, c.get('auth').userId);
-  if (!integration || integration.revokedAt) return c.json(publicStatus(null));
+  if (!integration || integration.revokedAt) return c.json(publicGmailStatus(null));
   if (config) {
     const refreshToken = await decryptSecret(
       integration.refreshTokenCiphertext,
@@ -141,7 +164,7 @@ gmailIntegrations.post('/disconnect', async (c) => {
     c.executionCtx.waitUntil(revokeGoogleToken(refreshToken));
   }
   await revokeGmailIntegration(db, c.get('auth').userId);
-  return c.json(publicStatus(null));
+  return c.json(publicGmailStatus(null));
 });
 
 gmailIntegrations.post('/sync', async (c) => {

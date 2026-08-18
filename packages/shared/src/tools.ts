@@ -42,6 +42,36 @@ export const IdInputSchema = z.object({ id: z.string().min(1) }).strict();
 
 export const GetBalancesInputSchema = EmptyInputSchema;
 
+export const GetGmailStatusInputSchema = EmptyInputSchema;
+
+const GmailSearchFieldsSchema = z
+  .object({
+    keywords: z.string().trim().min(1).max(200).optional(),
+    from: z.string().trim().min(1).max(200).optional(),
+    startDate: z.iso.date().optional(),
+    endDate: z.iso.date().optional(),
+    hasAttachment: z.boolean().optional(),
+    invoiceOnly: z.boolean().optional(),
+    limit: z.number().int().min(1).max(20).default(10),
+    cursor: z.string().min(1).max(1_000).optional(),
+  })
+  .strict();
+
+export const SearchGmailMessagesInputSchema = GmailSearchFieldsSchema.refine(
+  (value) => value.keywords || value.from || value.startDate || value.endDate || value.invoiceOnly,
+  {
+    message: 'At least one Gmail search filter is required.',
+  },
+);
+
+export const GetGmailMessageInputSchema = z
+  .object({ messageId: z.string().regex(/^[A-Za-z0-9_-]{8,128}$/) })
+  .strict();
+
+export const FindGmailInvoicesInputSchema = GmailSearchFieldsSchema.extend({
+  invoiceOnly: z.literal(true).default(true),
+});
+
 export const ListWalletsInputSchema = z
   .object({
     subCustomerId: z.string().optional(),
@@ -736,6 +766,10 @@ export const TOOL_INPUT_SCHEMAS = {
   ping: PingInputSchema,
   get_current_user: EmptyInputSchema,
   get_balances: GetBalancesInputSchema,
+  get_gmail_status: GetGmailStatusInputSchema,
+  search_gmail_messages: SearchGmailMessagesInputSchema,
+  get_gmail_message: GetGmailMessageInputSchema,
+  find_gmail_invoices: FindGmailInvoicesInputSchema,
   list_wallets: ListWalletsInputSchema,
   search_recipient: SearchRecipientInputSchema,
   prepare_payment: PreparePaymentInputSchema,

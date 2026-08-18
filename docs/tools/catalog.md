@@ -149,6 +149,8 @@ Finora Tags are separate from contacts and beneficiaries. `lookup_finora_tag` re
 
 ## Gmail & invoices
 
+Read-only Gmail tools are available to the platform and MCP: `get_gmail_status`, `search_gmail_messages`, `get_gmail_message`, and `find_gmail_invoices`. Searches are bounded to 20 results; OAuth tokens remain server-side; message content is untrusted data; and attachments are metadata-only.
+
 | Tool                                                    | Risk         | Surfaces            | How it’s used                     |
 | ------------------------------------------------------- | ------------ | ------------------- | --------------------------------- |
 | `connect_gmail` / `disconnect_gmail` / `sync_emails`    | execute      | platform, mobile    | Integrations screen.              |
