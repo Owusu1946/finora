@@ -155,6 +155,18 @@ type GmailToolReader = {
   message: (messageId: string) => Promise<unknown>;
 };
 
+function gmailToolFailure(error: unknown, operation: string) {
+  const message = error instanceof Error ? error.message : '';
+  const errorCode = message.includes('gmail_reauthorization_required')
+    ? 'gmail_reauthorization_required'
+    : message.includes('gmail_not_connected')
+      ? 'gmail_not_connected'
+      : message.includes('gmail_not_configured')
+        ? 'gmail_not_configured'
+        : `${operation}_failed`;
+  return { ok: false as const, errorCode };
+}
+
 export function createChatAgentTools(gmail?: GmailToolReader) {
   return {
     get_gmail_status: tool({
@@ -168,7 +180,11 @@ export function createChatAgentTools(gmail?: GmailToolReader) {
       inputSchema: zodSchema(SearchGmailMessagesInputSchema),
       execute: async (input) => {
         if (!gmail) throw new Error('gmail_unavailable');
-        return gmail.search(SearchGmailMessagesInputSchema.parse(input));
+        try {
+          return await gmail.search(SearchGmailMessagesInputSchema.parse(input));
+        } catch (error) {
+          return gmailToolFailure(error, 'gmail_search');
+        }
       },
     }),
     get_gmail_message: tool({
@@ -177,7 +193,11 @@ export function createChatAgentTools(gmail?: GmailToolReader) {
       inputSchema: zodSchema(GetGmailMessageInputSchema),
       execute: async ({ messageId }) => {
         if (!gmail) throw new Error('gmail_unavailable');
-        return gmail.message(messageId);
+        try {
+          return await gmail.message(messageId);
+        } catch (error) {
+          return gmailToolFailure(error, 'gmail_message');
+        }
       },
     }),
     find_gmail_invoices: tool({
@@ -185,7 +205,11 @@ export function createChatAgentTools(gmail?: GmailToolReader) {
       inputSchema: zodSchema(FindGmailInvoicesInputSchema),
       execute: async (input) => {
         if (!gmail) throw new Error('gmail_unavailable');
-        return gmail.search(FindGmailInvoicesInputSchema.parse(input));
+        try {
+          return await gmail.search(FindGmailInvoicesInputSchema.parse(input));
+        } catch (error) {
+          return gmailToolFailure(error, 'gmail_invoice_search');
+        }
       },
     }),
     get_balances: tool({

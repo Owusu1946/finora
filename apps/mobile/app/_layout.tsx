@@ -17,7 +17,7 @@ import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -246,6 +246,12 @@ function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime 
 
 function RootApp() {
   const { getToken, isLoaded: clerkLoaded, userId } = useAuth();
+  // Clerk may provide a new function identity while its session refreshes. Keep the
+  // callback passed into the remote runtime stable so the thread-list adapter (and
+  // its request cache) is not recreated on every auth render.
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+  const stableGetToken = useCallback(() => getTokenRef.current(), []);
   const [fontsLoaded] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
@@ -269,7 +275,7 @@ function RootApp() {
       const remoteChatPromise = (async (): Promise<RemoteChatRuntime | null> => {
         const apiUrl = getApiUrl();
         if (env.EXPO_PUBLIC_REMOTE_CHAT_ENABLED !== 'true' || !apiUrl || !userId) return null;
-        return { apiUrl, userId, getToken };
+        return { apiUrl, userId, getToken: stableGetToken };
       })();
       const [onboarding, tagConfigured, passcodeExists, remoteChat] = await Promise.all([
         getOnboardingState(),
@@ -290,7 +296,7 @@ function RootApp() {
     return () => {
       cancelled = true;
     };
-  }, [getToken, userId]);
+  }, [stableGetToken, userId]);
 
   // Keep a stable root so the splash overlay can mount + lay out before native hide.
   return (

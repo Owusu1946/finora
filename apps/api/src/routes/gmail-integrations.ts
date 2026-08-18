@@ -96,9 +96,14 @@ gmailIntegrations.get('/search', async (c) => {
     return c.json(await reader.search(parsed.data));
   } catch (error) {
     const code = error instanceof Error ? error.message : 'gmail_search_failed';
+    console.error('[gmail:search]', { code: code.split(':', 1)[0] });
     return c.json(
       { error: code },
-      code === 'gmail_not_connected' ? 409 : code === 'gmail_not_configured' ? 503 : 502,
+      code === 'gmail_not_connected' || code === 'gmail_reauthorization_required'
+        ? 409
+        : code === 'gmail_not_configured'
+          ? 503
+          : 502,
     );
   }
 });
@@ -115,9 +120,14 @@ gmailIntegrations.get('/messages/:messageId', async (c) => {
     return c.json(await reader.message(parsed.data.messageId));
   } catch (error) {
     const code = error instanceof Error ? error.message : 'gmail_message_failed';
+    console.error('[gmail:message]', { code: code.split(':', 1)[0] });
     return c.json(
       { error: code },
-      code === 'gmail_not_connected' ? 409 : code === 'gmail_not_configured' ? 503 : 502,
+      code === 'gmail_not_connected' || code === 'gmail_reauthorization_required'
+        ? 409
+        : code === 'gmail_not_configured'
+          ? 503
+          : 502,
     );
   }
 });

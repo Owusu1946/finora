@@ -3,7 +3,7 @@ import type { GmailIntegrationStatus } from '@finora/shared';
 
 import type { Database } from '../db/client';
 
-import { getGmailIntegration } from '../db/gmail-integrations';
+import { getGmailIntegration, markGmailReauthorizationRequired } from '../db/gmail-integrations';
 import {
   getGmailMessage,
   refreshGoogleAccessToken,
@@ -24,12 +24,22 @@ async function accessToken(db: Database, env: ApiEnv, userId: string) {
     throw new Error('gmail_not_connected');
   }
   const refreshToken = await decryptSecret(integration.refreshTokenCiphertext, encryptionKey);
-  const token = await refreshGoogleAccessToken({
-    clientId,
-    clientSecret,
-    refreshToken,
-  });
-  return token.access_token;
+  try {
+    const token = await refreshGoogleAccessToken({
+      clientId,
+      clientSecret,
+      refreshToken,
+    });
+    return token.access_token;
+  } catch (error) {
+    const errorCode = error instanceof Error ? error.message.split(':', 1)[0] : 'gmail_token_refresh_failed';
+    const requiresReauthorization = errorCode.includes('invalid_grant') || errorCode.includes('401');
+    if (requiresReauthorization) {
+      await markGmailReauthorizationRequired(db, integration.id, errorCode);
+      throw new Error('gmail_reauthorization_required');
+    }
+    throw error;
+  }
 }
 
 export function publicGmailStatus(
