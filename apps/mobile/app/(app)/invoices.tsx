@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useAuth } from '@clerk/expo';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
@@ -11,6 +12,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { listInvoices } from '@/lib/invoices-storage';
+import { getCachedRemoteInvoices, getRemoteInvoices, queueInvoiceSync, updateRemoteInvoicePreferences } from '@/lib/invoices-api';
 
 const FILTERS: { id: InvoiceFilter; label: string }[] = [
   { id: 'due', label: 'Due' },
@@ -20,17 +22,53 @@ const FILTERS: { id: InvoiceFilter; label: string }[] = [
 ];
 
 export default function InvoicesScreen() {
+  const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
   const { colors } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<InvoiceFilter>('due');
   const [items, setItems] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Invoice | null>(null);
+  const [range, setRange] = useState({ startDate: '', endDate: '', timezone: 'UTC' });
+  const [rangeModal, setRangeModal] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('');
+
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const next = await listInvoices();
-    setItems(next.filter((i) => i.status !== 'dismissed' || filter === 'all'));
+    const mapRemote = (remote: Awaited<ReturnType<typeof getRemoteInvoices>>) => {
+      setRange(remote.preferences);
+      setSyncStatus(remote.syncStatus);
+      setItems(remote.invoices.map((invoice) => ({
+        id: invoice.id,
+        vendor: invoice.vendor,
+        invoiceNumber: invoice.invoiceNumber,
+        amount: invoice.amount,
+        currency: invoice.currency,
+        dueDate: invoice.dueDate ?? invoice.receivedAt,
+        status: invoice.status,
+        source: 'gmail' as const,
+        description: invoice.description ?? undefined,
+        destination: { kind: 'bank_account' as const, label: 'Gmail source', value: 'Review before paying' },
+      })));
+    };
+    const cached = await getCachedRemoteInvoices();
+    if (cached) {
+      mapRemote(cached);
+      setLoading(false);
+    }
+    try {
+      const remote = await getRemoteInvoices(getTokenRef.current);
+      mapRemote(remote);
+    } catch {
+      const next = await listInvoices();
+      setItems(next.filter((i) => i.status !== 'dismissed' || filter === 'all'));
+      setSyncStatus('offline');
+    }
     setLoading(false);
   }, [filter]);
 
@@ -81,7 +119,8 @@ export default function InvoicesScreen() {
           </>
         }
         controls={
-          <View style={styles.filters}>
+          <View style={styles.controls}>
+            <View style={styles.filters}>
             {FILTERS.map((item) => {
               const active = filter === item.id;
               return (
@@ -107,6 +146,37 @@ export default function InvoicesScreen() {
                 </Pressable>
               );
             })}
+            </View>
+            <View style={styles.rangeRow}>
+              {['30', '90', '365'].map((days) => (
+                <Pressable
+                  key={days}
+                  onPress={() => {
+                    const end = new Date();
+                    const start = new Date(end);
+                    if (days === '365') start.setMonth(0, 1);
+                    else start.setDate(start.getDate() - Number(days) + 1);
+                    const next = {
+                      startDate: start.toISOString().slice(0, 10),
+                      endDate: end.toISOString().slice(0, 10),
+                      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                    };
+                    setRange(next);
+                    void updateRemoteInvoicePreferences(getTokenRef.current, next)
+                      .then(() => queueInvoiceSync(getTokenRef.current))
+                      .then(refresh)
+                      .catch(() => undefined);
+                  }}
+                  style={[styles.rangeButton, { borderColor: colors.border }]}
+                >
+                  <Text style={{ color: colors.foreground }}>{days === '365' ? 'This year' : `${days} days`}</Text>
+                </Pressable>
+              ))}
+              <Pressable onPress={() => setRangeModal(true)} style={[styles.rangeButton, { borderColor: colors.border }]}>
+                <Text style={{ color: colors.foreground }}>Custom</Text>
+              </Pressable>
+            </View>
+            {syncStatus ? <Text style={[styles.syncStatus, { color: colors.mutedForeground }]}>Gmail: {syncStatus}</Text> : null}
           </View>
         }
         keyExtractor={(item) => item.id}
@@ -119,6 +189,38 @@ export default function InvoicesScreen() {
         }
         renderItem={renderInvoice}
       />
+
+      <Modal visible={rangeModal} animationType='slide' transparent onRequestClose={() => setRangeModal(false)}>
+        <View style={[styles.rangeModal, { backgroundColor: colors.background }]}>
+          <Text style={[styles.modalTitle, { color: colors.foreground }]}>Invoice date range</Text>
+          <TextInput
+            value={range.startDate}
+            onChangeText={(value) => setRange((current) => ({ ...current, startDate: value }))}
+            placeholder='Start date: YYYY-MM-DD'
+            style={[styles.dateInput, { borderColor: colors.border, color: colors.foreground }]}
+          />
+          <TextInput
+            value={range.endDate}
+            onChangeText={(value) => setRange((current) => ({ ...current, endDate: value }))}
+            placeholder='End date: YYYY-MM-DD'
+            style={[styles.dateInput, { borderColor: colors.border, color: colors.foreground }]}
+          />
+          <Pressable
+            onPress={() => {
+              setRangeModal(false);
+              void updateRemoteInvoicePreferences(getTokenRef.current, range)
+                .then(() => queueInvoiceSync(getTokenRef.current))
+                .then(refresh)
+                .catch((error) =>
+                  Alert.alert('Could not update date range', error instanceof Error ? error.message : 'Try again.'),
+                );
+            }}
+            style={[styles.applyButton, { backgroundColor: colors.foreground }]}
+          >
+            <Text style={{ color: colors.background, fontWeight: '600' }}>Apply</Text>
+          </Pressable>
+        </View>
+      </Modal>
 
       <Modal
         visible={selected != null}
@@ -179,6 +281,25 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingBottom: 8,
   },
+  controls: {
+    gap: 8,
+    paddingBottom: 8,
+  },
+  rangeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  rangeButton: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  syncStatus: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -212,5 +333,24 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 19,
     fontWeight: '600',
+  },
+  rangeModal: {
+    marginTop: 'auto',
+    padding: 20,
+    gap: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  dateInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  applyButton: {
+    minHeight: 46,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

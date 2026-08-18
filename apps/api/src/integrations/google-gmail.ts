@@ -122,18 +122,44 @@ export async function getGmailProfile(accessToken: string) {
   });
 }
 
-export async function listGmailInvoiceCandidates(accessToken: string) {
-  const query = encodeURIComponent('newer_than:90d {invoice receipt bill "amount due"}');
+export async function listGmailInvoiceCandidates(
+  accessToken: string,
+  range?: { startDate: string; endDate: string },
+) {
+  const end = new Date();
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - 89);
+  const selectedRange = range ?? {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
+  const before = new Date(`${selectedRange.endDate}T00:00:00.000Z`);
+  before.setUTCDate(before.getUTCDate() + 1);
+  const after = new Date(`${selectedRange.startDate}T00:00:00.000Z`);
+  after.setUTCDate(after.getUTCDate() - 1);
+  const query = encodeURIComponent(
+    `after:${after.toISOString().slice(0, 10).replaceAll('-', '/')} before:${before.toISOString().slice(0, 10).replaceAll('-', '/')} {invoice receipt bill "amount due"}`,
+  );
   const list = await googleRequest<{
     messages?: Array<{ id: string }>;
     resultSizeEstimate?: number;
   }>(`${GMAIL_MESSAGES_URL}?q=${query}&maxResults=50`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  return {
-    messageIds: (list.messages ?? []).map((message) => message.id),
-    estimate: list.resultSizeEstimate ?? 0,
-  };
+  const messages = await Promise.all(
+    (list.messages ?? []).slice(0, 50).map((message) =>
+      googleRequest<{
+        id: string;
+        threadId?: string;
+        internalDate?: string;
+        snippet?: string;
+        payload?: { headers?: Array<{ name: string; value: string }> };
+      }>(`${GMAIL_MESSAGES_URL}/${message.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }),
+    ),
+  );
+  return { messages, estimate: list.resultSizeEstimate ?? messages.length };
 }
 
 export async function revokeGoogleToken(token: string) {
