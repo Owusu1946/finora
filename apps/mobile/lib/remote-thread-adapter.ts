@@ -19,6 +19,7 @@ import {
 } from './remote-chat-adapter';
 
 const optimisticChatIds = new Set<string>();
+const THREAD_LIST_CACHE_TTL_MS = 5_000;
 
 type GetToken = () => Promise<string | null>;
 
@@ -94,6 +95,20 @@ async function readCachedThreads(userId: string): Promise<RemoteThreadMetadata[]
 }
 
 export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThreadListAdapter {
+  let cachedList: {
+    threads: RemoteThreadMetadata[];
+    nextCursor?: string;
+    expiresAt: number;
+  } | null = null;
+  const inFlightLists = new Map<
+    string,
+    Promise<{ threads: RemoteThreadMetadata[]; nextCursor?: string }>
+  >();
+
+  function invalidateListCache() {
+    cachedList = null;
+  }
+
   async function headers() {
     const token = await config.getToken();
     if (!token) throw new Error('Your session expired. Please sign in again.');
@@ -112,22 +127,42 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
 
   return {
     async list(params) {
-      try {
-        const query = params?.after ? `?cursor=${encodeURIComponent(params.after)}` : '';
-        const response = await request(`/v1/chats${query}`);
-        const payload = (await response.json()) as {
-          chats: Array<Parameters<typeof toMetadata>[0]>;
-          nextCursor: string | null;
-        };
-        const threads = payload.chats.map(toMetadata);
-        if (!params?.after) {
-          await AsyncStorage.setItem(threadCacheKey(config.userId), JSON.stringify(payload.chats));
+      const query = params?.after ? `?cursor=${encodeURIComponent(params.after)}` : '';
+      const cacheKey = query || 'first-page';
+      if (!params?.after && cachedList && cachedList.expiresAt > Date.now()) {
+        return { threads: cachedList.threads, nextCursor: cachedList.nextCursor };
+      }
+      const existing = inFlightLists.get(cacheKey);
+      if (existing) return existing;
+
+      const load = (async () => {
+        try {
+          const response = await request(`/v1/chats${query}`);
+          const payload = (await response.json()) as {
+            chats: Array<Parameters<typeof toMetadata>[0]>;
+            nextCursor: string | null;
+          };
+          const threads = payload.chats.map(toMetadata);
+          if (!params?.after) {
+            cachedList = {
+              threads,
+              nextCursor: payload.nextCursor ?? undefined,
+              expiresAt: Date.now() + THREAD_LIST_CACHE_TTL_MS,
+            };
+            await AsyncStorage.setItem(threadCacheKey(config.userId), JSON.stringify(payload.chats));
+          }
+          return { threads, nextCursor: payload.nextCursor ?? undefined };
+        } catch (error) {
+          const cached = await readCachedThreads(config.userId);
+          if (cached.length > 0) return { threads: cached };
+          throw error;
         }
-        return { threads, nextCursor: payload.nextCursor ?? undefined };
-      } catch (error) {
-        const cached = await readCachedThreads(config.userId);
-        if (cached.length > 0) return { threads: cached };
-        throw error;
+      })();
+      inFlightLists.set(cacheKey, load);
+      try {
+        return await load;
+      } finally {
+        inFlightLists.delete(cacheKey);
       }
     },
 
@@ -148,6 +183,7 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle }),
       });
+      invalidateListCache();
     },
 
     async archive(remoteId) {
@@ -156,6 +192,7 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archived: true }),
       });
+      invalidateListCache();
     },
 
     async unarchive(remoteId) {
@@ -164,10 +201,12 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archived: false }),
       });
+      invalidateListCache();
     },
 
     async delete(remoteId) {
       await request(`/v1/chats/${encodeURIComponent(remoteId)}`, { method: 'DELETE' });
+      invalidateListCache();
       await AsyncStorage.removeItem(threadCacheKey(config.userId));
     },
 
