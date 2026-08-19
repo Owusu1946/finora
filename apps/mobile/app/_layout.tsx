@@ -69,7 +69,7 @@ import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
-import { finoraChatAdapter } from '@/lib/chat-adapter';
+import { createFinoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
@@ -251,8 +251,9 @@ function FinoraRuntimeContent({
   );
 }
 
-function LocalFinoraAssistantRuntime() {
-  const runtime = useLocalRuntime(finoraChatAdapter);
+function LocalFinoraAssistantRuntime({ getToken }: { getToken: () => Promise<string | null> }) {
+  const adapter = useMemo(() => createFinoraChatAdapter(getToken), [getToken]);
+  const runtime = useLocalRuntime(adapter);
   return <FinoraRuntimeContent runtime={runtime} />;
 }
 
@@ -280,11 +281,17 @@ function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime })
   );
 }
 
-function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime | null }) {
+function FinoraAssistantRuntime({
+  remoteChat,
+  getToken,
+}: {
+  remoteChat: RemoteChatRuntime | null;
+  getToken: () => Promise<string | null>;
+}) {
   return remoteChat ? (
     <RemoteFinoraAssistantRuntime config={remoteChat} />
   ) : (
-    <LocalFinoraAssistantRuntime />
+    <LocalFinoraAssistantRuntime getToken={getToken} />
   );
 }
 
@@ -362,6 +369,7 @@ function RootApp() {
                   <FinoraAssistantRuntime
                     key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
                     remoteChat={boot.remoteChat}
+                    getToken={stableGetToken}
                   />
                 </PasscodeGateProvider>
               </PhoneGateProvider>

@@ -45,6 +45,7 @@ import {
   setFallbackChatTitle,
 } from '../db/chat-store';
 import { createDb } from '../db/client';
+import { createCalendarReader } from '../integrations/calendar-reader';
 import { createGmailReader, getGmailStatus } from '../integrations/gmail-reader';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
@@ -479,15 +480,19 @@ chat.post('/', async (c) => {
         : {}),
     });
     const gmail = createGmailReader(db, env, userId);
+    const calendar = createCalendarReader(db, userId);
     const result = streamText({
       model: openai.chat(provider.modelId),
       system: FINORA_SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-      tools: createChatAgentTools({
-        status: () => getGmailStatus(db, userId),
-        search: gmail.search,
-        message: gmail.message,
-      }),
+      tools: createChatAgentTools(
+        {
+          status: () => getGmailStatus(db, userId),
+          search: gmail.search,
+          message: gmail.message,
+        },
+        calendar,
+      ),
       stopWhen: stepCountIs(5),
       abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,
       maxOutputTokens: 2_048,

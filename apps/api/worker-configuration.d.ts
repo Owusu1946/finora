@@ -3,6 +3,7 @@
 interface __BaseEnv_Env {
 	TRANSACTIONAL_EMAIL_QUEUE: Queue;
 	GMAIL_SYNC_QUEUE: Queue;
+	CALENDAR_SYNC_QUEUE: Queue;
 	ENVIRONMENT: "development";
 	CLERK_PUBLISHABLE_KEY: "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA";
 	WELCOME_EMAIL_FROM: "Finora <welcome@mail.askorin.app>";
@@ -27,6 +28,7 @@ interface __BaseEnv_Env {
 	GOOGLE_OAUTH_CLIENT_ID: string;
 	GOOGLE_OAUTH_CLIENT_SECRET: string;
 	GOOGLE_OAUTH_REDIRECT_URI: string;
+	GOOGLE_CALENDAR_REDIRECT_URI: string;
 	GOOGLE_TOKEN_ENCRYPTION_KEY: string;
 }
 declare namespace Cloudflare {
