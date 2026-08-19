@@ -19,6 +19,7 @@ import {
   MessageDocumentAttachment,
   MessageImageAttachment,
 } from './attachment';
+import { resolveChatActivity } from './chat-activity';
 import { EditComposer } from './edit-composer';
 import { AssistantMarkdownText } from './markdown-text';
 import { MessageActionBar } from './message-action-bar';
@@ -75,12 +76,9 @@ function TypingIndicator() {
   const parts = useAuiState((s) => s.message.parts);
   const { colors, isDark } = useTheme();
   if (!isRunning) return null;
+  const activity = resolveChatActivity(parts);
 
-  const activeTool = [...parts]
-    .reverse()
-    .find((part) => part.type === 'tool-call' && part.status.type === 'running');
-  const label =
-    activeTool?.type === 'tool-call' ? getToolStatusLabel(activeTool.toolName) : 'Working on that…';
+  const label = activity.label;
 
   return (
     <View
@@ -89,7 +87,7 @@ function TypingIndicator() {
       accessibilityLiveRegion='polite'
     >
       <ThinkingOrb
-        state='composing'
+        state={activity.orbState}
         size={20}
         speed={1.5}
         theme={isDark ? 'dark' : 'light'}
@@ -98,21 +96,6 @@ function TypingIndicator() {
       <Text style={[styles.typingLabel, { color: colors.mutedForeground }]}>{label}</Text>
     </View>
   );
-}
-
-function getToolStatusLabel(toolName: string) {
-  const labels: Record<string, string> = {
-    get_balances: 'Loading wallet balances…',
-    list_invoices: 'Checking unpaid invoices…',
-    list_expenses: 'Loading business expenses…',
-    generate_financial_insights: 'Preparing financial report…',
-    list_calendar_dues: 'Checking upcoming dues…',
-    list_receive_methods: 'Loading receive methods…',
-    list_virtual_accounts: 'Loading virtual accounts…',
-    list_virtual_cards: 'Loading virtual cards…',
-  };
-  if (labels[toolName]) return labels[toolName];
-  return `${toolName.replace(/_/g, ' ').replace(/^./, (char) => char.toUpperCase())}…`;
 }
 
 function UserMessage() {

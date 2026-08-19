@@ -503,7 +503,7 @@ function VoiceComposer({
         <ThinkingOrb
           state={
             state === 'recording'
-              ? 'composing'
+              ? 'listening'
               : state === 'transcribing'
                 ? 'solving'
                 : 'connecting'
