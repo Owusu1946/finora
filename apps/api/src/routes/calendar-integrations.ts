@@ -73,11 +73,10 @@ calendarIntegrations.get('/status', async (c) => {
     ),
   );
 });
-calendarIntegrations.get('/events', async (c) =>
-  c.json({
-    events: (
-      await listCalendarMoneyEvents(createDb(c.get('env').DATABASE_URL), c.get('auth').userId)
-    ).map((event) => ({
+calendarIntegrations.get('/events', async (c) => {
+  const events = (
+    await listCalendarMoneyEvents(createDb(c.get('env').DATABASE_URL), c.get('auth').userId)
+  ).map((event) => ({
       id: event.id,
       title: event.title,
       kind: event.kind,
@@ -87,9 +86,14 @@ calendarIntegrations.get('/events', async (c) =>
       counterparty: event.counterparty,
       notes: event.notes,
       sourceUrl: event.sourceUrl,
-    })),
-  }),
-);
+    }));
+  console.info('[Calendar] API events response', {
+    userId: c.get('auth').userId,
+    count: events.length,
+    events: events.map((event) => ({ id: event.id, title: event.title, kind: event.kind, dueAt: event.dueAt })),
+  });
+  return c.json({ events });
+});
 calendarIntegrations.post('/connect', async (c) => {
   const google = config(c.get('env'));
   if (!google) return c.json({ error: 'calendar_not_configured' }, 503);

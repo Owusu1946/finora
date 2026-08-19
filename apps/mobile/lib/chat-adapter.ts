@@ -293,10 +293,18 @@ function filterEventsByRange(
 ) {
   const horizonMs = (range === 'month' ? 31 : 7) * 24 * 60 * 60 * 1000;
   const now = Date.now();
-  return events.filter((event) => {
+  const filtered = events.filter((event) => {
     const due = new Date(event.dueAt).getTime();
     return due >= now - 12 * 60 * 60 * 1000 && due <= now + horizonMs;
   });
+  console.info('[Calendar] chat range filter', {
+    range,
+    inputCount: events.length,
+    outputCount: filtered.length,
+    inputEvents: events.map((event) => ({ id: event.id, title: event.title, dueAt: event.dueAt })),
+    outputEvents: filtered.map((event) => ({ id: event.id, title: event.title, dueAt: event.dueAt })),
+  });
+  return filtered;
 }
 
 function parseRecipientQuery(prompt: string): string | null {

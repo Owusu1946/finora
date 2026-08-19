@@ -150,11 +150,27 @@ export default function IntegrationsScreen() {
     }
     refreshInFlightRef.current = true;
     try {
+      console.info('[Calendar] integrations refresh starting');
       const [integrations, calendar, sms] = await Promise.all([
         getIntegrations(),
-        getCalendarEvents(getTokenRef.current).catch(() => []),
+        getCalendarEvents(getTokenRef.current).catch((error) => {
+          console.error('[Calendar] events fetch failed', {
+            name: error instanceof Error ? error.name : 'UnknownError',
+            message: error instanceof Error ? error.message : String(error),
+          });
+          return [];
+        }),
         listOpenSmsPaymentRequests(),
       ]);
+      console.info('[Calendar] integrations events fetched', {
+        count: calendar.length,
+        events: calendar.map((event) => ({
+          id: event.id,
+          title: event.title,
+          kind: event.kind,
+          dueAt: event.dueAt,
+        })),
+      });
       setState(integrations);
       setCalendarCount(calendar.length);
       setSmsCount(sms.length);
@@ -176,6 +192,7 @@ export default function IntegrationsScreen() {
       ]);
       const gmailStatus = gmailResult.value ?? gmailRef.current;
       if (calendarResult) setCalendarStatus(calendarResult);
+      console.info('[Calendar] status fetched', calendarResult);
       setState((current) => ({
         ...(current ?? integrations),
         gmailConnected: gmailStatus?.connected ?? false,
