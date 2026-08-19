@@ -39,6 +39,16 @@ export function classifyCalendarMoneyEvent(event: { summary?: string; descriptio
   };
 }
 
+function calendarEventFacts(event: { summary?: string; description?: string }) {
+  const classified = classifyCalendarMoneyEvent(event);
+  return {
+    kind: classified?.kind ?? 'other',
+    amount: classified?.amount ?? null,
+    currency: classified?.currency ?? null,
+    notes: `${event.summary ?? ''} ${event.description ?? ''}`.trim().slice(0, 500) || null,
+  };
+}
+
 export async function consumeCalendarSyncQueue(batch: MessageBatch<unknown>, bindings: Env) {
   const env = getApiEnv(bindings);
   const db = createDb(env.DATABASE_URL);
@@ -86,21 +96,20 @@ export async function consumeCalendarSyncQueue(batch: MessageBatch<unknown>, bin
           await cancelCalendarMoneyEvent(db, integration.clerkUserId, event.id);
           continue;
         }
-        const classified = classifyCalendarMoneyEvent(event);
-        if (!classified) continue;
         const dueAt =
           event.start?.dateTime ?? (event.start?.date ? `${event.start.date}T00:00:00.000Z` : null);
         if (!dueAt) continue;
+        const facts = calendarEventFacts(event);
         await upsertCalendarMoneyEvent(db, {
           clerkUserId: integration.clerkUserId,
           integrationId: integration.id,
           googleEventId: event.id,
           title: (event.summary ?? 'Financial event').slice(0, 200),
-          kind: classified.kind,
+          kind: facts.kind,
           dueAt: new Date(dueAt),
-          amount: classified.amount,
-          currency: classified.currency,
-          notes: classified.notes,
+          amount: facts.amount,
+          currency: facts.currency,
+          notes: facts.notes,
           sourceUrl: event.htmlLink ?? null,
           etag: event.etag ?? null,
         });

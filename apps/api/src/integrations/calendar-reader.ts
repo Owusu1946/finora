@@ -31,12 +31,21 @@ export function createCalendarReader(db: Database, userId: string) {
     async status() {
       return publicCalendarStatus(await getCalendarIntegration(db, userId));
     },
-    async dues(range: 'week' | 'month') {
+    async dues(range: 'week' | 'month', query?: string) {
       const integration = await getCalendarIntegration(db, userId);
       if (!integration || integration.revokedAt) return { connected: false as const, events: [] };
       const cutoff = Date.now() + (range === 'month' ? 31 : 7) * 86_400_000;
+      const queryTerms = query
+        ?.toLowerCase()
+        .split(/\s+/)
+        .filter((term) => term.length > 2);
       const events = (await listCalendarMoneyEvents(db, userId))
         .filter((event) => event.dueAt.getTime() <= cutoff)
+        .filter((event) => {
+          const text = `${event.title} ${event.notes ?? ''}`.toLowerCase();
+          if (queryTerms?.length) return queryTerms.some((term) => text.includes(term));
+          return /(invoice|bill|rent|payroll|subscription|renewal|tax|payment|due|fee)/i.test(text);
+        })
         .map((event) => ({
           id: event.id,
           title: event.title,

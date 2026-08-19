@@ -5,6 +5,7 @@ import type { AppEnv } from '../app-env';
 import type { CalendarSyncQueueMessage } from '../integrations/calendar-queue';
 
 import {
+  clearCalendarSyncToken,
   consumeCalendarOAuthAttempt,
   createCalendarOAuthAttempt,
   getCalendarIntegration,
@@ -115,12 +116,11 @@ calendarIntegrations.post('/connect', async (c) => {
   });
 });
 calendarIntegrations.post('/sync', async (c) => {
-  const integration = await getCalendarIntegration(
-    createDb(c.get('env').DATABASE_URL),
-    c.get('auth').userId,
-  );
+  const db = createDb(c.get('env').DATABASE_URL);
+  const integration = await getCalendarIntegration(db, c.get('auth').userId);
   if (!integration || integration.revokedAt)
     return c.json({ error: 'calendar_not_connected' }, 409);
+  await clearCalendarSyncToken(db, integration.id);
   await c.env.CALENDAR_SYNC_QUEUE.send({
     kind: 'calendar.sync',
     integrationId: integration.id,

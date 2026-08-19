@@ -433,8 +433,8 @@ export default function IntegrationsScreen() {
           <>
             <Text style={[styles.found, { color: colors.foreground }]}>
               {calendarStatus?.status === 'syncing'
-                ? 'Syncing upcoming financial events'
-                : `${calendarStatus?.eventCount ?? calendarCount} upcoming money event${(calendarStatus?.eventCount ?? calendarCount) === 1 ? '' : 's'} on calendar`}
+                ? 'Syncing upcoming calendar events'
+                : `${calendarStatus?.eventCount ?? calendarCount} calendar event${(calendarStatus?.eventCount ?? calendarCount) === 1 ? '' : 's'} synced`}
             </Text>
             <Pressable
               onPress={() => {

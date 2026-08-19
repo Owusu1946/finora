@@ -163,5 +163,6 @@ pnpm db:push
 ```
 
 Calendar access is read-only. Sync is queued, bounded to upcoming primary-calendar events, and uses
-Google sync tokens for incremental updates. Only events with explicit financial evidence are stored;
-event text is treated as untrusted data and cannot authorize payments.
+Google sync tokens for incremental updates. Events are stored as read-only source data, while the
+chat tool applies relevance filtering for each user query. Event text is treated as untrusted data
+and cannot authorize payments.
