@@ -1,4 +1,4 @@
-import type { CalendarIntegrationStatus, GmailIntegrationStatus } from '@finora/shared';
+import type { CalendarIntegrationStatus, DriveIntegrationStatus, GmailIntegrationStatus } from '@finora/shared';
 
 import { useAui } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
@@ -10,6 +10,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GmailLogo } from '@/components/integrations/gmail-logo';
 import { GoogleCalendarLogo } from '@/components/integrations/google-calendar-logo';
+import { GoogleDriveLogo } from '@/components/integrations/google-drive-logo';
 import { IMessageLogo } from '@/components/integrations/imessage-logo';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -36,6 +37,7 @@ import {
   type IntegrationsState,
 } from '@/lib/integrations-storage';
 import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
+import { beginDriveConnection, disconnectDriveIntegration, getDriveIntegrationStatus } from '@/lib/drive-integration-api';
 
 type IntegrationCardProps = {
   title: string;
@@ -129,9 +131,10 @@ export default function IntegrationsScreen() {
   const router = useRouter();
   const aui = useAui();
   const [state, setState] = useState<IntegrationsState | null>(null);
-  const [busyKey, setBusyKey] = useState<'gmail' | 'calendar' | 'sms' | null>(null);
+  const [busyKey, setBusyKey] = useState<'gmail' | 'calendar' | 'drive' | 'sms' | null>(null);
   const [gmail, setGmail] = useState<GmailIntegrationStatus | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<CalendarIntegrationStatus | null>(null);
+  const [driveStatus, setDriveStatus] = useState<DriveIntegrationStatus | null>(null);
   const gmailRef = useRef<GmailIntegrationStatus | null>(null);
   const refreshInFlightRef = useRef(false);
   const getTokenRef = useRef(getToken);
@@ -190,8 +193,13 @@ export default function IntegrationsScreen() {
           return null;
         }),
       ]);
+      const driveResult = await getDriveIntegrationStatus(getTokenRef.current).catch((error) => {
+        console.error('[DriveIntegration] status refresh failed', error);
+        return null;
+      });
       const gmailStatus = gmailResult.value ?? gmailRef.current;
       if (calendarResult) setCalendarStatus(calendarResult);
+      if (driveResult) setDriveStatus(driveResult);
       console.info('[Calendar] status fetched', calendarResult);
       setState((current) => ({
         ...(current ?? integrations),
@@ -211,6 +219,25 @@ export default function IntegrationsScreen() {
       refreshInFlightRef.current = false;
     }
   }, []);
+
+  const runConnectDrive = async () => {
+    setBusyKey('drive');
+    try {
+      const returnUrl = Linking.createURL('/integrations');
+      const { authorizationUrl } = await beginDriveConnection(getToken, returnUrl);
+      const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, returnUrl);
+      if (result.type === 'success' && new URL(result.url).searchParams.get('drive') !== 'connected') throw new Error('Google Drive connection failed.');
+      await refresh();
+    } catch (error) { Alert.alert('Could not connect Google Drive', error instanceof Error ? error.message : 'Try again.'); }
+    finally { setBusyKey(null); }
+  };
+
+  const runDisconnectDrive = async () => {
+    setBusyKey('drive');
+    try { await disconnectDriveIntegration(getToken); setDriveStatus(null); await refresh(); }
+    catch (error) { Alert.alert('Could not disconnect Google Drive', error instanceof Error ? error.message : 'Try again.'); }
+    finally { setBusyKey(null); }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -431,6 +458,18 @@ export default function IntegrationsScreen() {
             </Text>
           </>
         }
+      />
+
+      <IntegrationCard
+        title='Google Drive'
+        detail={driveStatus?.connected ? `Connected as ${driveStatus.email ?? 'account'}` : 'Find contracts, receipts, and financial documents'}
+        connected={driveStatus?.connected ?? false}
+        icon={<GoogleDriveLogo />}
+        busy={busyKey === 'drive'}
+        connectLabel='Connect Google Drive'
+        onConnect={() => void runConnectDrive()}
+        onDisconnect={() => void runDisconnectDrive()}
+        connectedBody={<Text style={[styles.found, { color: colors.foreground }]}>{driveStatus?.fileCount ?? 0} files indexed. Ask Finora to find a document in chat.</Text>}
       />
 
       <IntegrationCard
