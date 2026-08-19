@@ -52,3 +52,36 @@ export const CalendarMoneyEventSchema = z.object({
   sourceUrl: z.url().nullable(),
 });
 export type CalendarMoneyEvent = z.infer<typeof CalendarMoneyEventSchema>;
+
+export const DriveIntegrationStatusSchema = z.object({
+  connected: z.boolean(),
+  email: z.email().nullable(),
+  status: z.enum(['disconnected', 'connected', 'syncing', 'error', 'reauthorization_required']),
+  lastSyncedAt: z.iso.datetime().nullable(),
+  fileCount: z.number().int().nonnegative(),
+  errorCode: z.string().nullable(),
+});
+export type DriveIntegrationStatus = z.infer<typeof DriveIntegrationStatusSchema>;
+
+export const DriveConnectRequestSchema = z.object({ returnUrl: z.string().min(1).max(2_048) });
+export const DriveConnectResponseSchema = z.object({ authorizationUrl: z.url() });
+export const DriveFileSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  mimeType: z.string(),
+  modifiedTime: z.iso.datetime().nullable(),
+  webUrl: z.url().nullable(),
+  snippet: z.string().nullable(),
+});
+export const DriveSearchResponseSchema = z.object({
+  files: z.array(DriveFileSchema),
+  nextPageToken: z.string().nullable(),
+});
+export const DriveFileContentSchema = z.object({
+  file: DriveFileSchema,
+  text: z.string(),
+  citations: z.array(z.object({
+    quote: z.string(),
+    location: z.string(),
+  })),
+});

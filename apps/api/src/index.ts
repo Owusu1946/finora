@@ -11,6 +11,7 @@ import { getApiEnv } from './env';
 import { consumeCalendarSyncQueue } from './integrations/calendar-consumer';
 import { consumeGmailSyncQueue } from './integrations/gmail-consumer';
 import { calendarIntegrations, calendarOAuth } from './routes/calendar-integrations';
+import { driveIntegrations, driveOAuth } from './routes/drive-integrations';
 import { chat } from './routes/chat';
 import { chats } from './routes/chats';
 import { emailWebhooks } from './routes/email-webhooks';
@@ -49,6 +50,7 @@ app.get('/health', (c) => c.json({ ok: true, mode: 'mock' }));
 app.route('/webhooks', emailWebhooks);
 app.route('/oauth/google', googleOAuth);
 app.route('/oauth/google-calendar', calendarOAuth);
+app.route('/oauth/google-drive', driveOAuth);
 
 app.post('/v1/webhooks/wewire', async (c) => {
   const payload = await c.req.json();
@@ -62,6 +64,7 @@ app.route('/v1/chat', chat);
 app.route('/v1/chats', chats);
 app.route('/v1/integrations/gmail', gmailIntegrations);
 app.route('/v1/integrations/calendar', calendarIntegrations);
+app.route('/v1/integrations/drive', driveIntegrations);
 app.route('/v1/invoices', invoiceRoutes);
 app.route('/v1', v1);
 

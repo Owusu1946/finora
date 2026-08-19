@@ -223,6 +223,30 @@ export const gmailIntegrations = pgTable(
 
 export type GmailIntegrationRow = typeof gmailIntegrations.$inferSelect;
 
+export const driveIntegrations = pgTable(
+  'drive_integrations',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    googleSubject: text('google_subject').notNull(),
+    email: text('email').notNull(),
+    refreshTokenCiphertext: text('refresh_token_ciphertext').notNull(),
+    scopes: jsonb('scopes').$type<string[]>().notNull(),
+    status: integrationStatusEnum('status').notNull().default('connected'),
+    fileCount: integer('file_count').notNull().default(0),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+    lastErrorCode: text('last_error_code'),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('drive_integrations_user_unique').on(table.clerkUserId),
+    uniqueIndex('drive_integrations_google_subject_unique').on(table.googleSubject),
+  ],
+);
+export type DriveIntegrationRow = typeof driveIntegrations.$inferSelect;
+
 export const calendarIntegrations = pgTable(
   'calendar_integrations',
   {

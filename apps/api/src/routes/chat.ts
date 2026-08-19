@@ -34,6 +34,9 @@ import {
 } from '../ai/resumable-stream';
 import { FINORA_SYSTEM_PROMPT } from '../ai/system-prompt';
 import { createChatAgentTools } from '../ai/tools';
+import { getDriveIntegration } from '../db/drive-integrations';
+import { decryptSecret } from '../integrations/secret-box';
+import { refreshDriveAccessToken, searchDriveFiles } from '../integrations/google-drive';
 import {
   chatIsActive,
   claimChatStream,
@@ -481,6 +484,17 @@ chat.post('/', async (c) => {
     });
     const gmail = createGmailReader(db, env, userId);
     const calendar = createCalendarReader(db, userId);
+    const drive = {
+      search: async (query: string) => {
+        const integration = await getDriveIntegration(db, userId);
+        if (!integration || integration.revokedAt) return { ok: false, errorCode: 'drive_not_connected' };
+        const driveEnv = env as typeof env & { GOOGLE_DRIVE_REDIRECT_URI?: string };
+        if (!driveEnv.GOOGLE_OAUTH_CLIENT_ID || !driveEnv.GOOGLE_OAUTH_CLIENT_SECRET || !driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY) return { ok: false, errorCode: 'drive_not_configured' };
+        const token = await refreshDriveAccessToken({ clientId: driveEnv.GOOGLE_OAUTH_CLIENT_ID, clientSecret: driveEnv.GOOGLE_OAUTH_CLIENT_SECRET, refreshToken: await decryptSecret(integration.refreshTokenCiphertext, driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY) });
+        const result = await searchDriveFiles(token.access_token, query);
+        return { ok: true, files: (result.files ?? []).map((file) => ({ id: file.id, title: file.name, mimeType: file.mimeType, modifiedTime: file.modifiedTime ?? null, sourceUrl: file.webViewLink ?? null, citation: `Document: ${file.name}` })) };
+      },
+    };
     const result = streamText({
       model: openai.chat(provider.modelId),
       system: FINORA_SYSTEM_PROMPT,
@@ -492,6 +506,7 @@ chat.post('/', async (c) => {
           message: gmail.message,
         },
         calendar,
+        drive,
       ),
       stopWhen: stepCountIs(5),
       abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,

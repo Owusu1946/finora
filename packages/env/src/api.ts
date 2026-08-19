@@ -20,6 +20,7 @@ export function createApiEnv(runtimeEnv: RuntimeEnv) {
       GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
       GOOGLE_OAUTH_REDIRECT_URI: z.url().optional(),
       GOOGLE_CALENDAR_REDIRECT_URI: z.url().optional(),
+      GOOGLE_DRIVE_REDIRECT_URI: z.url().optional(),
       GOOGLE_TOKEN_ENCRYPTION_KEY: z.string().min(32).optional(),
       RESEND_API_KEY: z.string().min(1).optional(),
       RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
