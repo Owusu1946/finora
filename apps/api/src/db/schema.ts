@@ -261,6 +261,7 @@ export const calendarMoneyEvents = pgTable(
       .notNull()
       .references(() => calendarIntegrations.id, { onDelete: 'cascade' }),
     googleEventId: text('google_event_id').notNull(),
+    googleCalendarId: text('google_calendar_id').notNull().default('primary'),
     title: text('title').notNull(),
     kind: text('kind').notNull(),
     dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
@@ -277,6 +278,7 @@ export const calendarMoneyEvents = pgTable(
   (table) => [
     uniqueIndex('calendar_money_events_user_event_unique').on(
       table.clerkUserId,
+      table.googleCalendarId,
       table.googleEventId,
     ),
     index('calendar_money_events_user_due_index').on(table.clerkUserId, table.dueAt),

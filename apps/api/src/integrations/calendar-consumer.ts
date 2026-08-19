@@ -1,8 +1,7 @@
 import {
   cancelCalendarMoneyEvent,
-  clearCalendarSyncToken,
+  countCalendarEvents,
   getCalendarIntegrationById,
-  listCalendarMoneyEvents,
   markCalendarSynced,
   markCalendarSyncFailed,
   markCalendarSyncing,
@@ -11,7 +10,11 @@ import {
 import { createDb } from '../db/client';
 import { getApiEnv } from '../env';
 import { CalendarSyncQueueMessageSchema } from './calendar-queue';
-import { listGoogleCalendarEvents, refreshCalendarAccessToken } from './google-calendar';
+import {
+  listGoogleCalendarEvents,
+  listGoogleCalendars,
+  refreshCalendarAccessToken,
+} from './google-calendar';
 import { decryptSecret } from './secret-box';
 
 export function classifyCalendarMoneyEvent(event: { summary?: string; description?: string }) {
@@ -69,7 +72,6 @@ export async function consumeCalendarSyncQueue(batch: MessageBatch<unknown>, bin
       continue;
     }
     if (
-      !parsed.data.pageToken &&
       integration.status === 'syncing' &&
       Date.now() - integration.updatedAt.getTime() < 2 * 60_000
     ) {
@@ -87,55 +89,52 @@ export async function consumeCalendarSyncQueue(batch: MessageBatch<unknown>, bin
         clientSecret: env.GOOGLE_OAUTH_CLIENT_SECRET,
         refreshToken,
       });
-      const result = await listGoogleCalendarEvents(token.access_token, {
-        syncToken: integration.syncToken ?? undefined,
-        pageToken: parsed.data.pageToken,
-      });
-      for (const event of result.items ?? []) {
-        if (event.status === 'cancelled') {
-          await cancelCalendarMoneyEvent(db, integration.clerkUserId, event.id);
-          continue;
-        }
-        const dueAt =
-          event.start?.dateTime ?? (event.start?.date ? `${event.start.date}T00:00:00.000Z` : null);
-        if (!dueAt) continue;
-        const facts = calendarEventFacts(event);
-        await upsertCalendarMoneyEvent(db, {
-          clerkUserId: integration.clerkUserId,
-          integrationId: integration.id,
-          googleEventId: event.id,
-          title: (event.summary ?? 'Financial event').slice(0, 200),
-          kind: facts.kind,
-          dueAt: new Date(dueAt),
-          amount: facts.amount,
-          currency: facts.currency,
-          notes: facts.notes,
-          sourceUrl: event.htmlLink ?? null,
-          etag: event.etag ?? null,
-        });
+      const calendars = (await listGoogleCalendars(token.access_token)).items.slice(0, 25);
+      let processed = 0;
+      for (const calendar of calendars) {
+        let pageToken: string | undefined;
+        do {
+          const result = await listGoogleCalendarEvents(token.access_token, calendar.id, {
+            pageToken,
+          });
+          for (const event of result.items ?? []) {
+            if (event.status === 'cancelled') {
+              await cancelCalendarMoneyEvent(db, integration.clerkUserId, calendar.id, event.id);
+              continue;
+            }
+            const dueAt =
+              event.start?.dateTime ??
+              (event.start?.date ? `${event.start.date}T00:00:00.000Z` : null);
+            if (!dueAt) continue;
+            const facts = calendarEventFacts(event);
+            await upsertCalendarMoneyEvent(db, {
+              clerkUserId: integration.clerkUserId,
+              integrationId: integration.id,
+              googleEventId: event.id,
+              googleCalendarId: calendar.id,
+              title: (event.summary ?? 'Calendar event').slice(0, 200),
+              kind: facts.kind,
+              dueAt: new Date(dueAt),
+              amount: facts.amount,
+              currency: facts.currency,
+              notes: facts.notes,
+              sourceUrl: event.htmlLink ?? null,
+              etag: event.etag ?? null,
+            });
+            processed += 1;
+            if (processed >= 500) break;
+          }
+          pageToken = processed < 500 ? result.nextPageToken : undefined;
+        } while (pageToken);
+        if (processed >= 500) break;
       }
-      if (result.nextPageToken) {
-        await bindings.CALENDAR_SYNC_QUEUE.send({
-          kind: 'calendar.sync',
-          integrationId: integration.id,
-          pageToken: result.nextPageToken,
-        });
-        message.ack();
-        continue;
-      }
-      const count = (await listCalendarMoneyEvents(db, integration.clerkUserId)).length;
+      const count = await countCalendarEvents(db, integration.clerkUserId);
       await markCalendarSynced(db, integration.id, {
-        syncToken: result.nextSyncToken ?? integration.syncToken ?? undefined,
         eventCount: count,
       });
       message.ack();
     } catch (error) {
       const code = error instanceof Error ? error.message.split(':', 1)[0] : 'calendar_sync_failed';
-      if (error instanceof Error && error.message.includes('_410')) {
-        await clearCalendarSyncToken(db, integration.id);
-        message.retry({ delaySeconds: 5 });
-        continue;
-      }
       const reauth = error instanceof Error && /401|invalid_grant/.test(error.message);
       await markCalendarSyncFailed(db, integration.id, code, reauth);
       if (reauth) message.ack();

@@ -31,20 +31,38 @@ export function createCalendarReader(db: Database, userId: string) {
     async status() {
       return publicCalendarStatus(await getCalendarIntegration(db, userId));
     },
-    async dues(range: 'week' | 'month', query?: string) {
+    async dues(range: 'week' | 'month' | 'six_months', query?: string) {
       const integration = await getCalendarIntegration(db, userId);
       if (!integration || integration.revokedAt) return { connected: false as const, events: [] };
-      const cutoff = Date.now() + (range === 'month' ? 31 : 7) * 86_400_000;
+      const days = range === 'six_months' ? 180 : range === 'month' ? 31 : 7;
+      const cutoff = Date.now() + days * 86_400_000;
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const ignoredTerms = new Set([
+        'all',
+        'calendar',
+        'event',
+        'events',
+        'find',
+        'from',
+        'list',
+        'show',
+        'the',
+        'upcoming',
+      ]);
       const queryTerms = query
         ?.toLowerCase()
         .split(/\s+/)
-        .filter((term) => term.length > 2);
+        .filter((term) => term.length > 2 && !ignoredTerms.has(term));
       const events = (await listCalendarMoneyEvents(db, userId))
-        .filter((event) => event.dueAt.getTime() <= cutoff)
+        .filter(
+          (event) =>
+            event.dueAt.getTime() >= startOfToday.getTime() && event.dueAt.getTime() <= cutoff,
+        )
         .filter((event) => {
           const text = `${event.title} ${event.notes ?? ''}`.toLowerCase();
           if (queryTerms?.length) return queryTerms.some((term) => text.includes(term));
-          return /(invoice|bill|rent|payroll|subscription|renewal|tax|payment|due|fee)/i.test(text);
+          return true;
         })
         .map((event) => ({
           id: event.id,

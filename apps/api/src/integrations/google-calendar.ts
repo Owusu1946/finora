@@ -98,10 +98,21 @@ export async function refreshCalendarAccessToken(input: {
 }
 
 export async function listGoogleCalendars(accessToken: string) {
-  return googleRequest<{ items?: Array<{ id: string; summary?: string; primary?: boolean }> }>(
-    GOOGLE_CALENDAR_LIST_URL,
-    { headers: { Authorization: `Bearer ${accessToken}` } },
-  );
+  const calendars: Array<{ id: string; summary?: string; primary?: boolean }> = [];
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({ minAccessRole: 'reader', maxResults: '250' });
+    if (pageToken) params.set('pageToken', pageToken);
+    const page = await googleRequest<{
+      items?: Array<{ id: string; summary?: string; primary?: boolean }>;
+      nextPageToken?: string;
+    }>(`${GOOGLE_CALENDAR_LIST_URL}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    calendars.push(...(page.items ?? []));
+    pageToken = page.nextPageToken;
+  } while (pageToken);
+  return { items: calendars };
 }
 
 export type GoogleCalendarEvent = {
@@ -117,6 +128,7 @@ export type GoogleCalendarEvent = {
 
 export async function listGoogleCalendarEvents(
   accessToken: string,
+  calendarId = 'primary',
   input: { syncToken?: string; pageToken?: string } = {},
 ) {
   const params = new URLSearchParams({
@@ -128,14 +140,14 @@ export async function listGoogleCalendarEvents(
   if (input.syncToken) params.set('syncToken', input.syncToken);
   else {
     params.set('orderBy', 'startTime');
-    params.set('timeMin', new Date().toISOString());
+    params.set('timeMin', new Date(Date.now() - 86_400_000).toISOString());
     params.set('timeMax', new Date(Date.now() + 180 * 86_400_000).toISOString());
   }
   return googleRequest<{
     items?: GoogleCalendarEvent[];
     nextPageToken?: string;
     nextSyncToken?: string;
-  }>(`${GOOGLE_EVENTS_URL}/primary/events?${params.toString()}`, {
+  }>(`${GOOGLE_EVENTS_URL}/${encodeURIComponent(calendarId)}/events?${params.toString()}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 }

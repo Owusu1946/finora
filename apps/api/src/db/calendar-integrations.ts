@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull } from 'drizzle-orm';
+import { and, count, eq, gt, gte, isNull, lte } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -155,6 +155,7 @@ export async function upsertCalendarMoneyEvent(
     clerkUserId: string;
     integrationId: string;
     googleEventId: string;
+    googleCalendarId?: string;
     title: string;
     kind: string;
     dueAt: Date;
@@ -170,7 +171,11 @@ export async function upsertCalendarMoneyEvent(
     .insert(calendarMoneyEvents)
     .values(input)
     .onConflictDoUpdate({
-      target: [calendarMoneyEvents.clerkUserId, calendarMoneyEvents.googleEventId],
+      target: [
+        calendarMoneyEvents.clerkUserId,
+        calendarMoneyEvents.googleCalendarId,
+        calendarMoneyEvents.googleEventId,
+      ],
       set: { ...input, updatedAt: new Date(), cancelledAt: null },
     })
     .returning();
@@ -180,6 +185,7 @@ export async function upsertCalendarMoneyEvent(
 export async function cancelCalendarMoneyEvent(
   db: Database,
   clerkUserId: string,
+  googleCalendarId: string,
   googleEventId: string,
 ) {
   await db
@@ -188,6 +194,7 @@ export async function cancelCalendarMoneyEvent(
     .where(
       and(
         eq(calendarMoneyEvents.clerkUserId, clerkUserId),
+        eq(calendarMoneyEvents.googleCalendarId, googleCalendarId),
         eq(calendarMoneyEvents.googleEventId, googleEventId),
       ),
     );
@@ -204,5 +211,23 @@ export async function listCalendarMoneyEvents(db: Database, clerkUserId: string)
       ),
     )
     .orderBy(calendarMoneyEvents.dueAt)
-    .limit(100);
+    .limit(500);
+}
+
+export async function countCalendarEvents(db: Database, clerkUserId: string) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(Date.now() + 180 * 86_400_000);
+  const [result] = await db
+    .select({ value: count() })
+    .from(calendarMoneyEvents)
+    .where(
+      and(
+        eq(calendarMoneyEvents.clerkUserId, clerkUserId),
+        isNull(calendarMoneyEvents.cancelledAt),
+        gte(calendarMoneyEvents.dueAt, start),
+        lte(calendarMoneyEvents.dueAt, end),
+      ),
+    );
+  return result?.value ?? 0;
 }
