@@ -75,6 +75,10 @@ export const GetGmailMessageInputSchema = z
   .object({ messageId: z.string().regex(/^[A-Za-z0-9_-]{8,128}$/) })
   .strict();
 
+export const SearchDriveFilesInputSchema = z
+  .object({ query: z.string().trim().min(1).max(200) })
+  .strict();
+
 export const FindGmailInvoicesInputSchema = GmailSearchFieldsSchema.extend({
   invoiceOnly: z.literal(true).default(true),
 });

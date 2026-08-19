@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FINORA_SYSTEM_PROMPT } from './system-prompt';
+import { createChatAgentTools } from './tools';
 
 describe('FINORA_SYSTEM_PROMPT', () => {
   it.each([
@@ -15,5 +16,12 @@ describe('FINORA_SYSTEM_PROMPT', () => {
     'Do not reveal chain-of-thought',
   ])('retains the production safety invariant: %s', (invariant) => {
     expect(FINORA_SYSTEM_PROMPT).toContain(invariant);
+  });
+});
+
+describe('chat tools', () => {
+  it('constructs the complete tool set without throwing', () => {
+    expect(() => createChatAgentTools()).not.toThrow();
+    expect(createChatAgentTools()).toHaveProperty('search_drive_files');
   });
 });
