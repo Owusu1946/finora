@@ -15,6 +15,7 @@ import {
   PrepareConversionInputSchema,
   PreparePaymentInputSchema,
   PreparePayrollInputSchema,
+  PrepareRecurringPaymentInputSchema,
   PrepareSupplierPaymentInputSchema,
   SearchGmailMessagesInputSchema,
 } from '@finora/shared';
@@ -42,6 +43,7 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'prepare_conversion',
   'prepare_payroll',
   'prepare_supplier_payment',
+  'prepare_recurring',
   'create_financial_plan',
 ] as const;
 
@@ -447,6 +449,15 @@ export function createChatAgentTools(gmail?: GmailToolReader, calendar?: Calenda
           currency: input.amount.currency,
           reference: input.reference,
         };
+      },
+    }),
+    prepare_recurring: tool({
+      description:
+        'Prepare a recurring payment schedule for review. Use this proactively whenever the user asks to schedule, automate, or repeat a payment. Extract the recipient, amount, currency, payment network, destination, frequency, and date from the conversation. Ask for only one missing field at a time. This never activates or executes a payment and always requires explicit human approval.',
+      inputSchema: zodSchema(PrepareRecurringPaymentInputSchema),
+      execute: async (input) => {
+        const result = await callPlatform('/recurring/prepare', { method: 'POST', body: input });
+        return { ...result, status: 'pending', recurring: input };
       },
     }),
     create_financial_plan: tool({

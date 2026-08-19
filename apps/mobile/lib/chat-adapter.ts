@@ -361,14 +361,35 @@ function parseScheduleSeed(prompt: string) {
     destinationKind: destination?.kind,
     destinationLabel: destination?.label,
     destinationValue: destination?.value,
-    dayOfMonth: /\b(1st|first)\b/i.test(prompt)
-      ? 1
-      : /\b(15th|mid)\b/i.test(prompt)
-        ? 15
-        : undefined,
+    dayOfMonth: parseScheduleDay(prompt),
     timeOfDay: prompt.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/)?.[0],
     reference: purpose ? `${purpose} · auto-pay` : undefined,
   };
+}
+
+function parseScheduleDay(prompt: string): number | undefined {
+  const ordinal = prompt.match(/\b(\d{1,2})(?:st|nd|rd|th)\b/i)?.[1];
+  if (ordinal) {
+    const day = Number(ordinal);
+    if (day >= 1 && day <= 28) return day;
+  }
+  const words: Record<string, number> = {
+    first: 1,
+    second: 2,
+    third: 3,
+    fourth: 4,
+    fifth: 5,
+    tenth: 10,
+    fifteenth: 15,
+    twentieth: 20,
+    twentyfifth: 25,
+    'last day': 28,
+  };
+  const normalized = prompt.toLowerCase().replace(/[-]/g, ' ');
+  for (const [word, day] of Object.entries(words)) {
+    if (normalized.includes(word)) return day;
+  }
+  return undefined;
 }
 
 function isPaymentRequestIntent(prompt: string) {

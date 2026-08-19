@@ -9,7 +9,7 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type PrepareRecurringArgs = {
-  amount?: number;
+  amount?: number | { amount?: number; currency?: string };
   currency?: string;
   recipientName?: string;
   frequency?: RecurringFrequency;
@@ -25,9 +25,17 @@ type PrepareRecurringResult = {
 };
 
 function asDraft(args: PrepareRecurringArgs): RecurringDraft {
+  const amount =
+    typeof args.amount === 'number'
+      ? args.amount
+      : typeof args.amount?.amount === 'number'
+        ? args.amount.amount
+        : 0;
+  const currency =
+    typeof args.amount === 'object' ? args.amount.currency : undefined;
   return {
-    amount: typeof args.amount === 'number' ? args.amount : 0,
-    currency: args.currency ?? 'USD',
+    amount,
+    currency: currency ?? args.currency ?? 'GHS',
     recipientName: args.recipientName ?? 'Recipient',
     frequency: args.frequency ?? 'monthly',
     destination: {
