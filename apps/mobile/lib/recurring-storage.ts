@@ -9,6 +9,18 @@ import {
 const KEY = 'finora.recurring.v1';
 
 const memory = new Map<string, string>();
+const listeners = new Set<() => void>();
+
+function notify() {
+  for (const listener of listeners) listener();
+}
+
+export function subscribeRecurring(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 async function getItem(key: string): Promise<string | null> {
   try {
@@ -43,7 +55,8 @@ export async function listRecurring(): Promise<RecurringPayment[]> {
 
 export async function saveRecurring(payment: RecurringPayment): Promise<RecurringPayment> {
   const items = await listRecurring();
-  await setItem(KEY, JSON.stringify([payment, ...items]));
+  await setItem(KEY, JSON.stringify([payment, ...items.filter((item) => item.id !== payment.id)]));
+  notify();
   return payment;
 }
 
@@ -56,6 +69,7 @@ export async function updateRecurringStatus(
   if (idx < 0) return null;
   const next: RecurringPayment = { ...items[idx]!, status };
   await setItem(KEY, JSON.stringify(items.map((r, i) => (i === idx ? next : r))));
+  notify();
   return next;
 }
 
@@ -66,4 +80,5 @@ export async function clearRecurring(): Promise<void> {
   } catch {
     // ignore
   }
+  notify();
 }

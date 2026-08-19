@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { RecurringFilter, RecurringPayment } from '@/components/recurring/types';
@@ -9,7 +9,7 @@ import { RecurringListItem } from '@/components/recurring/RecurringListItem';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import { listRecurring, updateRecurringStatus } from '@/lib/recurring-storage';
+import { listRecurring, subscribeRecurring, updateRecurringStatus } from '@/lib/recurring-storage';
 
 const FILTERS: { id: RecurringFilter; label: string }[] = [
   { id: 'active', label: 'Active' },
@@ -34,6 +34,8 @@ export default function RecurringScreen() {
       void refresh();
     }, [refresh]),
   );
+
+  useEffect(() => subscribeRecurring(() => void refresh()), [refresh]);
 
   const filtered = useMemo(() => {
     if (filter === 'all') return items.filter((r) => r.status !== 'cancelled');

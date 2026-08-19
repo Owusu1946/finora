@@ -7,6 +7,7 @@ import type { RecurringFrequency, RecurringPayment } from '@/components/recurrin
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -177,7 +178,7 @@ export function RecurringPaymentCard({
               ]}
             >
               <Text style={[styles.btnLabel, { color: colors.background }]}>
-                {busy ? '…' : 'Confirm schedule'}
+                {busy ? <LoadingIcon color={colors.background} /> : 'Confirm schedule'}
               </Text>
             </Pressable>
           </View>
