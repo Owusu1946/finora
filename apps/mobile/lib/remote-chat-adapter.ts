@@ -331,7 +331,19 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
 
       try {
         const uiMessages = messages.filter((message) => message.role !== 'system').map(toUIMessage);
-        const state = config.isOptimistic?.() ? null : await api.getState(abortSignal);
+        let state = config.isOptimistic?.() ? null : await api.getState(abortSignal);
+        if (state?.active && state.resumable && state.activeStreamId) {
+          const resumed = await transport.reconnectToStream({
+            abortSignal,
+            chatId: config.chatId,
+            headers: await api.authHeaders(),
+          });
+          if (resumed) {
+            yield* assistantResults(resumed);
+            await persistActiveStreamId(config.chatId, null);
+          }
+          state = await api.getState(abortSignal);
+        }
         const storedMessages = state ? await validateStateMessages(state.messages) : [];
         const requestMessages = canonicalizeRemoteChatHistory(storedMessages, uiMessages);
         const trigger =

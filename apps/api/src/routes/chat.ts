@@ -248,6 +248,7 @@ chat.post('/:id/stop', async (c) => {
       return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
     }
     if (!stored.activeStreamResumable) {
+      await clearChatStream(db, parsedId.data, userId, activeStreamId);
       return new Response(null, { status: 204, headers: { 'x-request-id': requestId } });
     }
     if (!env.REDIS_URL) {
@@ -392,6 +393,7 @@ chat.post('/', async (c) => {
   const producerAbortController = new AbortController();
   let redisSession: Awaited<ReturnType<typeof createRedisStreamSession>> | null = null;
   let streamClaimed = false;
+  let requestAbortHandler: (() => void) | undefined;
 
   try {
     if (!(await ensureChat(db, parsed.data.id, userId))) {
@@ -434,6 +436,16 @@ chat.post('/', async (c) => {
         { 'x-request-id': requestId },
       );
     }
+
+    requestAbortHandler = () => {
+      producerAbortController.abort();
+      c.executionCtx.waitUntil(
+        clearChatStream(db, parsed.data.id, userId, streamId).catch((error) =>
+          logPersistenceError(error, requestId),
+        ),
+      );
+    };
+    c.req.raw.signal.addEventListener('abort', requestAbortHandler, { once: true });
 
     const stored = await loadChat(db, parsed.data.id, userId);
     if (!stored) throw new Error('Claimed chat could not be loaded.');
