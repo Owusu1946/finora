@@ -141,3 +141,27 @@ OAuth uses one-time state, PKCE, and encrypted refresh-token storage. Tokens nev
 The current sync stores only Gmail connection metadata and a bounded candidate count; it does not
 persist message bodies or attachments. The readonly Gmail scope is restricted and may require
 Google verification and a security assessment before public production use.
+
+## Google Calendar integration
+
+Enable the Google Calendar API in the same Google Cloud project. Add
+`https://www.googleapis.com/auth/calendar.readonly` to the OAuth consent screen and register this
+additional authorized redirect URI:
+
+```text
+https://<api-domain>/oauth/google-calendar/callback
+```
+
+Set `GOOGLE_CALENDAR_REDIRECT_URI` in `.dev.vars` and as a production Wrangler secret, then create
+the Calendar sync queue and dead-letter queue:
+
+```bash
+pnpm --filter @finora/api exec wrangler queues create finora-calendar-sync
+pnpm --filter @finora/api exec wrangler queues create finora-calendar-sync-dlq
+pnpm --filter @finora/api cf-typegen
+pnpm db:push
+```
+
+Calendar access is read-only. Sync is queued, bounded to upcoming primary-calendar events, and uses
+Google sync tokens for incremental updates. Only events with explicit financial evidence are stored;
+event text is treated as untrusted data and cannot authorize payments.
