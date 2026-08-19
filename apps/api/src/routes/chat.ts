@@ -34,9 +34,6 @@ import {
 } from '../ai/resumable-stream';
 import { FINORA_SYSTEM_PROMPT } from '../ai/system-prompt';
 import { createChatAgentTools } from '../ai/tools';
-import { getDriveIntegration } from '../db/drive-integrations';
-import { decryptSecret } from '../integrations/secret-box';
-import { refreshDriveAccessToken, searchDriveFiles } from '../integrations/google-drive';
 import {
   chatIsActive,
   claimChatStream,
@@ -48,8 +45,16 @@ import {
   setFallbackChatTitle,
 } from '../db/chat-store';
 import { createDb } from '../db/client';
+import { getDriveIntegration } from '../db/drive-integrations';
 import { createCalendarReader } from '../integrations/calendar-reader';
 import { createGmailReader, getGmailStatus } from '../integrations/gmail-reader';
+import {
+  getDriveFileContent,
+  getDriveFileMetadata,
+  refreshDriveAccessToken,
+  searchDriveFiles,
+} from '../integrations/google-drive';
+import { decryptSecret } from '../integrations/secret-box';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
@@ -489,19 +494,104 @@ chat.post('/', async (c) => {
         const startedAt = Date.now();
         try {
           const integration = await getDriveIntegration(db, userId);
-          if (!integration || integration.revokedAt) return { ok: false, errorCode: 'drive_not_connected' };
+          if (!integration || integration.revokedAt)
+            return { ok: false, errorCode: 'drive_not_connected' };
           const driveEnv = env as typeof env & { GOOGLE_DRIVE_REDIRECT_URI?: string };
-          if (!driveEnv.GOOGLE_OAUTH_CLIENT_ID || !driveEnv.GOOGLE_OAUTH_CLIENT_SECRET || !driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY) return { ok: false, errorCode: 'drive_not_configured' };
-          console.info('[drive:chat-search] starting', { requestId, queryCharacters: query.length });
-          const token = await refreshDriveAccessToken({ clientId: driveEnv.GOOGLE_OAUTH_CLIENT_ID, clientSecret: driveEnv.GOOGLE_OAUTH_CLIENT_SECRET, refreshToken: await decryptSecret(integration.refreshTokenCiphertext, driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY) });
+          if (
+            !driveEnv.GOOGLE_OAUTH_CLIENT_ID ||
+            !driveEnv.GOOGLE_OAUTH_CLIENT_SECRET ||
+            !driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY
+          )
+            return { ok: false, errorCode: 'drive_not_configured' };
+          console.info('[drive:chat-search] starting', {
+            requestId,
+            queryCharacters: query.length,
+          });
+          const token = await refreshDriveAccessToken({
+            clientId: driveEnv.GOOGLE_OAUTH_CLIENT_ID,
+            clientSecret: driveEnv.GOOGLE_OAUTH_CLIENT_SECRET,
+            refreshToken: await decryptSecret(
+              integration.refreshTokenCiphertext,
+              driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY,
+            ),
+          });
           const result = await searchDriveFiles(token.access_token, query);
-          console.info('[drive:chat-search] completed', { requestId, elapsedMs: Date.now() - startedAt, count: result.files?.length ?? 0 });
-          return { ok: true, files: (result.files ?? []).map((file) => ({ id: file.id, title: file.name, mimeType: file.mimeType, modifiedTime: file.modifiedTime ?? null, sourceUrl: file.webViewLink ?? null, citation: `Document: ${file.name}` })) };
+          console.info('[drive:chat-search] completed', {
+            requestId,
+            elapsedMs: Date.now() - startedAt,
+            count: result.files?.length ?? 0,
+          });
+          return {
+            ok: true,
+            files: (result.files ?? []).map((file) => ({
+              id: file.id,
+              title: file.name,
+              mimeType: file.mimeType,
+              modifiedTime: file.modifiedTime ?? null,
+              sourceUrl: file.webViewLink ?? null,
+              citation: `Document: ${file.name}`,
+            })),
+          };
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          const errorCode = /401|invalid_grant/.test(message) ? 'drive_reauthorization_required' : message.startsWith('google_drive_request_failed_') ? message : 'drive_search_failed';
-          console.error('[drive:chat-search] failed', { requestId, elapsedMs: Date.now() - startedAt, errorCode, errorName: error instanceof Error ? error.name : typeof error });
+          const errorCode = /401|invalid_grant/.test(message)
+            ? 'drive_reauthorization_required'
+            : message.startsWith('google_drive_request_failed_')
+              ? message
+              : 'drive_search_failed';
+          console.error('[drive:chat-search] failed', {
+            requestId,
+            elapsedMs: Date.now() - startedAt,
+            errorCode,
+            errorName: error instanceof Error ? error.name : typeof error,
+          });
           return { ok: false, errorCode };
+        }
+      },
+      file: async (fileId: string) => {
+        try {
+          const integration = await getDriveIntegration(db, userId);
+          const driveEnv = env as typeof env & { GOOGLE_DRIVE_REDIRECT_URI?: string };
+          if (!integration || integration.revokedAt)
+            return { ok: false, errorCode: 'drive_not_connected' };
+          if (
+            !driveEnv.GOOGLE_OAUTH_CLIENT_ID ||
+            !driveEnv.GOOGLE_OAUTH_CLIENT_SECRET ||
+            !driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY
+          )
+            return { ok: false, errorCode: 'drive_not_configured' };
+          const token = await refreshDriveAccessToken({
+            clientId: driveEnv.GOOGLE_OAUTH_CLIENT_ID,
+            clientSecret: driveEnv.GOOGLE_OAUTH_CLIENT_SECRET,
+            refreshToken: await decryptSecret(
+              integration.refreshTokenCiphertext,
+              driveEnv.GOOGLE_TOKEN_ENCRYPTION_KEY,
+            ),
+          });
+          const file = await getDriveFileMetadata(token.access_token, fileId);
+          const content = await getDriveFileContent(token.access_token, file);
+          return {
+            ok: true,
+            file: {
+              id: file.id,
+              title: file.name,
+              mimeType: file.mimeType,
+              modifiedTime: file.modifiedTime ?? null,
+              sourceUrl: file.webViewLink ?? null,
+              citation: `Document: ${file.name}`,
+            },
+            ...content,
+          };
+        } catch (error) {
+          console.error('[drive:chat-file] failed', {
+            requestId,
+            fileId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return {
+            ok: false,
+            errorCode: error instanceof Error ? error.message : 'drive_file_read_failed',
+          };
         }
       },
     };

@@ -23,5 +23,6 @@ describe('chat tools', () => {
   it('constructs the complete tool set without throwing', () => {
     expect(() => createChatAgentTools()).not.toThrow();
     expect(createChatAgentTools()).toHaveProperty('search_drive_files');
+    expect(createChatAgentTools()).toHaveProperty('get_drive_file');
   });
 });

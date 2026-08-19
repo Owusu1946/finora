@@ -78,6 +78,7 @@ export const GetGmailMessageInputSchema = z
 export const SearchDriveFilesInputSchema = z
   .object({ query: z.string().trim().min(1).max(200) })
   .strict();
+export const GetDriveFileInputSchema = z.object({ fileId: z.string().min(1).max(200) }).strict();
 
 export const FindGmailInvoicesInputSchema = GmailSearchFieldsSchema.extend({
   invoiceOnly: z.literal(true).default(true),

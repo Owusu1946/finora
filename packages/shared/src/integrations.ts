@@ -80,8 +80,11 @@ export const DriveSearchResponseSchema = z.object({
 export const DriveFileContentSchema = z.object({
   file: DriveFileSchema,
   text: z.string(),
-  citations: z.array(z.object({
-    quote: z.string(),
-    location: z.string(),
-  })),
+  citations: z.array(
+    z.object({
+      quote: z.string(),
+      location: z.string(),
+    }),
+  ),
 });
+export type DriveFileContent = z.infer<typeof DriveFileContentSchema>;

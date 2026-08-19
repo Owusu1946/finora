@@ -31,6 +31,7 @@
     "redis": "6.2.1",
     "resend": "^6.19.0",
     "resumable-stream": "2.2.12",
+    "unpdf": "1.8.1",
     "zod": "4.4.3"
   },
   "devDependencies": {
