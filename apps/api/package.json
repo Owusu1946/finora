@@ -26,12 +26,14 @@
     "ai": "7.0.65",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.1",
+    "mammoth": "1.12.1",
     "react": "19.1.0",
     "react-email": "^6.9.2",
     "redis": "6.2.1",
     "resend": "^6.19.0",
     "resumable-stream": "2.2.12",
     "unpdf": "1.8.1",
+    "xlsx": "0.18.5",
     "zod": "4.4.3"
   },
   "devDependencies": {

@@ -1,4 +1,6 @@
+import { extractRawText } from 'mammoth';
 import { extractText, getDocumentProxy } from 'unpdf';
+import * as XLSX from 'xlsx';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -71,6 +73,25 @@ async function googleBytes(url: string, accessToken: string) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function lineCitations(text: string, locationPrefix = 'Lines') {
+  return text
+    .split(/\r?\n/)
+    .reduce<Array<{ quote: string; location: string }>>((result, line, index) => {
+      if (line.trim() && result.length < 500) {
+        result.push({
+          quote: line.slice(0, 500),
+          location: `${locationPrefix} ${index + 1}-${index + 1}`,
+        });
+      }
+      return result;
+    }, []);
+}
+
+function fileExtension(name: string) {
+  const match = /\.([a-z0-9]+)$/i.exec(name);
+  return match?.[1].toLowerCase() ?? '';
 }
 
 export function createDriveAuthorizationUrl(input: {
@@ -163,8 +184,9 @@ export async function getDriveFileMetadata(accessToken: string, fileId: string) 
 }
 
 export async function getDriveFileContent(accessToken: string, file: DriveFile) {
+  const extension = fileExtension(file.name);
   const isPresentation = file.mimeType === 'application/vnd.google-apps.presentation';
-  if (file.mimeType === 'application/pdf' || isPresentation) {
+  if (file.mimeType === 'application/pdf' || extension === 'pdf' || isPresentation) {
     const bytes = await googleBytes(
       isPresentation
         ? `${DRIVE_FILES_URL}/${encodeURIComponent(file.id)}/export?mimeType=${encodeURIComponent('application/pdf')}`
@@ -184,6 +206,59 @@ export async function getDriveFileContent(accessToken: string, file: DriveFile) 
       }, []),
     };
   }
+  const isWordDocument =
+    file.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    extension === 'docx';
+  const isSpreadsheet =
+    [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ].includes(file.mimeType) ||
+    extension === 'xlsx' ||
+    extension === 'xls';
+  if (isWordDocument) {
+    const bytes = await googleBytes(
+      `${DRIVE_FILES_URL}/${encodeURIComponent(file.id)}?alt=media`,
+      accessToken,
+    );
+    const extracted = await extractRawText({ arrayBuffer: bytes.buffer });
+    const text = extracted.value.slice(0, 100_000);
+    return { text, citations: lineCitations(text) };
+  }
+  if (isSpreadsheet) {
+    const bytes = await googleBytes(
+      `${DRIVE_FILES_URL}/${encodeURIComponent(file.id)}?alt=media`,
+      accessToken,
+    );
+    const workbook = XLSX.read(bytes, {
+      type: 'array',
+      cellText: true,
+      cellDates: true,
+      dense: true,
+    });
+    const sections = workbook.SheetNames.map((sheetName) => {
+      const sheet = workbook.Sheets[sheetName];
+      return { sheetName, text: XLSX.utils.sheet_to_csv(sheet) };
+    });
+    const text = sections
+      .map(({ sheetName, text: sheetText }) => `Sheet: ${sheetName}\n${sheetText}`)
+      .join('\n\n')
+      .slice(0, 100_000);
+    const citations = sections.reduce<Array<{ quote: string; location: string }>>(
+      (result, { sheetName, text: sheetText }) => {
+        for (const [index, line] of sheetText.split(/\r?\n/).entries()) {
+          if (line.trim() && result.length < 500)
+            result.push({
+              quote: line.slice(0, 500),
+              location: `Sheet "${sheetName}", row ${index + 1}`,
+            });
+        }
+        return result;
+      },
+      [],
+    );
+    return { text, citations };
+  }
   const exportMime =
     file.mimeType === 'application/vnd.google-apps.document'
       ? 'text/plain'
@@ -193,20 +268,16 @@ export async function getDriveFileContent(accessToken: string, file: DriveFile) 
   const url = exportMime
     ? `${DRIVE_FILES_URL}/${encodeURIComponent(file.id)}/export?mimeType=${encodeURIComponent(exportMime)}`
     : `${DRIVE_FILES_URL}/${encodeURIComponent(file.id)}?alt=media`;
-  if (
-    !exportMime &&
-    !['text/plain', 'text/csv', 'text/markdown', 'application/json'].includes(file.mimeType)
-  ) {
+  const isTextDocument =
+    file.mimeType.startsWith('text/') ||
+    ['application/json', 'application/xml'].includes(file.mimeType) ||
+    ['txt', 'csv', 'md', 'json', 'xml', 'rtf'].includes(extension);
+  if (!exportMime && !isTextDocument) {
     throw new Error('drive_file_format_not_supported');
   }
   const text = await googleText(url, accessToken);
-  const lines = text.slice(0, 100_000).split(/\r?\n/);
   return {
     text: text.slice(0, 100_000),
-    citations: lines.reduce<Array<{ quote: string; location: string }>>((result, line, index) => {
-      if (line.trim() && result.length < 500)
-        result.push({ quote: line.slice(0, 500), location: `Lines ${index + 1}-${index + 1}` });
-      return result;
-    }, []),
+    citations: lineCitations(text),
   };
 }
