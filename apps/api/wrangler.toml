@@ -19,6 +19,9 @@ binding = "TRANSACTIONAL_EMAIL_QUEUE"
 queue = "finora-gmail-sync"
 binding = "GMAIL_SYNC_QUEUE"
 
+[[queues.producers]]
+queue = "finora-calendar-sync"
+binding = "CALENDAR_SYNC_QUEUE"
 [[queues.consumers]]
 queue = "finora-transactional-email"
 max_batch_size = 10
@@ -34,6 +37,14 @@ max_batch_timeout = 5
 max_retries = 5
 retry_delay = 60
 dead_letter_queue = "finora-gmail-sync-dlq"
+
+[[queues.consumers]]
+queue = "finora-calendar-sync"
+max_batch_size = 5
+max_batch_timeout = 5
+max_retries = 5
+retry_delay = 60
+dead_letter_queue = "finora-calendar-sync-dlq"
 # Secrets (set via `wrangler secret put` or local `.dev.vars`):
 # WEWIRE_API_KEY
 # CLERK_SECRET_KEY
@@ -42,6 +53,7 @@ dead_letter_queue = "finora-gmail-sync-dlq"
 # GOOGLE_OAUTH_CLIENT_ID
 # GOOGLE_OAUTH_CLIENT_SECRET
 # GOOGLE_OAUTH_REDIRECT_URI
+# GOOGLE_CALENDAR_REDIRECT_URI
 # GOOGLE_TOKEN_ENCRYPTION_KEY
 # OPENROUTER_API_KEY
 # OPENROUTER_MODEL

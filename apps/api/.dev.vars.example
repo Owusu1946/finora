@@ -21,5 +21,6 @@ WEWIRE_WEBHOOK_SECRET=
 GOOGLE_OAUTH_CLIENT_ID=your_google_client_id
 GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret
 GOOGLE_OAUTH_REDIRECT_URI=https://finora-api.your-subdomain.workers.dev/oauth/google/callback
+GOOGLE_CALENDAR_REDIRECT_URI=https://finora-api.your-subdomain.workers.dev/oauth/google-calendar/callback
 GOOGLE_TOKEN_ENCRYPTION_KEY=your_generated_encryption_key
 

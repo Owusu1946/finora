@@ -223,21 +223,82 @@ export const gmailIntegrations = pgTable(
 
 export type GmailIntegrationRow = typeof gmailIntegrations.$inferSelect;
 
-export const invoicePreferences = pgTable(
-  'invoice_preferences',
+export const calendarIntegrations = pgTable(
+  'calendar_integrations',
   {
-    clerkUserId: text('clerk_user_id').primaryKey(),
-    startDate: text('start_date').notNull(),
-    endDate: text('end_date').notNull(),
-    timezone: text('timezone').notNull().default('UTC'),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    googleSubject: text('google_subject').notNull(),
+    email: text('email').notNull(),
+    refreshTokenCiphertext: text('refresh_token_ciphertext').notNull(),
+    scopes: jsonb('scopes').$type<string[]>().notNull(),
+    status: integrationStatusEnum('status').notNull().default('connected'),
+    syncToken: text('sync_token'),
+    eventCount: integer('event_count').notNull().default(0),
+    lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+    lastErrorCode: text('last_error_code'),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
+  (table) => [
+    uniqueIndex('calendar_integrations_user_unique').on(table.clerkUserId),
+    uniqueIndex('calendar_integrations_google_subject_unique').on(table.googleSubject),
+    index('calendar_integrations_status_index').on(table.status),
+  ],
 );
+
+export const calendarMoneyEvents = pgTable(
+  'calendar_money_events',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    integrationId: uuid('integration_id')
+      .notNull()
+      .references(() => calendarIntegrations.id, { onDelete: 'cascade' }),
+    googleEventId: text('google_event_id').notNull(),
+    googleCalendarId: text('google_calendar_id').notNull().default('primary'),
+    title: text('title').notNull(),
+    kind: text('kind').notNull(),
+    dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+    amount: text('amount'),
+    currency: text('currency'),
+    counterparty: text('counterparty'),
+    notes: text('notes'),
+    sourceUrl: text('source_url'),
+    etag: text('etag'),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('calendar_money_events_user_event_unique').on(
+      table.clerkUserId,
+      table.googleCalendarId,
+      table.googleEventId,
+    ),
+    index('calendar_money_events_user_due_index').on(table.clerkUserId, table.dueAt),
+  ],
+);
+
+export const invoicePreferences = pgTable('invoice_preferences', {
+  clerkUserId: text('clerk_user_id').primaryKey(),
+  startDate: text('start_date').notNull(),
+  endDate: text('end_date').notNull(),
+  timezone: text('timezone').notNull().default('UTC'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const invoices = pgTable(
   'invoices',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
     gmailMessageId: text('gmail_message_id').notNull(),
     gmailThreadId: text('gmail_thread_id'),

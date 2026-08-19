@@ -10,7 +10,8 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ListCalendarDuesArgs = {
-  range?: 'week' | 'month';
+  range?: 'week' | 'month' | 'six_months';
+  query?: string;
 };
 
 type ListCalendarDuesResult = {
@@ -63,7 +64,7 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
           style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-            No upcoming money events on your calendar this week.
+            No matching upcoming events were found on your calendars.
           </Text>
         </View>
       );
@@ -72,7 +73,7 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
     return (
       <View style={styles.stack}>
         <Text style={[styles.stackTitle, { color: colors.mutedForeground }]}>
-          {events.length} calendar money event{events.length === 1 ? '' : 's'}
+          {events.length} calendar event{events.length === 1 ? '' : 's'}
         </Text>
         {events.map((event) => (
           <CalendarEventCard

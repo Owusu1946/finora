@@ -44,6 +44,13 @@ export const GetBalancesInputSchema = EmptyInputSchema;
 
 export const GetGmailStatusInputSchema = EmptyInputSchema;
 
+export const ListCalendarDuesInputSchema = z
+  .object({
+    range: z.enum(['week', 'month', 'six_months']).default('month'),
+    query: z.string().trim().min(1).max(120).optional(),
+  })
+  .strict();
+
 const GmailSearchFieldsSchema = z
   .object({
     keywords: z.string().trim().min(1).max(200).optional(),

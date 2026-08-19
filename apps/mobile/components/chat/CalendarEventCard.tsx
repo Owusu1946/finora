@@ -40,7 +40,7 @@ function kindLabel(kind: CalendarMoneyEvent['kind']) {
   if (kind === 'payroll') return 'Payroll';
   if (kind === 'bill') return 'Bill';
   if (kind === 'subscription') return 'Subscription';
-  return 'Money event';
+  return 'Calendar event';
 }
 
 export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEvent }) {
@@ -140,7 +140,7 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
 
         <View style={styles.meta}>
           <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-            Due {formatDue(event.dueAt)}
+            Starts {formatDue(event.dueAt)}
           </Text>
           {event.counterparty ? (
             <Text style={[styles.metaText, { color: colors.mutedForeground }]}>

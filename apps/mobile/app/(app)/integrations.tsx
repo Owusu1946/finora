@@ -1,4 +1,4 @@
-import type { GmailIntegrationStatus } from '@finora/shared';
+import type { CalendarIntegrationStatus, GmailIntegrationStatus } from '@finora/shared';
 
 import { useAui } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
@@ -15,7 +15,13 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
+import {
+  beginCalendarConnection,
+  disconnectCalendarIntegration,
+  getCalendarEvents,
+  getCalendarIntegrationStatus,
+  syncCalendarIntegration,
+} from '@/lib/calendar-integration-api';
 import {
   beginGmailConnection,
   disconnectGmailIntegration,
@@ -24,9 +30,7 @@ import {
 } from '@/lib/gmail-integration-api';
 import { haptics } from '@/lib/haptics';
 import {
-  connectGoogleCalendar,
   connectSmsInbox,
-  disconnectGoogleCalendar,
   disconnectSmsInbox,
   getIntegrations,
   type IntegrationsState,
@@ -127,6 +131,7 @@ export default function IntegrationsScreen() {
   const [state, setState] = useState<IntegrationsState | null>(null);
   const [busyKey, setBusyKey] = useState<'gmail' | 'calendar' | 'sms' | null>(null);
   const [gmail, setGmail] = useState<GmailIntegrationStatus | null>(null);
+  const [calendarStatus, setCalendarStatus] = useState<CalendarIntegrationStatus | null>(null);
   const gmailRef = useRef<GmailIntegrationStatus | null>(null);
   const refreshInFlightRef = useRef(false);
   const getTokenRef = useRef(getToken);
@@ -145,8 +150,32 @@ export default function IntegrationsScreen() {
     }
     refreshInFlightRef.current = true;
     try {
-      const [integrations, gmailResult, calendar, sms] = await Promise.all([
+      console.info('[Calendar] integrations refresh starting');
+      const [integrations, calendar, sms] = await Promise.all([
         getIntegrations(),
+        getCalendarEvents(getTokenRef.current).catch((error) => {
+          console.error('[Calendar] events fetch failed', {
+            name: error instanceof Error ? error.name : 'UnknownError',
+            message: error instanceof Error ? error.message : String(error),
+          });
+          return [];
+        }),
+        listOpenSmsPaymentRequests(),
+      ]);
+      console.info('[Calendar] integrations events fetched', {
+        count: calendar.length,
+        events: calendar.map((event) => ({
+          id: event.id,
+          title: event.title,
+          kind: event.kind,
+          dueAt: event.dueAt,
+        })),
+      });
+      setState(integrations);
+      setCalendarCount(calendar.length);
+      setSmsCount(sms.length);
+
+      const [gmailResult, calendarResult] = await Promise.all([
         getGmailIntegrationStatus(getTokenRef.current)
           .then((value) => ({ value, failed: false as const }))
           .catch((error) => {
@@ -156,23 +185,28 @@ export default function IntegrationsScreen() {
             });
             return { value: null, failed: true as const };
           }),
-        listUpcomingCalendarMoneyEvents(),
-        listOpenSmsPaymentRequests(),
+        getCalendarIntegrationStatus(getTokenRef.current).catch((error) => {
+          console.error('[CalendarIntegration] status refresh failed', error);
+          return null;
+        }),
       ]);
       const gmailStatus = gmailResult.value ?? gmailRef.current;
-      setState({
-        ...integrations,
+      if (calendarResult) setCalendarStatus(calendarResult);
+      console.info('[Calendar] status fetched', calendarResult);
+      setState((current) => ({
+        ...(current ?? integrations),
         gmailConnected: gmailStatus?.connected ?? false,
         gmailEmail: gmailStatus?.email ?? undefined,
         gmailConnectedAt: gmailStatus?.lastSyncedAt ?? undefined,
-      });
+        calendarConnected: calendarResult?.connected ?? integrations.calendarConnected,
+        calendarEmail: calendarResult?.email ?? integrations.calendarEmail,
+        calendarConnectedAt: calendarResult?.lastSyncedAt ?? integrations.calendarConnectedAt,
+      }));
       if (gmailResult.value) {
         gmailRef.current = gmailResult.value;
         setGmail(gmailResult.value);
       }
       setGmailStatusError(gmailResult.failed);
-      setCalendarCount(calendar.length);
-      setSmsCount(sms.length);
     } finally {
       refreshInFlightRef.current = false;
     }
@@ -195,13 +229,43 @@ export default function IntegrationsScreen() {
     );
   }
 
-  const runConnect = async (key: 'calendar', action: () => Promise<IntegrationsState>) => {
+  const runConnectCalendar = async () => {
     haptics.impact();
-    setBusyKey(key);
-    await new Promise((r) => setTimeout(r, 700));
-    setState(await action());
-    setBusyKey(null);
-    haptics.success();
+    setBusyKey('calendar');
+    try {
+      const returnUrl = Linking.createURL('/integrations');
+      const { authorizationUrl } = await beginCalendarConnection(getToken, returnUrl);
+      const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, returnUrl);
+      if (result.type !== 'success') return;
+      const outcome = new URL(result.url).searchParams.get('calendar');
+      if (outcome === 'failed') throw new Error('Google Calendar connection failed.');
+      if (outcome === 'connected') await refresh();
+      haptics.success();
+    } catch (error) {
+      console.error('[CalendarIntegration] OAuth flow failed', error);
+      Alert.alert(
+        'Could not connect Calendar',
+        error instanceof Error ? error.message : 'Try again.',
+      );
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const runDisconnectCalendar = async () => {
+    haptics.selection();
+    setBusyKey('calendar');
+    try {
+      await disconnectCalendarIntegration(getToken);
+      await refresh();
+    } catch (error) {
+      Alert.alert(
+        'Could not disconnect Calendar',
+        error instanceof Error ? error.message : 'Try again.',
+      );
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   const runConnectGmail = async () => {
@@ -380,12 +444,14 @@ export default function IntegrationsScreen() {
         icon={<GoogleCalendarLogo width={22} />}
         busy={busyKey === 'calendar'}
         connectLabel='Connect Calendar'
-        onConnect={() => void runConnect('calendar', () => connectGoogleCalendar())}
-        onDisconnect={() => void runDisconnect('calendar', () => disconnectGoogleCalendar())}
+        onConnect={() => void runConnectCalendar()}
+        onDisconnect={() => void runDisconnectCalendar()}
         connectedBody={
           <>
             <Text style={[styles.found, { color: colors.foreground }]}>
-              {calendarCount} upcoming money event{calendarCount === 1 ? '' : 's'} on calendar
+              {calendarStatus?.status === 'syncing'
+                ? 'Syncing upcoming calendar events'
+                : `${calendarStatus?.eventCount ?? calendarCount} calendar event${(calendarStatus?.eventCount ?? calendarCount) === 1 ? '' : 's'} synced`}
             </Text>
             <Pressable
               onPress={() => {
@@ -404,6 +470,31 @@ export default function IntegrationsScreen() {
               ]}
             >
               <Text style={[styles.btnLabel, { color: colors.background }]}>Ask in chat</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setBusyKey('calendar');
+                void syncCalendarIntegration(getToken)
+                  .then(refresh)
+                  .catch((error) =>
+                    Alert.alert(
+                      'Could not sync Calendar',
+                      error instanceof Error ? error.message : 'Try again.',
+                    ),
+                  )
+                  .finally(() => setBusyKey(null));
+              }}
+              disabled={busyKey === 'calendar'}
+              style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
+                {
+                  borderColor: colors.border,
+                  opacity: pressed || busyKey === 'calendar' ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Sync now</Text>
             </Pressable>
             <Text style={[styles.hint, { color: colors.mutedForeground }]}>
               Finora can prepare payments around due dates — it still needs your approval.

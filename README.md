@@ -69,6 +69,7 @@ RESEND_WEBHOOK_SECRET=your_resend_webhook_secret
 GOOGLE_OAUTH_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_OAUTH_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_OAUTH_REDIRECT_URI=https://your-api-domain.example.com/oauth/google/callback
+GOOGLE_CALENDAR_REDIRECT_URI=https://your-api-domain.example.com/oauth/google-calendar/callback
 GOOGLE_TOKEN_ENCRYPTION_KEY=at-least-32-random-characters
 WELCOME_EMAIL_MODE=disabled
 WELCOME_EMAIL_REDIRECT_TO=
@@ -134,6 +135,8 @@ pnpm --filter @finora/api exec wrangler queues create finora-transactional-email
 pnpm --filter @finora/api exec wrangler queues create finora-transactional-email-dlq
 pnpm --filter @finora/api exec wrangler queues create finora-gmail-sync
 pnpm --filter @finora/api exec wrangler queues create finora-gmail-sync-dlq
+pnpm --filter @finora/api exec wrangler queues create finora-calendar-sync
+pnpm --filter @finora/api exec wrangler queues create finora-calendar-sync-dlq
 pnpm --filter @finora/api cf-typegen
 ```
 
@@ -151,6 +154,7 @@ pnpm --filter @finora/api exec wrangler secret put RESEND_WEBHOOK_SECRET
 pnpm --filter @finora/api exec wrangler secret put GOOGLE_OAUTH_CLIENT_ID
 pnpm --filter @finora/api exec wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET
 pnpm --filter @finora/api exec wrangler secret put GOOGLE_OAUTH_REDIRECT_URI
+pnpm --filter @finora/api exec wrangler secret put GOOGLE_CALENDAR_REDIRECT_URI
 pnpm --filter @finora/api exec wrangler secret put GOOGLE_TOKEN_ENCRYPTION_KEY
 pnpm --filter @finora/api exec wrangler secret put WEWIRE_API_KEY
 pnpm --filter @finora/api exec wrangler secret put WEWIRE_WEBHOOK_SECRET

@@ -7,6 +7,7 @@ export function getApiEnv(bindings: Env) {
     GOOGLE_OAUTH_CLIENT_ID?: string;
     GOOGLE_OAUTH_CLIENT_SECRET?: string;
     GOOGLE_OAUTH_REDIRECT_URI?: string;
+    GOOGLE_CALENDAR_REDIRECT_URI?: string;
     GOOGLE_TOKEN_ENCRYPTION_KEY?: string;
     OPENAI_API_KEY?: string;
     OPENROUTER_API_KEY?: string;
@@ -26,6 +27,7 @@ export function getApiEnv(bindings: Env) {
     GOOGLE_OAUTH_CLIENT_ID: optionalBindings.GOOGLE_OAUTH_CLIENT_ID,
     GOOGLE_OAUTH_CLIENT_SECRET: optionalBindings.GOOGLE_OAUTH_CLIENT_SECRET,
     GOOGLE_OAUTH_REDIRECT_URI: optionalBindings.GOOGLE_OAUTH_REDIRECT_URI,
+    GOOGLE_CALENDAR_REDIRECT_URI: optionalBindings.GOOGLE_CALENDAR_REDIRECT_URI,
     GOOGLE_TOKEN_ENCRYPTION_KEY: optionalBindings.GOOGLE_TOKEN_ENCRYPTION_KEY,
     OPENAI_API_KEY: optionalBindings.OPENAI_API_KEY,
     OPENROUTER_API_KEY: optionalBindings.OPENROUTER_API_KEY,

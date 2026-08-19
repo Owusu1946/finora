@@ -1,0 +1,84 @@
+import {
+  CalendarConnectResponseSchema,
+  CalendarIntegrationStatusSchema,
+  CalendarMoneyEventSchema,
+  CalendarSyncResponseSchema,
+  type CalendarIntegrationStatus,
+} from '@finora/shared';
+import { z } from 'zod';
+
+import { getApiUrl } from './api-url';
+
+type GetToken = () => Promise<string | null>;
+
+async function calendarRequest(path: string, getToken: GetToken, init?: RequestInit) {
+  const apiUrl = getApiUrl();
+  const startedAt = Date.now();
+  console.info('[Calendar] request starting', { method: init?.method ?? 'GET', path, apiUrl });
+  if (!apiUrl) throw new Error('The Finora API is not configured.');
+  const token = await getToken();
+  console.info('[Calendar] token resolved', { available: Boolean(token), path });
+  if (!token) throw new Error('Your session is not ready. Try again.');
+  const response = await fetch(`${apiUrl}/v1/integrations/calendar${path}`, {
+    ...init,
+    headers: { Accept: 'application/json', Authorization: `Bearer ${token}`, ...init?.headers },
+  });
+  const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+  console.info('[Calendar] response received', {
+    path,
+    status: response.status,
+    ok: response.ok,
+    elapsedMs: Date.now() - startedAt,
+    payloadType: payload === null ? 'null' : Array.isArray(payload) ? 'array' : typeof payload,
+  });
+  if (!response.ok)
+    throw new Error(
+      payload?.error === 'calendar_not_configured'
+        ? 'Google Calendar is not configured yet.'
+        : (payload?.error ?? 'Could not connect Google Calendar. Try again.'),
+    );
+  return payload;
+}
+
+export async function getCalendarIntegrationStatus(
+  getToken: GetToken,
+): Promise<CalendarIntegrationStatus> {
+  return CalendarIntegrationStatusSchema.parse(await calendarRequest('/status', getToken));
+}
+export async function beginCalendarConnection(getToken: GetToken, returnUrl: string) {
+  return CalendarConnectResponseSchema.parse(
+    await calendarRequest('/connect', getToken, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ returnUrl }),
+    }),
+  );
+}
+export async function disconnectCalendarIntegration(getToken: GetToken) {
+  return CalendarIntegrationStatusSchema.parse(
+    await calendarRequest('/disconnect', getToken, { method: 'POST' }),
+  );
+}
+export async function syncCalendarIntegration(getToken: GetToken) {
+  return CalendarSyncResponseSchema.parse(
+    await calendarRequest('/sync', getToken, { method: 'POST' }),
+  );
+}
+
+const CalendarEventsResponseSchema = z.object({
+  events: z.array(CalendarMoneyEventSchema),
+});
+
+export async function getCalendarEvents(getToken: GetToken) {
+  const payload = CalendarEventsResponseSchema.parse(await calendarRequest('/events', getToken));
+  console.info('[Calendar] events parsed from API', {
+    count: payload.events.length,
+    events: payload.events.map((event) => ({
+      id: event.id,
+      title: event.title,
+      kind: event.kind,
+      dueAt: event.dueAt,
+    })),
+  });
+  return payload.events;
+}

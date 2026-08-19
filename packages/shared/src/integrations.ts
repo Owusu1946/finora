@@ -19,3 +19,36 @@ export const GmailConnectResponseSchema = z.object({
 });
 
 export const GmailSyncResponseSchema = z.object({ queued: z.literal(true) });
+
+export const CalendarIntegrationStatusSchema = z.object({
+  connected: z.boolean(),
+  email: z.email().nullable(),
+  status: z.enum(['disconnected', 'connected', 'syncing', 'error', 'reauthorization_required']),
+  lastSyncedAt: z.iso.datetime().nullable(),
+  eventCount: z.number().int().nonnegative(),
+  errorCode: z.string().nullable(),
+});
+export type CalendarIntegrationStatus = z.infer<typeof CalendarIntegrationStatusSchema>;
+
+export const CalendarConnectRequestSchema = z.object({
+  returnUrl: z.string().min(1).max(2_048),
+});
+
+export const CalendarConnectResponseSchema = z.object({
+  authorizationUrl: z.url(),
+});
+
+export const CalendarSyncResponseSchema = z.object({ queued: z.literal(true) });
+
+export const CalendarMoneyEventSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  kind: z.enum(['rent', 'payroll', 'bill', 'subscription', 'tax', 'other']),
+  dueAt: z.iso.datetime(),
+  amount: z.number().positive().nullable(),
+  currency: z.string().length(3).nullable(),
+  counterparty: z.string().nullable(),
+  notes: z.string().nullable(),
+  sourceUrl: z.url().nullable(),
+});
+export type CalendarMoneyEvent = z.infer<typeof CalendarMoneyEventSchema>;

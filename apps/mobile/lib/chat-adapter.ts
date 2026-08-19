@@ -16,7 +16,7 @@ import { MOCK_INVOICES } from '@/components/invoices/types';
 import { isBusinessAccount } from '@/lib/account';
 import { listAutomations } from '@/lib/automations-storage';
 import { listBeneficiaries } from '@/lib/beneficiaries-storage';
-import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
+import { getCalendarEvents } from '@/lib/calendar-integration-api';
 import {
   contactToPaymentDestination,
   contactToSendSeed,
@@ -288,15 +288,23 @@ function parseCreateEmployeeSeed(prompt: string) {
 }
 
 function filterEventsByRange(
-  events: Awaited<ReturnType<typeof listUpcomingCalendarMoneyEvents>>,
+  events: Awaited<ReturnType<typeof getCalendarEvents>>,
   range: 'week' | 'month',
 ) {
   const horizonMs = (range === 'month' ? 31 : 7) * 24 * 60 * 60 * 1000;
   const now = Date.now();
-  return events.filter((event) => {
+  const filtered = events.filter((event) => {
     const due = new Date(event.dueAt).getTime();
     return due >= now - 12 * 60 * 60 * 1000 && due <= now + horizonMs;
   });
+  console.info('[Calendar] chat range filter', {
+    range,
+    inputCount: events.length,
+    outputCount: filtered.length,
+    inputEvents: events.map((event) => ({ id: event.id, title: event.title, dueAt: event.dueAt })),
+    outputEvents: filtered.map((event) => ({ id: event.id, title: event.title, dueAt: event.dueAt })),
+  });
+  return filtered;
 }
 
 function parseRecipientQuery(prompt: string): string | null {
@@ -791,9 +799,11 @@ const finoraMockAdapter = {
   async *run({
     messages,
     abortSignal,
+    getToken,
   }: {
     messages: readonly ThreadMessage[];
     abortSignal: AbortSignal;
+    getToken?: () => Promise<string | null>;
   }) {
     const prompt = lastUserText(messages);
 
@@ -1922,7 +1932,7 @@ const finoraMockAdapter = {
       const args = { range };
       const argsText = JSON.stringify(args);
       const reasoning =
-        'Calendar money events requested.\nChecking Google Calendar for rent, payroll, and bill dues…';
+        'Calendar events requested.\nChecking your connected Google Calendars for upcoming events…';
 
       yield { content: [{ type: 'reasoning', text: reasoning }] };
       await wait(400);
@@ -1944,8 +1954,7 @@ const finoraMockAdapter = {
       await wait(600);
       if (abortSignal.aborted) return;
 
-      const integrations = await getIntegrations();
-      if (!integrations.calendarConnected) {
+      if (!getToken) {
         yield {
           content: [
             {
@@ -1969,12 +1978,40 @@ const finoraMockAdapter = {
         return;
       }
 
-      const events = filterEventsByRange(await listUpcomingCalendarMoneyEvents(), range);
+      let remoteEvents: Awaited<ReturnType<typeof getCalendarEvents>>;
+      try {
+        remoteEvents = await getCalendarEvents(getToken);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Could not load Google Calendar.';
+        yield {
+          content: [
+            { type: 'reasoning', text: `${reasoning}\nCalendar request failed.` },
+            {
+              type: 'tool-call',
+              toolCallId: 'call_list_calendar_dues',
+              toolName: 'list_calendar_dues',
+              args,
+              argsText,
+              result: { connected: true, events: [], error: message },
+            },
+            { type: 'text', text: `I couldn’t load your Google Calendar: ${message}` },
+          ],
+        };
+        return;
+      }
+      const events = filterEventsByRange(remoteEvents, range).map((event) => ({
+        ...event,
+        amount: event.amount ?? undefined,
+        currency: event.currency ?? undefined,
+        counterparty: event.counterparty ?? undefined,
+        notes: event.notes ?? undefined,
+        status: 'upcoming' as const,
+      }));
       yield {
         content: [
           {
             type: 'reasoning',
-            text: `${reasoning}\nFound ${events.length} upcoming money event(s).`,
+            text: `${reasoning}\nFound ${events.length} upcoming calendar event(s).`,
           },
           {
             type: 'tool-call',
@@ -1988,8 +2025,8 @@ const finoraMockAdapter = {
             type: 'text',
             text:
               events.length > 0
-                ? `Found ${events.length} money event${events.length === 1 ? '' : 's'} on your calendar this ${range}. Pay any with your passcode — Finora still needs your approval.`
-                : `No upcoming money events on your calendar this ${range}.`,
+                ? `Found ${events.length} calendar event${events.length === 1 ? '' : 's'} on your calendar this ${range}.`
+                : `No upcoming calendar events on your calendar this ${range}.`,
           },
         ],
       };
@@ -2706,10 +2743,14 @@ const finoraMockAdapter = {
   },
 };
 
-export const finoraChatAdapter: ChatModelAdapter = {
-  async *run(options) {
-    for await (const result of finoraMockAdapter.run(options)) {
-      yield JSON.parse(JSON.stringify(result)) as ChatModelRunResult;
-    }
-  },
-};
+export function createFinoraChatAdapter(getToken?: () => Promise<string | null>): ChatModelAdapter {
+  return {
+    async *run(options) {
+      for await (const result of finoraMockAdapter.run({ ...options, getToken })) {
+        yield JSON.parse(JSON.stringify(result)) as ChatModelRunResult;
+      }
+    },
+  };
+}
+
+export const finoraChatAdapter = createFinoraChatAdapter();
