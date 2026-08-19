@@ -9,11 +9,14 @@ import { z } from 'zod';
 
 import type { AppEnv } from '../app-env';
 
+import { fallbackChatTitle, generateAndPersistChatTitle } from '../ai/chat-title';
+import { getModelProviderConfig } from '../ai/model-provider';
 import {
   deleteChat,
   ensureChat,
   getChatMetadata,
   listChats,
+  setFallbackChatTitle,
   updateChatMetadata,
 } from '../db/chat-store';
 import { createDb } from '../db/client';
@@ -21,6 +24,10 @@ import { createDb } from '../db/client';
 const ListQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(30),
+});
+
+const GenerateTitleRequestSchema = z.object({
+  message: z.string().trim().min(1).max(1_000),
 });
 
 function encodeCursor(value: { updatedAt: Date; id: string }) {
@@ -104,6 +111,55 @@ chats.get('/:id', async (c) => {
     c.get('auth').userId,
   );
   return chat ? c.json(metadataResponse(chat)) : c.json({ message: 'Chat not found.' }, 404);
+});
+
+chats.post('/:id/title', async (c) => {
+  const id = ChatIdSchema.safeParse(c.req.param('id'));
+  const body = GenerateTitleRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!id.success || !body.success) return c.json({ message: 'Invalid title request.' }, 400);
+
+  const { userId } = c.get('auth');
+  const env = c.get('env');
+  const db = createDb(env.DATABASE_URL);
+  if (!(await ensureChat(db, id.data, userId))) {
+    return c.json({ message: 'This chat ID is unavailable.' }, 409);
+  }
+
+  const existing = await getChatMetadata(db, id.data, userId);
+  if (existing?.titleStatus === 'generated' && existing.title) {
+    return c.json({ title: existing.title, titleStatus: 'generated' as const });
+  }
+
+  const message = {
+    id: `title_${crypto.randomUUID()}`,
+    role: 'user' as const,
+    parts: [{ type: 'text' as const, text: body.data.message }],
+  };
+  const fallback = fallbackChatTitle([message]);
+  await setFallbackChatTitle(db, id.data, userId, fallback);
+
+  const provider = getModelProviderConfig(env);
+  if (!provider) return c.json({ title: fallback, titleStatus: 'fallback' as const });
+
+  try {
+    const generated = await generateAndPersistChatTitle({
+      db,
+      chatId: id.data,
+      userId,
+      messages: [message],
+      provider,
+      referer: env.WELCOME_EMAIL_CTA_URL,
+    });
+    return c.json({
+      title: generated ?? fallback,
+      titleStatus: generated ? ('generated' as const) : ('fallback' as const),
+    });
+  } catch (error) {
+    console.error('[chat:title]', {
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return c.json({ title: fallback, titleStatus: 'fallback' as const });
+  }
 });
 
 chats.patch('/:id', async (c) => {

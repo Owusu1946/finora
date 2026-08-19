@@ -19,7 +19,7 @@ import { Hono } from 'hono';
 
 import type { AppEnv } from '../types';
 
-import { fallbackChatTitle, generateAndPersistChatTitle } from '../ai/chat-title';
+import { fallbackChatTitle } from '../ai/chat-title';
 import { logChatError, toPublicChatError } from '../ai/errors';
 import {
   generatedMessagesForPersistence,
@@ -540,22 +540,6 @@ chat.post('/', async (c) => {
           }
         })();
         c.executionCtx.waitUntil(persistence);
-        if (shouldGenerateTitle) {
-          c.executionCtx.waitUntil(
-            persistence
-              .then(() =>
-                generateAndPersistChatTitle({
-                  db,
-                  chatId: parsed.data.id,
-                  userId,
-                  messages: generatedMessages,
-                  provider,
-                  referer: env.WELCOME_EMAIL_CTA_URL,
-                }),
-              )
-              .catch((error) => logPersistenceError(error, requestId)),
-          );
-        }
         return persistence;
       },
     });

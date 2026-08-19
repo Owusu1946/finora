@@ -19,7 +19,9 @@ import {
 } from './remote-chat-adapter';
 
 const optimisticChatIds = new Set<string>();
+const generatedTitles = new Map<string, string>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
+const TITLE_REQUEST_TIMEOUT_MS = 20_000;
 
 type GetToken = () => Promise<string | null>;
 
@@ -55,16 +57,52 @@ function toMetadata(item: {
   };
 }
 
-function fallbackTitle(messages: readonly ThreadMessage[]) {
+export function firstThreadUserText(messages: readonly ThreadMessage[]) {
   const firstUser = messages.find((message) => message.role === 'user');
-  const text = firstUser?.content
+  return firstUser?.content
     .flatMap((part) => (part.type === 'text' ? [part.text] : []))
     .join(' ')
     .replaceAll(/\s+/g, ' ')
     .trim();
+}
+
+export function fallbackThreadTitle(messages: readonly ThreadMessage[]) {
+  const text = firstThreadUserText(messages);
   if (!text) return 'New chat';
   const words = text.split(' ').slice(0, 7).join(' ');
   return words.length > 60 ? `${words.slice(0, 57).trim()}...` : words;
+}
+
+export async function requestRemoteThreadTitle(
+  config: RemoteThreadConfig,
+  remoteId: string,
+  message: string,
+) {
+  const token = await config.getToken();
+  if (!token) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TITLE_REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      `${config.apiUrl}/v1/chats/${encodeURIComponent(remoteId)}/title`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message }),
+        signal: controller.signal,
+      },
+    );
+    if (!response.ok) return null;
+    const payload = (await response.json().catch(() => null)) as { title?: unknown } | null;
+    if (!payload || typeof payload.title !== 'string' || !payload.title.trim()) return null;
+    const title = payload.title.trim();
+    generatedTitles.set(remoteId, title);
+    return title;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function titleAssistantStream(title: string) {
@@ -223,11 +261,12 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     async delete(remoteId) {
       await request(`/v1/chats/${encodeURIComponent(remoteId)}`, { method: 'DELETE' });
       invalidateListCache();
+      generatedTitles.delete(remoteId);
       await AsyncStorage.removeItem(threadCacheKey(config.userId));
     },
 
     async generateTitle(remoteId, messages) {
-      const title = fallbackTitle(messages);
+      const title = generatedTitles.get(remoteId) ?? fallbackThreadTitle(messages);
       if (cachedList) {
         cachedList = {
           ...cachedList,

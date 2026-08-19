@@ -1,5 +1,7 @@
 import {
   AssistantRuntimeProvider,
+  useAui,
+  useAuiEvent,
   useLocalRuntime,
   useRemoteThreadListRuntime,
   useAuiState,
@@ -77,6 +79,8 @@ import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import {
   createRemoteThreadAdapter,
   createRemoteThreadRuntimeAdapters,
+  firstThreadUserText,
+  requestRemoteThreadTitle,
   type RemoteThreadConfig,
 } from '@/lib/remote-thread-adapter';
 import { SettingsProvider } from '@/lib/settings-context';
@@ -172,9 +176,44 @@ function RootNavigator() {
   );
 }
 
-function FinoraRuntimeContent({ runtime }: { runtime: ReturnType<typeof useLocalRuntime> }) {
+function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
+  const aui = useAui();
+  const startedRef = useRef(new Set<string>());
+
+  useAuiEvent('thread.runStart', () => {
+    void (async () => {
+      const messages = aui.thread().getState().messages;
+      if (messages.filter((message) => message.role === 'user').length !== 1) return;
+      const message = firstThreadUserText(messages);
+      if (!message) return;
+
+      const item = aui.threadListItem.getState();
+      if (item.title && item.title !== 'New chat') return;
+      const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
+      if (startedRef.current.has(remoteId)) return;
+      startedRef.current.add(remoteId);
+
+      // assistant-ui normally generates titles on runEnd. Trigger it now so
+      // the deterministic local title reaches the drawer before the model responds.
+      aui.threadListItem.generateTitle();
+      const generated = await requestRemoteThreadTitle(config, remoteId, message);
+      if (generated) aui.threadListItem.generateTitle();
+    })();
+  });
+
+  return null;
+}
+
+function FinoraRuntimeContent({
+  runtime,
+  remoteConfig,
+}: {
+  runtime: ReturnType<typeof useLocalRuntime>;
+  remoteConfig?: RemoteThreadConfig;
+}) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
+      {remoteConfig ? <InstantRemoteTitleSync config={remoteConfig} /> : null}
       <PreparePaymentToolUI />
       <FundAccountToolUI />
       <ListReceiveMethodsToolUI />
@@ -233,7 +272,12 @@ function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime })
       return useLocalRuntime(adapters.chatModel, { adapters: { history: adapters.history } });
     },
   });
-  return <FinoraRuntimeContent runtime={runtime} />;
+  return (
+    <FinoraRuntimeContent
+      runtime={runtime}
+      remoteConfig={config}
+    />
+  );
 }
 
 function FinoraAssistantRuntime({ remoteChat }: { remoteChat: RemoteChatRuntime | null }) {
