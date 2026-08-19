@@ -15,10 +15,10 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { listUpcomingCalendarMoneyEvents } from '@/lib/calendar-events-storage';
 import {
   beginCalendarConnection,
   disconnectCalendarIntegration,
+  getCalendarEvents,
   getCalendarIntegrationStatus,
   syncCalendarIntegration,
 } from '@/lib/calendar-integration-api';
@@ -152,7 +152,7 @@ export default function IntegrationsScreen() {
     try {
       const [integrations, calendar, sms] = await Promise.all([
         getIntegrations(),
-        listUpcomingCalendarMoneyEvents(),
+        getCalendarEvents(getTokenRef.current).catch(() => []),
         listOpenSmsPaymentRequests(),
       ]);
       setState(integrations);

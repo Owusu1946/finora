@@ -1,9 +1,11 @@
 import {
   CalendarConnectResponseSchema,
   CalendarIntegrationStatusSchema,
+  CalendarMoneyEventSchema,
   CalendarSyncResponseSchema,
   type CalendarIntegrationStatus,
 } from '@finora/shared';
+import { z } from 'zod';
 
 import { getApiUrl } from './api-url';
 
@@ -51,4 +53,12 @@ export async function syncCalendarIntegration(getToken: GetToken) {
   return CalendarSyncResponseSchema.parse(
     await calendarRequest('/sync', getToken, { method: 'POST' }),
   );
+}
+
+const CalendarEventsResponseSchema = z.object({
+  events: z.array(CalendarMoneyEventSchema),
+});
+
+export async function getCalendarEvents(getToken: GetToken) {
+  return CalendarEventsResponseSchema.parse(await calendarRequest('/events', getToken)).events;
 }
