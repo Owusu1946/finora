@@ -47,7 +47,7 @@ export async function listPayrollImports(getToken: GetToken) {
 export async function updatePayrollRow(
   importId: string,
   rowId: string,
-  patch: Partial<Pick<PayrollImportRow, 'employeeName' | 'amount' | 'currency' | 'destination' | 'rail' | 'period' | 'payDate'>>,
+  patch: Partial<Pick<PayrollImportRow, 'employeeName' | 'employeeId' | 'role' | 'amount' | 'currency' | 'destinationType' | 'destination' | 'rail' | 'period' | 'payDate' | 'reference'>>,
   getToken: GetToken,
 ) {
   const payload = await payrollRequest(`/imports/${encodeURIComponent(importId)}/rows/${encodeURIComponent(rowId)}`, getToken, {

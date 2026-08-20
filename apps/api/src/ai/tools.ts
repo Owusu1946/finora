@@ -427,23 +427,9 @@ export function createChatAgentTools(
     }),
     prepare_payroll: tool({
       description:
-        'Prepare a payroll run for review and human approval. If an importId was inspected, use only its validated rows. This never pays employees by itself.',
+        'Prepare a previously inspected payroll import for review and human approval. Always pass the importId returned by inspect_payroll_attachment. Imported employee IDs are source identifiers and do not need to match a separate Finora roster. This never pays employees by itself.',
       inputSchema: zodSchema(PreparePayrollInputSchema),
       execute: async (input) => {
-        if (input.employeeIds?.length) {
-          const employeeData = await callPlatform('/employees');
-          const employees = Array.isArray(employeeData.employees) ? employeeData.employees : [];
-          const employeeIds = new Set(
-            employees.flatMap((entry) =>
-              typeof entry === 'object' && entry !== null && 'id' in entry
-                ? [String(entry.id)]
-                : [],
-            ),
-          );
-          if (input.employeeIds.some((employeeId) => !employeeIds.has(employeeId))) {
-            throw new Error('employees_not_found');
-          }
-        }
         const result = await callPlatform('/payroll/prepare', { method: 'POST', body: input });
         const payload = asRecord(result.payload) ?? {};
         const employees = Array.isArray(payload.employees) ? payload.employees : [];

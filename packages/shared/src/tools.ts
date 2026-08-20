@@ -554,11 +554,10 @@ export const PrepareSupplierPaymentInputSchema = z
   .strict();
 
 export const PreparePayrollInputSchema = z
-  .object({
-    period: z.string().optional(),
-    employeeIds: z.array(z.string()).optional(),
-    importId: z.string().uuid().optional(),
-  })
+    .object({
+      period: z.string().optional(),
+      importId: z.string().uuid(),
+    })
   .strict();
 
 export const InspectPayrollAttachmentInputSchema = z

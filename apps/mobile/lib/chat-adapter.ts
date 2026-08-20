@@ -1312,6 +1312,13 @@ const finoraMockAdapter = {
     }
 
     if (isPayrollIntent(prompt)) {
+      // Offline fallback must never render the legacy mock payroll roster.
+      // Imported payrolls are prepared only by the remote API after inspection.
+      yield {
+        content: [{ type: 'text', text: 'Attach a payroll file first. I’ll inspect every row, show any issues, and prepare the imported payroll for approval.' }],
+      };
+      return;
+
       const period = defaultPayrollPeriod();
       const employees = await listActiveEmployees();
       const total = employees.reduce((sum, e) => sum + e.salary, 0);

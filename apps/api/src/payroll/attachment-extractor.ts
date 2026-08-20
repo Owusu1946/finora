@@ -27,12 +27,16 @@ function parseAmount(value: unknown) {
 function canonicalHeader(value: unknown) {
   const header = clean(value).toLowerCase().replace(/[^a-z0-9]/g, '');
   if (/^(employee|staff|employeename|name|fullname)$/.test(header)) return 'employeeName';
+  if (/^(employeeid|staffid|personid|id)$/.test(header)) return 'employeeId';
+  if (/^(role|jobtitle|title|position)$/.test(header)) return 'role';
   if (/^(salary|netpay|amount|amountdue|grosspay|pay)$/.test(header)) return 'amount';
   if (/^(currency|ccy)$/.test(header)) return 'currency';
+  if (/^(destinationtype|accounttype|paymenttype|payouttype)$/.test(header)) return 'destinationType';
   if (/^(phone|phonenumber|momonumber|account|accountnumber|destination)$/.test(header)) return 'destination';
   if (/^(network|provider|rail|method)$/.test(header)) return 'rail';
   if (/^(period|month|payperiod)$/.test(header)) return 'period';
   if (/^(paydate|date|paymentdate)$/.test(header)) return 'payDate';
+  if (/^(reference|paymentreference|memo)$/.test(header)) return 'reference';
   return null;
 }
 
@@ -50,17 +54,21 @@ function rowsFromMatrix(matrix: unknown[][], sourceName: string, locationPrefix:
   const issues: PayrollValidationIssue[] = [];
   return data.slice(0, MAX_ROWS).map((values, index) => {
     const rowId = `row-${index + 1}`;
-    const get = (key: 'employeeName' | 'amount' | 'currency' | 'destination' | 'rail' | 'period' | 'payDate') => {
+    const get = (key: 'employeeName' | 'employeeId' | 'role' | 'amount' | 'currency' | 'destinationType' | 'destination' | 'rail' | 'period' | 'payDate' | 'reference') => {
       const column = headers.indexOf(key);
       return column >= 0 ? values[column] : '';
     };
     const employeeName = clean(hasHeader ? get('employeeName') : values[0]) || null;
+    const employeeId = clean(hasHeader ? get('employeeId') : '') || null;
+    const role = clean(hasHeader ? get('role') : '') || null;
     const amount = parseAmount(hasHeader ? get('amount') : values[1]);
     const currency = clean(hasHeader ? get('currency') : '') || null;
+    const destinationType = clean(hasHeader ? get('destinationType') : '') || null;
     const destination = clean(hasHeader ? get('destination') : values[2]) || null;
     const rail = clean(hasHeader ? get('rail') : '') || null;
     const period = clean(hasHeader ? get('period') : '') || null;
     const payDate = normalizeDate(hasHeader ? get('payDate') : '');
+    const reference = clean(hasHeader ? get('reference') : '') || null;
     const rowIssues: PayrollValidationIssue[] = [];
     if (!employeeName) rowIssues.push({ code: 'employee_missing', message: 'Employee name is missing.', rowId, blocking: true });
     if (amount == null) rowIssues.push({ code: 'amount_missing_or_invalid', message: 'A positive payment amount is required.', rowId, blocking: true });
@@ -68,7 +76,7 @@ function rowsFromMatrix(matrix: unknown[][], sourceName: string, locationPrefix:
     if (!destination) rowIssues.push({ code: 'destination_missing', message: 'A payout destination is missing.', rowId, blocking: true });
     issues.push(...rowIssues);
     return PayrollImportRowSchema.parse({
-      rowId, employeeName, employeeId: null, amount, currency, destination, rail, period, payDate,
+      rowId, employeeName, employeeId, role, amount, currency, destinationType, destination, rail, period, payDate, reference,
       confidence: rowIssues.length ? 0.35 : 0.9,
       citations: [{ sourceName, location: `${locationPrefix}, row ${index + (hasHeader ? 2 : 1)}` }],
       issues: rowIssues,
@@ -156,10 +164,14 @@ export function validatePayrollRow(row: PayrollImportRow): PayrollImportRow {
   return PayrollImportRowSchema.parse({
     ...row,
     employeeName: row.employeeName?.trim() || null,
+    employeeId: row.employeeId?.trim() || null,
+    role: row.role?.trim() || null,
     currency: row.currency?.trim().toUpperCase() || null,
+    destinationType: row.destinationType?.trim() || null,
     destination: row.destination?.trim() || null,
     rail: row.rail?.trim() || null,
     period: row.period?.trim() || null,
+    reference: row.reference?.trim() || null,
     issues,
     confidence: issues.length ? Math.min(row.confidence, 0.35) : Math.max(row.confidence, 0.9),
   });

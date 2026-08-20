@@ -1307,7 +1307,7 @@ v1.post('/payroll/prepare', async (c) => {
     const employees = importedRows.map(({ payload }) => ({
       id: String(payload.rowId ?? crypto.randomUUID()),
       name: String(payload.employeeName ?? 'Employee'),
-      role: 'Imported payroll',
+        role: String(payload.role ?? 'Imported payroll'),
       salary: Number(payload.amount ?? 0),
       currency: String(payload.currency ?? payrollImport.currency ?? 'USD'),
       destination: {

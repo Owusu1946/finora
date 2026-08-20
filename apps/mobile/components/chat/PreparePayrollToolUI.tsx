@@ -14,8 +14,7 @@ import { haptics } from '@/lib/haptics';
 
 type PreparePayrollArgs = {
   period?: string;
-  employeeIds?: string[];
-  importId?: string;
+  importId: string;
 };
 
 type PreparePayrollResult = {
