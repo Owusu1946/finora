@@ -138,3 +138,29 @@ export function summarizePayrollRows(rows: PayrollImportRow[]) {
   const blockingIssues = rows.flatMap((row) => row.issues).filter((issue) => issue.blocking);
   return { total, currency, blockingIssues, warnings: [] as PayrollValidationIssue[] };
 }
+
+export function validatePayrollRow(row: PayrollImportRow): PayrollImportRow {
+  const issues: PayrollValidationIssue[] = [];
+  if (!row.employeeName?.trim()) {
+    issues.push({ code: 'employee_missing', message: 'Employee name is missing.', rowId: row.rowId, blocking: true });
+  }
+  if (row.amount == null || !Number.isFinite(row.amount) || row.amount <= 0 || row.amount > 10_000_000) {
+    issues.push({ code: 'amount_missing_or_invalid', message: 'A positive payment amount is required.', rowId: row.rowId, blocking: true });
+  }
+  if (!row.currency?.trim()) {
+    issues.push({ code: 'currency_missing', message: 'Currency is missing.', rowId: row.rowId, blocking: true });
+  }
+  if (!row.destination?.trim()) {
+    issues.push({ code: 'destination_missing', message: 'A payout destination is missing.', rowId: row.rowId, blocking: true });
+  }
+  return PayrollImportRowSchema.parse({
+    ...row,
+    employeeName: row.employeeName?.trim() || null,
+    currency: row.currency?.trim().toUpperCase() || null,
+    destination: row.destination?.trim() || null,
+    rail: row.rail?.trim() || null,
+    period: row.period?.trim() || null,
+    issues,
+    confidence: issues.length ? Math.min(row.confidence, 0.35) : Math.max(row.confidence, 0.9),
+  });
+}

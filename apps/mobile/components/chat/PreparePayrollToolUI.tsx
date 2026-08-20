@@ -1,5 +1,5 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -9,10 +9,8 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import { defaultPayrollPeriod, recordPayrollRun, type Employee } from '@/lib/employees-storage';
+import { defaultPayrollPeriod, type Employee } from '@/lib/employees-storage';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
 
 type PreparePayrollArgs = {
   period?: string;
@@ -27,13 +25,6 @@ type PreparePayrollResult = {
   currency?: string;
   preparationId?: string;
 };
-
-function mockTransactionId() {
-  return `WW-SAL-${Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase()}`;
-}
 
 function PayrollConfirmCard({
   period,
@@ -50,83 +41,24 @@ function PayrollConfirmCard({
   const aui = useAui();
   const { requestApproval, modal } = usePasscodeApproval();
   const [busy, setBusy] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'sending' | 'sent'>('idle');
-  const finishedRef = useRef(false);
-
-  useEffect(() => {
-    if (phase !== 'sending' || finishedRef.current) return;
-    let cancelled = false;
-    const run = async () => {
-      await new Promise((r) => setTimeout(r, 900));
-      if (cancelled || finishedRef.current) return;
-      finishedRef.current = true;
-      const txId = mockTransactionId();
-      for (const employee of employees) {
-        await recordSentPayment({
-          payment: {
-            amount: employee.salary,
-            currency: employee.currency,
-            recipientName: employee.name,
-            destination: {
-              kind: employee.destination.kind,
-              label: employee.destination.label,
-              value: employee.destination.value,
-            },
-            reference: `Salary · ${period}`,
-            purposeCode: 'SALARY',
-            purposeLabel: 'Salary / payroll',
-          },
-          transactionId: `${txId}-${employee.id}`,
-          source: 'chat',
-        });
-      }
-      await recordPayrollRun({
-        period,
-        total,
-        currency,
-        employeeIds: employees.map((e) => e.id),
-        transactionId: txId,
-      });
-      setPhase('sent');
-      haptics.success();
-      appendAgentFollowUp(
-        aui,
-        `Payroll for ${period} is complete — ${employees.length} employee${
-          employees.length === 1 ? '' : 's'
-        }, ${formatPaymentAmount(total, currency)}. Ref ${txId}.`,
-      );
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [aui, currency, employees, period, phase, total]);
+  const [phase, setPhase] = useState<'idle' | 'approved'>('idle');
 
   return (
     <>
       <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <View style={styles.header}>
           <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
-            {phase === 'sending' ? (
-              <LoadingIcon
-                size='small'
-                color={colors.foreground}
-              />
-            ) : (
+            {
               <Icon
-                name={phase === 'sent' ? 'check' : 'contacts'}
+                name={phase === 'approved' ? 'check' : 'contacts'}
                 size={16}
                 color={colors.foreground}
               />
-            )}
+            }
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
-              {phase === 'sent'
-                ? 'Payroll paid'
-                : phase === 'sending'
-                  ? 'Running payroll…'
-                  : 'Payroll ready'}
+              {phase === 'approved' ? 'Approval recorded' : 'Payroll ready'}
             </Text>
             <Text style={[styles.title, { color: colors.foreground }]}>{period}</Text>
           </View>
@@ -162,7 +94,8 @@ function PayrollConfirmCard({
               const ok = await requestApproval();
               setBusy(false);
               if (!ok) return;
-              setPhase('sending');
+              setPhase('approved');
+              haptics.success();
             }}
             style={({ pressed }) => [
               styles.btn,
@@ -213,7 +146,7 @@ export const PreparePayrollToolUI = makeAssistantToolUI<PreparePayrollArgs, Prep
           style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-            No active employees on the roster. Add someone in Payroll, then try again.
+            Payroll could not be prepared. Resolve the import validation issues and try again.
           </Text>
         </View>
       );

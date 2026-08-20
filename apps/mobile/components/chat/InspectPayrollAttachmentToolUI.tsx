@@ -41,7 +41,7 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
           <Text style={{ color: colors.foreground }}>{result.rows?.length ?? 0} employees</Text>
           {result.totals ? <Text style={[styles.total, { color: colors.foreground }]}>{formatPaymentAmount(result.totals.total, result.totals.currency)}</Text> : null}
         </View>
-        {result.rows?.slice(0, 8).map((row) => (
+        {result.rows?.map((row) => (
           <View key={row.rowId} style={styles.row}>
             <View style={styles.rowText}>
               <Text style={{ color: colors.foreground }}>{row.employeeName ?? 'Unnamed employee'}</Text>

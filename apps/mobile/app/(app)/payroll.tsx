@@ -1,8 +1,9 @@
 import { useAui } from '@assistant-ui/react-native';
+import { useAuth } from '@clerk/expo';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -10,234 +11,79 @@ import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
-import {
-  defaultPayrollPeriod,
-  listActiveEmployees,
-  listPayrollRuns,
-  type Employee,
-  type PayrollRun,
-} from '@/lib/employees-storage';
 import { haptics } from '@/lib/haptics';
+import { listPayrollImports, type PayrollImport, updatePayrollRow } from '@/lib/payroll-api';
 
 export default function PayrollScreen() {
   const { colors } = useTheme();
+  const { getToken } = useAuth();
   const router = useRouter();
   const aui = useAui();
-  const [employees, setEmployees] = useState<Employee[] | null>(null);
-  const [runs, setRuns] = useState<PayrollRun[]>([]);
+  const [imports, setImports] = useState<PayrollImport[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [savingRow, setSavingRow] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [roster, payrollRuns] = await Promise.all([listActiveEmployees(), listPayrollRuns()]);
-    setEmployees(roster);
-    setRuns(payrollRuns);
-  }, []);
+    try {
+      setError(null);
+      setImports(await listPayrollImports(getToken));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not load payroll imports.');
+      setImports([]);
+    }
+  }, [getToken]);
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh();
-    }, [refresh]),
-  );
+  useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
   if (!isBusinessAccount()) {
-    return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Payroll is available on Business accounts. Switch account type in Settings.
-        </Text>
-      </View>
-    );
+    return <View style={[styles.root, { backgroundColor: colors.background }]}><Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Payroll is available on Business accounts.</Text></View>;
   }
 
-  if (!employees) {
-    return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <LoadingIcon
-          style={{ marginTop: 40 }}
-          color={colors.mutedForeground}
-        />
-      </View>
-    );
-  }
-
-  const total = employees.reduce((sum, e) => sum + e.salary, 0);
-  const currency = employees[0]?.currency ?? 'USD';
-  const lastRun = runs[0];
+  if (!imports) return <View style={[styles.root, { backgroundColor: colors.background }]}><LoadingIcon style={{ marginTop: 40 }} color={colors.mutedForeground} /></View>;
 
   return (
     <LegendList
-      data={employees}
-      keyExtractor={(employee) => employee.id}
+      data={imports}
+      keyExtractor={(item) => item.id}
       recycleItems
       showsVerticalScrollIndicator={false}
       style={[styles.root, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior='automatic'
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-            Team roster for {defaultPayrollPeriod()}. WeWire settles each salary as its own payout
-            after approval.
-          </Text>
-          <View
-            style={[
-              styles.summary,
-              { borderColor: colors.border, backgroundColor: colors.composer },
-            ]}
-          >
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>
-              Next run total
-            </Text>
-            <Text style={[styles.summaryAmount, { color: colors.foreground }]}>
-              {formatPaymentAmount(total, currency)}
-            </Text>
-            <Text style={[styles.summaryMeta, { color: colors.mutedForeground }]}>
-              {employees.length} active employee{employees.length === 1 ? '' : 's'}
-              {lastRun
-                ? ` · Last run ${new Date(lastRun.createdAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                  })}`
-                : ''}
-            </Text>
-            <Pressable
-              onPress={() => {
-                haptics.selection();
-                router.push('/');
-                aui.composer.setText('Run payroll');
-                aui.composer.send();
-              }}
-              style={({ pressed }) => [
-                styles.btn,
-                { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-              ]}
-            >
-              <Text style={[styles.btnLabel, { color: colors.background }]}>
-                Run payroll in chat
-              </Text>
-            </Pressable>
-          </View>
-          <Text style={[styles.section, { color: colors.mutedForeground }]}>Team</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Imported payroll drafts and reviewed runs. Edit rows here before preparing an approval.</Text>
+          {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
+          <Pressable onPress={() => { haptics.selection(); router.push('/'); aui.composer.setText('Create a payroll from an attachment'); }} style={[styles.btn, { backgroundColor: colors.foreground }]}><Text style={[styles.btnLabel, { color: colors.background }]}>Create payroll in chat</Text></Pressable>
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Payroll drafts</Text>
         </View>
       }
-      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
-      renderItem={({ item: employee }) => (
-        <View
-          style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
-        >
-          <View style={styles.rowText}>
-            <Text style={[styles.name, { color: colors.foreground }]}>{employee.name}</Text>
-            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
-              {employee.role} · {employee.destination.label}
-            </Text>
-          </View>
-          <Text style={[styles.amount, { color: colors.foreground }]}>
-            {formatPaymentAmount(employee.salary, employee.currency)}
-          </Text>
-        </View>
-      )}
+      ListEmptyComponent={<View style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}><Text style={{ color: colors.mutedForeground }}>No payroll imports yet. Attach a CSV, spreadsheet, PDF, document, or image in chat to create one.</Text></View>}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      renderItem={({ item }) => <PayrollImportCard item={item} colors={colors} savingRow={savingRow} onSave={async (rowId, patch) => { setSavingRow(`${item.id}:${rowId}`); try { const updated = await updatePayrollRow(item.id, rowId, patch, getToken); setImports((current) => current?.map((candidate) => candidate.id === updated.id ? updated : candidate) ?? current); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save payroll row.'); } finally { setSavingRow(null); } }} />}
     />
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
-  header: {
-    gap: 10,
-    paddingBottom: 10,
-  },
-  itemSeparator: {
-    height: 10,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    marginTop: -4,
-    marginBottom: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  summary: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 16,
-    gap: 8,
-    marginBottom: 6,
-  },
-  summaryLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  summaryAmount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  summaryMeta: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  btn: {
-    minHeight: 46,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  section: {
-    marginTop: 8,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  row: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  rowText: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  name: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  meta: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
+function PayrollImportCard({ item, colors, savingRow, onSave }: { item: PayrollImport; colors: ReturnType<typeof useTheme>['colors']; savingRow: string | null; onSave: (rowId: string, patch: Record<string, unknown>) => Promise<void> }) {
+  return <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+    <View style={styles.cardHeader}><View style={styles.rowText}><Text style={[styles.cardTitle, { color: colors.foreground }]}>{item.sourceName}</Text><Text style={[styles.meta, { color: colors.mutedForeground }]}>{item.rows.length} employees · {item.status} · {item.period ?? 'Period not set'}</Text></View><Text style={[styles.total, { color: colors.foreground }]}>{formatPaymentAmount(item.total, item.currency)}</Text></View>
+    {item.rows.map((row) => <EditablePayrollRow key={row.rowId} row={row} colors={colors} saving={savingRow === `${item.id}:${row.rowId}`} onSave={(patch) => onSave(row.rowId, patch)} />)}
+    {item.blockingIssues.length ? <Text style={[styles.error, { color: colors.destructive }]}>{item.blockingIssues.length} issue{item.blockingIssues.length === 1 ? '' : 's'} must be fixed before preparation.</Text> : <Text style={[styles.meta, { color: colors.mutedForeground }]}>Validated. Preparation still requires human approval.</Text>}
+  </View>;
+}
+
+function EditablePayrollRow({ row, colors, saving, onSave }: { row: PayrollImport['rows'][number]; colors: ReturnType<typeof useTheme>['colors']; saving: boolean; onSave: (patch: Record<string, unknown>) => Promise<void> }) {
+  const [name, setName] = useState(row.employeeName ?? '');
+  const [amount, setAmount] = useState(row.amount == null ? '' : String(row.amount));
+  const [destination, setDestination] = useState(row.destination ?? '');
+  const [rail, setRail] = useState(row.rail ?? '');
+  const dirty = name !== (row.employeeName ?? '') || amount !== String(row.amount ?? '') || destination !== (row.destination ?? '') || rail !== (row.rail ?? '');
+  return <View style={[styles.employeeRow, { borderTopColor: colors.border }]}>
+    <TextInput value={name} onChangeText={setName} placeholder='Employee name' placeholderTextColor={colors.mutedForeground} style={[styles.input, { color: colors.foreground, borderColor: colors.border }]} />
+    <View style={styles.inputLine}><TextInput value={amount} onChangeText={setAmount} keyboardType='decimal-pad' placeholder='Amount' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /><TextInput value={rail} onChangeText={setRail} placeholder='Network / bank' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /></View>
+    <View style={styles.inputLine}><TextInput value={destination} onChangeText={setDestination} placeholder='Destination' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} />{dirty ? <Pressable disabled={saving} onPress={() => void onSave({ employeeName: name, amount: Number(amount), destination, rail })} style={[styles.save, { backgroundColor: colors.foreground, opacity: saving ? 0.5 : 1 }]}><Text style={{ color: colors.background }}>{saving ? 'Saving' : 'Save'}</Text></Pressable> : null}</View>
+  </View>;
+}
+
+const styles = StyleSheet.create({ root: { flex: 1 }, content: { padding: 20, paddingBottom: 40 }, header: { gap: 10, paddingBottom: 10 }, title: { fontSize: 25, fontWeight: '600' }, subtitle: { fontSize: 15, lineHeight: 20 }, section: { marginTop: 8, fontSize: 13, fontWeight: '600' }, separator: { height: 12 }, empty: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card }, card: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, gap: 12 }, cardHeader: { flexDirection: 'row', gap: 12, alignItems: 'center' }, cardTitle: { fontSize: 16, fontWeight: '700' }, rowText: { flex: 1, minWidth: 0 }, total: { fontSize: 16, fontWeight: '700' }, meta: { fontSize: 13 }, employeeRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, gap: 8 }, inputLine: { flexDirection: 'row', gap: 8 }, input: { minHeight: 40, borderWidth: StyleSheet.hairlineWidth, borderRadius: 8, paddingHorizontal: 10, fontSize: 14 }, flex: { flex: 1 }, save: { minHeight: 40, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }, btn: { minHeight: 44, borderRadius: Radius.composer, alignItems: 'center', justifyContent: 'center', marginTop: 4 }, btnLabel: { fontSize: 15, fontWeight: '600' }, error: { fontSize: 13, lineHeight: 18 } });

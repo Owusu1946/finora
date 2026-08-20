@@ -1330,20 +1330,7 @@ v1.post('/payroll/prepare', async (c) => {
       201,
     );
   }
-  const employees =
-    Array.isArray(body.employeeIds) && body.employeeIds.length
-      ? mockStore.employees.filter((e) => (body.employeeIds as string[]).includes(e.id))
-      : mockStore.employees;
-  const total = employees.reduce((s, e) => s + e.salary, 0);
-  return c.json(
-    createPreparation('payroll', {
-      ...body,
-      employees,
-      total,
-      currency: 'USD',
-    }),
-    201,
-  );
+  return c.json({ error: 'payroll_import_required', message: 'Payroll must be imported and validated before preparation.' }, 409);
 });
 
 // ─── Notifications / integrations ──────────────────────────────────────────

@@ -1,13 +1,13 @@
-import { PayrollInspectionResponseSchema } from '@finora/shared';
+import { PayrollImportRowSchema, PayrollInspectionResponseSchema } from '@finora/shared';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
 import { createDb } from '../db/client';
 import { payrollAttachments, payrollImportRows, payrollImports } from '../db/schema';
-import { extractPayrollRows, summarizePayrollRows } from '../payroll/attachment-extractor';
+import { extractPayrollRows, summarizePayrollRows, validatePayrollRow } from '../payroll/attachment-extractor';
 import { getModelProviderConfig } from '../ai/model-provider';
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -82,7 +82,8 @@ export async function inspectPayrollAttachment(c: { env: Env; apiEnv: { DATABASE
     });
     const summary = summarizePayrollRows(rows);
     const status = summary.blockingIssues.length ? 'blocked' : 'ready';
-    const [imp] = await db.insert(payrollImports).values({ clerkUserId: c.userId, attachmentId: attachment.id, status, sourceName: attachment.fileName, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings }).onConflictDoUpdate({ target: payrollImports.attachmentId, set: { status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() } }).returning({ id: payrollImports.id });
+    const period = rows.find((row) => row.period)?.period ?? null;
+    const [imp] = await db.insert(payrollImports).values({ clerkUserId: c.userId, attachmentId: attachment.id, status, sourceName: attachment.fileName, period, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings }).onConflictDoUpdate({ target: payrollImports.attachmentId, set: { status, period, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() } }).returning({ id: payrollImports.id });
     if (!imp) throw new Error('payroll_import_persist_failed');
     await db.delete(payrollImportRows).where(eq(payrollImportRows.importId, imp.id));
     if (rows.length) await db.insert(payrollImportRows).values(rows.map((row) => ({ importId: imp.id, rowId: row.rowId, payload: row })));
@@ -101,3 +102,55 @@ payroll.get('/attachments/:id', async (c) => {
 });
 
 payroll.post('/attachments/:id/inspect', async (c) => c.json(await inspectPayrollAttachment({ env: c.env, apiEnv: c.get('env'), userId: c.get('auth').userId, attachmentId: c.req.param('id') })));
+
+function importPayload(importRow: typeof payrollImports.$inferSelect, rows: Array<{ payload: Record<string, unknown> }>) {
+  return {
+    id: importRow.id,
+    sourceName: importRow.sourceName,
+    status: importRow.status,
+    period: importRow.period,
+    total: Number(importRow.total ?? 0),
+    currency: importRow.currency ?? 'USD',
+    blockingIssues: importRow.blockingIssues,
+    warnings: importRow.warnings,
+    rows: rows.map((row) => row.payload),
+    createdAt: importRow.createdAt.toISOString(),
+    updatedAt: importRow.updatedAt.toISOString(),
+  };
+}
+
+payroll.get('/imports', async (c) => {
+  const db = createDb(c.get('env').DATABASE_URL);
+  const imports = await db.select().from(payrollImports).where(eq(payrollImports.clerkUserId, c.get('auth').userId)).orderBy(desc(payrollImports.updatedAt)).limit(50);
+  if (!imports.length) return c.json({ imports: [] });
+  const rows = await db.select({ importId: payrollImportRows.importId, payload: payrollImportRows.payload }).from(payrollImportRows).where(inArray(payrollImportRows.importId, imports.map((item) => item.id)));
+  const rowsByImport = new Map<string, Array<{ payload: Record<string, unknown> }>>();
+  for (const row of rows) rowsByImport.set(row.importId, [...(rowsByImport.get(row.importId) ?? []), { payload: row.payload }]);
+  return c.json({ imports: imports.map((item) => importPayload(item, rowsByImport.get(item.id) ?? [])) });
+});
+
+payroll.get('/imports/:id', async (c) => {
+  const db = createDb(c.get('env').DATABASE_URL);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
+  if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
+  const rows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  return c.json({ import: importPayload(item, rows) });
+});
+
+payroll.patch('/imports/:id/rows/:rowId', async (c) => {
+  const db = createDb(c.get('env').DATABASE_URL);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
+  if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
+  const [existing] = await db.select().from(payrollImportRows).where(and(eq(payrollImportRows.importId, item.id), eq(payrollImportRows.rowId, c.req.param('rowId')))).limit(1);
+  if (!existing) return c.json(jsonError('payroll_row_not_found', 404), 404);
+  const body = await c.req.json<Record<string, unknown>>();
+  const candidate = PayrollImportRowSchema.parse({ ...existing.payload, ...body, rowId: existing.rowId });
+  const validated = validatePayrollRow(candidate);
+  await db.update(payrollImportRows).set({ payload: validated }).where(eq(payrollImportRows.id, existing.id));
+  const updatedRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  const parsedRows = updatedRows.map((row) => PayrollImportRowSchema.parse(row.payload));
+  const summary = summarizePayrollRows(parsedRows);
+  const status = summary.blockingIssues.length ? 'blocked' : 'ready';
+  const [updated] = await db.update(payrollImports).set({ status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(eq(payrollImports.id, item.id)).returning();
+  return c.json({ import: updated ? importPayload(updated, updatedRows) : null });
+});
