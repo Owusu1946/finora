@@ -17,6 +17,7 @@ import { chats } from './routes/chats';
 import { emailWebhooks } from './routes/email-webhooks';
 import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
 import { invoiceRoutes } from './routes/invoices';
+import { payroll } from './routes/payroll';
 import { v1 } from './routes/v1';
 
 const app = new Hono<AppEnv>();
@@ -66,6 +67,7 @@ app.route('/v1/integrations/gmail', gmailIntegrations);
 app.route('/v1/integrations/calendar', calendarIntegrations);
 app.route('/v1/integrations/drive', driveIntegrations);
 app.route('/v1/invoices', invoiceRoutes);
+app.route('/v1/payroll', payroll);
 app.route('/v1', v1);
 
 async function consumeQueue(batch: MessageBatch<unknown>, env: Env) {

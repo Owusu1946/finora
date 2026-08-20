@@ -37,6 +37,10 @@ import {
   type FinoraTagSuggestion,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
+import {
+  payrollAttachmentContext,
+  uploadPayrollAttachment,
+} from '@/lib/payroll-attachments-api';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
 
 import {
@@ -60,6 +64,26 @@ const TAG_ACCENT = {
 function AttachButton() {
   const { colors } = useTheme();
   const aui = useAui();
+  const { getToken } = useAuth();
+
+  const addUploadedAttachment = async (source: Parameters<typeof uploadPayrollAttachment>[0]) => {
+    try {
+      const uploaded = await uploadPayrollAttachment(source, getToken);
+      await aui.composer.addAttachment({
+        id: uploaded.attachmentId,
+        name: uploaded.name,
+        type: uploaded.contentType.startsWith('image/') ? 'image' : 'document',
+        contentType: uploaded.contentType,
+        content: [{ type: 'text', text: payrollAttachmentContext(uploaded) }],
+      });
+      haptics.success();
+    } catch (error) {
+      Alert.alert(
+        'Could not attach file',
+        error instanceof Error ? error.message : 'Please try again.',
+      );
+    }
+  };
 
   const openWebFilePicker = (acceptTypes: string) => {
     if (typeof document === 'undefined') return;
@@ -70,26 +94,11 @@ function AttachButton() {
     input.onchange = async (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
       for (const file of files) {
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const dataUri = reader.result as string;
-            aui.composer.addAttachment({
-              name: file.name,
-              type: 'image',
-              contentType: file.type,
-              content: [{ type: 'image', image: dataUri }],
-            });
-          };
-          reader.readAsDataURL(file);
-        } else {
-          aui.composer.addAttachment({
-            name: file.name,
-            type: 'document',
-            contentType: file.type,
-            content: [{ type: 'text', text: `[Attached file: ${file.name}]` }],
-          });
-        }
+        await addUploadedAttachment({
+          file,
+          name: file.name,
+          contentType: file.type || 'application/octet-stream',
+        });
       }
     };
     input.click();
@@ -111,11 +120,11 @@ function AttachButton() {
     if (result.canceled || !result.assets?.length) return;
 
     for (const asset of result.assets) {
-      aui.composer.addAttachment({
+      await addUploadedAttachment({
+        uri: asset.uri,
         name: asset.fileName || `image_${Date.now()}.jpg`,
-        type: 'image',
         contentType: asset.mimeType || 'image/jpeg',
-        content: [{ type: 'image', image: asset.uri }],
+        size: asset.fileSize,
       });
     }
   };
@@ -129,22 +138,12 @@ function AttachButton() {
     if (result.canceled || !result.assets?.length) return;
 
     for (const asset of result.assets) {
-      const isImage = asset.mimeType?.startsWith('image/');
-      if (isImage) {
-        aui.composer.addAttachment({
-          name: asset.name,
-          type: 'image',
-          contentType: asset.mimeType,
-          content: [{ type: 'image', image: asset.uri }],
-        });
-      } else {
-        aui.composer.addAttachment({
-          name: asset.name,
-          type: 'document',
-          contentType: asset.mimeType,
-          content: [{ type: 'text', text: `[Attached document: ${asset.name}]` }],
-        });
-      }
+      await addUploadedAttachment({
+        uri: asset.uri,
+        name: asset.name,
+        contentType: asset.mimeType || 'application/octet-stream',
+        size: asset.size,
+      });
     }
   };
 

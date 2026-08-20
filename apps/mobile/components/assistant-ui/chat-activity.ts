@@ -23,6 +23,7 @@ const TOOL_ACTIVITY: Record<string, ChatActivity> = {
   prepare_supplier_payment: { orbState: 'shaping', label: 'Preparing the supplier payment...' },
   prepare_employee_payment: { orbState: 'shaping', label: 'Preparing the employee payment...' },
   prepare_payroll: { orbState: 'shaping', label: 'Preparing payroll...' },
+  inspect_payroll_attachment: { orbState: 'working', label: 'Reading payroll file...' },
   prepare_recurring: { orbState: 'shaping', label: 'Preparing the recurring payment...' },
   create_financial_plan: { orbState: 'weaving', label: 'Building your financial plan...' },
   create_virtual_card: { orbState: 'shaping', label: 'Preparing the virtual card...' },

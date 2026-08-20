@@ -17,6 +17,7 @@ import { recordSentPayment } from '@/lib/transactions-storage';
 type PreparePayrollArgs = {
   period?: string;
   employeeIds?: string[];
+  importId?: string;
 };
 
 type PreparePayrollResult = {

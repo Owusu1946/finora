@@ -557,7 +557,12 @@ export const PreparePayrollInputSchema = z
   .object({
     period: z.string().optional(),
     employeeIds: z.array(z.string()).optional(),
+    importId: z.string().uuid().optional(),
   })
+  .strict();
+
+export const InspectPayrollAttachmentInputSchema = z
+  .object({ attachmentId: z.string().uuid() })
   .strict();
 
 export const ListNotificationsInputSchema = z

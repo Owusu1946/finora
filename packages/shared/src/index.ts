@@ -6,6 +6,7 @@ export * from './finora-tag';
 export * from './integrations';
 export * from './invoices';
 export * from './money';
+export * from './payroll';
 export * from './phone';
 export * from './registry';
 export * from './tools';

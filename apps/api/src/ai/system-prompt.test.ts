@@ -24,5 +24,6 @@ describe('chat tools', () => {
     expect(() => createChatAgentTools()).not.toThrow();
     expect(createChatAgentTools()).toHaveProperty('search_drive_files');
     expect(createChatAgentTools()).toHaveProperty('get_drive_file');
+    expect(createChatAgentTools()).toHaveProperty('inspect_payroll_attachment');
   });
 });

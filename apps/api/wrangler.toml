@@ -22,6 +22,10 @@ binding = "GMAIL_SYNC_QUEUE"
 [[queues.producers]]
 queue = "finora-calendar-sync"
 binding = "CALENDAR_SYNC_QUEUE"
+
+[[r2_buckets]]
+binding = "PAYROLL_ATTACHMENTS"
+bucket_name = "finora-payroll-attachments"
 [[queues.consumers]]
 queue = "finora-transactional-email"
 max_batch_size = 10

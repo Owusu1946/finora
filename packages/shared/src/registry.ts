@@ -910,6 +910,14 @@ export const TOOL_REGISTRY = [
     'List employees',
   ),
   t(
+    'inspect_payroll_attachment',
+    'inspectPayrollAttachment',
+    'business',
+    ['platform', 'mobile'],
+    'read',
+    'Inspect a payroll attachment',
+  ),
+  t(
     'prepare_payroll',
     'runPayroll',
     'business',

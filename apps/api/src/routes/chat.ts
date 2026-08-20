@@ -55,6 +55,7 @@ import {
   searchDriveFiles,
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
+import { inspectPayrollAttachment } from './payroll';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
@@ -619,6 +620,15 @@ chat.post('/', async (c) => {
         },
         calendar,
         drive,
+        {
+          inspectAttachment: (attachmentId) =>
+            inspectPayrollAttachment({
+              env: c.env,
+              apiEnv: env,
+              userId,
+              attachmentId,
+            }),
+        },
       ),
       stopWhen: stepCountIs(5),
       abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,

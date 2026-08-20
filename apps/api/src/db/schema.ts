@@ -344,3 +344,66 @@ export const invoices = pgTable(
     index('invoices_user_received_index').on(table.clerkUserId, table.receivedAt),
   ],
 );
+
+export const payrollAttachmentStatusEnum = pgEnum('payroll_attachment_status', [
+  'uploaded', 'inspecting', 'ready', 'failed', 'expired',
+]);
+export const payrollImportStatusEnum = pgEnum('payroll_import_status', [
+  'inspecting', 'ready', 'blocked', 'failed',
+]);
+
+export const payrollAttachments = pgTable(
+  'payroll_attachments',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    objectKey: text('object_key').notNull(),
+    fileName: text('file_name').notNull(),
+    contentType: text('content_type').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    checksum: text('checksum').notNull(),
+    status: payrollAttachmentStatusEnum('status').notNull().default('uploaded'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    lastErrorCode: text('last_error_code'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('payroll_attachments_object_key_unique').on(table.objectKey),
+    index('payroll_attachments_user_created_index').on(table.clerkUserId, table.createdAt),
+  ],
+);
+
+export const payrollImports = pgTable(
+  'payroll_imports',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    attachmentId: uuid('attachment_id').notNull().references(() => payrollAttachments.id, { onDelete: 'cascade' }),
+    status: payrollImportStatusEnum('status').notNull().default('inspecting'),
+    sourceName: text('source_name').notNull(),
+    period: text('period'),
+    total: text('total'),
+    currency: text('currency'),
+    blockingIssues: jsonb('blocking_issues').$type<unknown[]>().notNull().default([]),
+    warnings: jsonb('warnings').$type<unknown[]>().notNull().default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('payroll_imports_attachment_unique').on(table.attachmentId),
+    index('payroll_imports_user_created_index').on(table.clerkUserId, table.createdAt),
+  ],
+);
+
+export const payrollImportRows = pgTable(
+  'payroll_import_rows',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    importId: uuid('import_id').notNull().references(() => payrollImports.id, { onDelete: 'cascade' }),
+    rowId: text('row_id').notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('payroll_import_rows_import_row_unique').on(table.importId, table.rowId)],
+);
