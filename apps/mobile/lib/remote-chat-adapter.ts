@@ -4,6 +4,7 @@ import type {
   ChatModelRunResult,
   ThreadMessage,
   ThreadMessageLike,
+  ThreadUserMessagePart,
 } from '@assistant-ui/react-native';
 import type { ChatErrorResponse } from '@finora/shared';
 
@@ -22,6 +23,10 @@ import { canonicalizeRemoteChatHistory } from './remote-chat-history';
 
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
 const BOOTSTRAP_TIMEOUT_MS = 5_000;
+const ATTACHMENT_REFERENCE_PATTERN =
+  /^\[Finora attachment: id=([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12});/i;
+const INTERNAL_ATTACHMENT_PATTERN =
+  /^\[Finora uploaded attachment ID: [0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\]$/i;
 
 type GetToken = () => Promise<string | null>;
 type RemoteChatConfig = {
@@ -85,6 +90,24 @@ function toUIMessage(message: ThreadMessage): UIMessage {
     });
   }
 
+  // Attachment uploads are represented by server-issued opaque IDs. Forward
+  // only the reference metadata; raw file bytes never enter the chat request.
+  if (message.role === 'user' && Array.isArray(message.attachments)) {
+    for (const attachment of message.attachments) {
+      const reference = attachment.content?.find(
+        (part: ThreadUserMessagePart) =>
+          part.type === 'text' && part.text.startsWith('[Finora attachment:'),
+      );
+      if (reference?.type !== 'text') continue;
+      const attachmentId = ATTACHMENT_REFERENCE_PATTERN.exec(reference.text)?.[1];
+      if (!attachmentId) continue;
+      const internalReference = `[Finora uploaded attachment ID: ${attachmentId}]`;
+      if (!parts.some((part) => part.type === 'text' && part.text === internalReference)) {
+        parts.push({ type: 'text', text: internalReference });
+      }
+    }
+  }
+
   return {
     id: message.id,
     role: message.role === 'user' ? 'user' : 'assistant',
@@ -145,7 +168,9 @@ function toThreadMessage(message: UIMessage): ThreadMessageLike {
       message.role === 'assistant'
         ? toAssistantContent(message)
         : message.parts.flatMap((part) =>
-            part.type === 'text' ? [{ type: 'text' as const, text: part.text }] : [],
+            part.type === 'text' && !INTERNAL_ATTACHMENT_PATTERN.test(part.text)
+              ? [{ type: 'text' as const, text: part.text }]
+              : [],
           ),
     status: message.role === 'assistant' ? { type: 'complete', reason: 'stop' } : undefined,
   };
