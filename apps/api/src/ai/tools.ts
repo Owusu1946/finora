@@ -173,7 +173,10 @@ type DriveToolReader = {
   search: (query: string) => Promise<unknown>;
   file: (fileId: string) => Promise<unknown>;
 };
-type PayrollToolReader = { inspectAttachment: (attachmentId: string) => Promise<unknown> };
+type PayrollToolReader = {
+  inspectAttachment: (attachmentId: string) => Promise<unknown>;
+  prepareImport: (input: { importId: string; period?: string }) => Promise<Record<string, unknown>>;
+};
 
 function gmailToolFailure(error: unknown, operation: string) {
   const message = error instanceof Error ? error.message : '';
@@ -430,7 +433,8 @@ export function createChatAgentTools(
         'Prepare a previously inspected payroll import for review and human approval. Always pass the importId returned by inspect_payroll_attachment. Imported employee IDs are source identifiers and do not need to match a separate Finora roster. This never pays employees by itself.',
       inputSchema: zodSchema(PreparePayrollInputSchema),
       execute: async (input) => {
-        const result = await callPlatform('/payroll/prepare', { method: 'POST', body: input });
+        if (!payroll) throw new Error('payroll_unavailable');
+        const result = await payroll.prepareImport(input);
         const payload = asRecord(result.payload) ?? {};
         const employees = Array.isArray(payload.employees) ? payload.employees : [];
         return {

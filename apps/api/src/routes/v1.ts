@@ -15,7 +15,7 @@ import type { AuthenticatedUser } from '../auth';
 
 import { createDb } from '../db/client';
 import { and, eq } from 'drizzle-orm';
-import { payrollImportRows, payrollImports } from '../db/schema';
+import { PayrollPreparationError, preparePayrollImport } from '../payroll/prepare-import';
 import {
   consumeRecoveryAttempt,
   deleteRecoveryChallenge,
@@ -1281,56 +1281,22 @@ v1.get('/employees', (c) => c.json({ mode: 'mock', employees: mockStore.employee
 
 v1.post('/payroll/prepare', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
-  if (typeof body.importId === 'string') {
-    const db = createDb(c.get('env').DATABASE_URL);
-    const [payrollImport] = await db
-      .select()
-      .from(payrollImports)
-      .where(
-        and(
-          eq(payrollImports.id, body.importId),
-          eq(payrollImports.clerkUserId, c.get('auth').userId),
-        ),
-      )
-      .limit(1);
-    if (!payrollImport) return c.json({ error: 'payroll_import_not_found' }, 404);
-    if (payrollImport.status !== 'ready') {
-      return c.json(
-        { error: 'payroll_import_blocked', blockingIssues: payrollImport.blockingIssues },
-        409,
-      );
-    }
-    const importedRows = await db
-      .select({ payload: payrollImportRows.payload })
-      .from(payrollImportRows)
-      .where(eq(payrollImportRows.importId, payrollImport.id));
-    const employees = importedRows.map(({ payload }) => ({
-      id: String(payload.rowId ?? crypto.randomUUID()),
-      name: String(payload.employeeName ?? 'Employee'),
-        role: String(payload.role ?? 'Imported payroll'),
-      salary: Number(payload.amount ?? 0),
-      currency: String(payload.currency ?? payrollImport.currency ?? 'USD'),
-      destination: {
-        kind: String(payload.rail ?? '').toLowerCase().includes('momo')
-          ? 'mobile_money'
-          : 'bank_account',
-        label: String(payload.rail ?? 'Payout destination'),
-        value: String(payload.destination ?? ''),
-      },
-      citations: payload.citations ?? [],
-    }));
-    return c.json(
-      createPreparation('payroll', {
-        importId: payrollImport.id,
-        period: payrollImport.period ?? body.period,
-        employees,
-        total: Number(payrollImport.total ?? 0),
-        currency: payrollImport.currency ?? 'USD',
-      }),
-      201,
-    );
+  if (typeof body.importId !== 'string') {
+    return c.json({ error: 'payroll_import_required', message: 'Payroll must be imported and validated before preparation.' }, 409);
   }
-  return c.json({ error: 'payroll_import_required', message: 'Payroll must be imported and validated before preparation.' }, 409);
+  try {
+    return c.json(await preparePayrollImport({
+      databaseUrl: c.get('env').DATABASE_URL,
+      userId: c.get('auth').userId,
+      importId: body.importId,
+      period: typeof body.period === 'string' ? body.period : undefined,
+    }), 201);
+  } catch (error) {
+    if (error instanceof PayrollPreparationError) {
+      return c.json({ error: error.code, ...error.details }, error.status);
+    }
+    throw error;
+  }
 });
 
 // ─── Notifications / integrations ──────────────────────────────────────────

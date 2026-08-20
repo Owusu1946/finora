@@ -56,6 +56,7 @@ import {
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
 import { inspectPayrollAttachment } from './payroll';
+import { preparePayrollImport } from '../payroll/prepare-import';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
@@ -627,6 +628,13 @@ chat.post('/', async (c) => {
               apiEnv: env,
               userId,
               attachmentId,
+            }),
+          prepareImport: ({ importId, period }) =>
+            preparePayrollImport({
+              databaseUrl: env.DATABASE_URL,
+              userId,
+              importId,
+              period,
             }),
         },
       ),
