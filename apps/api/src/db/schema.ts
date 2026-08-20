@@ -389,6 +389,7 @@ export const payrollImports = pgTable(
     warnings: jsonb('warnings').$type<unknown[]>().notNull().default([]),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    version: integer('version').notNull().default(1),
   },
   (table) => [
     uniqueIndex('payroll_imports_attachment_unique').on(table.attachmentId),
@@ -406,4 +407,42 @@ export const payrollImportRows = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('payroll_import_rows_import_row_unique').on(table.importId, table.rowId)],
+);
+
+export const payrollEditProposalStatusEnum = pgEnum('payroll_edit_proposal_status', [
+  'pending', 'applied', 'cancelled', 'expired', 'stale',
+]);
+
+export const payrollEditProposals = pgTable(
+  'payroll_edit_proposals',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    importId: uuid('import_id').notNull().references(() => payrollImports.id, { onDelete: 'cascade' }),
+    baseVersion: integer('base_version').notNull(),
+    status: payrollEditProposalStatusEnum('status').notNull().default('pending'),
+    changes: jsonb('changes').$type<unknown[]>().notNull(),
+    beforeState: jsonb('before_state').$type<Record<string, unknown>>().notNull(),
+    afterState: jsonb('after_state').$type<Record<string, unknown>>().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    appliedAt: timestamp('applied_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('payroll_edit_proposals_user_created_index').on(table.clerkUserId, table.createdAt)],
+);
+
+export const payrollAuditEvents = pgTable(
+  'payroll_audit_events',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    importId: uuid('import_id').notNull().references(() => payrollImports.id, { onDelete: 'cascade' }),
+    proposalId: uuid('proposal_id').references(() => payrollEditProposals.id, { onDelete: 'set null' }),
+    action: text('action').notNull(),
+    beforeState: jsonb('before_state').$type<Record<string, unknown> | null>(),
+    afterState: jsonb('after_state').$type<Record<string, unknown> | null>(),
+    metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('payroll_audit_events_user_created_index').on(table.clerkUserId, table.createdAt)],
 );

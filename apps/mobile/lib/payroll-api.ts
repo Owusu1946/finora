@@ -63,3 +63,11 @@ export async function deletePayrollRow(importId: string, rowId: string, getToken
   if (!payload.import) throw new Error('Payroll delete returned no import.');
   return payload.import;
 }
+
+export async function applyPayrollProposal(proposalId: string, getToken: GetToken) {
+  return payrollRequest(`/proposals/${encodeURIComponent(proposalId)}/apply`, getToken, { method: 'POST' });
+}
+
+export async function cancelPayrollProposal(proposalId: string, getToken: GetToken) {
+  return payrollRequest(`/proposals/${encodeURIComponent(proposalId)}/cancel`, getToken, { method: 'POST' });
+}

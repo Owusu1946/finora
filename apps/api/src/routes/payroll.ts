@@ -6,9 +6,10 @@ import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
 import { createDb } from '../db/client';
-import { payrollAttachments, payrollImportRows, payrollImports } from '../db/schema';
+import { payrollAttachments, payrollAuditEvents, payrollImportRows, payrollImports } from '../db/schema';
 import { extractPayrollRows, summarizePayrollRows, validatePayrollRow } from '../payroll/attachment-extractor';
 import { getModelProviderConfig } from '../ai/model-provider';
+import { applyPayrollChanges, cancelPayrollProposal, PayrollEditError } from '../payroll/edit-service';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const TTL_MS = 24 * 60 * 60 * 1000;
@@ -146,12 +147,17 @@ payroll.patch('/imports/:id/rows/:rowId', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
   const candidate = PayrollImportRowSchema.parse({ ...existing.payload, ...body, rowId: existing.rowId });
   const validated = validatePayrollRow(candidate);
-  await db.update(payrollImportRows).set({ payload: validated }).where(eq(payrollImportRows.id, existing.id));
-  const updatedRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
-  const parsedRows = updatedRows.map((row) => PayrollImportRowSchema.parse(row.payload));
+  const currentRows = await db.select().from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  const parsedRows = currentRows.map((row) => row.id === existing.id ? validated : PayrollImportRowSchema.parse(row.payload));
   const summary = summarizePayrollRows(parsedRows);
   const status = summary.blockingIssues.length ? 'blocked' : 'ready';
-  const [updated] = await db.update(payrollImports).set({ status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(eq(payrollImports.id, item.id)).returning();
+  const batch = await db.batch([
+    db.update(payrollImportRows).set({ payload: validated }).where(eq(payrollImportRows.id, existing.id)),
+    db.update(payrollImports).set({ version: item.version + 1, status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(and(eq(payrollImports.id, item.id), eq(payrollImports.version, item.version))).returning(),
+    db.insert(payrollAuditEvents).values({ clerkUserId: c.get('auth').userId, importId: item.id, action: 'payroll_row_updated', beforeState: existing.payload, afterState: validated, metadata: { source: 'payroll_screen', rowId: existing.rowId } }),
+  ]);
+  const [updated] = batch[1];
+  const updatedRows = currentRows.map((row) => ({ payload: row.id === existing.id ? validated : row.payload }));
   return c.json({ import: updated ? importPayload(updated, updatedRows) : null });
 });
 
@@ -159,12 +165,36 @@ payroll.delete('/imports/:id/rows/:rowId', async (c) => {
   const db = createDb(c.get('env').DATABASE_URL);
   const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
   if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
-  const deleted = await db.delete(payrollImportRows).where(and(eq(payrollImportRows.importId, item.id), eq(payrollImportRows.rowId, c.req.param('rowId')))).returning({ id: payrollImportRows.id });
-  if (!deleted.length) return c.json(jsonError('payroll_row_not_found', 404), 404);
-  const updatedRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
-  const parsedRows = updatedRows.map((row) => PayrollImportRowSchema.parse(row.payload));
+  const [existing] = await db.select().from(payrollImportRows).where(and(eq(payrollImportRows.importId, item.id), eq(payrollImportRows.rowId, c.req.param('rowId')))).limit(1);
+  if (!existing) return c.json(jsonError('payroll_row_not_found', 404), 404);
+  const currentRows = await db.select().from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  const remainingRows = currentRows.filter((row) => row.id !== existing.id);
+  const parsedRows = remainingRows.map((row) => PayrollImportRowSchema.parse(row.payload));
   const summary = summarizePayrollRows(parsedRows);
   const status = summary.blockingIssues.length ? 'blocked' : 'ready';
-  const [updated] = await db.update(payrollImports).set({ status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(eq(payrollImports.id, item.id)).returning();
-  return c.json({ import: updated ? importPayload(updated, updatedRows) : null });
+  const batch = await db.batch([
+    db.delete(payrollImportRows).where(eq(payrollImportRows.id, existing.id)),
+    db.update(payrollImports).set({ version: item.version + 1, status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(and(eq(payrollImports.id, item.id), eq(payrollImports.version, item.version))).returning(),
+    db.insert(payrollAuditEvents).values({ clerkUserId: c.get('auth').userId, importId: item.id, action: 'payroll_row_deleted', beforeState: existing.payload, afterState: null, metadata: { source: 'payroll_screen', rowId: existing.rowId } }),
+  ]);
+  const [updated] = batch[1];
+  return c.json({ import: updated ? importPayload(updated, remainingRows) : null });
+});
+
+payroll.post('/proposals/:id/apply', async (c) => {
+  try {
+    return c.json(await applyPayrollChanges(c.get('env').DATABASE_URL, c.get('auth').userId, c.req.param('id')));
+  } catch (error) {
+    if (error instanceof PayrollEditError) return c.json(jsonError(error.code, error.status), error.status);
+    throw error;
+  }
+});
+
+payroll.post('/proposals/:id/cancel', async (c) => {
+  try {
+    return c.json(await cancelPayrollProposal(c.get('env').DATABASE_URL, c.get('auth').userId, c.req.param('id')));
+  } catch (error) {
+    if (error instanceof PayrollEditError) return c.json(jsonError(error.code, error.status), error.status);
+    throw error;
+  }
 });

@@ -57,6 +57,7 @@ import {
 import { decryptSecret } from '../integrations/secret-box';
 import { inspectPayrollAttachment } from './payroll';
 import { preparePayrollImport } from '../payroll/prepare-import';
+import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
 const TOTAL_TIMEOUT_MS = 120_000;
@@ -636,6 +637,8 @@ chat.post('/', async (c) => {
               importId,
               period,
             }),
+          listImports: (input) => listPayrollImportsForChat(env.DATABASE_URL, userId, input),
+          proposeChanges: (input) => proposePayrollChanges(env.DATABASE_URL, userId, input),
         },
       ),
       stopWhen: stepCountIs(5),
