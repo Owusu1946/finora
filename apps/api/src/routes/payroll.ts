@@ -154,3 +154,17 @@ payroll.patch('/imports/:id/rows/:rowId', async (c) => {
   const [updated] = await db.update(payrollImports).set({ status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(eq(payrollImports.id, item.id)).returning();
   return c.json({ import: updated ? importPayload(updated, updatedRows) : null });
 });
+
+payroll.delete('/imports/:id/rows/:rowId', async (c) => {
+  const db = createDb(c.get('env').DATABASE_URL);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
+  if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
+  const deleted = await db.delete(payrollImportRows).where(and(eq(payrollImportRows.importId, item.id), eq(payrollImportRows.rowId, c.req.param('rowId')))).returning({ id: payrollImportRows.id });
+  if (!deleted.length) return c.json(jsonError('payroll_row_not_found', 404), 404);
+  const updatedRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  const parsedRows = updatedRows.map((row) => PayrollImportRowSchema.parse(row.payload));
+  const summary = summarizePayrollRows(parsedRows);
+  const status = summary.blockingIssues.length ? 'blocked' : 'ready';
+  const [updated] = await db.update(payrollImports).set({ status, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() }).where(eq(payrollImports.id, item.id)).returning();
+  return c.json({ import: updated ? importPayload(updated, updatedRows) : null });
+});

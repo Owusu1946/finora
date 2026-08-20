@@ -2,17 +2,24 @@ import { useAui } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
+import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
-import { listPayrollImports, type PayrollImport, updatePayrollRow } from '@/lib/payroll-api';
+import { deletePayrollRow, listPayrollImports, type PayrollImport, updatePayrollRow } from '@/lib/payroll-api';
+
+type Row = PayrollImport['rows'][number];
+type Colors = ReturnType<typeof useTheme>['colors'];
 
 export default function PayrollScreen() {
   const { colors } = useTheme();
@@ -21,79 +28,21 @@ export default function PayrollScreen() {
   const aui = useAui();
   const [imports, setImports] = useState<PayrollImport[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [savingRow, setSavingRow] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    try {
-      setError(null);
-      setImports(await listPayrollImports(getToken));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not load payroll imports.');
-      setImports([]);
-    }
-  }, [getToken]);
-
+  const [busy, setBusy] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{ importId: string; row: Row } | null>(null);
+  const refresh = useCallback(async () => { try { setError(null); setImports(await listPayrollImports(getToken)); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not load payroll imports.'); setImports([]); } }, [getToken]);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
-
-  if (!isBusinessAccount()) {
-    return <View style={[styles.root, { backgroundColor: colors.background }]}><Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Payroll is available on Business accounts.</Text></View>;
-  }
-
+  if (!isBusinessAccount()) return <View style={[styles.root, { backgroundColor: colors.background }]}><Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Payroll is available on Business accounts.</Text></View>;
   if (!imports) return <View style={[styles.root, { backgroundColor: colors.background }]}><LoadingIcon style={{ marginTop: 40 }} color={colors.mutedForeground} /></View>;
-
-  return (
-    <LegendList
-      data={imports}
-      keyExtractor={(item) => item.id}
-      recycleItems
-      showsVerticalScrollIndicator={false}
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Imported payroll drafts and reviewed runs. Edit rows here before preparing an approval.</Text>
-          {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
-          <Pressable onPress={() => { haptics.selection(); router.push('/'); aui.composer.setText('Create a payroll from an attachment'); }} style={[styles.btn, { backgroundColor: colors.foreground }]}><Text style={[styles.btnLabel, { color: colors.background }]}>Create payroll in chat</Text></Pressable>
-          <Text style={[styles.section, { color: colors.mutedForeground }]}>Payroll drafts</Text>
-        </View>
-      }
-      ListEmptyComponent={<View style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}><Text style={{ color: colors.mutedForeground }}>No payroll imports yet. Attach a CSV, spreadsheet, PDF, document, or image in chat to create one.</Text></View>}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      renderItem={({ item }) => <PayrollImportCard item={item} colors={colors} savingRow={savingRow} onSave={async (rowId, patch) => { setSavingRow(`${item.id}:${rowId}`); try { const updated = await updatePayrollRow(item.id, rowId, patch, getToken); setImports((current) => current?.map((candidate) => candidate.id === updated.id ? updated : candidate) ?? current); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save payroll row.'); } finally { setSavingRow(null); } }} />}
-    />
-  );
+  const save = async (patch: Record<string, unknown>) => { if (!selected) return; const key = `${selected.importId}:${selected.row.rowId}`; setBusy(key); try { const updated = await updatePayrollRow(selected.importId, selected.row.rowId, patch, getToken); setImports((current) => current?.map((item) => item.id === updated.id ? updated : item) ?? current); const row = updated.rows.find((candidate) => candidate.rowId === selected.row.rowId); if (row) setSelected({ importId: selected.importId, row }); haptics.success(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save payroll employee.'); } finally { setBusy(null); } };
+  const remove = async (importId: string, rowId: string) => { const key = `${importId}:${rowId}`; setBusy(key); try { const updated = await deletePayrollRow(importId, rowId, getToken); setImports((current) => current?.map((item) => item.id === updated.id ? updated : item) ?? current); if (selected?.row.rowId === rowId) setSelected(null); haptics.success(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not delete payroll employee.'); } finally { setBusy(null); } };
+  return <><LegendList data={imports} keyExtractor={(item) => item.id} recycleItems showsVerticalScrollIndicator={false} style={[styles.root, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} ListHeaderComponent={<View style={styles.header}><Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Tap an employee to edit. Swipe left or use the delete icon to remove them.</Text>{error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}<Pressable onPress={() => { haptics.selection(); router.push('/'); aui.composer.setText('Create a payroll from an attachment'); }} style={[styles.btn, { backgroundColor: colors.foreground }]}><Text style={[styles.btnLabel, { color: colors.background }]}>Create payroll in chat</Text></Pressable></View>} ListEmptyComponent={<View style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}><Text style={{ color: colors.mutedForeground }}>No payroll imports yet. Attach a payroll file in chat to create one.</Text></View>} ItemSeparatorComponent={() => <View style={styles.separator} />} renderItem={({ item }) => <ImportCard item={item} colors={colors} busy={busy} onOpen={(row) => setSelected({ importId: item.id, row })} onDelete={(rowId) => void remove(item.id, rowId)} />}/><Editor selected={selected} colors={colors} busy={selected ? busy === `${selected.importId}:${selected.row.rowId}` : false} onClose={() => setSelected(null)} onSave={save} /></>;
 }
 
-function PayrollImportCard({ item, colors, savingRow, onSave }: { item: PayrollImport; colors: ReturnType<typeof useTheme>['colors']; savingRow: string | null; onSave: (rowId: string, patch: Record<string, unknown>) => Promise<void> }) {
-  return <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-    <View style={styles.cardHeader}><View style={styles.rowText}><Text style={[styles.cardTitle, { color: colors.foreground }]}>{item.sourceName}</Text><Text style={[styles.meta, { color: colors.mutedForeground }]}>{item.rows.length} employees · {item.status} · {item.period ?? 'Period not set'}</Text></View><Text style={[styles.total, { color: colors.foreground }]}>{formatPaymentAmount(item.total, item.currency)}</Text></View>
-    {item.rows.map((row) => <EditablePayrollRow key={row.rowId} row={row} colors={colors} saving={savingRow === `${item.id}:${row.rowId}`} onSave={(patch) => onSave(row.rowId, patch)} />)}
-    {item.blockingIssues.length ? <Text style={[styles.error, { color: colors.destructive }]}>{item.blockingIssues.length} issue{item.blockingIssues.length === 1 ? '' : 's'} must be fixed before preparation.</Text> : <Text style={[styles.meta, { color: colors.mutedForeground }]}>Validated. Preparation still requires human approval.</Text>}
-  </View>;
-}
+function ImportCard({ item, colors, busy, onOpen, onDelete }: { item: PayrollImport; colors: Colors; busy: string | null; onOpen: (row: Row) => void; onDelete: (rowId: string) => void }) { return <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}><View style={styles.cardHeader}><View style={styles.rowText}><Text style={[styles.cardTitle, { color: colors.foreground }]}>{item.sourceName}</Text><Text style={[styles.meta, { color: colors.mutedForeground }]}>{item.rows.length} employees Â· {item.status} Â· {item.period ?? 'Period not set'}</Text></View><Text style={[styles.total, { color: colors.foreground }]}>{formatPaymentAmount(item.total, item.currency)}</Text></View>{item.rows.map((row) => <EmployeeRow key={row.rowId} row={row} colors={colors} busy={busy === `${item.id}:${row.rowId}`} onOpen={() => onOpen(row)} onDelete={() => onDelete(row.rowId)} />)}{item.blockingIssues.length ? <Text style={[styles.error, { color: colors.destructive }]}>{item.blockingIssues.length} issue{item.blockingIssues.length === 1 ? '' : 's'} must be fixed before preparation.</Text> : null}</View>; }
 
-function EditablePayrollRow({ row, colors, saving, onSave }: { row: PayrollImport['rows'][number]; colors: ReturnType<typeof useTheme>['colors']; saving: boolean; onSave: (patch: Record<string, unknown>) => Promise<void> }) {
-  const [name, setName] = useState(row.employeeName ?? '');
-  const [employeeId, setEmployeeId] = useState(row.employeeId ?? '');
-  const [role, setRole] = useState(row.role ?? '');
-  const [amount, setAmount] = useState(row.amount == null ? '' : String(row.amount));
-  const [currency, setCurrency] = useState(row.currency ?? '');
-  const [destinationType, setDestinationType] = useState(row.destinationType ?? '');
-  const [destination, setDestination] = useState(row.destination ?? '');
-  const [rail, setRail] = useState(row.rail ?? '');
-  const [period, setPeriod] = useState(row.period ?? '');
-  const [payDate, setPayDate] = useState(row.payDate ?? '');
-  const [reference, setReference] = useState(row.reference ?? '');
-  const dirty = JSON.stringify({ employeeName: name, employeeId, role, amount, currency, destinationType, destination, rail, period, payDate, reference }) !== JSON.stringify({ employeeName: row.employeeName ?? '', employeeId: row.employeeId ?? '', role: row.role ?? '', amount: String(row.amount ?? ''), currency: row.currency ?? '', destinationType: row.destinationType ?? '', destination: row.destination ?? '', rail: row.rail ?? '', period: row.period ?? '', payDate: row.payDate ?? '', reference: row.reference ?? '' });
-  return <View style={[styles.employeeRow, { borderTopColor: colors.border }]}>
-    <TextInput value={name} onChangeText={setName} placeholder='Employee name' placeholderTextColor={colors.mutedForeground} style={[styles.input, { color: colors.foreground, borderColor: colors.border }]} />
-    <View style={styles.inputLine}><TextInput value={employeeId} onChangeText={setEmployeeId} placeholder='Employee ID' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /><TextInput value={role} onChangeText={setRole} placeholder='Role' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /></View>
-    <View style={styles.inputLine}><TextInput value={amount} onChangeText={setAmount} keyboardType='decimal-pad' placeholder='Amount' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /><TextInput value={currency} onChangeText={setCurrency} placeholder='Currency' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /></View>
-    <View style={styles.inputLine}><TextInput value={destinationType} onChangeText={setDestinationType} placeholder='Destination type' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /><TextInput value={rail} onChangeText={setRail} placeholder='Network / bank' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /></View>
-    <View style={styles.inputLine}><TextInput value={destination} onChangeText={setDestination} placeholder='Destination' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /><TextInput value={period} onChangeText={setPeriod} placeholder='Period' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /></View>
-    <View style={styles.inputLine}><TextInput value={payDate} onChangeText={setPayDate} placeholder='Pay date YYYY-MM-DD' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} /><TextInput value={reference} onChangeText={setReference} placeholder='Reference' placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.flex, { color: colors.foreground, borderColor: colors.border }]} />{dirty ? <Pressable disabled={saving} onPress={() => void onSave({ employeeName: name, employeeId, role, amount: Number(amount), currency, destinationType, destination, rail, period, payDate: payDate || null, reference })} style={[styles.save, { backgroundColor: colors.foreground, opacity: saving ? 0.5 : 1 }]}><Text style={{ color: colors.background }}>{saving ? 'Saving' : 'Save'}</Text></Pressable> : null}</View>
-  </View>;
-}
+function EmployeeRow({ row, colors, busy, onOpen, onDelete }: { row: Row; colors: Colors; busy: boolean; onOpen: () => void; onDelete: () => void }) { const x = useSharedValue(0); const remove = () => { x.value = withTiming(-420, { duration: 180 }, (done) => { if (done) runOnJS(onDelete)(); }); }; const pan = Gesture.Pan().activeOffsetX([-12, 12]).failOffsetY([-12, 12]).onUpdate((e) => { x.value = Math.min(0, e.translationX); }).onEnd((e) => { if (e.translationX < -110 || e.velocityX < -700) runOnJS(remove)(); else x.value = withSpring(0); }); const animated = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] })); return <View style={styles.swipeFrame}><View style={[styles.deleteReveal, { backgroundColor: colors.destructive }]}><Icon name='remove' size={20} color='#fff' /></View><GestureDetector gesture={pan}><Animated.View style={[styles.employeeRow, { borderTopColor: colors.border, backgroundColor: colors.composer }, animated]}><Pressable disabled={busy} onPress={onOpen} style={styles.rowPress}><View style={styles.avatar}><Text style={[styles.avatarText, { color: colors.foreground }]}>{(row.employeeName ?? '?').slice(0, 1).toUpperCase()}</Text></View><View style={styles.rowText}><Text style={[styles.name, { color: colors.foreground }]}>{row.employeeName ?? 'Unnamed employee'}</Text><Text style={[styles.meta, { color: colors.mutedForeground }]}>{row.role || row.destinationType || 'Payroll employee'} Â· {row.currency ?? ''} {row.amount?.toLocaleString() ?? 'â€”'}</Text></View></Pressable><Pressable accessibilityRole='button' accessibilityLabel={`Delete ${row.employeeName ?? 'employee'}`} disabled={busy} onPress={onDelete} style={styles.deleteButton}><Icon name='remove' size={18} color={colors.destructive} /></Pressable></Animated.View></GestureDetector></View>; }
 
-const styles = StyleSheet.create({ root: { flex: 1 }, content: { padding: 20, paddingBottom: 40 }, header: { gap: 10, paddingBottom: 10 }, title: { fontSize: 25, fontWeight: '600' }, subtitle: { fontSize: 15, lineHeight: 20 }, section: { marginTop: 8, fontSize: 13, fontWeight: '600' }, separator: { height: 12 }, empty: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card }, card: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, gap: 12 }, cardHeader: { flexDirection: 'row', gap: 12, alignItems: 'center' }, cardTitle: { fontSize: 16, fontWeight: '700' }, rowText: { flex: 1, minWidth: 0 }, total: { fontSize: 16, fontWeight: '700' }, meta: { fontSize: 13 }, employeeRow: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, gap: 8 }, inputLine: { flexDirection: 'row', gap: 8 }, input: { minHeight: 40, borderWidth: StyleSheet.hairlineWidth, borderRadius: 8, paddingHorizontal: 10, fontSize: 14 }, flex: { flex: 1 }, save: { minHeight: 40, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }, btn: { minHeight: 44, borderRadius: Radius.composer, alignItems: 'center', justifyContent: 'center', marginTop: 4 }, btnLabel: { fontSize: 15, fontWeight: '600' }, error: { fontSize: 13, lineHeight: 18 } });
+function Editor({ selected, colors, busy, onClose, onSave }: { selected: { importId: string; row: Row } | null; colors: Colors; busy: boolean; onClose: () => void; onSave: (patch: Record<string, unknown>) => Promise<void> }) { const row = selected?.row; const [values, setValues] = useState<Record<string, string>>({}); useEffect(() => { if (row) setValues({ employeeName: row.employeeName ?? '', employeeId: row.employeeId ?? '', role: row.role ?? '', amount: row.amount == null ? '' : String(row.amount), currency: row.currency ?? '', destinationType: row.destinationType ?? '', destination: row.destination ?? '', rail: row.rail ?? '', period: row.period ?? '', payDate: row.payDate ?? '', reference: row.reference ?? '' }); }, [row]); const fields: Array<[string, string]> = [['employeeName','Name'],['employeeId','Employee ID'],['role','Position'],['amount','Amount'],['currency','Currency'],['destinationType','Destination type'],['destination','Destination'],['rail','Network / bank'],['period','Pay period'],['payDate','Pay date (YYYY-MM-DD)'],['reference','Reference']]; return <SheetModal visible={Boolean(row)} onClose={onClose} keyboardAvoiding style={styles.sheet}><View style={styles.sheetHeader}><View><Text style={[styles.sheetTitle, { color: colors.foreground }]}>Employee details</Text><Text style={[styles.meta, { color: colors.mutedForeground }]}>Edit imported payroll information</Text></View><Pressable onPress={onClose}><Icon name='close-circle' size={22} color={colors.mutedForeground} /></Pressable></View>{row ? <View style={styles.form}>{fields.map(([key, label]) => <TextInput key={key} value={values[key] ?? ''} onChangeText={(value) => setValues((current) => ({ ...current, [key]: value }))} placeholder={label} placeholderTextColor={colors.mutedForeground} keyboardType={key === 'amount' ? 'decimal-pad' : 'default'} style={[styles.input, { color: colors.foreground, borderColor: colors.border }]} />)}<Pressable disabled={busy} onPress={() => void onSave({ ...values, amount: Number(values.amount), payDate: values.payDate || null })} style={[styles.saveButton, { backgroundColor: colors.foreground, opacity: busy ? 0.6 : 1 }]}><Text style={{ color: colors.background }}>{busy ? 'Savingâ€¦' : 'Save changes'}</Text></Pressable></View> : null}</SheetModal>; }
+
+const styles = StyleSheet.create({ root: { flex: 1 }, content: { padding: 20, paddingBottom: 40 }, header: { gap: 10, paddingBottom: 10 }, title: { fontSize: 25, fontWeight: '600' }, subtitle: { fontSize: 15, lineHeight: 20 }, separator: { height: 12 }, empty: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card }, card: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, gap: 4 }, cardHeader: { flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 4 }, cardTitle: { fontSize: 16, fontWeight: '700' }, rowText: { flex: 1, minWidth: 0 }, total: { fontSize: 16, fontWeight: '700' }, meta: { fontSize: 13 }, name: { fontSize: 15, fontWeight: '600' }, error: { fontSize: 13, lineHeight: 18, marginTop: 10 }, employeeRow: { minHeight: 64, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }, rowPress: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }, avatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: '#E7E2D9' }, avatarText: { fontSize: 14, fontWeight: '700' }, swipeFrame: { overflow: 'hidden' }, deleteReveal: { ...StyleSheet.absoluteFillObject, alignItems: 'flex-end', justifyContent: 'center', paddingRight: 20 }, deleteButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' }, btn: { minHeight: 44, borderRadius: Radius.composer, alignItems: 'center', justifyContent: 'center', marginTop: 4 }, btnLabel: { fontSize: 15, fontWeight: '600' }, sheet: { paddingHorizontal: 20, paddingBottom: 28 }, sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14 }, sheetTitle: { fontSize: 20, fontWeight: '700' }, form: { gap: 10 }, input: { minHeight: 44, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 12, fontSize: 15 }, saveButton: { minHeight: 46, borderRadius: Radius.composer, alignItems: 'center', justifyContent: 'center', marginTop: 4 } });

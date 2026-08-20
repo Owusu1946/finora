@@ -57,3 +57,9 @@ export async function updatePayrollRow(
   if (!payload.import) throw new Error('Payroll update returned no import.');
   return payload.import;
 }
+
+export async function deletePayrollRow(importId: string, rowId: string, getToken: GetToken) {
+  const payload = await payrollRequest(`/imports/${encodeURIComponent(importId)}/rows/${encodeURIComponent(rowId)}`, getToken, { method: 'DELETE' });
+  if (!payload.import) throw new Error('Payroll delete returned no import.');
+  return payload.import;
+}
