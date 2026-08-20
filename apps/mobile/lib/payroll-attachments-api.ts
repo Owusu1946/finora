@@ -1,4 +1,5 @@
 import { fetch } from 'expo/fetch';
+import { File as ExpoFile } from 'expo-file-system';
 
 import { getApiUrl } from './api-url';
 
@@ -25,10 +26,10 @@ export async function uploadPayrollAttachment(
   if ('file' in source) {
     form.append('file', source.file);
   } else {
-    form.append(
-      'file',
-      { uri: source.uri, name: source.name, type: source.contentType } as unknown as Blob,
-    );
+    const file = new ExpoFile(source.uri);
+    if (!file.exists) throw new Error('The selected attachment is no longer available.');
+    if (file.size > MAX_BYTES) throw new Error('Attachments must be 10 MB or smaller.');
+    form.append('file', file);
   }
   const response = await fetch(`${apiUrl}/v1/payroll/attachments`, {
     method: 'POST',
