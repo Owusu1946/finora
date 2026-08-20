@@ -54,6 +54,46 @@ export const PayrollInspectionResponseSchema = z.object({
 export type PayrollCitation = z.infer<typeof PayrollCitationSchema>;
 export type PayrollValidationIssue = z.infer<typeof PayrollValidationIssueSchema>;
 export type PayrollImportRow = z.infer<typeof PayrollImportRowSchema>;
+
+export const PayrollEditPatchSchema = z.object({
+  employeeName: boundedText(200).nullable().optional(),
+  employeeId: boundedText(120).nullable().optional(),
+  role: boundedText(160).nullable().optional(),
+  amount: z.number().finite().nonnegative().nullable().optional(),
+  currency: boundedText(12).nullable().optional(),
+  destinationType: boundedText(40).nullable().optional(),
+  destination: boundedText(160).nullable().optional(),
+  rail: boundedText(40).nullable().optional(),
+  period: boundedText(80).nullable().optional(),
+  payDate: z.string().date().nullable().optional(),
+  reference: boundedText(140).nullable().optional(),
+}).strict();
+
+export const PayrollEditChangeSchema = z.object({
+  rowId: boundedText(80),
+  operation: z.enum(['update', 'delete']),
+  patch: PayrollEditPatchSchema.optional(),
+}).strict().superRefine((change, ctx) => {
+  if (change.operation === 'update' && (!change.patch || Object.keys(change.patch).length === 0)) {
+    ctx.addIssue({ code: 'custom', message: 'An update requires at least one field.' });
+  }
+  if (change.operation === 'delete' && change.patch) {
+    ctx.addIssue({ code: 'custom', message: 'A delete cannot include a patch.' });
+  }
+});
+
+export const ProposePayrollChangesInputSchema = z.object({
+  importId: z.string().uuid(),
+  changes: z.array(PayrollEditChangeSchema).min(1).max(100),
+}).strict();
+
+export const ListPayrollImportsInputSchema = z.object({
+  query: boundedText(200).optional(),
+  importId: z.string().uuid().optional(),
+  limit: z.number().int().min(1).max(50).default(20),
+}).strict();
+
+export const ApplyPayrollChangesInputSchema = z.object({ proposalId: z.string().uuid() }).strict();
 export type PayrollInspectionResponse = z.infer<typeof PayrollInspectionResponseSchema>;
 
 export const PayrollAttachmentReferenceSchema = z.object({

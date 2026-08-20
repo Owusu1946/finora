@@ -14,6 +14,7 @@ describe('FINORA_SYSTEM_PROMPT', () => {
     'Never request, accept, repeat, store, or expose a PIN',
     'Use a tool proactively whenever the user\'s answer depends on current account data',
     'Do not reveal chain-of-thought',
+    'Only the authenticated approval control in the proposal card can apply changes',
   ])('retains the production safety invariant: %s', (invariant) => {
     expect(FINORA_SYSTEM_PROMPT).toContain(invariant);
   });
@@ -25,5 +26,8 @@ describe('chat tools', () => {
     expect(createChatAgentTools()).toHaveProperty('search_drive_files');
     expect(createChatAgentTools()).toHaveProperty('get_drive_file');
     expect(createChatAgentTools()).toHaveProperty('inspect_payroll_attachment');
+    expect(createChatAgentTools()).toHaveProperty('list_payroll_imports');
+    expect(createChatAgentTools()).toHaveProperty('propose_payroll_changes');
+    expect(createChatAgentTools()).not.toHaveProperty('apply_payroll_changes');
   });
 });

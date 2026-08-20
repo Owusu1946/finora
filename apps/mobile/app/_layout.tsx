@@ -56,6 +56,7 @@ import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeeP
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
 import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
+import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
@@ -237,6 +238,7 @@ function FinoraRuntimeContent({
       <FinancialReportToolUI />
       <InspectPayrollAttachmentToolUI />
       <PreparePayrollToolUI />
+      <ProposePayrollChangesToolUI />
       <PrepareSupplierPaymentToolUI />
       <PrepareEmployeePaymentToolUI />
       <CreateEmployeeToolUI />
