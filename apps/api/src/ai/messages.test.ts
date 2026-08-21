@@ -29,6 +29,13 @@ describe('reconcileChatMessages', () => {
     ).toEqual([firstUser, firstAssistant, secondUser]);
   });
 
+  it('keeps the complete local clarification context when the server snapshot is behind', () => {
+    const clarification = textMessage('assistant-clarification', 'assistant', 'Which pay period?');
+    expect(
+      reconcileChatMessages([firstUser], [firstUser, clarification, secondUser], 'submit-message'),
+    ).toEqual([firstUser, clarification, secondUser]);
+  });
+
   it('ignores a divergent client base and appends to authoritative stored history', () => {
     const divergentUser = textMessage('different-user', 'user', 'Different history');
     expect(

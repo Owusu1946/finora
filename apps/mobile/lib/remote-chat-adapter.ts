@@ -23,6 +23,7 @@ import { canonicalizeRemoteChatHistory } from './remote-chat-history';
 
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
 const BOOTSTRAP_TIMEOUT_MS = 5_000;
+const HISTORY_RECONCILIATION_DELAYS_MS = [75, 150, 300, 600] as const;
 const ATTACHMENT_REFERENCE_PATTERN =
   /^\[Finora attachment: id=([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12});/i;
 const INTERNAL_ATTACHMENT_PATTERN =
@@ -174,6 +175,27 @@ function toThreadMessage(message: UIMessage): ThreadMessageLike {
           ),
     status: message.role === 'assistant' ? { type: 'complete', reason: 'stop' } : undefined,
   };
+}
+
+function messagesMatch(left: UIMessage, right: UIMessage) {
+  if (
+    left.id !== right.id ||
+    left.role !== right.role ||
+    left.parts.length !== right.parts.length
+  ) {
+    return false;
+  }
+  return left.parts.every(
+    (leftPart, index) => JSON.stringify(leftPart) === JSON.stringify(right.parts[index]),
+  );
+}
+
+function latestCompletedAssistantBeforeUser(messages: UIMessage[]) {
+  const latestUserIndex = messages.findLastIndex((message) => message.role === 'user');
+  if (latestUserIndex <= 0) return null;
+  return (
+    messages.slice(0, latestUserIndex).findLast((message) => message.role === 'assistant') ?? null
+  );
 }
 
 function activeStreamStorageKey(chatId: string) {
@@ -369,10 +391,27 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
           }
           state = await api.getState(abortSignal);
         }
-        const storedMessages = state ? await validateStateMessages(state.messages) : [];
+        const expectedAssistant = latestCompletedAssistantBeforeUser(uiMessages);
+        let storedMessages = state ? await validateStateMessages(state.messages) : [];
+        if (
+          expectedAssistant &&
+          !storedMessages.some((message) => message.id === expectedAssistant.id)
+        ) {
+          for (const delayMs of HISTORY_RECONCILIATION_DELAYS_MS) {
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            state = await api.getState(abortSignal);
+            storedMessages = state ? await validateStateMessages(state.messages) : [];
+            if (storedMessages.some((message) => message.id === expectedAssistant.id)) break;
+          }
+        }
         const requestMessages = canonicalizeRemoteChatHistory(storedMessages, uiMessages);
+        const storedIsPrefixOfRequest = storedMessages.every((message, index) =>
+          messagesMatch(message, requestMessages[index]!),
+        );
         const trigger =
-          requestMessages.length === storedMessages.length + 1
+          storedIsPrefixOfRequest &&
+          requestMessages.length > storedMessages.length &&
+          requestMessages.at(-1)?.role === 'user'
             ? ('submit-message' as const)
             : ('regenerate-message' as const);
         const stream = await transport.sendMessages({

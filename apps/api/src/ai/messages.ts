@@ -117,6 +117,18 @@ function isStoredPrefix(stored: UIMessage[], incoming: UIMessage[]) {
   return stored.every((message, index) => messagesMatch(message, incoming[index]!));
 }
 
+function safeUnpersistedClarification(stored: UIMessage[], incoming: UIMessage[]) {
+  if (incoming.length !== stored.length + 2) return null;
+  const clarification = incoming[stored.length];
+  const answer = incoming[stored.length + 1];
+  if (clarification?.role !== 'assistant' || answer?.role !== 'user') return null;
+  const safeParts = clarification.parts.filter(
+    (part) => part.type === 'text' || part.type === 'step-start',
+  );
+  if (!safeParts.some((part) => part.type === 'text' && part.text.trim().length > 0)) return null;
+  return { ...clarification, parts: safeParts } satisfies UIMessage;
+}
+
 export function reconcileChatMessages(
   stored: UIMessage[],
   incoming: UIMessage[],
@@ -127,8 +139,16 @@ export function reconcileChatMessages(
     const pendingMessage = incoming.at(-1);
     if (!pendingMessage || pendingMessage.role !== 'user') return null;
     if (stored.some((message) => message.id === pendingMessage.id)) return null;
-    // Stored history is authoritative. Client runtimes can assign different IDs
-    // or omit transport-only parts when reconstructing assistant messages.
+    if (stored.length === 0) return [pendingMessage];
+    const clarification = isStoredPrefix(stored, incoming)
+      ? safeUnpersistedClarification(stored, incoming)
+      : null;
+    if (clarification) {
+      return [...stored, clarification, pendingMessage];
+    }
+    // Stored history is authoritative when the client snapshot is behind.
+    // If the client did not include the missing assistant continuation, append
+    // only the fresh user turn to the persisted server history.
     return [...stored, pendingMessage];
   }
 
