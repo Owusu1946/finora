@@ -1331,6 +1331,8 @@ export const TOOL_REGISTRY = [
     'execute',
     'Learn supplier',
   ),
+  t('remember_note', 'rememberNote', 'memory', ['platform', 'mobile'], 'execute', 'Store note'),
+  t('update_memory', 'updateMemory', 'memory', ['platform', 'mobile'], 'execute', 'Update memory'),
   t('forget_memory', 'forgetMemory', 'memory', ['platform', 'mobile'], 'execute', 'Delete memory'),
   t('list_memories', 'listMemories', 'memory', ['platform', 'mobile'], 'read', 'List memories'),
 

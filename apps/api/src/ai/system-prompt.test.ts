@@ -16,6 +16,7 @@ describe('FINORA_SYSTEM_PROMPT', () => {
     'Do not reveal chain-of-thought',
     'Only the authenticated approval control in the proposal card can apply changes',
     'For one uniquely matched employee, call prepare_employee_payment',
+    'Only create, update, or delete a cross-chat memory when the user explicitly asks',
   ])('retains the production safety invariant: %s', (invariant) => {
     expect(FINORA_SYSTEM_PROMPT).toContain(invariant);
   });
@@ -30,6 +31,9 @@ describe('chat tools', () => {
     expect(createChatAgentTools()).toHaveProperty('list_payroll_imports');
     expect(createChatAgentTools()).toHaveProperty('propose_payroll_changes');
     expect(createChatAgentTools()).toHaveProperty('prepare_employee_payment');
+    expect(createChatAgentTools()).toHaveProperty('remember_preference');
+    expect(createChatAgentTools()).toHaveProperty('list_memories');
+    expect(createChatAgentTools()).toHaveProperty('forget_memory');
     expect(createChatAgentTools()).not.toHaveProperty('apply_payroll_changes');
   });
 

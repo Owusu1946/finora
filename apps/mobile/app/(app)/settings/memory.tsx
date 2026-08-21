@@ -1,4 +1,5 @@
 import { useFocusEffect } from 'expo-router';
+import { useAuth } from '@clerk/expo';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
@@ -16,12 +17,14 @@ import { haptics } from '@/lib/haptics';
 import {
   clearMemories,
   forgetMemory,
-  getMemoryStore,
-  memoryKindLabel,
-  setMemoryEnabled,
+  getMemories,
+  setMemoriesEnabled,
   type FinoraMemory,
-  type MemoryStore,
-} from '@/lib/memory-storage';
+} from '@/lib/memory-api';
+
+function memoryKindLabel(kind: FinoraMemory['kind']): string {
+  return kind === 'preference' ? 'Preference' : kind === 'contact' ? 'Contact' : kind === 'supplier' ? 'Supplier' : 'Note';
+}
 
 function relativeDay(iso: string): string {
   const d = new Date(iso);
@@ -36,14 +39,20 @@ function relativeDay(iso: string): string {
 
 export default function MemorySettingsScreen() {
   const { colors } = useTheme();
+  const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [store, setStore] = useState<MemoryStore>({ enabled: true, items: [] });
+  const [store, setStore] = useState<{ enabled: boolean; items: FinoraMemory[] }>({ enabled: true, items: [] });
 
   const refresh = useCallback(async () => {
-    const next = await getMemoryStore();
-    setStore(next);
-    setLoading(false);
-  }, []);
+    try {
+      const next = await getMemories(getToken);
+      setStore({ enabled: next.enabled, items: next.memories });
+    } catch {
+      Alert.alert('Could not load memory', 'Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [getToken]);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,9 +61,16 @@ export default function MemorySettingsScreen() {
   );
 
   const handleToggle = async (enabled: boolean) => {
-    const next = await setMemoryEnabled(enabled);
-    setStore(next);
-    haptics.selection();
+    const previous = store.enabled;
+    setStore((current) => ({ ...current, enabled }));
+    try {
+      const next = await setMemoriesEnabled(getToken, enabled);
+      setStore((current) => ({ ...current, enabled: next }));
+      haptics.selection();
+    } catch {
+      setStore((current) => ({ ...current, enabled: previous }));
+      Alert.alert('Could not update memory', 'Check your connection and try again.');
+    }
   };
 
   const handleForget = (item: FinoraMemory) => {
@@ -64,9 +80,13 @@ export default function MemorySettingsScreen() {
         text: 'Forget',
         style: 'destructive',
         onPress: async () => {
-          const next = await forgetMemory(item.id);
-          setStore(next);
-          haptics.success();
+          try {
+            await forgetMemory(getToken, item.id);
+            setStore((current) => ({ ...current, items: current.items.filter((memory) => memory.id !== item.id) }));
+            haptics.success();
+          } catch {
+            Alert.alert('Could not forget memory', 'Check your connection and try again.');
+          }
         },
       },
     ]);
@@ -83,9 +103,13 @@ export default function MemorySettingsScreen() {
           text: 'Clear all',
           style: 'destructive',
           onPress: async () => {
-            const next = await clearMemories();
-            setStore(next);
-            haptics.success();
+            try {
+              await clearMemories(getToken);
+              setStore((current) => ({ ...current, items: [] }));
+              haptics.success();
+            } catch {
+              Alert.alert('Could not clear memory', 'Check your connection and try again.');
+            }
           },
         },
       ],
@@ -157,7 +181,7 @@ export default function MemorySettingsScreen() {
                   style={[styles.memoryDetail, { color: colors.mutedForeground }]}
                   numberOfLines={2}
                 >
-                  {item.detail}
+                  {item.content}
                 </Text>
                 <Text style={[styles.memoryWhen, { color: colors.mutedForeground }]}>
                   Updated {relativeDay(item.updatedAt)}
