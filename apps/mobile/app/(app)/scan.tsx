@@ -252,10 +252,10 @@ export default function ScanScreen() {
     );
   } else {
     content = (
-      <View style={styles.scannerShell}>
+      <View style={[styles.scannerShell, { backgroundColor: colors.background }]}>
         <View style={styles.scannerTop}>
-          <Text style={[styles.scannerTitle, { color: '#fff' }]}>Scan to pay</Text>
-          <Text style={[styles.scannerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>
+          <Text style={[styles.scannerTitle, { color: colors.foreground }]}>Scan to pay</Text>
+          <Text style={[styles.scannerSubtitle, { color: colors.mutedForeground }]}>
             Point at a Finora QR code
           </Text>
         </View>
@@ -276,24 +276,24 @@ export default function ScanScreen() {
             <View style={[styles.reticleCorner, styles.br, { borderColor: colors.foreground }]} />
           </View>
         </View>
-        {error ? <Text style={[styles.error, { color: '#ffb4ab' }]}>{error}</Text> : null}
+        {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
         <View style={styles.scannerActions}>
           <Pressable
             accessibilityLabel='Choose QR from photo library'
             onPress={() => void scanFromLibrary()}
-            style={styles.libraryButton}
+            style={[styles.libraryButton, { backgroundColor: colors.muted }]}
           >
             <Icon
               name='image'
               size={27}
-              color='#fff'
+              color={colors.foreground}
             />
           </Pressable>
           <Pressable
             onPress={openPayloadEntry}
-            style={styles.myCodeButton}
+            style={[styles.myCodeButton, { backgroundColor: colors.foreground }]}
           >
-            <Text style={styles.myCodeText}>My code</Text>
+            <Text style={[styles.myCodeText, { color: colors.background }]}>Enter payload</Text>
           </Pressable>
         </View>
       </View>
@@ -629,7 +629,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 12,
-    backgroundColor: '#101010',
     gap: 18,
   },
   scannerTop: { gap: 4, alignItems: 'center' },
@@ -650,13 +649,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
   },
   myCodeButton: {
-    backgroundColor: '#fff',
     borderRadius: 999,
     paddingHorizontal: 30,
     paddingVertical: 14,
   },
-  myCodeText: { color: '#111', fontFamily: 'DMSans_400Regular', fontSize: 17, fontWeight: '700' },
+  myCodeText: { fontFamily: 'DMSans_400Regular', fontSize: 17, fontWeight: '700' },
 });
