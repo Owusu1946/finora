@@ -557,7 +557,18 @@ export const PreparePayrollInputSchema = z
     .object({
       period: z.string().optional(),
       importId: z.string().uuid(),
+      rowIds: z.array(z.string().min(1).max(80)).min(1).max(500).optional(),
     })
+  .strict();
+
+export const PrepareEmployeePaymentInputSchema = z
+  .object({
+    importId: z.string().uuid(),
+    rowId: z.string().min(1).max(80),
+    amount: z.number().positive().max(10_000_000).optional(),
+    currency: CurrencySchema.optional(),
+    reference: z.string().max(140).optional(),
+  })
   .strict();
 
 export const InspectPayrollAttachmentInputSchema = z

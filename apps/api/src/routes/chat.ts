@@ -56,7 +56,7 @@ import {
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
 import { inspectPayrollAttachment } from './payroll';
-import { preparePayrollImport } from '../payroll/prepare-import';
+import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
 import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
 
 const FIRST_CHUNK_TIMEOUT_MS = 30_000;
@@ -630,13 +630,15 @@ chat.post('/', async (c) => {
               userId,
               attachmentId,
             }),
-          prepareImport: ({ importId, period }) =>
+          prepareImport: ({ importId, period, rowIds }) =>
             preparePayrollImport({
               databaseUrl: env.DATABASE_URL,
               userId,
               importId,
               period,
+              rowIds,
             }),
+          prepareEmployee: (input) => prepareImportedEmployeePayment({ databaseUrl: env.DATABASE_URL, userId, ...input }),
           listImports: (input) => listPayrollImportsForChat(env.DATABASE_URL, userId, input),
           proposeChanges: (input) => proposePayrollChanges(env.DATABASE_URL, userId, input),
         },

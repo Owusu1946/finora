@@ -15,6 +15,7 @@ import {
   PrepareConversionInputSchema,
   PreparePaymentInputSchema,
   PreparePayrollInputSchema,
+  PrepareEmployeePaymentInputSchema,
   InspectPayrollAttachmentInputSchema,
   PrepareRecurringPaymentInputSchema,
   PrepareSupplierPaymentInputSchema,
@@ -52,6 +53,7 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'prepare_payment',
   'prepare_conversion',
   'prepare_payroll',
+  'prepare_employee_payment',
   'prepare_supplier_payment',
   'prepare_recurring',
   'create_financial_plan',
@@ -179,7 +181,8 @@ type DriveToolReader = {
 };
 type PayrollToolReader = {
   inspectAttachment: (attachmentId: string) => Promise<unknown>;
-  prepareImport: (input: { importId: string; period?: string }) => Promise<Record<string, unknown>>;
+  prepareImport: (input: { importId: string; period?: string; rowIds?: string[] }) => Promise<Record<string, unknown>>;
+  prepareEmployee: (input: { importId: string; rowId: string; amount?: number; currency?: string; reference?: string }) => Promise<Record<string, unknown>>;
   listImports: (input: { query?: string; importId?: string; limit: number }) => Promise<unknown>;
   proposeChanges: (input: unknown) => Promise<unknown>;
 };
@@ -372,12 +375,26 @@ export function createChatAgentTools(
       },
     }),
     list_employees: tool({
-      description: 'List the employees currently available for Finora payroll operations.',
+      description: 'List employees from the user\'s validated imported payrolls. Use this proactively before paying named employees. Resolve exact importId and rowId values; never guess or use the legacy mock roster.',
       inputSchema: zodSchema(ListEmployeesInputSchema),
       execute: async () => {
-        const data = await callPlatform('/employees');
-        const employees = Array.isArray(data.employees) ? data.employees : [];
-        return { mode: data.mode, employees: employees.map(publicEmployee).filter(Boolean) };
+        const data = await payroll?.listImports({ limit: 50 }) as { imports?: Array<Record<string, unknown>> } | undefined;
+        const imports = Array.isArray(data?.imports) ? data.imports : [];
+        return {
+          employees: imports.flatMap((item) => {
+            const rows = Array.isArray(item.rows) ? item.rows : [];
+            return rows.map((value) => {
+              const row = asRecord(value);
+              if (!row) return null;
+              return {
+                importId: String(item.importId ?? ''), rowId: String(row.rowId ?? ''),
+                name: String(row.employeeName ?? 'Employee'), employeeId: row.employeeId == null ? undefined : String(row.employeeId),
+                role: String(row.role ?? ''), salary: Number(row.amount ?? 0), currency: String(row.currency ?? item.currency ?? 'USD'),
+                destination: publicDestination({ kind: row.destinationType, label: row.rail ?? row.destinationType, value: row.destination, rail: row.rail }),
+              };
+            }).filter(Boolean);
+          }),
+        };
       },
     }),
     list_suppliers: tool({
@@ -446,7 +463,7 @@ export function createChatAgentTools(
     }),
     prepare_payroll: tool({
       description:
-        'Prepare a previously inspected payroll import for review and human approval. Always pass the importId returned by inspect_payroll_attachment. Imported employee IDs are source identifiers and do not need to match a separate Finora roster. This never pays employees by itself.',
+        'Prepare a full or selected imported payroll for review and human approval. Pass rowIds only when the user named a specific set of employees. Use exact IDs returned by list_employees or list_payroll_imports. This never pays employees by itself.',
       inputSchema: zodSchema(PreparePayrollInputSchema),
       execute: async (input) => {
         if (!payroll) throw new Error('payroll_unavailable');
@@ -460,6 +477,15 @@ export function createChatAgentTools(
           total: Number('total' in payload ? payload.total : 0),
           currency: String('currency' in payload ? payload.currency : 'USD'),
         };
+      },
+    }),
+    prepare_employee_payment: tool({
+      description: 'Prepare one imported employee payment using the payout destination already stored on that exact payroll row. Use only after resolving a unique importId and rowId. An optional amount may override the stored salary for a bonus or partial payment. This is preparation-only and never moves money.',
+      inputSchema: zodSchema(PrepareEmployeePaymentInputSchema),
+      execute: async (input) => {
+        if (!payroll) throw new Error('payroll_unavailable');
+        const result = await payroll.prepareEmployee(input);
+        return { ...result, employee: publicEmployee(result.employee) };
       },
     }),
     prepare_supplier_payment: tool({
