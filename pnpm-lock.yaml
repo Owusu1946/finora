@@ -270,8 +270,8 @@ importers:
         specifier: ~17.0.11
         version: 17.0.11(expo@54.0.36)
       expo-linear-gradient:
-        specifier: ^57.0.1
-        version: 57.0.1(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)
+        specifier: ~15.0.8
+        version: 15.0.8(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)
       expo-linking:
         specifier: ~8.0.12
         version: 8.0.12(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)(supports-color@10.2.2)
@@ -6058,8 +6058,8 @@ packages:
       expo: '*'
       react: '*'
 
-  expo-linear-gradient@57.0.1:
-    resolution: {integrity: sha512-CpS8eMqoIWcHVGKV66zbDvzotCw9qYp3f8CuI9N+h1LaO0tMLUzBpkhAKePUsXlpN3yolYlHFSPkfVZ/uSh+iA==}
+  expo-linear-gradient@15.0.8:
+    resolution: {integrity: sha512-V2d8Wjn0VzhPHO+rrSBtcl+Fo+jUUccdlmQ6OoL9/XQB7Qk3d9lYrqKDJyccwDxmQT10JdST3Tmf2K52NLc3kw==}
     peerDependencies:
       expo: '*'
       react: '*'
@@ -15214,7 +15214,7 @@ snapshots:
       expo: 54.0.36(@babel/core@7.29.7(supports-color@10.2.2))(@expo/dom-webview@57.0.1)(@expo/metro-runtime@6.1.2)(bufferutil@4.1.0)(expo-router@6.0.24)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)(supports-color@10.2.2)(typescript@5.9.3)(utf-8-validate@6.0.6)
       react: 19.1.0
 
-  expo-linear-gradient@57.0.1(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0):
+  expo-linear-gradient@15.0.8(expo@54.0.36)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0):
     dependencies:
       expo: 54.0.36(@babel/core@7.29.7(supports-color@10.2.2))(@expo/dom-webview@57.0.1)(@expo/metro-runtime@6.1.2)(bufferutil@4.1.0)(expo-router@6.0.24)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)(supports-color@10.2.2)(typescript@5.9.3)(utf-8-validate@6.0.6)
       react: 19.1.0

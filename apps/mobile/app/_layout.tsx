@@ -375,13 +375,12 @@ function RootApp() {
     };
   }, [stableGetToken, userId]);
 
-  // Keep a stable root so the splash overlay can mount + lay out before native hide.
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: SPLASH_BACKGROUND }}>
-      {!bootReady || boot === null ? (
-        <SplashPlaceholder />
-      ) : (
-        <SettingsProvider>
+      <SettingsProvider>
+        {!bootReady || boot === null ? (
+          <SplashPlaceholder />
+        ) : (
           <AuthGateProvider tagConfigured={boot.tagConfigured}>
             <OnboardingGateProvider completed={boot.onboardingCompleted}>
               <PhoneGateProvider key={boot.userId ?? 'signed-out'}>
@@ -401,19 +400,19 @@ function RootApp() {
               </PhoneGateProvider>
             </OnboardingGateProvider>
           </AuthGateProvider>
-        </SettingsProvider>
-      )}
-      {showOverlay ? (
-        <SplashOverlay
-          progress={progress}
-          opacity={overlayOpacity}
-          reducedMotion={reducedMotion}
-          onLayout={onOverlayLayout}
-        />
-      ) : null}
-      <StatusBarBackdrop />
-      {/* Covers UI in App Switcher / Recents so balances aren't previewed. */}
-      <AppSwitcherPrivacy />
+        )}
+        {showOverlay ? (
+          <SplashOverlay
+            progress={progress}
+            opacity={overlayOpacity}
+            reducedMotion={reducedMotion}
+            onLayout={onOverlayLayout}
+          />
+        ) : null}
+        <StatusBarBackdrop />
+        {/* Covers UI in App Switcher / Recents so balances aren't previewed. */}
+        <AppSwitcherPrivacy />
+      </SettingsProvider>
     </GestureHandlerRootView>
   );
 }
