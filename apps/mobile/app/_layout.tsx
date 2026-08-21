@@ -221,15 +221,20 @@ function InstantThreadTitleSync({ config }: { config?: RemoteThreadConfig }) {
       const itemState = threadItem?.getState?.();
       if (itemState?.title && itemState.title !== 'New chat') return;
 
+      let remoteId = itemState?.remoteId;
+      if (!remoteId && threadItem?.initialize) {
+        const initResult = await threadItem.initialize();
+        remoteId = initResult?.remoteId;
+      }
+
+      if (remoteId && startedRef.current.has(remoteId)) return;
+      if (remoteId) startedRef.current.add(remoteId);
+
       if (threadItem?.generateTitle) {
         void threadItem.generateTitle();
       }
 
-      if (!config) return;
-
-      const remoteId = itemState?.remoteId ?? (await threadItem?.initialize?.())?.remoteId;
-      if (!remoteId || startedRef.current.has(remoteId)) return;
-      startedRef.current.add(remoteId);
+      if (!config || !remoteId) return;
 
       const generated = await requestRemoteThreadTitle(config, remoteId, text);
       if (generated) {
