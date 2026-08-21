@@ -32,6 +32,28 @@ pnpm db:push
 
 Do not generate or commit Drizzle migration artifacts for this repository.
 
+## Semantic chat memory
+
+Cross-chat memories use hybrid lexical and semantic retrieval. Semantic retrieval is optional:
+without embedding configuration, chat continues to use the existing lexical path.
+
+The schema stores 1,536-dimension `halfvec` embeddings. Before the first schema push on a database,
+enable pgvector using its direct/unpooled connection:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+Then review and apply the additive `ai_user_memories` column changes with the repository's normal
+`pnpm db:push` workflow. Configure `MEMORY_EMBEDDING_API_KEY` as an OpenAI API key in Wrangler
+secrets. A non-OpenRouter `OPENAI_API_KEY` is used as a fallback; OpenRouter chat keys are
+deliberately not reused. `MEMORY_EMBEDDING_MODEL` is optional and defaults to
+`text-embedding-3-small`.
+
+Memory writes remain synchronous and durable while embedding generation runs with `waitUntil`.
+Embedding, vector-query, and backfill failures fall back to lexical retrieval and never block chat.
+Backfill is tenant-scoped and bounded to five memories per request.
+
 ## Transactional welcome email
 
 Welcome email delivery is asynchronous:

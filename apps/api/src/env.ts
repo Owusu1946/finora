@@ -13,6 +13,8 @@ export function getApiEnv(bindings: Env) {
     OPENAI_API_KEY?: string;
     OPENROUTER_API_KEY?: string;
     OPENROUTER_MODEL?: string;
+    MEMORY_EMBEDDING_API_KEY?: string;
+    MEMORY_EMBEDDING_MODEL?: string;
     REDIS_URL?: string;
     RESEND_WEBHOOK_SECRET?: string;
     WELCOME_EMAIL_REDIRECT_TO?: string;
@@ -34,6 +36,8 @@ export function getApiEnv(bindings: Env) {
     OPENAI_API_KEY: optionalBindings.OPENAI_API_KEY,
     OPENROUTER_API_KEY: optionalBindings.OPENROUTER_API_KEY,
     OPENROUTER_MODEL: optionalBindings.OPENROUTER_MODEL,
+    MEMORY_EMBEDDING_API_KEY: optionalBindings.MEMORY_EMBEDDING_API_KEY,
+    MEMORY_EMBEDDING_MODEL: optionalBindings.MEMORY_EMBEDDING_MODEL,
     REDIS_URL: optionalBindings.REDIS_URL,
     RESEND_API_KEY: bindings.RESEND_API_KEY,
     RESEND_WEBHOOK_SECRET: optionalBindings.RESEND_WEBHOOK_SECRET,

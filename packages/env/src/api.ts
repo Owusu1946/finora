@@ -13,6 +13,8 @@ export function createApiEnv(runtimeEnv: RuntimeEnv) {
       OPENROUTER_API_KEY: z.string().min(1).optional(),
       OPENROUTER_MODEL: z.string().min(1).optional(),
       OPENAI_API_KEY: z.string().min(1).optional(),
+      MEMORY_EMBEDDING_API_KEY: z.string().min(1).optional(),
+      MEMORY_EMBEDDING_MODEL: z.string().min(1).optional(),
       REDIS_URL: z.url().optional(),
       CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
       DEEPGRAM_API_KEY: z.string().min(1).optional(),

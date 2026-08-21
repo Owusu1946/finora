@@ -24,6 +24,11 @@ import { messagesForModel, refreshChatContext, threadContextPrompt } from '../ai
 import { fallbackChatTitle } from '../ai/chat-title';
 import { logChatError, toPublicChatError } from '../ai/errors';
 import {
+  backfillMemoryEmbeddings,
+  embedMemoryQuery,
+  refreshMemoryEmbedding,
+} from '../ai/memory-embeddings';
+import {
   generatedMessagesForPersistence,
   reconcileChatMessages,
   sanitizeIncomingMessages,
@@ -654,8 +659,20 @@ chat.post('/', async (c) => {
     const currentUserText = latestUserText(messages);
     let relevantMemories: Awaited<ReturnType<typeof findRelevantUserMemories>> = [];
     let storedThreadContext: StoredChatContext | null = null;
+    const queryEmbedding = currentUserText
+      ? () =>
+          embedMemoryQuery(env, currentUserText).catch((error) => {
+            console.error('[chat:memory-query-embedding]', {
+              requestId,
+              errorName: error instanceof Error ? error.name : typeof error,
+            });
+            return null;
+          })
+      : null;
     const [memoryResult, contextResult] = await Promise.allSettled([
-      currentUserText ? findRelevantUserMemories(db, userId, currentUserText) : Promise.resolve([]),
+      currentUserText
+        ? findRelevantUserMemories(db, userId, currentUserText, queryEmbedding)
+        : Promise.resolve([]),
       getChatContext(db, parsed.data.id, userId),
     ]);
     if (memoryResult.status === 'fulfilled') relevantMemories = memoryResult.value;
@@ -678,6 +695,14 @@ chat.post('/', async (c) => {
             : typeof contextResult.reason,
       });
     }
+    c.executionCtx.waitUntil(
+      backfillMemoryEmbeddings(db, env, userId).catch((error) => {
+        console.error('[chat:memory-embedding-backfill]', {
+          requestId,
+          errorName: error instanceof Error ? error.name : typeof error,
+        });
+      }),
+    );
     const compactedMessages = messagesForModel(messages, storedThreadContext);
     const threadSummary =
       compactedMessages === messages ? null : (storedThreadContext?.summary ?? null);
@@ -722,6 +747,15 @@ chat.post('/', async (c) => {
               chatId: parsed.data.id,
               messageId: latestMessageId,
             });
+            c.executionCtx.waitUntil(
+              refreshMemoryEmbedding(db, env, userId, memory).catch((error) => {
+                console.error('[chat:memory-embedding-write]', {
+                  requestId,
+                  memoryId: memory.id,
+                  errorName: error instanceof Error ? error.name : typeof error,
+                });
+              }),
+            );
             return { ok: true, memory: serializeMemory(memory) };
           },
           list: async (input) => {
@@ -733,6 +767,17 @@ chat.post('/', async (c) => {
           },
           update: async (input) => {
             const memory = await updateUserMemory(db, userId, input);
+            if (memory) {
+              c.executionCtx.waitUntil(
+                refreshMemoryEmbedding(db, env, userId, memory).catch((error) => {
+                  console.error('[chat:memory-embedding-write]', {
+                    requestId,
+                    memoryId: memory.id,
+                    errorName: error instanceof Error ? error.name : typeof error,
+                  });
+                }),
+              );
+            }
             return memory
               ? { ok: true, memory: serializeMemory(memory) }
               : { ok: false, errorCode: 'memory_not_found' };

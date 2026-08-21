@@ -13,6 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { halfvec } from 'drizzle-orm/pg-core/columns/vector_extension/halfvec';
 
 export const accountTypeEnum = pgEnum('account_type', ['personal', 'business']);
 export const aiChatMessageRoleEnum = pgEnum('ai_chat_message_role', ['user', 'assistant']);
@@ -178,6 +179,8 @@ export const aiUserMemories = pgTable(
     source: text('source').notNull().default('explicit'),
     sourceChatId: text('source_chat_id'),
     sourceMessageId: text('source_message_id'),
+    embedding: halfvec('embedding', { dimensions: 1536 }),
+    embeddingModel: text('embedding_model'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
