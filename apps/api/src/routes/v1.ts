@@ -1,5 +1,3 @@
-import type { ApiEnv } from '@finora/env/api';
-
 import {
   PhoneVerificationCodeSchema,
   SEND_CORRIDORS,
@@ -9,13 +7,13 @@ import {
   previewFxQuote,
   type Currency,
 } from '@finora/shared';
+import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import type { AuthenticatedUser } from '../auth';
+import type { AppApiEnv } from '../env';
 
 import { createDb } from '../db/client';
-import { and, eq } from 'drizzle-orm';
-import { PayrollPreparationError, preparePayrollImport } from '../payroll/prepare-import';
 import {
   consumeRecoveryAttempt,
   deleteRecoveryChallenge,
@@ -36,11 +34,12 @@ import {
   upsertUserProfile,
 } from '../db/user-profiles';
 import { createPreparation, mockStore, newId } from '../mock/store';
+import { PayrollPreparationError, preparePayrollImport } from '../payroll/prepare-import';
 import { transcriptions } from './transcriptions';
 
 type AppEnv = {
   Bindings: Env;
-  Variables: { auth: AuthenticatedUser; env: ApiEnv };
+  Variables: { auth: AuthenticatedUser; env: AppApiEnv };
 };
 
 /**
@@ -1282,15 +1281,24 @@ v1.get('/employees', (c) => c.json({ mode: 'mock', employees: mockStore.employee
 v1.post('/payroll/prepare', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
   if (typeof body.importId !== 'string') {
-    return c.json({ error: 'payroll_import_required', message: 'Payroll must be imported and validated before preparation.' }, 409);
+    return c.json(
+      {
+        error: 'payroll_import_required',
+        message: 'Payroll must be imported and validated before preparation.',
+      },
+      409,
+    );
   }
   try {
-    return c.json(await preparePayrollImport({
-      databaseUrl: c.get('env').DATABASE_URL,
-      userId: c.get('auth').userId,
-      importId: body.importId,
-      period: typeof body.period === 'string' ? body.period : undefined,
-    }), 201);
+    return c.json(
+      await preparePayrollImport({
+        databaseUrl: c.get('env').DATABASE_URL,
+        userId: c.get('auth').userId,
+        importId: body.importId,
+        period: typeof body.period === 'string' ? body.period : undefined,
+      }),
+      201,
+    );
   } catch (error) {
     if (error instanceof PayrollPreparationError) {
       return c.json({ error: error.code, ...error.details }, error.status);

@@ -1,8 +1,5 @@
 import type { MemoryKind } from '@finora/shared';
 
-import { createOpenAI } from '@ai-sdk/openai';
-import { embed, embedMany } from 'ai';
-
 import type { Database } from '../db/client';
 
 import {
@@ -11,18 +8,12 @@ import {
   setMemoryEmbedding,
 } from '../db/memory-store';
 
-const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
-const EMBEDDING_DIMENSIONS = 1_536;
-const EMBEDDING_TIMEOUT_MS = 8_000;
-const QUERY_EMBEDDING_TIMEOUT_MS = 1_000;
+export const MEMORY_EMBEDDING_MODEL = '@cf/baai/bge-m3' as const;
+const EMBEDDING_DIMENSIONS = 1_024;
+const QUERY_EMBEDDING_TIMEOUT_MS = 1_500;
 const BACKFILL_LIMIT = 5;
-
-type MemoryEmbeddingEnvironment = {
-  MEMORY_EMBEDDING_API_KEY?: string;
-  MEMORY_EMBEDDING_MODEL?: string;
-  OPENAI_API_KEY?: string;
-};
-
+const MAX_EMBEDDING_CHARACTERS = 12_000;
+type MemoryEmbeddingEnvironment = { AI?: Ai };
 type EmbeddableMemory = {
   id: string;
   kind: MemoryKind;
@@ -30,51 +21,65 @@ type EmbeddableMemory = {
   content: string;
   updatedAt: Date;
 };
-
-export type MemoryEmbedding = {
-  values: number[];
-  model: string;
-};
+export type MemoryEmbedding = { values: number[]; model: string };
 
 export function getMemoryEmbeddingConfig(env: MemoryEmbeddingEnvironment) {
-  const apiKey = env.MEMORY_EMBEDDING_API_KEY ?? env.OPENAI_API_KEY;
-  if (!apiKey || apiKey.startsWith('sk-or-')) return null;
-  return { apiKey, model: env.MEMORY_EMBEDDING_MODEL ?? DEFAULT_EMBEDDING_MODEL };
+  if (!env.AI) return null;
+  return { ai: env.AI, model: MEMORY_EMBEDDING_MODEL };
 }
-
 export function memoryEmbeddingText(memory: Pick<EmbeddableMemory, 'kind' | 'title' | 'content'>) {
   return `Kind: ${memory.kind}\nTitle: ${memory.title}\nContent: ${memory.content}`;
 }
-
 export function validateMemoryEmbedding(values: number[], model: string): MemoryEmbedding {
-  if (values.length !== EMBEDDING_DIMENSIONS) {
+  if (values.length !== EMBEDDING_DIMENSIONS)
     throw new Error(`memory_embedding_dimension_mismatch_${values.length}`);
-  }
-  if (values.some((value) => !Number.isFinite(value))) {
+  if (values.some((value) => !Number.isFinite(value)))
     throw new Error('memory_embedding_contains_invalid_values');
-  }
   return { values, model };
 }
-
-function embeddingModel(config: NonNullable<ReturnType<typeof getMemoryEmbeddingConfig>>) {
-  return createOpenAI({ apiKey: config.apiKey }).embeddingModel(config.model);
+export function parseMemoryEmbeddingResponse(result: unknown, expectedCount: number) {
+  if (!result || typeof result !== 'object' || !('data' in result) || !Array.isArray(result.data))
+    throw new Error('memory_embedding_response_invalid');
+  if (result.data.length !== expectedCount)
+    throw new Error(`memory_embedding_response_count_mismatch_${result.data.length}`);
+  return result.data.map((values) => {
+    if (!Array.isArray(values) || values.some((value) => typeof value !== 'number'))
+      throw new Error('memory_embedding_response_invalid');
+    return validateMemoryEmbedding(values, MEMORY_EMBEDDING_MODEL);
+  });
 }
-
+async function runMemoryEmbeddings(ai: Ai, values: string[]) {
+  const result = await ai.run(MEMORY_EMBEDDING_MODEL, {
+    text: values.map((value) => value.trim().slice(0, MAX_EMBEDDING_CHARACTERS)),
+    truncate_inputs: true,
+  });
+  return parseMemoryEmbeddingResponse(result, values.length);
+}
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('memory_embedding_timeout')), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
 export async function embedMemoryQuery(
   env: MemoryEmbeddingEnvironment,
   query: string,
 ): Promise<MemoryEmbedding | null> {
   const config = getMemoryEmbeddingConfig(env);
   if (!config || !query.trim()) return null;
-  const result = await embed({
-    model: embeddingModel(config),
-    value: query.trim().slice(0, 4_000),
-    abortSignal: AbortSignal.timeout(QUERY_EMBEDDING_TIMEOUT_MS),
-    maxRetries: 1,
-  });
-  return validateMemoryEmbedding(result.embedding, config.model);
+  const [embedding] = await withTimeout(
+    runMemoryEmbeddings(config.ai, [query]),
+    QUERY_EMBEDDING_TIMEOUT_MS,
+  );
+  return embedding ?? null;
 }
-
 export async function refreshMemoryEmbedding(
   db: Database,
   env: MemoryEmbeddingEnvironment,
@@ -83,21 +88,10 @@ export async function refreshMemoryEmbedding(
 ) {
   const config = getMemoryEmbeddingConfig(env);
   if (!config) return false;
-  const result = await embed({
-    model: embeddingModel(config),
-    value: memoryEmbeddingText(memory).slice(0, 4_000),
-    abortSignal: AbortSignal.timeout(EMBEDDING_TIMEOUT_MS),
-    maxRetries: 1,
-  });
-  return setMemoryEmbedding(
-    db,
-    clerkUserId,
-    memory.id,
-    validateMemoryEmbedding(result.embedding, config.model),
-    memory.updatedAt,
-  );
+  const [embedding] = await runMemoryEmbeddings(config.ai, [memoryEmbeddingText(memory)]);
+  if (!embedding) return false;
+  return setMemoryEmbedding(db, clerkUserId, memory.id, embedding, memory.updatedAt);
 }
-
 export async function backfillMemoryEmbeddings(
   db: Database,
   env: MemoryEmbeddingEnvironment,
@@ -114,21 +108,15 @@ export async function backfillMemoryEmbeddings(
     config.model,
   );
   if (memories.length === 0) return 0;
-  const result = await embedMany({
-    model: embeddingModel(config),
-    values: memories.map((memory) => memoryEmbeddingText(memory).slice(0, 4_000)),
-    abortSignal: AbortSignal.timeout(EMBEDDING_TIMEOUT_MS),
-    maxRetries: 1,
-  });
+  const embeddings = await runMemoryEmbeddings(
+    config.ai,
+    memories.map((memory) => memoryEmbeddingText(memory)),
+  );
   const updates = await Promise.all(
     memories.map((memory, index) =>
-      setMemoryEmbedding(
-        db,
-        clerkUserId,
-        memory.id,
-        validateMemoryEmbedding(result.embeddings[index] ?? [], config.model),
-        memory.updatedAt,
-      ),
+      embeddings[index]
+        ? setMemoryEmbedding(db, clerkUserId, memory.id, embeddings[index], memory.updatedAt)
+        : false,
     ),
   );
   return updates.filter(Boolean).length;

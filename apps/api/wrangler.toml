@@ -3,6 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
 
+[ai]
+binding = "AI"
+remote = true
+
 [vars]
 ENVIRONMENT = "development"
 CLERK_PUBLISHABLE_KEY = "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA"
@@ -62,8 +66,6 @@ dead_letter_queue = "finora-calendar-sync-dlq"
 # OPENROUTER_API_KEY
 # OPENROUTER_MODEL
 # OPENAI_API_KEY (temporary fallback)
-# MEMORY_EMBEDDING_API_KEY (optional; falls back to a non-OpenRouter OPENAI_API_KEY)
-# MEMORY_EMBEDDING_MODEL (optional; defaults to text-embedding-3-small)
 # REDIS_URL
 # DATABASE_URL
 # RESEND_API_KEY

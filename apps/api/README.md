@@ -34,10 +34,12 @@ Do not generate or commit Drizzle migration artifacts for this repository.
 
 ## Semantic chat memory
 
-Cross-chat memories use hybrid lexical and semantic retrieval. Semantic retrieval is optional:
-without embedding configuration, chat continues to use the existing lexical path.
+Cross-chat memories use hybrid lexical and semantic retrieval. Semantic retrieval runs through the
+Worker's `AI` binding using Cloudflare Workers AI and `@cf/baai/bge-m3`. It requires no separate API
+key. If the binding is unavailable, its free daily allocation is exhausted, or inference fails, chat
+continues with lexical retrieval.
 
-The schema stores 1,536-dimension `halfvec` embeddings. Before the first schema push on a database,
+The schema stores 1,024-dimension `halfvec` embeddings. Before the first schema push on a database,
 enable pgvector using its direct/unpooled connection:
 
 ```sql
@@ -45,10 +47,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 Then review and apply the additive `ai_user_memories` column changes with the repository's normal
-`pnpm db:push` workflow. Configure `MEMORY_EMBEDDING_API_KEY` as an OpenAI API key in Wrangler
-secrets. A non-OpenRouter `OPENAI_API_KEY` is used as a fallback; OpenRouter chat keys are
-deliberately not reused. `MEMORY_EMBEDDING_MODEL` is optional and defaults to
-`text-embedding-3-small`.
+`pnpm db:push` workflow. The Wrangler `[ai]` binding is deployed with the Worker. Workers AI includes
+a recurring free allocation; monitor usage and quota errors in production because the lexical path
+is the intentional degradation mode.
 
 Memory writes remain synchronous and durable while embedding generation runs with `waitUntil`.
 Embedding, vector-query, and backfill failures fall back to lexical retrieval and never block chat.
