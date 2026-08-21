@@ -1,7 +1,7 @@
-import { PayrollImportRowSchema, PayrollInspectionResponseSchema } from '@finora/shared';
+import { ArchivePayrollImportInputSchema, BulkArchivePayrollImportsInputSchema, BulkDeletePayrollRowsInputSchema, PayrollImportRowSchema, PayrollInspectionResponseSchema } from '@finora/shared';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
@@ -84,7 +84,7 @@ export async function inspectPayrollAttachment(c: { env: Env; apiEnv: { DATABASE
     const summary = summarizePayrollRows(rows);
     const status = summary.blockingIssues.length ? 'blocked' : 'ready';
     const period = rows.find((row) => row.period)?.period ?? null;
-    const [imp] = await db.insert(payrollImports).values({ clerkUserId: c.userId, attachmentId: attachment.id, status, sourceName: attachment.fileName, period, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings }).onConflictDoUpdate({ target: payrollImports.attachmentId, set: { status, period, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, updatedAt: new Date() } }).returning({ id: payrollImports.id });
+    const [imp] = await db.insert(payrollImports).values({ clerkUserId: c.userId, attachmentId: attachment.id, status, sourceName: attachment.fileName, period, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings }).onConflictDoUpdate({ target: payrollImports.attachmentId, set: { status, period, total: String(summary.total), currency: summary.currency, blockingIssues: summary.blockingIssues, warnings: summary.warnings, deletedAt: null, updatedAt: new Date() } }).returning({ id: payrollImports.id });
     if (!imp) throw new Error('payroll_import_persist_failed');
     await db.delete(payrollImportRows).where(eq(payrollImportRows.importId, imp.id));
     if (rows.length) await db.insert(payrollImportRows).values(rows.map((row) => ({ importId: imp.id, rowId: row.rowId, payload: row })));
@@ -114,15 +114,32 @@ function importPayload(importRow: typeof payrollImports.$inferSelect, rows: Arra
     currency: importRow.currency ?? 'USD',
     blockingIssues: importRow.blockingIssues,
     warnings: importRow.warnings,
+    version: importRow.version,
     rows: rows.map((row) => row.payload),
     createdAt: importRow.createdAt.toISOString(),
     updatedAt: importRow.updatedAt.toISOString(),
   };
 }
 
+function parseRows(rows: Array<{ payload: Record<string, unknown> }>) {
+  return rows.map(({ payload }) => PayrollImportRowSchema.parse(payload));
+}
+
+function payrollState(importRow: typeof payrollImports.$inferSelect, rows: ReturnType<typeof parseRows>) {
+  const summary = summarizePayrollRows(rows);
+  return {
+    employeeCount: rows.length,
+    total: summary.total,
+    currency: summary.currency,
+    status: summary.blockingIssues.length ? 'blocked' : 'ready',
+    blockingIssues: summary.blockingIssues,
+    rows,
+  };
+}
+
 payroll.get('/imports', async (c) => {
   const db = createDb(c.get('env').DATABASE_URL);
-  const imports = await db.select().from(payrollImports).where(eq(payrollImports.clerkUserId, c.get('auth').userId)).orderBy(desc(payrollImports.updatedAt)).limit(50);
+  const imports = await db.select().from(payrollImports).where(and(eq(payrollImports.clerkUserId, c.get('auth').userId), isNull(payrollImports.deletedAt))).orderBy(desc(payrollImports.updatedAt)).limit(50);
   if (!imports.length) return c.json({ imports: [] });
   const rows = await db.select({ importId: payrollImportRows.importId, payload: payrollImportRows.payload }).from(payrollImportRows).where(inArray(payrollImportRows.importId, imports.map((item) => item.id)));
   const rowsByImport = new Map<string, Array<{ payload: Record<string, unknown> }>>();
@@ -132,7 +149,7 @@ payroll.get('/imports', async (c) => {
 
 payroll.get('/imports/:id', async (c) => {
   const db = createDb(c.get('env').DATABASE_URL);
-  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId), isNull(payrollImports.deletedAt))).limit(1);
   if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
   const rows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
   return c.json({ import: importPayload(item, rows) });
@@ -140,7 +157,7 @@ payroll.get('/imports/:id', async (c) => {
 
 payroll.patch('/imports/:id/rows/:rowId', async (c) => {
   const db = createDb(c.get('env').DATABASE_URL);
-  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId), isNull(payrollImports.deletedAt))).limit(1);
   if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
   const [existing] = await db.select().from(payrollImportRows).where(and(eq(payrollImportRows.importId, item.id), eq(payrollImportRows.rowId, c.req.param('rowId')))).limit(1);
   if (!existing) return c.json(jsonError('payroll_row_not_found', 404), 404);
@@ -163,7 +180,7 @@ payroll.patch('/imports/:id/rows/:rowId', async (c) => {
 
 payroll.delete('/imports/:id/rows/:rowId', async (c) => {
   const db = createDb(c.get('env').DATABASE_URL);
-  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId))).limit(1);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, c.req.param('id')), eq(payrollImports.clerkUserId, c.get('auth').userId), isNull(payrollImports.deletedAt))).limit(1);
   if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
   const [existing] = await db.select().from(payrollImportRows).where(and(eq(payrollImportRows.importId, item.id), eq(payrollImportRows.rowId, c.req.param('rowId')))).limit(1);
   if (!existing) return c.json(jsonError('payroll_row_not_found', 404), 404);
@@ -179,6 +196,128 @@ payroll.delete('/imports/:id/rows/:rowId', async (c) => {
   ]);
   const [updated] = batch[1];
   return c.json({ import: updated ? importPayload(updated, remainingRows) : null });
+});
+
+payroll.post('/imports/:id/rows/bulk-delete', async (c) => {
+  const parsed = BulkDeletePayrollRowsInputSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json(jsonError('payroll_bulk_delete_invalid'), 400);
+  const userId = c.get('auth').userId;
+  const importId = c.req.param('id');
+  const db = createDb(c.get('env').DATABASE_URL);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, importId), eq(payrollImports.clerkUserId, userId), isNull(payrollImports.deletedAt))).limit(1);
+  if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
+  if (item.version !== parsed.data.version) return c.json(jsonError('payroll_import_stale', 409), 409);
+  const currentRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  const rows = parseRows(currentRows);
+  const selected = new Set(parsed.data.rowIds);
+  if (rows.filter((row) => selected.has(row.rowId)).length !== selected.size) {
+    return c.json(jsonError('payroll_row_not_found', 404), 404);
+  }
+  const remainingRows = rows.filter((row) => !selected.has(row.rowId));
+  const beforeState = payrollState(item, rows);
+  const afterState = payrollState(item, remainingRows);
+  const result = await db.$client.query(
+    `with updated_import as (
+       update payroll_imports
+       set version = version + 1, status = $4::payroll_import_status, total = $5,
+           currency = $6, blocking_issues = $7::jsonb, warnings = $8::jsonb, updated_at = now()
+       where id = $1 and clerk_user_id = $2 and version = $3 and deleted_at is null
+       returning *
+     ), deleted_rows as (
+       delete from payroll_import_rows
+       where import_id = $1 and row_id in (select jsonb_array_elements_text($9::jsonb))
+         and exists (select 1 from updated_import)
+     ), stale_proposals as (
+       update payroll_edit_proposals set status = 'stale'
+       where import_id = $1 and clerk_user_id = $2 and status = 'pending'
+         and exists (select 1 from updated_import)
+     ), audited as (
+       insert into payroll_audit_events (clerk_user_id, import_id, action, before_state, after_state, metadata)
+       select $2, $1, 'payroll_rows_bulk_deleted', $10::jsonb, $11::jsonb,
+         jsonb_build_object('source', 'payroll_screen', 'rowIds', $9::jsonb, 'deletedCount', jsonb_array_length($9::jsonb))
+       where exists (select 1 from updated_import)
+     ) select * from updated_import`,
+    [item.id, userId, item.version, afterState.status, String(afterState.total), afterState.currency, JSON.stringify(afterState.blockingIssues), JSON.stringify(summarizePayrollRows(remainingRows).warnings), JSON.stringify(parsed.data.rowIds), JSON.stringify(beforeState), JSON.stringify(afterState)],
+  );
+  const [updated] = result as unknown as Array<typeof payrollImports.$inferSelect>;
+  if (!updated) return c.json(jsonError('payroll_import_stale', 409), 409);
+  return c.json({ import: importPayload(updated, remainingRows.map((payload) => ({ payload }))), deletedCount: selected.size });
+});
+
+payroll.post('/imports/bulk-archive', async (c) => {
+  const parsed = BulkArchivePayrollImportsInputSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json(jsonError('payroll_bulk_archive_invalid'), 400);
+  const userId = c.get('auth').userId;
+  const db = createDb(c.get('env').DATABASE_URL);
+  const ids = parsed.data.imports.map(({ importId }) => importId);
+  const imports = await db.select().from(payrollImports).where(and(inArray(payrollImports.id, ids), eq(payrollImports.clerkUserId, userId), isNull(payrollImports.deletedAt)));
+  if (imports.length !== ids.length) return c.json(jsonError('payroll_import_not_found', 404), 404);
+  const requestedVersion = new Map(parsed.data.imports.map(({ importId, version }) => [importId, version]));
+  if (imports.some((item) => requestedVersion.get(item.id) !== item.version)) return c.json(jsonError('payroll_import_stale', 409), 409);
+  const rawRows = await db.select({ importId: payrollImportRows.importId, payload: payrollImportRows.payload }).from(payrollImportRows).where(inArray(payrollImportRows.importId, ids));
+  const rowsByImport = new Map<string, Array<{ payload: Record<string, unknown> }>>();
+  for (const row of rawRows) rowsByImport.set(row.importId, [...(rowsByImport.get(row.importId) ?? []), { payload: row.payload }]);
+  const states = imports.map((item) => ({ importId: item.id, state: payrollState(item, parseRows(rowsByImport.get(item.id) ?? [])) }));
+  const result = await db.$client.query(
+    `with requested as (
+       select * from jsonb_to_recordset($3::jsonb) as request(import_id uuid, version integer)
+     ), archived_imports as (
+       update payroll_imports payroll
+       set version = payroll.version + 1, deleted_at = now(), updated_at = now()
+       from requested
+       where payroll.id = requested.import_id and payroll.version = requested.version
+         and payroll.clerk_user_id = $1 and payroll.deleted_at is null
+         and (select count(*) from payroll_imports candidate join requested item on candidate.id = item.import_id and candidate.version = item.version where candidate.clerk_user_id = $1 and candidate.deleted_at is null) = $2
+       returning payroll.id
+     ), stale_proposals as (
+       update payroll_edit_proposals set status = 'stale'
+       where import_id in (select id from archived_imports) and clerk_user_id = $1 and status = 'pending'
+     ), states as (
+       select * from jsonb_to_recordset($4::jsonb) as value(import_id uuid, state jsonb)
+     ), audited as (
+       insert into payroll_audit_events (clerk_user_id, import_id, action, before_state, after_state, metadata)
+       select $1, archived.id, 'payroll_import_archived', states.state, null,
+         jsonb_build_object('source', 'payroll_screen', 'bulk', true)
+       from archived_imports archived join states on states.import_id = archived.id
+     ) select id from archived_imports`,
+    [userId, parsed.data.imports.length, JSON.stringify(parsed.data.imports.map(({ importId, version }) => ({ import_id: importId, version }))), JSON.stringify(states.map(({ importId, state }) => ({ import_id: importId, state })))],
+  );
+  const archived = result as unknown as Array<{ id: string }>;
+  if (archived.length !== parsed.data.imports.length) return c.json(jsonError('payroll_import_stale', 409), 409);
+  return c.json({ archived: true, importIds: archived.map(({ id }) => id) });
+});
+
+payroll.delete('/imports/:id', async (c) => {
+  const parsed = ArchivePayrollImportInputSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json(jsonError('payroll_archive_invalid'), 400);
+  const userId = c.get('auth').userId;
+  const importId = c.req.param('id');
+  const db = createDb(c.get('env').DATABASE_URL);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, importId), eq(payrollImports.clerkUserId, userId), isNull(payrollImports.deletedAt))).limit(1);
+  if (!item) return c.json(jsonError('payroll_import_not_found', 404), 404);
+  if (item.version !== parsed.data.version) return c.json(jsonError('payroll_import_stale', 409), 409);
+  const rawRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
+  const beforeState = payrollState(item, parseRows(rawRows));
+  const result = await db.$client.query(
+    `with archived_import as (
+       update payroll_imports set version = version + 1, deleted_at = now(), updated_at = now()
+       where id = $1 and clerk_user_id = $2 and version = $3 and deleted_at is null
+       returning id, source_name
+     ), stale_proposals as (
+       update payroll_edit_proposals set status = 'stale'
+       where import_id = $1 and clerk_user_id = $2 and status = 'pending'
+         and exists (select 1 from archived_import)
+     ), audited as (
+       insert into payroll_audit_events (clerk_user_id, import_id, action, before_state, after_state, metadata)
+       select $2, $1, 'payroll_import_archived', $4::jsonb, null,
+         jsonb_build_object('source', 'payroll_screen')
+       where exists (select 1 from archived_import)
+     ) select * from archived_import`,
+    [item.id, userId, item.version, JSON.stringify(beforeState)],
+  );
+  const [archived] = result as unknown as Array<{ id: string; source_name: string }>;
+  if (!archived) return c.json(jsonError('payroll_import_stale', 409), 409);
+  return c.json({ archived: true, importId: archived.id });
 });
 
 payroll.post('/proposals/:id/apply', async (c) => {

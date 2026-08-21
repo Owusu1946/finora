@@ -1,8 +1,6 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { StyleSheet, View } from 'react-native';
 
-import type { Employee } from '@/lib/employees-storage';
-
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -10,7 +8,16 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ListEmployeesResult = {
-  employees?: Employee[];
+  employees?: Array<{
+    id?: string;
+    importId?: string;
+    rowId?: string;
+    name: string;
+    role: string;
+    salary: number;
+    currency: string;
+    destination: { label: string };
+  }>;
 };
 
 export const ListEmployeesToolUI = makeAssistantToolUI<Record<string, never>, ListEmployeesResult>({
@@ -57,9 +64,9 @@ export const ListEmployeesToolUI = makeAssistantToolUI<Record<string, never>, Li
           {employees.length} employee{employees.length === 1 ? '' : 's'} · payroll{' '}
           {formatPaymentAmount(total, currency)}
         </Text>
-        {employees.map((employee) => (
+        {employees.map((employee, index) => (
           <View
-            key={employee.id}
+            key={employee.id ?? `${employee.importId ?? 'payroll'}:${employee.rowId ?? index}`}
             style={styles.row}
           >
             <View style={styles.rowText}>

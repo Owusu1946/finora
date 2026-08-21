@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import {
   PayrollEditChangeSchema,
   PayrollEditPatchSchema,
@@ -42,7 +42,7 @@ export function applyProposedChanges(rows: PayrollImportRow[], rawChanges: unkno
 
 async function ownedImport(databaseUrl: string, userId: string, importId: string) {
   const db = createDb(databaseUrl);
-  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, importId), eq(payrollImports.clerkUserId, userId))).limit(1);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, importId), eq(payrollImports.clerkUserId, userId), isNull(payrollImports.deletedAt))).limit(1);
   if (!item) throw new PayrollEditError('payroll_import_not_found', 404);
   const rawRows = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
   const rows = rawRows.map(({ payload }) => PayrollImportRowSchema.parse(payload));
@@ -51,7 +51,7 @@ async function ownedImport(databaseUrl: string, userId: string, importId: string
 
 export async function listPayrollImportsForChat(databaseUrl: string, userId: string, input: { query?: string; importId?: string; limit: number }) {
   const db = createDb(databaseUrl);
-  const imports = await db.select().from(payrollImports).where(eq(payrollImports.clerkUserId, userId)).orderBy(desc(payrollImports.updatedAt)).limit(50);
+  const imports = await db.select().from(payrollImports).where(and(eq(payrollImports.clerkUserId, userId), isNull(payrollImports.deletedAt))).orderBy(desc(payrollImports.updatedAt)).limit(50);
   const result = [];
   const normalizedQuery = input.query?.trim().toLowerCase();
   for (const item of imports.filter((candidate) => !input.importId || candidate.id === input.importId)) {
@@ -84,7 +84,7 @@ export async function applyPayrollChanges(databaseUrl: string, userId: string, p
   if (!proposal) throw new PayrollEditError('payroll_proposal_not_found', 404);
   if (proposal.status !== 'pending') throw new PayrollEditError('payroll_proposal_already_resolved', 409);
   if (proposal.expiresAt.getTime() <= Date.now()) { await db.update(payrollEditProposals).set({ status: 'expired' }).where(eq(payrollEditProposals.id, proposal.id)); throw new PayrollEditError('payroll_proposal_expired', 409); }
-  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, proposal.importId), eq(payrollImports.clerkUserId, userId))).limit(1);
+  const [item] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, proposal.importId), eq(payrollImports.clerkUserId, userId), isNull(payrollImports.deletedAt))).limit(1);
   if (!item || item.version !== proposal.baseVersion) { await db.update(payrollEditProposals).set({ status: 'stale' }).where(eq(payrollEditProposals.id, proposal.id)); throw new PayrollEditError('payroll_proposal_stale', 409); }
   const rawRows = await db.select().from(payrollImportRows).where(eq(payrollImportRows.importId, item.id));
   const current = new Map(rawRows.map((row) => [row.rowId, PayrollImportRowSchema.parse(row.payload)]));

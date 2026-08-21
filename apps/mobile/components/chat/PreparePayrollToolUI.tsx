@@ -67,9 +67,9 @@ function PayrollConfirmCard({
         </View>
 
         <View style={styles.lines}>
-          {employees.map((employee) => (
+          {employees.map((employee, index) => (
             <View
-              key={employee.id}
+              key={`${employee.id}:${index}`}
               style={styles.line}
             >
               <View style={styles.lineText}>
