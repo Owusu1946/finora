@@ -32,4 +32,13 @@ describe('chat tools', () => {
     expect(createChatAgentTools()).toHaveProperty('prepare_employee_payment');
     expect(createChatAgentTools()).not.toHaveProperty('apply_payroll_changes');
   });
+
+  it('gives imported employees stable UI identities', async () => {
+    const tools = createChatAgentTools(undefined, undefined, undefined, {
+      inspectAttachment: async () => ({}), prepareImport: async () => ({}), prepareEmployee: async () => ({}), proposeChanges: async () => ({}),
+      listImports: async () => ({ imports: [{ importId: '11111111-1111-4111-8111-111111111111', currency: 'GHS', rows: [{ rowId: 'row-1', employeeName: 'Ama', amount: 100, currency: 'GHS', destination: '0240000000', destinationType: 'mobile_money', rail: 'MTN' }] }] }),
+    });
+    const result = await tools.list_employees.execute!({}, { toolCallId: 'test', messages: [], abortSignal: new AbortController().signal } as never) as { employees: Array<{ id: string }> };
+    expect(result.employees[0]?.id).toBe('11111111-1111-4111-8111-111111111111:row-1');
+  });
 });

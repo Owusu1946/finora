@@ -386,8 +386,10 @@ export function createChatAgentTools(
             return rows.map((value) => {
               const row = asRecord(value);
               if (!row) return null;
+              const importId = String(item.importId ?? '');
+              const rowId = String(row.rowId ?? '');
               return {
-                importId: String(item.importId ?? ''), rowId: String(row.rowId ?? ''),
+                id: `${importId}:${rowId}`, importId, rowId,
                 name: String(row.employeeName ?? 'Employee'), employeeId: row.employeeId == null ? undefined : String(row.employeeId),
                 role: String(row.role ?? ''), salary: Number(row.amount ?? 0), currency: String(row.currency ?? item.currency ?? 'USD'),
                 destination: publicDestination({ kind: row.destinationType, label: row.rail ?? row.destinationType, value: row.destination, rail: row.rail }),
