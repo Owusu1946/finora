@@ -10,7 +10,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@hugeicons/core-free-icons": "^4.2.3",
+    "@hugeicons/core-free-icons": "^4.3.0",
     "@hugeicons/react": "^1.1.9",
     "next": "16.3.1",
     "react": "19.2.8",
@@ -24,7 +24,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^10.8.1",
     "eslint-config-next": "16.3.1",
-    "oxlint": "^1.78.0",
+    "oxlint": "^1.79.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~7.0.2"
   }
