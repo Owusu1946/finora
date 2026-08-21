@@ -16,6 +16,7 @@ import {
 
 import type { Database } from './client';
 
+import { isMemoryEmbeddingCompatible, MEMORY_EMBEDDING_DIMENSIONS } from '../ai/memory-contract';
 import { aiMemorySettings, aiUserMemories } from './schema';
 
 const SEMANTIC_DISTANCE_THRESHOLD = 0.45;
@@ -302,14 +303,32 @@ export async function findRelevantUserMemories(
     | Promise<{ values: number[]; model: string } | null>
     | (() => Promise<{ values: number[]; model: string } | null>),
 ) {
+  const startedAt = Date.now();
   const settings = await getMemorySettings(db, clerkUserId);
-  if (!settings.enabled) return [];
+  if (!settings.enabled) {
+    console.info('[memory:retrieval]', { mode: 'disabled', latencyMs: Date.now() - startedAt });
+    return [];
+  }
   const [memories, resolvedEmbedding] = await Promise.all([
     listUserMemories(db, clerkUserId, { limit: 50 }),
     typeof queryEmbedding === 'function' ? queryEmbedding() : queryEmbedding,
   ]);
-  if (!resolvedEmbedding || resolvedEmbedding.values.length !== 1_536) {
-    return rankRelevantMemories(memories, query);
+  if (!resolvedEmbedding || !isMemoryEmbeddingCompatible(resolvedEmbedding.values)) {
+    if (resolvedEmbedding) {
+      console.warn('[memory:semantic-retrieval-skipped]', {
+        reason: 'embedding_dimension_mismatch',
+        expectedDimensions: MEMORY_EMBEDDING_DIMENSIONS,
+        receivedDimensions: resolvedEmbedding.values.length,
+      });
+    }
+    const results = rankRelevantMemories(memories, query);
+    console.info('[memory:retrieval]', {
+      mode: 'lexical_fallback',
+      candidateCount: memories.length,
+      resultCount: results.length,
+      latencyMs: Date.now() - startedAt,
+    });
+    return results;
   }
   try {
     const distance = cosineDistance(aiUserMemories.embedding, resolvedEmbedding.values);
@@ -326,16 +345,33 @@ export async function findRelevantUserMemories(
       )
       .orderBy(asc(distance))
       .limit(12);
-    return rankHybridMemories(
+    const results = rankHybridMemories(
       memories,
       query,
       semantic.map((item) => ({ id: item.id, distance: Number(item.distance) })),
     );
+    console.info('[memory:retrieval]', {
+      mode: 'hybrid',
+      candidateCount: memories.length,
+      semanticCount: semantic.length,
+      resultCount: results.length,
+      embeddingModel: resolvedEmbedding.model,
+      latencyMs: Date.now() - startedAt,
+    });
+    return results;
   } catch (error) {
     console.error('[memory:semantic-retrieval]', {
       errorName: error instanceof Error ? error.name : typeof error,
     });
-    return rankRelevantMemories(memories, query);
+    const results = rankRelevantMemories(memories, query);
+    console.info('[memory:retrieval]', {
+      mode: 'lexical_fallback',
+      reason: 'semantic_query_failed',
+      candidateCount: memories.length,
+      resultCount: results.length,
+      latencyMs: Date.now() - startedAt,
+    });
+    return results;
   }
 }
 

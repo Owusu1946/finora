@@ -1,6 +1,7 @@
 import { CreateMemoryInputSchema } from '@finora/shared';
 import { describe, expect, it } from 'vitest';
 
+import { isMemoryEmbeddingCompatible } from '../ai/memory-contract';
 import { normalizeMemoryKey, rankHybridMemories, rankRelevantMemories } from './memory-store';
 
 describe('memory store helpers', () => {
@@ -50,5 +51,24 @@ describe('memory store helpers', () => {
         { id: 'payroll', distance: 0.25 },
       ])[0],
     ).toBe(memories[2]);
+  });
+
+  it('keeps semantically retrieved memories eligible when using Workers AI dimensions', () => {
+    const memories = [
+      { id: 'currency', title: 'Reporting currency', content: 'Use GHS.' },
+      { id: 'theme', title: 'Theme', content: 'Use dark mode.' },
+    ];
+    const semantic = [{ id: 'currency', distance: 0.2 }];
+    expect(rankHybridMemories(memories, 'Which currency?', semantic)).toEqual([memories[0]]);
+  });
+
+  it('rejects stale or malformed embedding contracts before vector SQL', () => {
+    expect(isMemoryEmbeddingCompatible(Array.from({ length: 1_024 }, () => 0.1))).toBe(true);
+    expect(isMemoryEmbeddingCompatible(Array.from({ length: 1_536 }, () => 0.1))).toBe(false);
+    expect(
+      isMemoryEmbeddingCompatible(
+        Array.from({ length: 1_024 }, (_, index) => (index === 4 ? Number.NaN : 0.1)),
+      ),
+    ).toBe(false);
   });
 });
