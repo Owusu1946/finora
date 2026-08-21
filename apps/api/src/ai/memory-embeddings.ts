@@ -7,9 +7,14 @@ import {
   listMemoriesMissingEmbeddings,
   setMemoryEmbedding,
 } from '../db/memory-store';
+import {
+  isMemoryEmbeddingCompatible,
+  MEMORY_EMBEDDING_DIMENSIONS,
+  MEMORY_EMBEDDING_MODEL,
+} from './memory-contract';
 
-export const MEMORY_EMBEDDING_MODEL = '@cf/baai/bge-m3' as const;
-const EMBEDDING_DIMENSIONS = 1_024;
+export { MEMORY_EMBEDDING_MODEL } from './memory-contract';
+
 const QUERY_EMBEDDING_TIMEOUT_MS = 1_500;
 const BACKFILL_LIMIT = 5;
 const MAX_EMBEDDING_CHARACTERS = 12_000;
@@ -31,9 +36,9 @@ export function memoryEmbeddingText(memory: Pick<EmbeddableMemory, 'kind' | 'tit
   return `Kind: ${memory.kind}\nTitle: ${memory.title}\nContent: ${memory.content}`;
 }
 export function validateMemoryEmbedding(values: number[], model: string): MemoryEmbedding {
-  if (values.length !== EMBEDDING_DIMENSIONS)
+  if (values.length !== MEMORY_EMBEDDING_DIMENSIONS)
     throw new Error(`memory_embedding_dimension_mismatch_${values.length}`);
-  if (values.some((value) => !Number.isFinite(value)))
+  if (!isMemoryEmbeddingCompatible(values))
     throw new Error('memory_embedding_contains_invalid_values');
   return { values, model };
 }
@@ -48,20 +53,28 @@ export function parseMemoryEmbeddingResponse(result: unknown, expectedCount: num
     return validateMemoryEmbedding(values, MEMORY_EMBEDDING_MODEL);
   });
 }
-async function runMemoryEmbeddings(ai: Ai, values: string[]) {
-  const result = await ai.run(MEMORY_EMBEDDING_MODEL, {
-    text: values.map((value) => value.trim().slice(0, MAX_EMBEDDING_CHARACTERS)),
-    truncate_inputs: true,
-  });
+async function runMemoryEmbeddings(ai: Ai, values: string[], signal?: AbortSignal) {
+  const result = await ai.run(
+    MEMORY_EMBEDDING_MODEL,
+    {
+      text: values.map((value) => value.trim().slice(0, MAX_EMBEDDING_CHARACTERS)),
+      truncate_inputs: true,
+    },
+    signal ? { signal } : undefined,
+  );
   return parseMemoryEmbeddingResponse(result, values.length);
 }
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
+async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>, timeoutMs: number) {
+  const controller = new AbortController();
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
-      promise,
+      run(controller.signal),
       new Promise<never>((_, reject) => {
-        timeout = setTimeout(() => reject(new Error('memory_embedding_timeout')), timeoutMs);
+        timeout = setTimeout(() => {
+          controller.abort('memory_embedding_timeout');
+          reject(new Error('memory_embedding_timeout'));
+        }, timeoutMs);
       }),
     ]);
   } finally {
@@ -75,7 +88,7 @@ export async function embedMemoryQuery(
   const config = getMemoryEmbeddingConfig(env);
   if (!config || !query.trim()) return null;
   const [embedding] = await withTimeout(
-    runMemoryEmbeddings(config.ai, [query]),
+    (signal) => runMemoryEmbeddings(config.ai, [query], signal),
     QUERY_EMBEDDING_TIMEOUT_MS,
   );
   return embedding ?? null;
