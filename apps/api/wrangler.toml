@@ -3,6 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
 
+[ai]
+binding = "AI"
+remote = true
+
 [vars]
 ENVIRONMENT = "development"
 CLERK_PUBLISHABLE_KEY = "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA"

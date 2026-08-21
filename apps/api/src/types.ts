@@ -1,11 +1,10 @@
-import type { ApiEnv } from '@finora/env/api';
-
 import type { AuthenticatedUser } from './auth';
+import type { AppApiEnv } from './env';
 
 export type AppEnv = {
   Bindings: Env;
   Variables: {
     auth: AuthenticatedUser;
-    env: ApiEnv;
+    env: AppApiEnv;
   };
 };

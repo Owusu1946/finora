@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
 
+import { refreshMemoryEmbedding } from '../ai/memory-embeddings';
 import { createDb } from '../db/client';
 import {
   clearUserMemories,
@@ -44,6 +45,14 @@ memories.post('/', async (c) => {
   const settings = await getMemorySettings(db, userId);
   if (!settings.enabled) return c.json({ message: 'Memory is disabled.' }, 409);
   const memory = await rememberUserMemory(db, userId, input.data);
+  c.executionCtx.waitUntil(
+    refreshMemoryEmbedding(db, c.get('env'), userId, memory).catch((error) => {
+      console.error('[memory:embedding-write]', {
+        memoryId: memory.id,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+    }),
+  );
   return c.json({ memory: serializeMemory(memory) }, 201);
 });
 
@@ -65,11 +74,18 @@ memories.patch('/:id', async (c) => {
   });
   if (!input.success) return c.json({ message: 'Invalid memory update.' }, 400);
   try {
-    const memory = await updateUserMemory(
-      createDb(c.get('env').DATABASE_URL),
-      c.get('auth').userId,
-      input.data,
-    );
+    const db = createDb(c.get('env').DATABASE_URL);
+    const memory = await updateUserMemory(db, c.get('auth').userId, input.data);
+    if (memory) {
+      c.executionCtx.waitUntil(
+        refreshMemoryEmbedding(db, c.get('env'), c.get('auth').userId, memory).catch((error) => {
+          console.error('[memory:embedding-write]', {
+            memoryId: memory.id,
+            errorName: error instanceof Error ? error.name : typeof error,
+          });
+        }),
+      );
+    }
     return memory
       ? c.json({ memory: serializeMemory(memory) })
       : c.json({ message: 'Memory not found or conflicts with an existing memory.' }, 409);

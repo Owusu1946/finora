@@ -1,12 +1,31 @@
 import type { CreateMemoryInput, MemoryKind, UpdateMemoryInput } from '@finora/shared';
-import { and, desc, eq, ilike, or } from 'drizzle-orm';
+
+import {
+  and,
+  asc,
+  cosineDistance,
+  desc,
+  eq,
+  ilike,
+  isNotNull,
+  isNull,
+  lt,
+  ne,
+  or,
+} from 'drizzle-orm';
 
 import type { Database } from './client';
 
 import { aiMemorySettings, aiUserMemories } from './schema';
 
+const SEMANTIC_DISTANCE_THRESHOLD = 0.45;
+
 export function normalizeMemoryKey(value: string) {
-  return value.trim().toLocaleLowerCase().replaceAll(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replaceAll(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 }
 
 export async function getMemorySettings(db: Database, clerkUserId: string) {
@@ -54,6 +73,7 @@ export async function rememberUserMemory(
   clerkUserId: string,
   input: CreateMemoryInput,
   source?: { chatId?: string; messageId?: string },
+  embedding?: { values: number[]; model: string },
 ) {
   const normalizedKey = normalizeMemoryKey(input.title);
   const [memory] = await db
@@ -65,6 +85,8 @@ export async function rememberUserMemory(
       source: 'explicit',
       sourceChatId: source?.chatId,
       sourceMessageId: source?.messageId,
+      embedding: embedding?.values,
+      embeddingModel: embedding?.model,
       updatedAt: new Date(),
     })
     .onConflictDoUpdate({
@@ -75,11 +97,34 @@ export async function rememberUserMemory(
         source: 'explicit',
         sourceChatId: source?.chatId,
         sourceMessageId: source?.messageId,
+        embedding: embedding?.values ?? null,
+        embeddingModel: embedding?.model ?? null,
         updatedAt: new Date(),
       },
     })
     .returning();
   return memory!;
+}
+
+export async function setMemoryEmbedding(
+  db: Database,
+  clerkUserId: string,
+  id: string,
+  embedding: { values: number[]; model: string },
+  expectedUpdatedAt: Date,
+) {
+  const [updated] = await db
+    .update(aiUserMemories)
+    .set({ embedding: embedding.values, embeddingModel: embedding.model })
+    .where(
+      and(
+        eq(aiUserMemories.id, id),
+        eq(aiUserMemories.clerkUserId, clerkUserId),
+        eq(aiUserMemories.updatedAt, expectedUpdatedAt),
+      ),
+    )
+    .returning({ id: aiUserMemories.id });
+  return updated !== undefined;
 }
 
 export async function updateUserMemory(
@@ -115,11 +160,44 @@ export async function updateUserMemory(
       title,
       content: input.content ?? existing.content,
       normalizedKey,
+      embedding: null,
+      embeddingModel: null,
       updatedAt: new Date(),
     })
     .where(and(eq(aiUserMemories.id, input.id), eq(aiUserMemories.clerkUserId, clerkUserId)))
     .returning();
   return updated ?? null;
+}
+
+export function listMemoriesMissingEmbeddings(
+  db: Database,
+  clerkUserId: string,
+  limit = 5,
+  embeddingModel?: string,
+) {
+  return db
+    .select({
+      id: aiUserMemories.id,
+      kind: aiUserMemories.kind,
+      title: aiUserMemories.title,
+      content: aiUserMemories.content,
+      updatedAt: aiUserMemories.updatedAt,
+    })
+    .from(aiUserMemories)
+    .where(
+      and(
+        eq(aiUserMemories.clerkUserId, clerkUserId),
+        embeddingModel
+          ? or(
+              isNull(aiUserMemories.embedding),
+              isNull(aiUserMemories.embeddingModel),
+              ne(aiUserMemories.embeddingModel, embeddingModel),
+            )
+          : isNull(aiUserMemories.embedding),
+      ),
+    )
+    .orderBy(desc(aiUserMemories.updatedAt))
+    .limit(Math.min(Math.max(limit, 1), 10));
 }
 
 export async function forgetUserMemory(db: Database, clerkUserId: string, id: string) {
@@ -140,7 +218,18 @@ export async function clearUserMemories(db: Database, clerkUserId: string) {
 
 function tokens(value: string) {
   const stopWords = new Set([
-    'and', 'are', 'for', 'from', 'has', 'have', 'please', 'that', 'the', 'this', 'use', 'with',
+    'and',
+    'are',
+    'for',
+    'from',
+    'has',
+    'have',
+    'please',
+    'that',
+    'the',
+    'this',
+    'use',
+    'with',
   ]);
   return new Set(
     normalizeMemoryKey(value)
@@ -173,17 +262,81 @@ export function rankRelevantMemories<T extends { title: string; content: string 
     .map((item) => item.memory);
 }
 
+export function rankHybridMemories<T extends { id: string; title: string; content: string }>(
+  memories: T[],
+  query: string,
+  semantic: { id: string; distance: number }[],
+  limit = 6,
+) {
+  const lexical = rankRelevantMemories(memories, query, limit);
+  const lexicalRanks = new Map(lexical.map((memory, index) => [memory.id, index]));
+  const semanticDistances = new Map(
+    semantic
+      .filter(
+        (item) => Number.isFinite(item.distance) && item.distance < SEMANTIC_DISTANCE_THRESHOLD,
+      )
+      .map((item) => [item.id, item.distance]),
+  );
+  return memories
+    .map((memory, index) => {
+      const distance = semanticDistances.get(memory.id);
+      const lexicalRank = lexicalRanks.get(memory.id);
+      const semanticScore = distance === undefined ? 0 : (1 - distance) * 2;
+      const lexicalScore =
+        lexicalRank === undefined ? 0 : 1 - lexicalRank / Math.max(lexical.length, 1);
+      return { memory, score: semanticScore + lexicalScore, index };
+    })
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .slice(0, limit)
+    .map((item) => item.memory);
+}
+
 export async function findRelevantUserMemories(
   db: Database,
   clerkUserId: string,
   query: string,
+  queryEmbedding?:
+    | { values: number[]; model: string }
+    | null
+    | Promise<{ values: number[]; model: string } | null>
+    | (() => Promise<{ values: number[]; model: string } | null>),
 ) {
-  const [settings, memories] = await Promise.all([
-    getMemorySettings(db, clerkUserId),
-    listUserMemories(db, clerkUserId, { limit: 50 }),
-  ]);
+  const settings = await getMemorySettings(db, clerkUserId);
   if (!settings.enabled) return [];
-  return rankRelevantMemories(memories, query);
+  const [memories, resolvedEmbedding] = await Promise.all([
+    listUserMemories(db, clerkUserId, { limit: 50 }),
+    typeof queryEmbedding === 'function' ? queryEmbedding() : queryEmbedding,
+  ]);
+  if (!resolvedEmbedding || resolvedEmbedding.values.length !== 1_536) {
+    return rankRelevantMemories(memories, query);
+  }
+  try {
+    const distance = cosineDistance(aiUserMemories.embedding, resolvedEmbedding.values);
+    const semantic = await db
+      .select({ id: aiUserMemories.id, distance })
+      .from(aiUserMemories)
+      .where(
+        and(
+          eq(aiUserMemories.clerkUserId, clerkUserId),
+          eq(aiUserMemories.embeddingModel, resolvedEmbedding.model),
+          isNotNull(aiUserMemories.embedding),
+          lt(distance, SEMANTIC_DISTANCE_THRESHOLD),
+        ),
+      )
+      .orderBy(asc(distance))
+      .limit(12);
+    return rankHybridMemories(
+      memories,
+      query,
+      semantic.map((item) => ({ id: item.id, distance: Number(item.distance) })),
+    );
+  } catch (error) {
+    console.error('[memory:semantic-retrieval]', {
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return rankRelevantMemories(memories, query);
+  }
 }
 
 export function serializeMemory(memory: typeof aiUserMemories.$inferSelect) {

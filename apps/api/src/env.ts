@@ -1,4 +1,8 @@
+import type { ApiEnv } from '@finora/env/api';
+
 import { createApiEnv } from '@finora/env/api';
+
+export type AppApiEnv = ApiEnv & { AI?: Ai };
 
 export function getApiEnv(bindings: Env) {
   const optionalBindings = bindings as Env & {
@@ -18,7 +22,7 @@ export function getApiEnv(bindings: Env) {
     WELCOME_EMAIL_REDIRECT_TO?: string;
   };
 
-  return createApiEnv({
+  const env = createApiEnv({
     ENVIRONMENT: bindings.ENVIRONMENT,
     DATABASE_URL: bindings.DATABASE_URL,
     CLERK_SECRET_KEY: bindings.CLERK_SECRET_KEY,
@@ -44,5 +48,7 @@ export function getApiEnv(bindings: Env) {
     WELCOME_EMAIL_CTA_URL: bindings.WELCOME_EMAIL_CTA_URL,
     WEWIRE_API_KEY: bindings.WEWIRE_API_KEY,
     WEWIRE_WEBHOOK_SECRET: bindings.WEWIRE_WEBHOOK_SECRET,
-  });
+  }) as AppApiEnv;
+
+  return { ...env, AI: bindings.AI };
 }

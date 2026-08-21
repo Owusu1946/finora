@@ -13,6 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { halfvec } from 'drizzle-orm/pg-core/columns/vector_extension/halfvec';
 
 export const accountTypeEnum = pgEnum('account_type', ['personal', 'business']);
 export const aiChatMessageRoleEnum = pgEnum('ai_chat_message_role', ['user', 'assistant']);
@@ -169,7 +170,9 @@ export const aiMemorySettings = pgTable('ai_memory_settings', {
 export const aiUserMemories = pgTable(
   'ai_user_memories',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
     kind: aiMemoryKindEnum('kind').notNull(),
     title: text('title').notNull(),
@@ -178,6 +181,8 @@ export const aiUserMemories = pgTable(
     source: text('source').notNull().default('explicit'),
     sourceChatId: text('source_chat_id'),
     sourceMessageId: text('source_message_id'),
+    embedding: halfvec('embedding', { dimensions: 1024 }),
+    embeddingModel: text('embedding_model'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -276,7 +281,9 @@ export type GmailIntegrationRow = typeof gmailIntegrations.$inferSelect;
 export const driveIntegrations = pgTable(
   'drive_integrations',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
     googleSubject: text('google_subject').notNull(),
     email: text('email').notNull(),
@@ -396,16 +403,25 @@ export const invoices = pgTable(
 );
 
 export const payrollAttachmentStatusEnum = pgEnum('payroll_attachment_status', [
-  'uploaded', 'inspecting', 'ready', 'failed', 'expired',
+  'uploaded',
+  'inspecting',
+  'ready',
+  'failed',
+  'expired',
 ]);
 export const payrollImportStatusEnum = pgEnum('payroll_import_status', [
-  'inspecting', 'ready', 'blocked', 'failed',
+  'inspecting',
+  'ready',
+  'blocked',
+  'failed',
 ]);
 
 export const payrollAttachments = pgTable(
   'payroll_attachments',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
     objectKey: text('object_key').notNull(),
     fileName: text('file_name').notNull(),
@@ -427,9 +443,13 @@ export const payrollAttachments = pgTable(
 export const payrollImports = pgTable(
   'payroll_imports',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
-    attachmentId: uuid('attachment_id').notNull().references(() => payrollAttachments.id, { onDelete: 'cascade' }),
+    attachmentId: uuid('attachment_id')
+      .notNull()
+      .references(() => payrollAttachments.id, { onDelete: 'cascade' }),
     status: payrollImportStatusEnum('status').notNull().default('inspecting'),
     sourceName: text('source_name').notNull(),
     period: text('period'),
@@ -451,8 +471,12 @@ export const payrollImports = pgTable(
 export const payrollImportRows = pgTable(
   'payroll_import_rows',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-    importId: uuid('import_id').notNull().references(() => payrollImports.id, { onDelete: 'cascade' }),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    importId: uuid('import_id')
+      .notNull()
+      .references(() => payrollImports.id, { onDelete: 'cascade' }),
     rowId: text('row_id').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -461,15 +485,23 @@ export const payrollImportRows = pgTable(
 );
 
 export const payrollEditProposalStatusEnum = pgEnum('payroll_edit_proposal_status', [
-  'pending', 'applied', 'cancelled', 'expired', 'stale',
+  'pending',
+  'applied',
+  'cancelled',
+  'expired',
+  'stale',
 ]);
 
 export const payrollEditProposals = pgTable(
   'payroll_edit_proposals',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
-    importId: uuid('import_id').notNull().references(() => payrollImports.id, { onDelete: 'cascade' }),
+    importId: uuid('import_id')
+      .notNull()
+      .references(() => payrollImports.id, { onDelete: 'cascade' }),
     baseVersion: integer('base_version').notNull(),
     status: payrollEditProposalStatusEnum('status').notNull().default('pending'),
     changes: jsonb('changes').$type<unknown[]>().notNull(),
@@ -479,21 +511,31 @@ export const payrollEditProposals = pgTable(
     appliedAt: timestamp('applied_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('payroll_edit_proposals_user_created_index').on(table.clerkUserId, table.createdAt)],
+  (table) => [
+    index('payroll_edit_proposals_user_created_index').on(table.clerkUserId, table.createdAt),
+  ],
 );
 
 export const payrollAuditEvents = pgTable(
   'payroll_audit_events',
   {
-    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
-    importId: uuid('import_id').notNull().references(() => payrollImports.id, { onDelete: 'cascade' }),
-    proposalId: uuid('proposal_id').references(() => payrollEditProposals.id, { onDelete: 'set null' }),
+    importId: uuid('import_id')
+      .notNull()
+      .references(() => payrollImports.id, { onDelete: 'cascade' }),
+    proposalId: uuid('proposal_id').references(() => payrollEditProposals.id, {
+      onDelete: 'set null',
+    }),
     action: text('action').notNull(),
     beforeState: jsonb('before_state').$type<Record<string, unknown> | null>(),
     afterState: jsonb('after_state').$type<Record<string, unknown> | null>(),
     metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('payroll_audit_events_user_created_index').on(table.clerkUserId, table.createdAt)],
+  (table) => [
+    index('payroll_audit_events_user_created_index').on(table.clerkUserId, table.createdAt),
+  ],
 );
