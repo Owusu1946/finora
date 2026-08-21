@@ -15,6 +15,7 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
+import { BlurView } from 'expo-blur';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -22,6 +23,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 import '../global.css';
@@ -100,6 +102,22 @@ export const unstable_settings = {
 void SplashScreen.preventAutoHideAsync().catch(() => {
   // Already prevented / unavailable in some environments.
 });
+
+function StatusBarBackdrop() {
+  const { top } = useSafeAreaInsets();
+
+  if (top === 0) return null;
+
+  return (
+    <BlurView
+      pointerEvents='none'
+      tint='systemUltraThinMaterial'
+      intensity={80}
+      experimentalBlurMethod='dimezisBlurView'
+      style={[styles.statusBarBackdrop, { height: top }]}
+    />
+  );
+}
 
 function RootNavigator() {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
@@ -389,6 +407,7 @@ function RootApp() {
           onLayout={onOverlayLayout}
         />
       ) : null}
+      <StatusBarBackdrop />
       {/* Covers UI in App Switcher / Recents so balances aren't previewed. */}
       <AppSwitcherPrivacy />
     </GestureHandlerRootView>
@@ -396,6 +415,13 @@ function RootApp() {
 }
 
 const styles = StyleSheet.create({
+  statusBarBackdrop: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    left: 0,
+    zIndex: 80,
+  },
   securityCover: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 90,
