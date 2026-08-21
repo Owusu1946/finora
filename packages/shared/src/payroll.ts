@@ -94,6 +94,27 @@ export const ListPayrollImportsInputSchema = z.object({
 }).strict();
 
 export const ApplyPayrollChangesInputSchema = z.object({ proposalId: z.string().uuid() }).strict();
+export const BulkDeletePayrollRowsInputSchema = z.object({
+  rowIds: z.array(boundedText(80)).min(1).max(500),
+  version: z.number().int().positive(),
+}).strict().superRefine(({ rowIds }, ctx) => {
+  if (new Set(rowIds).size !== rowIds.length) {
+    ctx.addIssue({ code: 'custom', message: 'Row IDs must be unique.' });
+  }
+});
+export const ArchivePayrollImportInputSchema = z.object({
+  version: z.number().int().positive(),
+}).strict();
+export const BulkArchivePayrollImportsInputSchema = z.object({
+  imports: z.array(z.object({
+    importId: z.string().uuid(),
+    version: z.number().int().positive(),
+  }).strict()).min(1).max(50),
+}).strict().superRefine(({ imports }, ctx) => {
+  if (new Set(imports.map(({ importId }) => importId)).size !== imports.length) {
+    ctx.addIssue({ code: 'custom', message: 'Payroll import IDs must be unique.' });
+  }
+});
 export type PayrollInspectionResponse = z.infer<typeof PayrollInspectionResponseSchema>;
 
 export const PayrollAttachmentReferenceSchema = z.object({

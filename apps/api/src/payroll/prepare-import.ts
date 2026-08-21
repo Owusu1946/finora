@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import { createDb } from '../db/client';
 import { payrollImportRows, payrollImports } from '../db/schema';
@@ -29,6 +29,7 @@ export async function preparePayrollImport(input: {
       and(
         eq(payrollImports.id, input.importId),
         eq(payrollImports.clerkUserId, input.userId),
+        isNull(payrollImports.deletedAt),
       ),
     )
     .limit(1);

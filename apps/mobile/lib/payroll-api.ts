@@ -14,6 +14,7 @@ export type PayrollImport = {
   currency: string;
   blockingIssues: Array<{ code?: string; message?: string; rowId?: string; blocking?: boolean }>;
   warnings: Array<{ code?: string; message?: string; rowId?: string; blocking?: boolean }>;
+  version: number;
   rows: PayrollImportRow[];
   createdAt: string;
   updatedAt: string;
@@ -62,6 +63,29 @@ export async function deletePayrollRow(importId: string, rowId: string, getToken
   const payload = await payrollRequest(`/imports/${encodeURIComponent(importId)}/rows/${encodeURIComponent(rowId)}`, getToken, { method: 'DELETE' });
   if (!payload.import) throw new Error('Payroll delete returned no import.');
   return payload.import;
+}
+
+export async function bulkDeletePayrollRows(importId: string, rowIds: string[], version: number, getToken: GetToken) {
+  const payload = await payrollRequest(`/imports/${encodeURIComponent(importId)}/rows/bulk-delete`, getToken, {
+    method: 'POST',
+    body: JSON.stringify({ rowIds, version }),
+  });
+  if (!payload.import) throw new Error('Payroll bulk delete returned no import.');
+  return payload.import;
+}
+
+export async function archivePayrollImport(importId: string, version: number, getToken: GetToken) {
+  await payrollRequest(`/imports/${encodeURIComponent(importId)}`, getToken, {
+    method: 'DELETE',
+    body: JSON.stringify({ version }),
+  });
+}
+
+export async function bulkArchivePayrollImports(imports: Array<{ importId: string; version: number }>, getToken: GetToken) {
+  await payrollRequest('/imports/bulk-archive', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ imports }),
+  });
 }
 
 export async function applyPayrollProposal(proposalId: string, getToken: GetToken) {
