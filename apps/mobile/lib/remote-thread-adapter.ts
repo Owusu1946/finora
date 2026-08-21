@@ -107,8 +107,15 @@ export async function requestRemoteThreadTitle(
   }
 }
 
-function titleAssistantStream(title: string) {
-  return createAssistantStream((controller) => controller.appendText(title)) as AssistantStream;
+export function titleAssistantStream(title: string): AssistantStream {
+  return createAssistantStream(async (controller) => {
+    const tokens = title.split(/(\s+)/);
+    for (const token of tokens) {
+      if (!token) continue;
+      controller.appendText(token);
+      await new Promise((resolve) => setTimeout(resolve, 35));
+    }
+  }) as AssistantStream;
 }
 
 async function readCachedThreads(userId: string): Promise<RemoteThreadMetadata[]> {

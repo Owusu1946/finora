@@ -75,6 +75,7 @@ import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { createFinoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
+import { createLocalThreadListAdapter } from '@/lib/local-thread-adapter';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { PasscodeGateProvider, usePasscodeGate } from '@/lib/passcode-gate';
@@ -220,10 +221,7 @@ function InstantThreadTitleSync({ config }: { config?: RemoteThreadConfig }) {
       const itemState = threadItem?.getState?.();
       if (itemState?.title && itemState.title !== 'New chat') return;
 
-      const optimisticTitle = fallbackThreadTitle(messages);
-      if (threadItem?.rename) {
-        void threadItem.rename(optimisticTitle);
-      } else if (threadItem?.generateTitle) {
+      if (threadItem?.generateTitle) {
         void threadItem.generateTitle();
       }
 
@@ -235,10 +233,10 @@ function InstantThreadTitleSync({ config }: { config?: RemoteThreadConfig }) {
 
       const generated = await requestRemoteThreadTitle(config, remoteId, text);
       if (generated) {
-        if (threadItem?.rename) {
-          void threadItem.rename(generated);
-        } else if (threadItem?.generateTitle) {
+        if (threadItem?.generateTitle) {
           void threadItem.generateTitle();
+        } else if (threadItem?.rename) {
+          void threadItem.rename(generated);
         }
       }
     })();
@@ -251,7 +249,7 @@ function FinoraRuntimeContent({
   runtime,
   remoteConfig,
 }: {
-  runtime: ReturnType<typeof useLocalRuntime>;
+  runtime: ReturnType<typeof useRemoteThreadListRuntime>;
   remoteConfig?: RemoteThreadConfig;
 }) {
   return (
@@ -297,8 +295,14 @@ function FinoraRuntimeContent({
 }
 
 function LocalFinoraAssistantRuntime({ getToken }: { getToken: () => Promise<string | null> }) {
-  const adapter = useMemo(() => createFinoraChatAdapter(getToken), [getToken]);
-  const runtime = useLocalRuntime(adapter);
+  const threadListAdapter = useMemo(() => createLocalThreadListAdapter(), []);
+  const runtime = useRemoteThreadListRuntime({
+    adapter: threadListAdapter,
+    runtimeHook: function LocalThreadRuntimeHook() {
+      const adapter = useMemo(() => createFinoraChatAdapter(getToken), [getToken]);
+      return useLocalRuntime(adapter);
+    },
+  });
   return <FinoraRuntimeContent runtime={runtime} />;
 }
 
