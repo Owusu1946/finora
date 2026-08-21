@@ -17,6 +17,7 @@ import { chats } from './routes/chats';
 import { emailWebhooks } from './routes/email-webhooks';
 import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
 import { invoiceRoutes } from './routes/invoices';
+import { memories } from './routes/memories';
 import { payroll } from './routes/payroll';
 import { v1 } from './routes/v1';
 
@@ -67,6 +68,7 @@ app.route('/v1/integrations/gmail', gmailIntegrations);
 app.route('/v1/integrations/calendar', calendarIntegrations);
 app.route('/v1/integrations/drive', driveIntegrations);
 app.route('/v1/invoices', invoiceRoutes);
+app.route('/v1/memories', memories);
 app.route('/v1/payroll', payroll);
 app.route('/v1', v1);
 

@@ -21,6 +21,12 @@ export const aiChatTitleStatusEnum = pgEnum('ai_chat_title_status', [
   'generated',
   'fallback',
 ]);
+export const aiMemoryKindEnum = pgEnum('ai_memory_kind', [
+  'preference',
+  'contact',
+  'supplier',
+  'note',
+]);
 export const transactionalEmailStatusEnum = pgEnum('transactional_email_status', [
   'queued',
   'sending',
@@ -138,6 +144,50 @@ export const aiChatMessages = pgTable(
   (table) => [
     uniqueIndex('ai_chat_messages_chat_message_unique').on(table.chatId, table.messageId),
     uniqueIndex('ai_chat_messages_chat_position_unique').on(table.chatId, table.position),
+  ],
+);
+
+export const aiChatContexts = pgTable('ai_chat_contexts', {
+  chatId: text('chat_id')
+    .primaryKey()
+    .references(() => aiChats.id, { onDelete: 'cascade' }),
+  summary: text('summary').notNull(),
+  summarizedThroughPosition: integer('summarized_through_position').notNull(),
+  summarizedThroughMessageId: text('summarized_through_message_id').notNull(),
+  sourceMessageCount: integer('source_message_count').notNull(),
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const aiMemorySettings = pgTable('ai_memory_settings', {
+  clerkUserId: text('clerk_user_id').primaryKey(),
+  enabled: boolean('enabled').notNull().default(true),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const aiUserMemories = pgTable(
+  'ai_user_memories',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    kind: aiMemoryKindEnum('kind').notNull(),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    normalizedKey: text('normalized_key').notNull(),
+    source: text('source').notNull().default('explicit'),
+    sourceChatId: text('source_chat_id'),
+    sourceMessageId: text('source_message_id'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('ai_user_memories_user_kind_key_unique').on(
+      table.clerkUserId,
+      table.kind,
+      table.normalizedKey,
+    ),
+    index('ai_user_memories_user_updated_index').on(table.clerkUserId, table.updatedAt),
   ],
 );
 

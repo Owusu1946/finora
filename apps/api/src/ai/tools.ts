@@ -24,6 +24,14 @@ import {
   GetDriveFileInputSchema,
   ProposePayrollChangesInputSchema,
   ListPayrollImportsInputSchema,
+  CreateMemoryInputSchema,
+  ForgetMemoryInputSchema,
+  ListMemoriesInputSchema,
+  UpdateMemoryInputSchema,
+  RememberMemoryDetailsInputSchema,
+  type CreateMemoryInput,
+  type MemoryKind,
+  type UpdateMemoryInput,
 } from '@finora/shared';
 import { tool, zodSchema, type ToolSet } from 'ai';
 
@@ -57,6 +65,13 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'prepare_supplier_payment',
   'prepare_recurring',
   'create_financial_plan',
+  'remember_preference',
+  'remember_contact',
+  'remember_supplier',
+  'remember_note',
+  'list_memories',
+  'update_memory',
+  'forget_memory',
 ] as const;
 
 export type ChatAgentToolName = (typeof CHAT_AGENT_TOOL_NAMES)[number];
@@ -186,6 +201,12 @@ type PayrollToolReader = {
   listImports: (input: { query?: string; importId?: string; limit: number }) => Promise<unknown>;
   proposeChanges: (input: unknown) => Promise<unknown>;
 };
+type MemoryToolReader = {
+  remember: (input: CreateMemoryInput) => Promise<unknown>;
+  list: (input: { query?: string; kind?: MemoryKind; limit: number }) => Promise<unknown>;
+  update: (input: UpdateMemoryInput) => Promise<unknown>;
+  forget: (id: string) => Promise<unknown>;
+};
 
 function gmailToolFailure(error: unknown, operation: string) {
   const message = error instanceof Error ? error.message : '';
@@ -204,8 +225,44 @@ export function createChatAgentTools(
   calendar?: CalendarToolReader,
   drive?: DriveToolReader,
   payroll?: PayrollToolReader,
+  memory?: MemoryToolReader,
 ) {
   return {
+    remember_preference: tool({
+      description: 'Store a preference only when the user explicitly asks Finora to remember or save it for future chats. Never infer consent from ordinary conversation.',
+      inputSchema: zodSchema(RememberMemoryDetailsInputSchema),
+      execute: async (input) => memory?.remember({ ...input, kind: 'preference' }) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    remember_contact: tool({
+      description: 'Store non-sensitive context about a contact only when the user explicitly asks Finora to remember it. Never store full payment credentials or authentication secrets.',
+      inputSchema: zodSchema(RememberMemoryDetailsInputSchema),
+      execute: async (input) => memory?.remember({ ...input, kind: 'contact' }) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    remember_supplier: tool({
+      description: 'Store non-sensitive supplier context only when the user explicitly asks Finora to remember it. Current invoices and payout details must still be verified through tools.',
+      inputSchema: zodSchema(RememberMemoryDetailsInputSchema),
+      execute: async (input) => memory?.remember({ ...input, kind: 'supplier' }) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    remember_note: tool({
+      description: 'Store a general financial-operations note only when the user explicitly asks Finora to remember it across chats. Never store secrets or payment authorization.',
+      inputSchema: zodSchema(RememberMemoryDetailsInputSchema),
+      execute: async (input) => memory?.remember({ ...input, kind: 'note' }) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    list_memories: tool({
+      description: 'List saved user memories when the user asks what Finora remembers or needs to identify a memory before updating or forgetting it.',
+      inputSchema: zodSchema(ListMemoriesInputSchema),
+      execute: async (input) => memory?.list(input) ?? { enabled: false, memories: [] },
+    }),
+    update_memory: tool({
+      description: 'Update an exact saved memory only after resolving its ID with list_memories. Use only when the user explicitly requests a correction.',
+      inputSchema: zodSchema(UpdateMemoryInputSchema),
+      execute: async (input) => memory?.update(input) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    forget_memory: tool({
+      description: 'Delete an exact saved memory only when the user explicitly asks Finora to forget it. Resolve the ID with list_memories when needed.',
+      inputSchema: zodSchema(ForgetMemoryInputSchema),
+      execute: async ({ id }) => memory?.forget(id) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
     list_payroll_imports: tool({
       description: 'Search user-owned payroll rows by the employee name or source employee ID mentioned by the user before proposing an edit or deletion. Use query whenever a name or ID is available; results are bounded. Never guess a row.',
       inputSchema: zodSchema(ListPayrollImportsInputSchema),
