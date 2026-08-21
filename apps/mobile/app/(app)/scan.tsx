@@ -1,7 +1,8 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useCallback, useState } from 'react';
 import {
@@ -104,6 +105,33 @@ export default function ScanScreen() {
     setPhase('scan');
   };
 
+  const scanFromLibrary = async () => {
+    haptics.selection();
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError('Allow photo access to scan a QR from your library.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+      allowsEditing: false,
+    });
+    if (result.canceled || !result.assets[0]?.uri) return;
+
+    setLocked(true);
+    setError(null);
+    const codes = await scanFromURLAsync(result.assets[0].uri, ['qr']);
+    if (!codes[0]?.data) {
+      haptics.error();
+      setError('No QR code found in that image. Try another photo.');
+      setLocked(false);
+      return;
+    }
+    applyPayload(codes[0].data);
+  };
+
   const onContinueAmount = () => {
     if (!parsed || amount == null || amount <= 0) return;
     haptics.selection();
@@ -167,7 +195,7 @@ export default function ScanScreen() {
             onPress={openScanner}
             style={styles.linkBtn}
           >
-            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Back to camera</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
           </Pressable>
         ) : null}
       </>
@@ -224,14 +252,14 @@ export default function ScanScreen() {
     );
   } else {
     content = (
-      <>
-        <WizardStepHeader
-          step={1}
-          total={2}
-          title='Scan to pay'
-          subtitle='Point at a Finora receive QR or payment-request code.'
-        />
-        <View style={[styles.cameraWrap, { borderColor: colors.border }]}>
+      <View style={styles.scannerShell}>
+        <View style={styles.scannerTop}>
+          <Text style={[styles.scannerTitle, { color: '#fff' }]}>Scan to pay</Text>
+          <Text style={[styles.scannerSubtitle, { color: 'rgba(255,255,255,0.72)' }]}>
+            Point at a Finora QR code
+          </Text>
+        </View>
+        <View style={styles.cameraWrap}>
           <CameraView
             style={StyleSheet.absoluteFill}
             facing='back'
@@ -248,21 +276,27 @@ export default function ScanScreen() {
             <View style={[styles.reticleCorner, styles.br, { borderColor: colors.foreground }]} />
           </View>
         </View>
-        {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
-        <Pressable
-          onPress={openPayloadEntry}
-          style={styles.payloadLink}
-        >
-          <Text style={[styles.payloadLinkText, { color: colors.foreground }]}>
-            Or enter payload
-          </Text>
-          <Icon
-            name='chevron-right'
-            size={18}
-            color={colors.mutedForeground}
-          />
-        </Pressable>
-      </>
+        {error ? <Text style={[styles.error, { color: '#ffb4ab' }]}>{error}</Text> : null}
+        <View style={styles.scannerActions}>
+          <Pressable
+            accessibilityLabel='Choose QR from photo library'
+            onPress={() => void scanFromLibrary()}
+            style={styles.libraryButton}
+          >
+            <Icon
+              name='image'
+              size={27}
+              color='#fff'
+            />
+          </Pressable>
+          <Pressable
+            onPress={openPayloadEntry}
+            style={styles.myCodeButton}
+          >
+            <Text style={styles.myCodeText}>My code</Text>
+          </Pressable>
+        </View>
+      </View>
     );
   }
 
@@ -489,10 +523,10 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 1,
     maxHeight: 360,
-    borderRadius: Radius.card,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 26,
     overflow: 'hidden',
     alignSelf: 'center',
+    backgroundColor: '#151515',
   },
   reticle: {
     ...StyleSheet.absoluteFillObject,
@@ -587,4 +621,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 18,
   },
+  scannerShell: {
+    flex: 1,
+    minHeight: 620,
+    marginHorizontal: -16,
+    marginTop: -8,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+    backgroundColor: '#101010',
+    gap: 18,
+  },
+  scannerTop: { gap: 4, alignItems: 'center' },
+  scannerTitle: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '700' },
+  scannerSubtitle: { fontFamily: 'DMSans_400Regular', fontSize: 15 },
+  scannerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 64,
+    position: 'relative',
+  },
+  libraryButton: {
+    position: 'absolute',
+    left: 4,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  myCodeButton: {
+    backgroundColor: '#fff',
+    borderRadius: 999,
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+  },
+  myCodeText: { color: '#111', fontFamily: 'DMSans_400Regular', fontSize: 17, fontWeight: '700' },
 });
