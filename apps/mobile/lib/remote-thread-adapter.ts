@@ -59,11 +59,13 @@ function toMetadata(item: {
 
 export function firstThreadUserText(messages: readonly ThreadMessage[]) {
   const firstUser = messages.find((message) => message.role === 'user');
-  return firstUser?.content
+  const raw = firstUser?.content
     .flatMap((part) => (part.type === 'text' ? [part.text] : []))
     .join(' ')
     .replaceAll(/\s+/g, ' ')
     .trim();
+  if (!raw) return '';
+  return raw.replace(/\[Finora uploaded attachment ID:[^\]]+\]/gi, '').trim();
 }
 
 export function fallbackThreadTitle(messages: readonly ThreadMessage[]) {
@@ -169,7 +171,14 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       chats: Array<Parameters<typeof toMetadata>[0]>;
       nextCursor: string | null;
     };
-    const threads = payload.chats.map(toMetadata);
+    const threads = payload.chats.map((item) => {
+      const meta = toMetadata(item);
+      const gen = generatedTitles.get(meta.remoteId);
+      if (gen && (!meta.title || meta.title === 'New chat')) {
+        return { ...meta, title: gen };
+      }
+      return meta;
+    });
     if (!query) {
       cachedList = {
         threads,
@@ -194,12 +203,18 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       if (!params?.after) {
         const persisted = await readCachedThreads(config.userId);
         if (persisted.length > 0) {
+          const merged = persisted.map((thread) => {
+            const gen = generatedTitles.get(thread.remoteId);
+            return gen && (!thread.title || thread.title === 'New chat')
+              ? { ...thread, title: gen }
+              : thread;
+          });
           cachedList = {
-            threads: persisted,
+            threads: merged,
             expiresAt: Date.now() + THREAD_LIST_CACHE_TTL_MS,
           };
           void loadNetworkList(query).catch(() => undefined);
-          return { threads: persisted };
+          return { threads: merged };
         }
       }
 
@@ -232,6 +247,15 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     },
 
     async rename(remoteId, newTitle) {
+      generatedTitles.set(remoteId, newTitle);
+      if (cachedList) {
+        cachedList = {
+          ...cachedList,
+          threads: cachedList.threads.map((thread) =>
+            thread.remoteId === remoteId ? { ...thread, title: newTitle, lastMessageAt: new Date() } : thread,
+          ),
+        };
+      }
       await request(`/v1/chats/${encodeURIComponent(remoteId)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -267,6 +291,7 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
 
     async generateTitle(remoteId, messages) {
       const title = generatedTitles.get(remoteId) ?? fallbackThreadTitle(messages);
+      generatedTitles.set(remoteId, title);
       if (cachedList) {
         cachedList = {
           ...cachedList,

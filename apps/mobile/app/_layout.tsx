@@ -83,6 +83,7 @@ import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import {
   createRemoteThreadAdapter,
   createRemoteThreadRuntimeAdapters,
+  fallbackThreadTitle,
   firstThreadUserText,
   requestRemoteThreadTitle,
   type RemoteThreadConfig,
@@ -200,28 +201,46 @@ function RootNavigator() {
   );
 }
 
-function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
+function InstantThreadTitleSync({ config }: { config?: RemoteThreadConfig }) {
   const aui = useAui();
   const startedRef = useRef(new Set<string>());
 
   useAuiEvent('thread.runStart', () => {
     void (async () => {
       const messages = aui.thread().getState().messages;
-      if (messages.filter((message) => message.role === 'user').length !== 1) return;
-      const message = firstThreadUserText(messages);
-      if (!message) return;
+      const userMessages = messages.filter((message) => message.role === 'user');
+      if (userMessages.length !== 1) return;
+      const text = firstThreadUserText(messages);
+      if (!text) return;
 
-      const item = aui.threadListItem.getState();
-      if (item.title && item.title !== 'New chat') return;
-      const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
-      if (startedRef.current.has(remoteId)) return;
+      const mainThreadId = aui.threads?.getState?.()?.mainThreadId;
+      if (!mainThreadId) return;
+
+      const threadItem = aui.threads.item({ id: mainThreadId });
+      const itemState = threadItem?.getState?.();
+      if (itemState?.title && itemState.title !== 'New chat') return;
+
+      const optimisticTitle = fallbackThreadTitle(messages);
+      if (threadItem?.rename) {
+        void threadItem.rename(optimisticTitle);
+      } else if (threadItem?.generateTitle) {
+        void threadItem.generateTitle();
+      }
+
+      if (!config) return;
+
+      const remoteId = itemState?.remoteId ?? (await threadItem?.initialize?.())?.remoteId;
+      if (!remoteId || startedRef.current.has(remoteId)) return;
       startedRef.current.add(remoteId);
 
-      // assistant-ui normally generates titles on runEnd. Trigger it now so
-      // the deterministic local title reaches the drawer before the model responds.
-      aui.threadListItem.generateTitle();
-      const generated = await requestRemoteThreadTitle(config, remoteId, message);
-      if (generated) aui.threadListItem.generateTitle();
+      const generated = await requestRemoteThreadTitle(config, remoteId, text);
+      if (generated) {
+        if (threadItem?.rename) {
+          void threadItem.rename(generated);
+        } else if (threadItem?.generateTitle) {
+          void threadItem.generateTitle();
+        }
+      }
     })();
   });
 
@@ -237,7 +256,7 @@ function FinoraRuntimeContent({
 }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      {remoteConfig ? <InstantRemoteTitleSync config={remoteConfig} /> : null}
+      <InstantThreadTitleSync config={remoteConfig} />
       <PreparePaymentToolUI />
       <FundAccountToolUI />
       <ListReceiveMethodsToolUI />
