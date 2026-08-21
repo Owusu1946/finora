@@ -147,6 +147,19 @@ export const aiChatMessages = pgTable(
   ],
 );
 
+export const aiChatContexts = pgTable('ai_chat_contexts', {
+  chatId: text('chat_id')
+    .primaryKey()
+    .references(() => aiChats.id, { onDelete: 'cascade' }),
+  summary: text('summary').notNull(),
+  summarizedThroughPosition: integer('summarized_through_position').notNull(),
+  summarizedThroughMessageId: text('summarized_through_message_id').notNull(),
+  sourceMessageCount: integer('source_message_count').notNull(),
+  version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const aiMemorySettings = pgTable('ai_memory_settings', {
   clerkUserId: text('clerk_user_id').primaryKey(),
   enabled: boolean('enabled').notNull().default(true),
