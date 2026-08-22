@@ -338,6 +338,14 @@ export default function ScanScreen() {
         >
           <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Enter payload instead</Text>
         </Pressable>
+        {user?.id ? (
+          <Pressable
+            onPress={openMyCode}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Show my code</Text>
+          </Pressable>
+        ) : null}
       </>
     );
   } else if (phase === 'amount' && parsed) {
