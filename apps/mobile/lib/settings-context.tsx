@@ -26,7 +26,7 @@ type SettingsContextValue = {
   settings: FinoraSettings;
   loading: boolean;
   refresh: () => Promise<void>;
-  update: (patch: Partial<FinoraSettings>) => Promise<void>;
+  update: (patch: Partial<FinoraSettings>) => Promise<FinoraSettings>;
   setTheme: (theme: ThemePreference) => Promise<void>;
   setLanguage: (language: AppLanguage) => Promise<void>;
   setLargerText: (largerText: boolean) => Promise<void>;
@@ -58,6 +58,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const update = useCallback(async (patch: Partial<FinoraSettings>) => {
     const next = await saveSettings(patch);
     setSettings(next);
+    return next;
   }, []);
 
   const setTheme = useCallback(

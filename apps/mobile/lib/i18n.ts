@@ -132,7 +132,8 @@ const en = {
   sec_passcode_detail_has: 'Used to approve payments and plans',
   sec_passcode_detail_none: 'Required before first send',
   sec_biometrics: 'Biometrics',
-  sec_biometrics_detail: 'Face ID / Touch ID (coming soon)',
+  sec_biometrics_detail: 'Unlock Finora and approve payments',
+  sec_biometrics_enable_failed: 'Could not enable biometrics. Enter your passcode instead.',
   sec_footer_passcode: 'Passcode and biometrics gate Approvals before money moves.',
   sec_trusted_devices: 'Trusted devices',
   sec_trusted_footer: 'Revoke a device to require sign-in again on that device.',
@@ -289,7 +290,7 @@ const fr: Record<TranslationKey, string> = {
   sec_passcode_detail_has: 'Utilis\u00e9 pour approuver les paiements et plans',
   sec_passcode_detail_none: 'Requis avant le premier envoi',
   sec_biometrics: 'Biom\u00e9trie',
-  sec_biometrics_detail: 'Face ID / Empreinte (bient\u00f4t disponible)',
+  sec_biometrics_detail: 'D\u00e9bloquez Finora et approuvez les paiements',
   sec_footer_passcode:
     'Le code secret et la biom\u00e9trie prot\u00e8gent les approbations avant d\u2019ex\u00e9cuter un paiement.',
   sec_trusted_devices: 'Appareils de confiance',
@@ -300,6 +301,8 @@ const fr: Record<TranslationKey, string> = {
   sec_revoke_confirm: 'Retirer cet appareil des appareils de confiance\u00a0?',
   sec_passcode_updated_title: 'Code secret mis \u00e0 jour',
   sec_passcode_updated_sub: 'Utilisez votre nouveau code secret pour approuver vos transactions.',
+  sec_biometrics_enable_failed:
+    "Impossible d'activer la biom\u00e9trie. Saisissez votre code secret.",
 
   // Account screen
   account_type_title: 'Type de compte',
