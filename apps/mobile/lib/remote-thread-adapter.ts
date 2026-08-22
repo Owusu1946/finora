@@ -10,8 +10,6 @@ import { createAssistantStream, type AssistantStream } from 'assistant-stream';
 import * as Crypto from 'expo-crypto';
 import { fetch } from 'expo/fetch';
 
-import type { RemoteChatBootstrap } from './remote-chat-adapter';
-
 import {
   createRemoteChatAdapter,
   createRemoteChatResumeStream,
@@ -19,7 +17,6 @@ import {
 } from './remote-chat-adapter';
 
 const optimisticChatIds = new Set<string>();
-const pendingThreadChatIds = new Map<string, () => void>();
 const pendingThreadChatIdRefs = new Map<string, { current: string | null }>();
 const generatedTitles = new Map<string, string>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
@@ -227,7 +224,6 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       optimisticChatIds.add(remoteId);
       const chatIdRef = pendingThreadChatIdRefs.get(localThreadId);
       if (chatIdRef) chatIdRef.current = remoteId;
-      pendingThreadChatIds.get(localThreadId)?.();
       return { remoteId };
     },
 
@@ -302,9 +298,14 @@ export function createRemoteThreadRuntimeAdapters(
   localThreadId: string,
   chatId: string,
 ) {
-  const chatIdRef = { current: chatId === 'pending' ? null : chatId };
+  const chatIdRef: { current: string | null } = {
+    current: chatId === 'pending' ? null : chatId,
+  };
   if (chatId === 'pending') {
     pendingThreadChatIdRefs.set(localThreadId, chatIdRef);
+  }
+  if (chatIdRef.current !== null) {
+    optimisticChatIds.delete(chatIdRef.current);
   }
   const chatConfig = {
     apiUrl: config.apiUrl,
@@ -327,9 +328,17 @@ export function createRemoteThreadRuntimeAdapters(
       };
     },
     async *resume(options: ChatModelRunOptions) {
-      const bootstrap: RemoteChatBootstrap = await loadRemoteChatBootstrap(chatConfig);
+      const activeChatId = chatIdRef.current;
+      if (!activeChatId) return;
+      const bootstrap = await loadRemoteChatBootstrap({
+        ...chatConfig,
+        chatId: activeChatId,
+      });
       if (!bootstrap.activeStreamId) return;
-      yield* createRemoteChatResumeStream(chatConfig, bootstrap.activeStreamId)(options);
+      yield* createRemoteChatResumeStream(
+        { ...chatConfig, chatId: activeChatId },
+        bootstrap.activeStreamId,
+      )(options);
     },
     async append() {},
     async update() {},
