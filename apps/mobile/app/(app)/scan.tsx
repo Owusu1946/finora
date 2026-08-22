@@ -60,9 +60,7 @@ export default function ScanScreen() {
   const [customAmount, setCustomAmount] = useState('');
   const [profileState, setProfileState] = useState<ProfileState>({ status: 'idle' });
 
-  useEffect(() => {
-    getTokenRef.current = getToken;
-  }, [getToken]);
+  getTokenRef.current = getToken;
 
   useEffect(() => {
     setProfileState({ status: user?.id ? 'loading' : 'idle' });
@@ -76,10 +74,6 @@ export default function ScanScreen() {
       .catch(() => {
         if (currentUserId === user.id) setProfileState({ status: 'error' });
       });
-
-    return () => {
-      currentUserId = null;
-    };
   }, [user?.id]);
 
   const personalMethod = useMemo(
@@ -406,11 +400,11 @@ export default function ScanScreen() {
           <Pressable
             accessibilityLabel='Choose QR from photo library'
             onPress={() => void scanFromLibrary()}
-            style={[styles.libraryButton, { backgroundColor: colors.muted }]}
+            style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
           >
             <Icon
               name='image'
-              size={27}
+              size={22}
               color={colors.foreground}
             />
           </Pressable>
@@ -418,11 +412,11 @@ export default function ScanScreen() {
             <Pressable
               accessibilityLabel='Show my receive QR code'
               onPress={openMyCode}
-              style={[styles.myCodeEntry, { backgroundColor: colors.muted }]}
+              style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
             >
               <Icon
                 name='qr'
-                size={24}
+                size={22}
                 color={colors.foreground}
               />
             </Pressable>
@@ -896,17 +890,12 @@ const styles = StyleSheet.create({
     minHeight: 64,
     gap: 12,
   },
-  libraryButton: {
+  scannerIconButton: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  myCodeEntry: {
-    width: 48,
-    height: 48,
-    borderRadius: 999,
   },
   myCodeCard: {
     alignSelf: 'center',
