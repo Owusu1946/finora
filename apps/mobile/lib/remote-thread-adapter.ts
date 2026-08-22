@@ -19,6 +19,7 @@ import {
 } from './remote-chat-adapter';
 
 const optimisticChatIds = new Set<string>();
+const pendingThreadChatIds = new Map<string, () => void>();
 const generatedTitles = new Map<string, string>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
 const TITLE_REQUEST_TIMEOUT_MS = 20_000;
@@ -220,9 +221,10 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       }
     },
 
-    async initialize() {
+    async initialize(localThreadId: string) {
       const remoteId = `chat_${Crypto.randomUUID().replaceAll('-', '')}`;
       optimisticChatIds.add(remoteId);
+      pendingThreadChatIds.get(localThreadId)?.();
       return { remoteId };
     },
 
@@ -292,8 +294,17 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
   };
 }
 
-export function createRemoteThreadRuntimeAdapters(config: RemoteThreadConfig, chatId: string) {
+export function createRemoteThreadRuntimeAdapters(
+  config: RemoteThreadConfig,
+  localThreadId: string,
+  chatId: string,
+) {
   const chatIdRef = { current: chatId === 'pending' ? null : chatId };
+  if (chatId === 'pending') {
+    pendingThreadChatIds.set(localThreadId, () => {
+      chatIdRef.current = optimisticChatIds.values().next().value ?? null;
+    });
+  }
   const chatConfig = {
     apiUrl: config.apiUrl,
     chatId,

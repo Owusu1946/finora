@@ -5,7 +5,7 @@ import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera'
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -47,6 +47,7 @@ export default function ScanScreen() {
   const aui = useAui();
   const { getToken } = useAuth();
   const { user } = useUser();
+  const getTokenRef = useRef(getToken);
   const headerHeight = useHeaderHeight();
   const [permission, requestPermission] = useCameraPermissions();
   const [phase, setPhase] = useState<Phase>('scan');
@@ -60,11 +61,15 @@ export default function ScanScreen() {
   const [profileState, setProfileState] = useState<ProfileState>({ status: 'idle' });
 
   useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
+  useEffect(() => {
     setProfileState({ status: user?.id ? 'loading' : 'idle' });
     if (!user?.id) return;
 
     let currentUserId: string | null = user.id;
-    void getUserProfile(getToken)
+    void getUserProfile(() => getTokenRef.current())
       .then((next) => {
         if (currentUserId === user.id) setProfileState({ status: 'ready', profile: next });
       })
@@ -75,7 +80,7 @@ export default function ScanScreen() {
     return () => {
       currentUserId = null;
     };
-  }, [getToken, user?.id]);
+  }, [user?.id]);
 
   const personalMethod = useMemo(
     () =>
@@ -94,14 +99,14 @@ export default function ScanScreen() {
     if (!userId) return;
     haptics.selection();
     setProfileState({ status: 'loading' });
-    void getUserProfile(getToken)
+    void getUserProfile(() => getTokenRef.current())
       .then((next) => {
         if (user?.id === userId) setProfileState({ status: 'ready', profile: next });
       })
       .catch(() => {
         if (user?.id === userId) setProfileState({ status: 'error' });
       });
-  }, [getToken, user?.id]);
+  }, [user?.id]);
 
   const finishPay = useCallback(
     (qr: ParsedPaymentQr, payAmount: number, payCurrency: string) => {
@@ -398,6 +403,17 @@ export default function ScanScreen() {
         </View>
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
         <View style={styles.scannerActions}>
+          <Pressable
+            accessibilityLabel='Choose QR from photo library'
+            onPress={() => void scanFromLibrary()}
+            style={[styles.libraryButton, { backgroundColor: colors.muted }]}
+          >
+            <Icon
+              name='image'
+              size={27}
+              color={colors.foreground}
+            />
+          </Pressable>
           {user?.id ? (
             <Pressable
               accessibilityLabel='Show my receive QR code'
@@ -411,17 +427,6 @@ export default function ScanScreen() {
               />
             </Pressable>
           ) : null}
-          <Pressable
-            accessibilityLabel='Choose QR from photo library'
-            onPress={() => void scanFromLibrary()}
-            style={[styles.libraryButton, { backgroundColor: colors.muted }]}
-          >
-            <Icon
-              name='image'
-              size={27}
-              color={colors.foreground}
-            />
-          </Pressable>
           <Pressable
             onPress={openPayloadEntry}
             style={[styles.primaryPillButton, { backgroundColor: colors.foreground }]}
@@ -889,11 +894,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 64,
-    position: 'relative',
+    gap: 12,
   },
   libraryButton: {
-    position: 'absolute',
-    left: 4,
     width: 52,
     height: 52,
     borderRadius: 16,
@@ -901,8 +904,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   myCodeEntry: {
-    position: 'absolute',
-    right: 4,
     width: 48,
     height: 48,
     borderRadius: 999,
