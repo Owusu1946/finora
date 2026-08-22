@@ -397,7 +397,7 @@ chat.get('/:id', async (c) => {
   }
 });
 
-chat.post('/', async (c) => {
+chat.post('/:id', async (c) => {
   const requestId = crypto.randomUUID();
   const env = c.get('env');
   const provider = getModelProviderConfig(env);
