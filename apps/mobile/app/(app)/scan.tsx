@@ -4,6 +4,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -15,6 +16,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 
 import type { ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
 
@@ -40,6 +42,19 @@ type ProfileState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'ready'; profile: Awaited<ReturnType<typeof getUserProfile>> };
+
+type QrActionState = {
+  busy: boolean;
+  status: string | null;
+  error: string | null;
+};
+
+const QR_ACTION_IDLE: QrActionState = { busy: false, status: null, error: null };
+
+function qrActionErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return 'That action did not complete. Please try again.';
+}
 
 export default function ScanScreen() {
   const { colors } = useTheme();
@@ -568,9 +583,38 @@ function AmountStep({
 
 function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => void }) {
   const { colors, isDark } = useTheme();
+  const qrRef = useRef<View>(null);
+  const [actionState, setActionState] = useState(QR_ACTION_IDLE);
+
+  const withQrAction = useCallback(
+    async (action: (uri: string) => Promise<string>) => {
+      if (actionState.busy) return;
+      setActionState({ ...QR_ACTION_IDLE, busy: true });
+      haptics.selection();
+
+      try {
+        const uri = await captureRef(qrRef, {
+          format: 'png',
+          quality: 1,
+          width: 720,
+          height: 720,
+        });
+        const status = await action(uri);
+        haptics.success();
+        setActionState({ ...QR_ACTION_IDLE, status });
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          setActionState({ ...QR_ACTION_IDLE, error: 'Saving was cancelled.' });
+          return;
+        }
+        haptics.error();
+        setActionState({ ...QR_ACTION_IDLE, error: qrActionErrorMessage(error) });
+      }
+    },
+    [actionState.busy],
+  );
 
   const shareCode = async () => {
-    haptics.selection();
     const message = [
       `Scan this Finora receive code for ${method.currency}.`,
       method.title,
@@ -580,7 +624,26 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
       ...method.fields.map((field) => `${field.label}: ${field.value}`),
     ].join('\n');
 
-    await Share.share({ message, title: `Finora QR · ${method.currency}` });
+    await withQrAction(async (qrUri) => {
+      await Share.share({
+        url: Platform.OS === 'ios' ? qrUri : undefined,
+        message: Platform.OS === 'ios' ? message : `${message}\n${qrUri}`,
+        title: `Finora QR · ${method.currency}`,
+      });
+      return '';
+    });
+  };
+
+  const saveCode = async () => {
+    await withQrAction(async (qrUri) => {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        throw new Error('Allow photo access in Settings to save your code.');
+      }
+      const asset = await MediaLibrary.createAssetAsync(qrUri);
+      await MediaLibrary.createAlbumAsync('Finora', asset, false).catch(() => asset);
+      return 'Saved to your photo library.';
+    });
   };
 
   return (
@@ -593,6 +656,7 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
       />
       <View style={[styles.myCodeCard, { backgroundColor: isDark ? '#fff' : colors.background }]}>
         <MockQrCode
+          ref={qrRef}
           value={method.qrPayload}
           size={230}
           color='#18181b'
@@ -602,11 +666,30 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
       <Text style={[styles.myCodeHint, { color: colors.mutedForeground }]}>
         Save or scan this code to receive GHS.
       </Text>
+      {actionState.error ? (
+        <Text style={[styles.actionFeedback, styles.actionError, { color: colors.destructive }]}>
+          {actionState.error}
+        </Text>
+      ) : actionState.status ? (
+        <Text style={[styles.actionFeedback, { color: colors.mutedForeground }]}>
+          {actionState.status}
+        </Text>
+      ) : null}
       <Pressable
         onPress={() => void shareCode()}
+        disabled={actionState.busy}
         style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
       >
-        <Text style={[styles.primaryBtnText, { color: colors.background }]}>Share code</Text>
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+          {actionState.busy ? 'Working…' : 'Share code'}
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={() => void saveCode()}
+        disabled={actionState.busy}
+        style={[styles.secondaryBtn, { borderColor: colors.border }]}
+      >
+        <Text style={[styles.secondaryBtnText, { color: colors.foreground }]}>Save image</Text>
       </Pressable>
       <Pressable
         onPress={onBack}
@@ -790,14 +873,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
   },
-  secondaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.pill,
-    paddingVertical: 12,
-  },
   linkBtn: {
     alignItems: 'center',
     paddingVertical: 8,
@@ -909,6 +984,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
+  },
+  actionFeedback: {
+    marginTop: -4,
+    textAlign: 'center',
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    paddingHorizontal: 24,
+  },
+  actionError: {
+    fontFamily: 'DMSans_600SemiBold',
+  },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: Radius.pill,
+    paddingVertical: 12,
+  },
+  secondaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
   },
   primaryPillButton: {
     borderRadius: Radius.pill,

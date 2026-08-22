@@ -1,6 +1,5 @@
-import type { ReactNode } from 'react';
-
 import QRCodeLib from 'qrcode';
+import { forwardRef, type ReactNode } from 'react';
 import { useMemo } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, G, Rect } from 'react-native-svg';
@@ -95,14 +94,10 @@ function FinderPattern({
 }
 
 /** Real QR encoding with WeWire-style rounded modules and finder patterns. */
-export function MockQrCode({
-  value,
-  size = 168,
-  color = '#18181b',
-  backgroundColor = '#ffffff',
-  centerLogo,
-  centerLogoSize,
-}: Props) {
+export const MockQrCode = forwardRef<View, Props>(function MockQrCode(
+  { value, size = 168, color = '#18181b', backgroundColor = '#ffffff', centerLogo, centerLogoSize },
+  ref,
+) {
   const ecl = centerLogo ? 'H' : 'M';
   const logoSize = centerLogoSize ?? Math.round(size * 0.22);
 
@@ -146,6 +141,7 @@ export function MockQrCode({
 
   return (
     <View
+      ref={ref}
       style={{
         width: size,
         height: size,
@@ -215,4 +211,4 @@ export function MockQrCode({
       ) : null}
     </View>
   );
-}
+});
