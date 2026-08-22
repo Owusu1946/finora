@@ -137,6 +137,15 @@ export function toPublicChatError(error: unknown, requestId: string): PublicChat
 }
 
 export function logChatError(error: unknown, requestId: string) {
+  if (isTimeoutError(error)) {
+    console.error('[chat]', {
+      requestId,
+      code: 'model_timeout',
+      errorName: error instanceof Error ? error.name : typeof error,
+      statusCode: apiCallError(error)?.statusCode,
+    });
+    return;
+  }
   if (isAbortError(error)) return;
   const publicChatError = toPublicChatError(error, requestId);
   console.error('[chat]', {

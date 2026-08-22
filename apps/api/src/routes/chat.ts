@@ -72,11 +72,11 @@ import {
   searchDriveFiles,
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
-import { inspectPayrollAttachment } from './payroll';
-import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
 import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
+import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
+import { inspectPayrollAttachment } from './payroll';
 
-const FIRST_CHUNK_TIMEOUT_MS = 30_000;
+const FIRST_CHUNK_TIMEOUT_MS = 60_000;
 const TOTAL_TIMEOUT_MS = 120_000;
 const RESUMABLE_STREAM_ID_HEADER = 'x-resumable-stream-id';
 const RESUME_INITIALIZATION_GRACE_MS = 10_000;
@@ -735,7 +735,8 @@ chat.post('/', async (c) => {
               period,
               rowIds,
             }),
-          prepareEmployee: (input) => prepareImportedEmployeePayment({ databaseUrl: env.DATABASE_URL, userId, ...input }),
+          prepareEmployee: (input) =>
+            prepareImportedEmployeePayment({ databaseUrl: env.DATABASE_URL, userId, ...input }),
           listImports: (input) => listPayrollImportsForChat(env.DATABASE_URL, userId, input),
           proposeChanges: (input) => proposePayrollChanges(env.DATABASE_URL, userId, input),
         },
