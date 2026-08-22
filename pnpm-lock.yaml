@@ -6,9 +6,6 @@ settings:
 
 overrides:
   lightningcss: 1.30.1
-  '@assistant-ui/core': 0.3.5
-  '@assistant-ui/store': 0.3.3
-  assistant-stream: 0.3.33
 
 importers:
 
@@ -222,8 +219,8 @@ importers:
         specifier: ^0.1.41
         version: 0.1.41
       assistant-stream:
-        specifier: 0.3.33
-        version: 0.3.33
+        specifier: 0.3.39
+        version: 0.3.39
       expo:
         specifier: ~54.0.37
         version: 54.0.37(@babel/core@7.29.7(supports-color@10.2.2))(@expo/dom-webview@57.0.1)(@expo/metro-runtime@6.1.2)(bufferutil@4.1.0)(expo-router@6.0.24)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)(supports-color@10.2.2)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -524,10 +521,10 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@assistant-ui/core@0.3.5':
-    resolution: {integrity: sha512-+3hFt6g+y83rbQAjbWZCvtCe4J5RIYwjcRWRly56AxIQqcXv11vFJTc4587RkOEGZTkjp8FUOA2ILEW5YoweHg==}
+  '@assistant-ui/core@0.3.15':
+    resolution: {integrity: sha512-pCeVhMmzK4xFbahtRtvjlGXDxycsvl1plgiD0M5ZyABm+QxINGnBO5GEz1hqDHQVjKlCIJDNj15PlFSkuFnidA==}
     peerDependencies:
-      '@assistant-ui/store': 0.3.3
+      '@assistant-ui/store': ^0.3.0
       '@assistant-ui/tap': ^0.9.0
       '@types/react': '*'
       assistant-cloud: ^0.1.31
@@ -553,14 +550,16 @@ packages:
       '@types/react':
         optional: true
 
-  '@assistant-ui/store@0.3.3':
-    resolution: {integrity: sha512-kNkxE6vNkaBTGwJc3NcAYB+MoDSk08ab8VLJ3wFdr4xR3Y8YApWMojMYvoy1E/VCNmvli8m3Zh+qpTqoFWRuSA==}
+  '@assistant-ui/store@0.3.10':
+    resolution: {integrity: sha512-QSFgodFt/daEjyaY09WdahNewsGPtAeY+DkSb2LM2rPN6634h13R1vJQvCtyWK5YsI5WXgzgbsctzgpIQLU0qw==}
     peerDependencies:
-      '@assistant-ui/tap': ^0.9.0
+      '@assistant-ui/tap': ^0.9.12
       '@types/react': '*'
       react: ^18 || ^19
     peerDependenciesMeta:
       '@types/react':
+        optional: true
+      react:
         optional: true
 
   '@assistant-ui/tap@0.9.13':
@@ -4649,10 +4648,12 @@ packages:
   '@xmldom/xmldom@0.8.14':
     resolution: {integrity: sha512-T4EDRUBVZYRldYApjEJiU0e1stYWaRAX7CuSnKzrpwdZKo53zGV8/pqfzV6FfwNl9YThD2OumQYvqtvjvgG7aQ==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xmldom/xmldom@0.9.11':
     resolution: {integrity: sha512-tW8bcK3hsG0/uqSnNz6TK4BkcuZSezoU7DlnYssILmZDktPnSHHuDJJFM0AJv+13gz2r0iGdrj6qqKeUnxXEDg==}
     engines: {node: '>=14.6'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@zxcvbn-ts/core@3.0.4':
     resolution: {integrity: sha512-aQeiT0F09FuJaAqNrxynlAwZ2mW/1MdXakKWNmGM1Qp/VaY6CnB/GfnMS2T8gB2231Esp1/maCWd8vTG4OuShw==}
@@ -4855,10 +4856,10 @@ packages:
   assistant-cloud@0.1.41:
     resolution: {integrity: sha512-lrH9USOoNaAWAAbujeHa/PEiWoqNQHjIPIAeeA3y3GUXOdlmTjIyR/7GbEZBKbHhm1Lyt7aAYKvdxHFkhuEbJw==}
 
-  assistant-stream@0.3.33:
-    resolution: {integrity: sha512-ZUP5hGMtucRpg1TQWCMX3Tp7iOvhG4KWrKTJYtNUCbtDvPuMod4JbBp2JJp8ThrNALXBi3OlE4ZU1a/6W11Cog==}
+  assistant-stream@0.3.39:
+    resolution: {integrity: sha512-Ad28saCwQxqaB69w4WNaS3uW5OW5BgTYnzTfbgFnz1CPXZjcWFsMrHhcJUpR4+lfYPTNal0oHEb47VUZH4Zz1g==}
     peerDependencies:
-      ioredis: ^5.10.1
+      ioredis: ^5.10.1 || ^6.0.0
       redis: ^5.12.1
     peerDependenciesMeta:
       ioredis:
@@ -9287,11 +9288,11 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@assistant-ui/core@0.3.5(@assistant-ui/store@0.3.3(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0))(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(assistant-cloud@0.1.41)(react@19.1.0)(zustand@5.0.15(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0)))':
+  '@assistant-ui/core@0.3.15(@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0))(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(assistant-cloud@0.1.41)(react@19.1.0)(zustand@5.0.15(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0)))':
     dependencies:
-      '@assistant-ui/store': 0.3.3(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)
+      '@assistant-ui/store': 0.3.10(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)
       '@assistant-ui/tap': 0.9.13(@types/react@19.1.17)(react@19.1.0)
-      assistant-stream: 0.3.33
+      assistant-stream: 0.3.39
       nanoid: 6.0.1
     optionalDependencies:
       '@types/react': 19.1.17
@@ -9304,10 +9305,10 @@ snapshots:
 
   '@assistant-ui/react-native@0.1.35(@types/react@19.1.17)(assistant-cloud@0.1.41)(react-native@0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0))':
     dependencies:
-      '@assistant-ui/core': 0.3.5(@assistant-ui/store@0.3.3(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0))(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(assistant-cloud@0.1.41)(react@19.1.0)(zustand@5.0.15(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0)))
-      '@assistant-ui/store': 0.3.3(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)
+      '@assistant-ui/core': 0.3.15(@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0))(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(assistant-cloud@0.1.41)(react@19.1.0)(zustand@5.0.15(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0)))
+      '@assistant-ui/store': 0.3.10(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)
       '@assistant-ui/tap': 0.9.13(@types/react@19.1.17)(react@19.1.0)
-      assistant-stream: 0.3.33
+      assistant-stream: 0.3.39
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.2(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.1.17)(bufferutil@4.1.0)(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6)
       zustand: 5.0.15(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0))
@@ -9320,12 +9321,12 @@ snapshots:
       - redis
       - use-sync-external-store
 
-  '@assistant-ui/store@0.3.3(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)':
+  '@assistant-ui/store@0.3.10(@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0))(@types/react@19.1.17)(react@19.1.0)':
     dependencies:
       '@assistant-ui/tap': 0.9.13(@types/react@19.1.17)(react@19.1.0)
-      react: 19.1.0
     optionalDependencies:
       '@types/react': 19.1.17
+      react: 19.1.0
 
   '@assistant-ui/tap@0.9.13(@types/react@19.1.17)(react@19.1.0)':
     optionalDependencies:
@@ -13773,12 +13774,12 @@ snapshots:
 
   assistant-cloud@0.1.41:
     dependencies:
-      assistant-stream: 0.3.33
+      assistant-stream: 0.3.39
     transitivePeerDependencies:
       - ioredis
       - redis
 
-  assistant-stream@0.3.33:
+  assistant-stream@0.3.39:
     dependencies:
       '@standard-schema/spec': 1.1.0
       nanoid: 6.0.1

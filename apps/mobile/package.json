@@ -32,7 +32,7 @@
     "@usenavii/react-native": "^0.9.1",
     "ai": "7.0.65",
     "assistant-cloud": "^0.1.41",
-    "assistant-stream": "0.3.33",
+    "assistant-stream": "0.3.39",
     "expo": "~54.0.37",
     "expo-audio": "~1.1.1",
     "expo-auth-session": "~7.0.11",
