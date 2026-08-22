@@ -143,12 +143,6 @@ export default function ScanScreen() {
   if (Platform.OS === 'web') {
     content = (
       <>
-        <WizardStepHeader
-          step={1}
-          total={2}
-          title='Enter payment payload'
-          subtitle='Paste the payload from a Finora receive QR or payment request.'
-        />
         {phase === 'amount' && parsed ? (
           <AmountStep
             parsed={parsed}
@@ -178,26 +172,13 @@ export default function ScanScreen() {
   } else if (phase === 'payload') {
     content = (
       <>
-        <WizardStepHeader
-          step={1}
-          total={2}
-          title='Enter payment payload'
-          subtitle='Paste the payload from a Finora receive QR or payment request.'
-        />
         <PasteBlock
           paste={paste}
           setPaste={setPaste}
           onSubmit={onPasteSubmit}
           error={error}
+          onScanQr={permission?.granted ? openScanner : undefined}
         />
-        {permission?.granted ? (
-          <Pressable
-            onPress={openScanner}
-            style={styles.linkBtn}
-          >
-            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
-          </Pressable>
-        ) : null}
       </>
     );
   } else if (!permission) {
@@ -297,6 +278,14 @@ export default function ScanScreen() {
           </Pressable>
         </View>
       </View>
+    );
+  }
+
+  if (phase === 'scan' && Platform.OS !== 'web') {
+    return (
+      <SwipeBackView>
+        <View style={[styles.flex, { backgroundColor: colors.background }]}>{content}</View>
+      </SwipeBackView>
     );
   }
 
@@ -427,11 +416,13 @@ function PasteBlock({
   setPaste,
   onSubmit,
   error,
+  onScanQr,
 }: {
   paste: string;
   setPaste: (v: string) => void;
   onSubmit: () => void;
   error: string | null;
+  onScanQr?: () => void;
 }) {
   const { colors } = useTheme();
 
@@ -446,8 +437,27 @@ function PasteBlock({
   };
 
   return (
-    <View style={styles.pasteBlock}>
-      <Text style={[styles.pasteLabel, { color: colors.mutedForeground }]}>Payment payload</Text>
+    <ScrollView
+      contentContainerStyle={styles.screenContent}
+      contentInsetAdjustmentBehavior='automatic'
+      keyboardShouldPersistTaps='handled'
+      keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+      showsVerticalScrollIndicator={false}
+      style={{ backgroundColor: colors.background }}
+    >
+      <View style={styles.payloadHero}>
+        <View style={[styles.payloadIconWrap, { backgroundColor: colors.muted }]}>
+          <Icon
+            name='clipboard'
+            size={24}
+            color={colors.foreground}
+          />
+        </View>
+        <Text style={[styles.payloadTitle, { color: colors.foreground }]}>Enter payload</Text>
+        <Text style={[styles.payloadSubtitle, { color: colors.mutedForeground }]}>
+          Paste the code or payload from a Finora receive QR or payment request.
+        </Text>
+      </View>
       <View style={styles.payloadInputWrap}>
         <TextInput
           value={paste}
@@ -459,7 +469,6 @@ function PasteBlock({
           placeholder='finora:momo:ghs:0550123456'
           placeholderTextColor={colors.mutedForeground}
           style={[
-            styles.input,
             styles.payloadInput,
             {
               color: colors.foreground,
@@ -490,18 +499,26 @@ function PasteBlock({
           haptics.selection();
           onSubmit();
         }}
-        style={[styles.secondaryBtn, { borderColor: colors.border }]}
+        disabled={!paste.trim()}
+        style={[
+          styles.primaryBtn,
+          { backgroundColor: colors.foreground, opacity: paste.trim() ? 1 : 0.4 },
+        ]}
       >
-        <Icon
-          name='qr'
-          size={16}
-          color={colors.foreground}
-        />
-        <Text style={{ color: colors.foreground, fontWeight: '600', marginLeft: 8 }}>
-          Use payload
-        </Text>
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>Use payload</Text>
       </Pressable>
-    </View>
+      {onScanQr ? (
+        <Pressable
+          onPress={() => {
+            haptics.selection();
+            onScanQr();
+          }}
+          style={styles.linkBtn}
+        >
+          <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+        </Pressable>
+      ) : null}
+    </ScrollView>
   );
 }
 
@@ -591,9 +608,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-  pasteBlock: {
+  payloadHero: {
+    flex: 1,
+    minHeight: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    marginTop: 4,
+    paddingTop: 24,
+  },
+  payloadIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payloadTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  payloadSubtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
   payloadInputWrap: {
     position: 'relative',
@@ -601,6 +641,12 @@ const styles = StyleSheet.create({
   },
   payloadInput: {
     paddingRight: 52,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
   },
   clipboardBtn: {
     position: 'absolute',
