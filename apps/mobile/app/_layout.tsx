@@ -293,7 +293,8 @@ function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime })
     runtimeHook: function RemoteThreadRuntimeHook() {
       const remoteId = useAuiState((state) => state.threadListItem.remoteId);
       const adapters = useMemo(
-        () => createRemoteThreadRuntimeAdapters(config, remoteId ?? 'pending'),
+        () =>
+          createRemoteThreadRuntimeAdapters(config, remoteId ?? 'pending', remoteId ?? 'pending'),
         [remoteId],
       );
       return useLocalRuntime(adapters.chatModel, { adapters: { history: adapters.history } });
