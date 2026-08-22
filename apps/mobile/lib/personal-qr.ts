@@ -7,7 +7,7 @@ type PersonalQrProfile = {
 };
 
 /** Build the current user's receive QR from a verified mobile-money number. */
-export function buildPersonalReceiveMethod(profile: PersonalQrProfile): ReceiveMethod | null {
+export function buildPersonalReceiveMethod(profile: PersonalQrProfile) {
   if (!profile.phoneNumber || !profile.phoneVerifiedAt) return null;
 
   return {
@@ -21,5 +21,5 @@ export function buildPersonalReceiveMethod(profile: PersonalQrProfile): ReceiveM
       { label: 'Account name', value: profile.displayName },
       { label: 'MoMo number', value: profile.phoneNumber },
     ],
-  };
+  } satisfies ReceiveMethod;
 }

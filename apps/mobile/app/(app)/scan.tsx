@@ -35,6 +35,11 @@ const AMOUNTS = [25, 50, 100, 250, 500];
 const CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'USDT'];
 
 type Phase = 'scan' | 'my-code' | 'payload' | 'amount';
+type ProfileState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; profile: Awaited<ReturnType<typeof getUserProfile>> };
 
 export default function ScanScreen() {
   const { colors } = useTheme();
@@ -52,36 +57,46 @@ export default function ScanScreen() {
   const [amount, setAmount] = useState<number | null>(null);
   const [currency, setCurrency] = useState('GHS');
   const [customAmount, setCustomAmount] = useState('');
-  const [profile, setProfile] = useState<Awaited<ReturnType<typeof getUserProfile>> | null>(null);
+  const [profileState, setProfileState] = useState<ProfileState>({ status: 'idle' });
 
   useEffect(() => {
+    setProfileState({ status: user?.id ? 'loading' : 'idle' });
     if (!user?.id) return;
 
-    let cancelled = false;
+    let currentUserId: string | null = user.id;
     void getUserProfile(getToken)
       .then((next) => {
-        if (!cancelled) setProfile(next);
+        if (currentUserId === user.id) setProfileState({ status: 'ready', profile: next });
       })
       .catch(() => {
-        if (!cancelled) setProfile(null);
+        if (currentUserId === user.id) setProfileState({ status: 'error' });
       });
 
     return () => {
-      cancelled = true;
+      currentUserId = null;
     };
   }, [getToken, user?.id]);
 
   const personalMethod = useMemo(
     () =>
-      profile
+      profileState.status === 'ready'
         ? buildPersonalReceiveMethod({
-            displayName: profile.displayName,
-            phoneNumber: profile.phoneNumber,
-            phoneVerifiedAt: profile.phoneVerifiedAt,
+            displayName: profileState.profile.displayName,
+            phoneNumber: profileState.profile.phoneNumber,
+            phoneVerifiedAt: profileState.profile.phoneVerifiedAt,
           })
         : null,
-    [profile],
+    [profileState],
   );
+
+  const loadPersonalProfile = useCallback(() => {
+    if (!user?.id) return;
+    haptics.selection();
+    setProfileState({ status: 'loading' });
+    void getUserProfile(getToken)
+      .then((next) => setProfileState({ status: 'ready', profile: next }))
+      .catch(() => setProfileState({ status: 'error' }));
+  }, [getToken, user?.id]);
 
   const finishPay = useCallback(
     (qr: ParsedPaymentQr, payAmount: number, payCurrency: string) => {
@@ -215,27 +230,71 @@ export default function ScanScreen() {
       </>
     );
   } else if (phase === 'my-code') {
-    content = personalMethod ? (
-      <MyCodeStep
-        method={personalMethod}
-        onBack={openScanner}
-      />
-    ) : (
-      <>
-        <WizardStepHeader
-          step={1}
-          total={1}
-          title='Verify your phone'
-          subtitle='Your personal receive code needs a verified mobile-money number.'
+    if (personalMethod) {
+      content = (
+        <MyCodeStep
+          method={personalMethod}
+          onBack={openScanner}
         />
-        <Pressable
-          onPress={openScanner}
-          style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
-        >
-          <Text style={[styles.primaryBtnText, { color: colors.background }]}>Back to scan</Text>
-        </Pressable>
-      </>
-    );
+      );
+    } else if (profileState.status === 'error') {
+      content = (
+        <>
+          <WizardStepHeader
+            step={1}
+            total={1}
+            title='Could not load your code'
+            subtitle='Check your connection, then try again.'
+          />
+          <Pressable
+            onPress={loadPersonalProfile}
+            style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
+          >
+            <Text style={[styles.primaryBtnText, { color: colors.background }]}>Retry</Text>
+          </Pressable>
+          <Pressable
+            onPress={openScanner}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+          </Pressable>
+        </>
+      );
+    } else if (profileState.status === 'loading') {
+      content = (
+        <>
+          <WizardStepHeader
+            step={1}
+            total={1}
+            title='Loading your code'
+            subtitle='Checking your verified mobile-money profile.'
+          />
+          <Pressable
+            onPress={openScanner}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+          </Pressable>
+        </>
+      );
+    } else {
+      content = (
+        <>
+          <WizardStepHeader
+            step={1}
+            total={1}
+            title='Verify your phone'
+            subtitle='Your personal receive code needs a verified mobile-money number.'
+          />
+          <Pressable
+            onPress={openScanner}
+            style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
+          >
+            <Text style={[styles.primaryBtnText, { color: colors.background }]}>Back to scan</Text>
+          </Pressable>
+        </>
+      );
+    }
   } else if (phase === 'payload') {
     content = (
       <>
@@ -327,8 +386,9 @@ export default function ScanScreen() {
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
         <View style={styles.scannerActions}>
           <Pressable
+            accessibilityLabel='Show my receive QR code'
             onPress={openMyCode}
-            style={[styles.libraryButton, styles.myCodeEntry, { backgroundColor: colors.muted }]}
+            style={[styles.myCodeEntry, { backgroundColor: colors.muted }]}
           >
             <Icon
               name='qr'
@@ -826,6 +886,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   myCodeEntry: {
+    position: 'absolute',
+    right: 4,
     width: 48,
     height: 48,
     borderRadius: 999,
