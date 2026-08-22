@@ -293,7 +293,15 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
 }
 
 export function createRemoteThreadRuntimeAdapters(config: RemoteThreadConfig, chatId: string) {
-  const chatConfig = { apiUrl: config.apiUrl, chatId, getToken: config.getToken };
+  const chatIdRef = { current: chatId === 'pending' ? null : chatId };
+  const chatConfig = {
+    apiUrl: config.apiUrl,
+    chatId,
+    getToken: config.getToken,
+    getChatId: () => chatIdRef.current,
+    isOptimistic: () => optimisticChatIds.has(chatId),
+    markPersisted: () => optimisticChatIds.delete(chatId),
+  };
   const history: ThreadHistoryAdapter = {
     async load() {
       if (chatId === 'pending') return { messages: [] };
@@ -313,11 +321,7 @@ export function createRemoteThreadRuntimeAdapters(config: RemoteThreadConfig, ch
     async update() {},
   };
   return {
-    chatModel: createRemoteChatAdapter({
-      ...chatConfig,
-      isOptimistic: () => optimisticChatIds.has(chatId),
-      markPersisted: () => optimisticChatIds.delete(chatId),
-    }),
+    chatModel: createRemoteChatAdapter(chatConfig),
     history,
   };
 }

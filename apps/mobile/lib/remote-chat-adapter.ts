@@ -33,6 +33,7 @@ type GetToken = () => Promise<string | null>;
 type RemoteChatConfig = {
   apiUrl: string;
   chatId: string;
+  getChatId?: () => string | null | Promise<string | null>;
   getToken: GetToken;
   isOptimistic?: () => boolean;
   markPersisted?: () => void;
@@ -229,16 +230,22 @@ async function responseError(response: Response) {
   } satisfies ChatErrorResponse;
 }
 
-function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
-  const chatUrl = `${apiUrl}/v1/chat`;
+async function resolveChatId(config: RemoteChatConfig) {
+  if (!config.getChatId) return config.chatId;
+  return config.getChatId();
+}
+
+function createRemoteChatApi(apiConfig: RemoteChatConfig) {
+  const chatUrl = `${apiConfig.apiUrl}/v1/chat`;
 
   async function authHeaders() {
-    const token = await getToken();
+    const token = await apiConfig.getToken();
     if (!token) throw new RemoteChatError('Your session expired. Please sign in again.');
     return { Authorization: `Bearer ${token}` };
   }
 
   async function getState(signal?: AbortSignal) {
+    const chatId = await resolveChatId(apiConfig);
     const response = await fetch(`${chatUrl}/${chatId}`, {
       headers: await authHeaders(),
       signal,
@@ -252,13 +259,14 @@ function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
   }
 
   async function stop(activeStreamId: string | null) {
+    const chatId = await resolveChatId(apiConfig);
     try {
       const response = await fetch(`${chatUrl}/${chatId}/stop`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ activeStreamId }),
       });
-      if (response.ok) await persistActiveStreamId(chatId, null);
+      if (response.ok && chatId) await persistActiveStreamId(chatId, null);
     } catch {
       // Keep the stream ID so a later app launch can reconcile with the server.
     }
@@ -270,11 +278,12 @@ function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
       fetch: async (input, init) => {
         const url =
           typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const chatId = await resolveChatId(apiConfig);
         const response = await fetch(url, init as Parameters<typeof fetch>[1]);
         if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
         const streamId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
         if (streamId) {
-          await persistActiveStreamId(chatId, streamId).catch(() => undefined);
+          if (chatId) await persistActiveStreamId(chatId, streamId).catch(() => undefined);
           onStreamId(streamId);
         }
         return response;
@@ -369,6 +378,12 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
 
   return {
     async *run({ messages, abortSignal }) {
+      if (config.getChatId) {
+        while ((await config.getChatId()) === null) {
+          await new Promise((resolve) => setTimeout(resolve, 25));
+          if (abortSignal.aborted) return;
+        }
+      }
       let activeStreamId: string | null = null;
       const transport = api.transport((streamId) => {
         activeStreamId = streamId;
