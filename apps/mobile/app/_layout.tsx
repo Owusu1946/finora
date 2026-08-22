@@ -15,8 +15,8 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
+import { BlurView } from 'expo-blur';
 import { useFonts } from 'expo-font';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -105,20 +105,15 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 
 function StatusBarBackdrop() {
   const { top } = useSafeAreaInsets();
-  const { colors } = useTheme();
 
   if (top === 0) return null;
 
-  // Taller than the safe-area inset so the fade extends past the status bar
-  // into the content area, giving a smooth ChatGPT-style disappearing effect.
-  const fadeHeight = top + 28;
-
   return (
-    <LinearGradient
+    <BlurView
       pointerEvents='none'
-      colors={[colors.background, colors.background, `${colors.background}00`]}
-      locations={[0, 0.45, 1]}
-      style={[styles.statusBarBackdrop, { height: fadeHeight }]}
+      intensity={40}
+      tint='systemChromeMaterial'
+      style={[styles.statusBarBackdrop, { height: top }]}
     />
   );
 }
@@ -431,6 +426,7 @@ const styles = StyleSheet.create({
     right: 0,
     left: 0,
     zIndex: 80,
+    overflow: 'hidden',
   },
   securityCover: {
     ...StyleSheet.absoluteFillObject,
