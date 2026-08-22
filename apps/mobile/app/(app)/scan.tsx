@@ -1,19 +1,24 @@
 import { useAui } from '@assistant-ui/react-native';
+import { useAuth, useUser } from '@clerk/expo';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Share,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 
+import type { ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
+
+import { MockQrCode } from '@/components/chat/MockQrCode';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { Icon } from '@/components/ui/icon';
@@ -22,17 +27,26 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { buildScanPayPrompt, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
+import { buildPersonalReceiveMethod } from '@/lib/personal-qr';
+import { getUserProfile } from '@/lib/profile-api';
 import { sendChatPrompt } from '@/lib/send-chat-prompt';
 
 const AMOUNTS = [25, 50, 100, 250, 500];
 const CURRENCIES = ['GHS', 'USD', 'GBP', 'EUR', 'USDT'];
 
-type Phase = 'scan' | 'payload' | 'amount';
+type Phase = 'scan' | 'my-code' | 'payload' | 'amount';
+type ProfileState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; profile: Awaited<ReturnType<typeof getUserProfile>> };
 
 export default function ScanScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const aui = useAui();
+  const { getToken } = useAuth();
+  const { user } = useUser();
   const headerHeight = useHeaderHeight();
   const [permission, requestPermission] = useCameraPermissions();
   const [phase, setPhase] = useState<Phase>('scan');
@@ -43,6 +57,51 @@ export default function ScanScreen() {
   const [amount, setAmount] = useState<number | null>(null);
   const [currency, setCurrency] = useState('GHS');
   const [customAmount, setCustomAmount] = useState('');
+  const [profileState, setProfileState] = useState<ProfileState>({ status: 'idle' });
+
+  useEffect(() => {
+    setProfileState({ status: user?.id ? 'loading' : 'idle' });
+    if (!user?.id) return;
+
+    let currentUserId: string | null = user.id;
+    void getUserProfile(getToken)
+      .then((next) => {
+        if (currentUserId === user.id) setProfileState({ status: 'ready', profile: next });
+      })
+      .catch(() => {
+        if (currentUserId === user.id) setProfileState({ status: 'error' });
+      });
+
+    return () => {
+      currentUserId = null;
+    };
+  }, [getToken, user?.id]);
+
+  const personalMethod = useMemo(
+    () =>
+      profileState.status === 'ready'
+        ? buildPersonalReceiveMethod({
+            displayName: profileState.profile.displayName,
+            phoneNumber: profileState.profile.phoneNumber,
+            phoneVerifiedAt: profileState.profile.phoneVerifiedAt,
+          })
+        : null,
+    [profileState],
+  );
+
+  const loadPersonalProfile = useCallback(() => {
+    const userId = user?.id;
+    if (!userId) return;
+    haptics.selection();
+    setProfileState({ status: 'loading' });
+    void getUserProfile(getToken)
+      .then((next) => {
+        if (user?.id === userId) setProfileState({ status: 'ready', profile: next });
+      })
+      .catch(() => {
+        if (user?.id === userId) setProfileState({ status: 'error' });
+      });
+  }, [getToken, user?.id]);
 
   const finishPay = useCallback(
     (qr: ParsedPaymentQr, payAmount: number, payCurrency: string) => {
@@ -103,6 +162,12 @@ export default function ScanScreen() {
     setError(null);
     setLocked(false);
     setPhase('scan');
+  };
+
+  const openMyCode = () => {
+    haptics.selection();
+    setError(null);
+    setPhase('my-code');
   };
 
   const scanFromLibrary = async () => {
@@ -169,6 +234,72 @@ export default function ScanScreen() {
         )}
       </>
     );
+  } else if (phase === 'my-code') {
+    if (personalMethod) {
+      content = (
+        <MyCodeStep
+          method={personalMethod}
+          onBack={openScanner}
+        />
+      );
+    } else if (profileState.status === 'error') {
+      content = (
+        <>
+          <WizardStepHeader
+            step={1}
+            total={1}
+            title='Could not load your code'
+            subtitle='Check your connection, then try again.'
+          />
+          <Pressable
+            onPress={loadPersonalProfile}
+            style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
+          >
+            <Text style={[styles.primaryBtnText, { color: colors.background }]}>Retry</Text>
+          </Pressable>
+          <Pressable
+            onPress={openScanner}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+          </Pressable>
+        </>
+      );
+    } else if (profileState.status === 'loading') {
+      content = (
+        <>
+          <WizardStepHeader
+            step={1}
+            total={1}
+            title='Loading your code'
+            subtitle='Checking your verified mobile-money profile.'
+          />
+          <Pressable
+            onPress={openScanner}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+          </Pressable>
+        </>
+      );
+    } else {
+      content = (
+        <>
+          <WizardStepHeader
+            step={1}
+            total={1}
+            title='Verify your phone'
+            subtitle='Your personal receive code needs a verified mobile-money number.'
+          />
+          <Pressable
+            onPress={openScanner}
+            style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
+          >
+            <Text style={[styles.primaryBtnText, { color: colors.background }]}>Back to scan</Text>
+          </Pressable>
+        </>
+      );
+    }
   } else if (phase === 'payload') {
     content = (
       <>
@@ -207,6 +338,14 @@ export default function ScanScreen() {
         >
           <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Enter payload instead</Text>
         </Pressable>
+        {user?.id ? (
+          <Pressable
+            onPress={openMyCode}
+            style={styles.linkBtn}
+          >
+            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Show my code</Text>
+          </Pressable>
+        ) : null}
       </>
     );
   } else if (phase === 'amount' && parsed) {
@@ -259,6 +398,19 @@ export default function ScanScreen() {
         </View>
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
         <View style={styles.scannerActions}>
+          {user?.id ? (
+            <Pressable
+              accessibilityLabel='Show my receive QR code'
+              onPress={openMyCode}
+              style={[styles.myCodeEntry, { backgroundColor: colors.muted }]}
+            >
+              <Icon
+                name='qr'
+                size={24}
+                color={colors.foreground}
+              />
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityLabel='Choose QR from photo library'
             onPress={() => void scanFromLibrary()}
@@ -272,7 +424,7 @@ export default function ScanScreen() {
           </Pressable>
           <Pressable
             onPress={openPayloadEntry}
-            style={[styles.myCodeButton, { backgroundColor: colors.foreground }]}
+            style={[styles.primaryPillButton, { backgroundColor: colors.foreground }]}
           >
             <Text style={[styles.myCodeText, { color: colors.background }]}>Enter payload</Text>
           </Pressable>
@@ -406,6 +558,58 @@ function AmountStep({
         style={styles.linkBtn}
       >
         <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan again</Text>
+      </Pressable>
+    </>
+  );
+}
+
+function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => void }) {
+  const { colors, isDark } = useTheme();
+
+  const shareCode = async () => {
+    haptics.selection();
+    const message = [
+      `Scan this Finora receive code for ${method.currency}.`,
+      method.title,
+      '',
+      method.qrPayload,
+      '',
+      ...method.fields.map((field) => `${field.label}: ${field.value}`),
+    ].join('\n');
+
+    await Share.share({ message, title: `Finora QR · ${method.currency}` });
+  };
+
+  return (
+    <>
+      <WizardStepHeader
+        step={1}
+        total={1}
+        title='My code'
+        subtitle={method.subtitle}
+      />
+      <View style={[styles.myCodeCard, { backgroundColor: isDark ? '#fff' : colors.background }]}>
+        <MockQrCode
+          value={method.qrPayload}
+          size={230}
+          color='#18181b'
+          backgroundColor='#ffffff'
+        />
+      </View>
+      <Text style={[styles.myCodeHint, { color: colors.mutedForeground }]}>
+        Save or scan this code to receive GHS.
+      </Text>
+      <Pressable
+        onPress={() => void shareCode()}
+        style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
+      >
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>Share code</Text>
+      </Pressable>
+      <Pressable
+        onPress={onBack}
+        style={styles.linkBtn}
+      >
+        <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
       </Pressable>
     </>
   );
@@ -695,6 +899,28 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  myCodeEntry: {
+    position: 'absolute',
+    right: 4,
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+  },
+  myCodeCard: {
+    alignSelf: 'center',
+    padding: 14,
+    borderRadius: Radius.card,
+  },
+  myCodeHint: {
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+  },
+  primaryPillButton: {
+    borderRadius: Radius.pill,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
   },
   myCodeButton: {
     borderRadius: 999,
