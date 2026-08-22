@@ -14,7 +14,7 @@ const en = {
   nav_policies: 'Policies',
   nav_settings: 'Settings',
   nav_security: 'Security',
-  nav_appearance: 'Appearance',
+  nav_display: 'Display',
   nav_wallets: 'Wallets',
   nav_activity: 'Activity',
   nav_recurring: 'Recurring',
@@ -84,7 +84,7 @@ const en = {
 
   // Settings hub
   settings_title: 'Settings',
-  settings_appearance: 'Appearance',
+  settings_display: 'Appearance',
   settings_security: 'Security & Passcode',
   settings_language: 'Language',
   settings_theme: 'Theme',
@@ -104,7 +104,7 @@ const en = {
   settings_memory_label: 'Memory',
   settings_memory_detail: 'What Finora remembers about you',
   settings_notifications_label: 'Notifications',
-  settings_appearance_label: 'Appearance',
+  settings_appearance_label: 'Display',
   settings_integrations_label: 'Integrations',
   settings_integrations_detail: 'Gmail and connected tools',
   settings_approvals_label: 'Approvals',
@@ -168,7 +168,7 @@ const fr: Record<TranslationKey, string> = {
   nav_policies: 'R\u00e8gles',
   nav_settings: 'Param\u00e8tres',
   nav_security: 'S\u00e9curit\u00e9',
-  nav_appearance: 'Apparence',
+  nav_display: 'Affichage',
   nav_wallets: 'Portefeuilles',
   nav_activity: 'Activit\u00e9',
   nav_recurring: 'R\u00e9currents',
@@ -241,7 +241,7 @@ const fr: Record<TranslationKey, string> = {
 
   // Settings hub
   settings_title: 'Param\u00e8tres',
-  settings_appearance: 'Apparence',
+  settings_display: 'Apparence',
   settings_security: 'S\u00e9curit\u00e9 & Code secret',
   settings_language: 'Langue',
   settings_theme: 'Th\u00e8me',
@@ -261,7 +261,7 @@ const fr: Record<TranslationKey, string> = {
   settings_memory_label: 'M\u00e9moire',
   settings_memory_detail: 'Ce que Finora retient de vous',
   settings_notifications_label: 'Notifications',
-  settings_appearance_label: 'Apparence',
+  settings_appearance_label: 'Affichage',
   settings_integrations_label: 'Int\u00e9grations',
   settings_integrations_detail: 'Gmail et outils connect\u00e9s',
   settings_approvals_label: 'Approbations',
