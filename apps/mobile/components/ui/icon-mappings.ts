@@ -19,6 +19,7 @@ import {
   Clock01Icon,
   ClipboardIcon,
   Copy01Icon,
+  ScanFaceIcon,
   CreditCardIcon,
   UserIcon,
   Edit02Icon,
@@ -99,6 +100,7 @@ export type IconName =
   | 'thumb-down'
   | 'quote'
   | 'biometric'
+  | 'face-id'
   | 'eraser';
 
 export type IconProps = {
@@ -158,5 +160,6 @@ export const HUGE_ICONS = {
   'thumb-down': ThumbsDownIcon,
   quote: QuoteDownIcon,
   biometric: FingerPrintScanIcon,
+  'face-id': ScanFaceIcon,
   eraser: Eraser01Icon,
 } as const;

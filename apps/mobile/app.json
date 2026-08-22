@@ -11,7 +11,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Finora uses the camera to scan payment QR codes."
+        "NSCameraUsageDescription": "Finora uses the camera to scan payment QR codes.",
+        "NSFaceIDUsageDescription": "Finora uses Face ID to unlock your account and approve transactions."
       },
       "associatedDomains": ["applinks:pay.finora.app"]
     },
@@ -46,6 +47,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-local-authentication",
       "expo-secure-store",
       "@clerk/expo",
       [

@@ -177,6 +177,10 @@ export function usePasscodeApproval() {
       forgotHint={forgotHint}
       onClose={() => close(false)}
       onComplete={onComplete}
+      onBiometricUnlock={() => {
+        haptics.success();
+        close(true);
+      }}
       onClearError={() => setError(null)}
       onForgot={
         phase === 'unlock' || phase === 'forgot-otp' || locked
