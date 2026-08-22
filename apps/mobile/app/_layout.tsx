@@ -15,8 +15,8 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -58,9 +58,9 @@ import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeeP
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
 import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
-import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
+import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
@@ -291,12 +291,18 @@ function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime })
   const runtime = useRemoteThreadListRuntime({
     adapter: threadListAdapter,
     runtimeHook: function RemoteThreadRuntimeHook() {
+      const localThreadId = useAuiState((state) => state.threadListItem.id);
       const remoteId = useAuiState((state) => state.threadListItem.remoteId);
       const adapters = useMemo(
-        () =>
-          createRemoteThreadRuntimeAdapters(config, remoteId ?? 'pending', remoteId ?? 'pending'),
-        [remoteId],
+        () => createRemoteThreadRuntimeAdapters(config, localThreadId ?? null),
+        [config.apiUrl, config.userId, localThreadId],
       );
+
+      useEffect(() => {
+        if (remoteId) adapters.bindRemoteId(remoteId);
+        return () => adapters.release();
+      }, [adapters, remoteId]);
+
       return useLocalRuntime(adapters.chatModel, { adapters: { history: adapters.history } });
     },
   });
