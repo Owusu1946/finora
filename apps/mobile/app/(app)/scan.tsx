@@ -90,12 +90,17 @@ export default function ScanScreen() {
   );
 
   const loadPersonalProfile = useCallback(() => {
-    if (!user?.id) return;
+    const userId = user?.id;
+    if (!userId) return;
     haptics.selection();
     setProfileState({ status: 'loading' });
     void getUserProfile(getToken)
-      .then((next) => setProfileState({ status: 'ready', profile: next }))
-      .catch(() => setProfileState({ status: 'error' }));
+      .then((next) => {
+        if (user?.id === userId) setProfileState({ status: 'ready', profile: next });
+      })
+      .catch(() => {
+        if (user?.id === userId) setProfileState({ status: 'error' });
+      });
   }, [getToken, user?.id]);
 
   const finishPay = useCallback(
