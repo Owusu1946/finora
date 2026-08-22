@@ -298,6 +298,7 @@ export function createRemoteThreadRuntimeAdapters(
   localThreadId: string,
   chatId: string,
 ) {
+  pendingThreadChatIdRefs.delete(localThreadId);
   const chatIdRef: { current: string | null } = {
     current: chatId === 'pending' ? null : chatId,
   };
