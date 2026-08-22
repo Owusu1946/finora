@@ -398,17 +398,19 @@ export default function ScanScreen() {
         </View>
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
         <View style={styles.scannerActions}>
-          <Pressable
-            accessibilityLabel='Show my receive QR code'
-            onPress={openMyCode}
-            style={[styles.myCodeEntry, { backgroundColor: colors.muted }]}
-          >
-            <Icon
-              name='qr'
-              size={24}
-              color={colors.foreground}
-            />
-          </Pressable>
+          {user?.id ? (
+            <Pressable
+              accessibilityLabel='Show my receive QR code'
+              onPress={openMyCode}
+              style={[styles.myCodeEntry, { backgroundColor: colors.muted }]}
+            >
+              <Icon
+                name='qr'
+                size={24}
+                color={colors.foreground}
+              />
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityLabel='Choose QR from photo library'
             onPress={() => void scanFromLibrary()}
