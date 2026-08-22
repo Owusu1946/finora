@@ -232,7 +232,9 @@ async function responseError(response: Response) {
 
 async function resolveChatId(config: RemoteChatConfig) {
   if (!config.getChatId) return config.chatId;
-  return config.getChatId();
+  const chatId = await config.getChatId();
+  if (!chatId) throw new RemoteChatError('The chat is not ready yet. Please try again.');
+  return chatId;
 }
 
 function createRemoteChatApi(apiConfig: RemoteChatConfig) {
@@ -266,7 +268,7 @@ function createRemoteChatApi(apiConfig: RemoteChatConfig) {
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ activeStreamId }),
       });
-      if (response.ok && chatId) await persistActiveStreamId(chatId, null);
+      if (response.ok) await persistActiveStreamId(chatId, null);
     } catch {
       // Keep the stream ID so a later app launch can reconcile with the server.
     }
@@ -276,14 +278,13 @@ function createRemoteChatApi(apiConfig: RemoteChatConfig) {
     return new DefaultChatTransport<UIMessage>({
       api: chatUrl,
       fetch: async (input, init) => {
-        const url =
-          typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
         const chatId = await resolveChatId(apiConfig);
+        const url = `${apiConfig.apiUrl}/v1/chat/${encodeURIComponent(chatId)}`;
         const response = await fetch(url, init as Parameters<typeof fetch>[1]);
         if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
         const streamId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
         if (streamId) {
-          if (chatId) await persistActiveStreamId(chatId, streamId).catch(() => undefined);
+          await persistActiveStreamId(chatId, streamId).catch(() => undefined);
           onStreamId(streamId);
         }
         return response;

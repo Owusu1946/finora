@@ -20,6 +20,7 @@ import {
 
 const optimisticChatIds = new Set<string>();
 const pendingThreadChatIds = new Map<string, () => void>();
+const pendingThreadChatIdRefs = new Map<string, { current: string | null }>();
 const generatedTitles = new Map<string, string>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
 const TITLE_REQUEST_TIMEOUT_MS = 20_000;
@@ -224,6 +225,8 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     async initialize(localThreadId: string) {
       const remoteId = `chat_${Crypto.randomUUID().replaceAll('-', '')}`;
       optimisticChatIds.add(remoteId);
+      const chatIdRef = pendingThreadChatIdRefs.get(localThreadId);
+      if (chatIdRef) chatIdRef.current = remoteId;
       pendingThreadChatIds.get(localThreadId)?.();
       return { remoteId };
     },
@@ -301,17 +304,17 @@ export function createRemoteThreadRuntimeAdapters(
 ) {
   const chatIdRef = { current: chatId === 'pending' ? null : chatId };
   if (chatId === 'pending') {
-    pendingThreadChatIds.set(localThreadId, () => {
-      chatIdRef.current = optimisticChatIds.values().next().value ?? null;
-    });
+    pendingThreadChatIdRefs.set(localThreadId, chatIdRef);
   }
   const chatConfig = {
     apiUrl: config.apiUrl,
     chatId,
     getToken: config.getToken,
     getChatId: () => chatIdRef.current,
-    isOptimistic: () => optimisticChatIds.has(chatId),
-    markPersisted: () => optimisticChatIds.delete(chatId),
+    isOptimistic: () => chatIdRef.current !== null && optimisticChatIds.has(chatIdRef.current),
+    markPersisted: () => {
+      if (chatIdRef.current !== null) optimisticChatIds.delete(chatIdRef.current);
+    },
   };
   const history: ThreadHistoryAdapter = {
     async load() {

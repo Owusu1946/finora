@@ -397,36 +397,40 @@ export default function ScanScreen() {
         </View>
         {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
         <View style={styles.scannerActions}>
-          <Pressable
-            accessibilityLabel='Choose QR from photo library'
-            onPress={() => void scanFromLibrary()}
-            style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
-          >
-            <Icon
-              name='image'
-              size={22}
-              color={colors.foreground}
-            />
-          </Pressable>
-          {user?.id ? (
+          <View style={styles.scannerActionStart}>
             <Pressable
-              accessibilityLabel='Show my receive QR code'
-              onPress={openMyCode}
+              accessibilityLabel='Choose QR from photo library'
+              onPress={() => void scanFromLibrary()}
               style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
             >
               <Icon
-                name='qr'
+                name='image'
                 size={22}
                 color={colors.foreground}
               />
             </Pressable>
-          ) : null}
+          </View>
           <Pressable
             onPress={openPayloadEntry}
             style={[styles.primaryPillButton, { backgroundColor: colors.foreground }]}
           >
             <Text style={[styles.myCodeText, { color: colors.background }]}>Enter payload</Text>
           </Pressable>
+          <View style={styles.scannerActionEnd}>
+            {user?.id ? (
+              <Pressable
+                accessibilityLabel='Show my receive QR code'
+                onPress={openMyCode}
+                style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
+              >
+                <Icon
+                  name='qr'
+                  size={22}
+                  color={colors.foreground}
+                />
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       </View>
     );
@@ -873,7 +877,6 @@ const styles = StyleSheet.create({
   scannerShell: {
     flex: 1,
     minHeight: 620,
-    marginHorizontal: -16,
     marginTop: -8,
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -886,10 +889,10 @@ const styles = StyleSheet.create({
   scannerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     minHeight: 64,
-    gap: 12,
   },
+  scannerActionStart: { flex: 1, alignItems: 'flex-start' },
+  scannerActionEnd: { flex: 1, alignItems: 'flex-end' },
   scannerIconButton: {
     width: 52,
     height: 52,
