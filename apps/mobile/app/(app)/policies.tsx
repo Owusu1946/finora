@@ -2,11 +2,10 @@ import { useAui } from '@assistant-ui/react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -30,9 +29,11 @@ export default function PoliciesScreen() {
 
   if (!isBusinessAccount()) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Approval policies</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+      <View className='flex-1 bg-background px-5 pt-4'>
+        <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+          Approval policies
+        </Text>
+        <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
           Policies are available on Business accounts.
         </Text>
       </View>
@@ -41,7 +42,7 @@ export default function PoliciesScreen() {
 
   if (!policies) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View className='flex-1 bg-background'>
         <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
@@ -56,13 +57,15 @@ export default function PoliciesScreen() {
       keyExtractor={(policy) => policy.id}
       recycleItems
       showsVerticalScrollIndicator={false}
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
+      className='flex-1 bg-background'
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
       contentInsetAdjustmentBehavior='automatic'
       ListHeaderComponent={
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Approval policies</Text>
-          <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+        <View className='gap-2.5 pb-2.5'>
+          <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+            Approval policies
+          </Text>
+          <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
             Rules that decide when prepares need your passcode. AI never bypasses these.
           </Text>
           <Pressable
@@ -72,23 +75,21 @@ export default function PoliciesScreen() {
               aui.composer.setText('What happens if I send 2000 USD to a new recipient?');
               aui.composer.send();
             }}
-            style={({ pressed }) => [
-              styles.btn,
-              { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-            ]}
+            className='mb-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>Simulate in chat</Text>
+            <Text className='font-sans-semibold text-[15px] text-background'>Simulate in chat</Text>
           </Pressable>
         </View>
       }
-      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+      ItemSeparatorComponent={() => <View className='h-2.5' />}
       renderItem={({ item: p }) => (
-        <View
-          style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
-        >
-          <View style={styles.flex}>
-            <Text style={[styles.name, { color: colors.foreground }]}>{p.name}</Text>
-            <Text style={[styles.meta, { color: colors.mutedForeground }]}>{p.rule}</Text>
+        <View className='flex-row items-center gap-3 rounded-[26px] border border-border bg-composer p-3.5'>
+          <View className='min-w-0 flex-1 gap-0.5'>
+            <Text className='font-sans-semibold text-base text-foreground'>{p.name}</Text>
+            <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
+              {p.rule}
+            </Text>
           </View>
           <Switch
             value={p.enabled}
@@ -103,38 +104,3 @@ export default function PoliciesScreen() {
     />
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
-  header: { gap: 10, paddingBottom: 10 },
-  itemSeparator: { height: 10 },
-  title: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '600', letterSpacing: -0.4 },
-  sub: {
-    marginTop: -4,
-    marginBottom: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  btn: {
-    minHeight: 46,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  btnLabel: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
-  row: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  flex: { flex: 1, gap: 2, minWidth: 0 },
-  name: { fontFamily: 'DMSans_400Regular', fontSize: 16, fontWeight: '600' },
-  meta: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500', lineHeight: 18 },
-});
