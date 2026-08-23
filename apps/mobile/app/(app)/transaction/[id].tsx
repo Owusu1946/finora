@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { Transaction } from '@/components/activity/types';
 
@@ -35,15 +35,15 @@ export default function TransactionDetailScreen() {
   return (
     <SwipeBackView>
       {loading ? (
-        <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View className='flex-1 bg-background'>
           <LoadingIcon
             style={{ marginTop: 40 }}
             color={colors.mutedForeground}
           />
         </View>
       ) : !tx ? (
-        <View style={[styles.root, { backgroundColor: colors.background }]}>
-          <Text style={[styles.missing, { color: colors.mutedForeground }]}>
+        <View className='flex-1 bg-background'>
+          <Text className='mt-10 text-center font-sans-medium text-[15px] text-muted-foreground'>
             Transaction not found.
           </Text>
         </View>
@@ -53,16 +53,3 @@ export default function TransactionDetailScreen() {
     </SwipeBackView>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  missing: {
-    marginTop: 40,
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-});

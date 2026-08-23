@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { DrawerActions } from '@react-navigation/native';
 import { Stack, useNavigation, useRouter } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
@@ -21,7 +21,7 @@ function MenuHeaderButton() {
         haptics.selection();
         navigation.dispatch(DrawerActions.openDrawer());
       }}
-      style={[styles.headerAction, styles.headerLeftAction]}
+      className='ml-3 size-10 items-center justify-center rounded-full'
     >
       <Icon
         name='menu'
@@ -46,7 +46,7 @@ function NewChatHeaderButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={[styles.headerAction, styles.headerRightAction]}
+      className='mr-3 size-10 items-center justify-center rounded-full'
     >
       <Icon
         name='compose'
@@ -110,19 +110,3 @@ export default function SettingsLayout() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  headerAction: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-  },
-  headerLeftAction: {
-    marginLeft: 12,
-  },
-  headerRightAction: {
-    marginRight: 12,
-  },
-});

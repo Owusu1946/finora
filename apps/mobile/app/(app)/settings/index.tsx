@@ -2,7 +2,7 @@ import { useClerk, useUser } from '@clerk/expo';
 import Constants from 'expo-constants';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import {
@@ -108,7 +108,8 @@ export default function SettingsHubScreen() {
             haptics.selection();
             router.push('/settings/account' as Href);
           }}
-          style={({ pressed }) => [styles.profile, pressed && { opacity: 0.7 }]}
+          className='flex-row items-center gap-3.5 px-3.5 py-4'
+          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
         >
           <UserAvatar
             accountType={accountType}
@@ -119,17 +120,17 @@ export default function SettingsHubScreen() {
             seed={user?.id ?? settings.email}
             size={52}
           />
-          <View style={styles.profileMeta}>
-            <Text style={[styles.profileName, { color: colors.foreground }]}>
+          <View className='min-w-0 flex-1 gap-0.5'>
+            <Text className='font-sans-semibold text-lg tracking-[-0.3px] text-foreground'>
               {settings.displayName}
             </Text>
             <Text
-              style={[styles.profileEmail, { color: colors.mutedForeground }]}
+              className='font-sans-medium text-[15px] text-muted-foreground'
               numberOfLines={1}
             >
               {settings.email}
             </Text>
-            <Text style={[styles.profileType, { color: colors.mutedForeground }]}>
+            <Text className='mt-0.5 font-sans-medium text-sm text-muted-foreground'>
               {getAccountFullLabel(accountType)}
             </Text>
           </View>
@@ -228,35 +229,3 @@ export default function SettingsHubScreen() {
     </SettingsScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  profile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 16,
-  },
-  profileMeta: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  profileName: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  profileEmail: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  profileType: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-});
