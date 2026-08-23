@@ -11,6 +11,7 @@ import {
 } from '@/components/settings/SettingsPrimitives';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { confirmBiometricEnable, getBiometricAvailability } from '@/lib/biometrics';
 import { haptics } from '@/lib/haptics';
 import { hasPasscode } from '@/lib/passcode-storage';
 import { useSettings } from '@/lib/settings-context';
@@ -38,12 +39,18 @@ export default function SecuritySettingsScreen() {
   const { settings, loading, update, refresh, t } = useSettings();
   const { requestChange, modal: passcodeModal } = useChangePasscode();
   const [hasPin, setHasPin] = useState(false);
+  const [biometricMethod, setBiometricMethod] = useState<'face' | 'fingerprint'>('fingerprint');
   const resumedChangeRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       void refresh();
-      void hasPasscode().then(setHasPin);
+      void Promise.all([hasPasscode(), getBiometricAvailability()]).then(
+        ([passcodeExists, biometrics]) => {
+          setHasPin(passcodeExists);
+          setBiometricMethod(biometrics.method);
+        },
+      );
     }, [refresh]),
   );
 
@@ -63,13 +70,19 @@ export default function SecuritySettingsScreen() {
   }, [handleChangePasscode, params.changePasscode, router]);
 
   const handleBiometrics = async (next: boolean) => {
-    await update({ biometricsEnabled: next });
-    if (next) {
-      Alert.alert(
-        t('sec_biometrics'),
-        'Face ID / fingerprint will unlock Approvals once device auth is wired. The toggle is saved for now.',
-      );
+    if (!next) {
+      await update({ biometricsEnabled: false });
+      return;
     }
+
+    const confirmation = await confirmBiometricEnable();
+    if (!confirmation.confirmed) {
+      Alert.alert(t('sec_biometrics'), t('sec_biometrics_enable_failed'));
+      return;
+    }
+
+    await update({ biometricsEnabled: true });
+    haptics.success();
   };
 
   const handleRevokeDevice = (id: string, name: string) => {
@@ -104,7 +117,7 @@ export default function SecuritySettingsScreen() {
           <SettingsSwitchRow
             label={t('sec_biometrics')}
             detail={t('sec_biometrics_detail')}
-            icon='biometric'
+            icon={biometricMethod === 'face' ? 'face-id' : 'biometric'}
             value={settings.biometricsEnabled}
             onValueChange={(v) => void handleBiometrics(v)}
             isLast

@@ -1,5 +1,5 @@
-import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
-import { useEffect, useRef, useState } from 'react';
+import { makeAssistantToolUI } from '@assistant-ui/react-native';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -9,10 +9,8 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import { defaultPayrollPeriod, recordPayrollRun, type Employee } from '@/lib/employees-storage';
+import { defaultPayrollPeriod, type Employee } from '@/lib/employees-storage';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
 
 type PreparePayrollArgs = {
   period?: string;
@@ -27,10 +25,6 @@ type PreparePayrollResult = {
   preparationId?: string;
 };
 
-function mockTransactionId() {
-  return `tx_prun_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-}
-
 function PayrollConfirmCard({
   period,
   employees,
@@ -43,43 +37,26 @@ function PayrollConfirmCard({
   currency: string;
 }) {
   const { colors } = useTheme();
-  const aui = useAui();
   const { requestApproval, modal } = usePasscodeApproval();
   const [busy, setBusy] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'sending' | 'paid'>('idle');
-  const [txId, setTxId] = useState<string | null>(null);
-  const finishedRef = useRef(false);
+  const [phase, setPhase] = useState<'idle' | 'approved'>('idle');
 
   return (
     <>
       <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <View style={styles.header}>
-          <View
-            style={[
-              styles.iconWrap,
-              {
-                backgroundColor:
-                  phase === 'paid' ? colors.foreground : colors.muted,
-              },
-            ]}
-          >
-            {phase === 'sending' ? (
-              <LoadingIcon color={colors.foreground} />
-            ) : (
+          <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+            {
               <Icon
-                name={phase === 'paid' ? 'check' : 'contacts'}
+                name={phase === 'approved' ? 'check' : 'contacts'}
                 size={16}
-                color={phase === 'paid' ? colors.background : colors.foreground}
+                color={colors.foreground}
               />
-            )}
+            }
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
-              {phase === 'paid'
-                ? 'Paid · Sent via rails'
-                : phase === 'sending'
-                  ? 'Executing payroll payout…'
-                  : 'Payroll ready for approval'}
+              {phase === 'approved' ? 'Approval recorded' : 'Payroll ready'}
             </Text>
             <Text style={[styles.title, { color: colors.foreground }]}>{period}</Text>
           </View>
@@ -115,52 +92,8 @@ function PayrollConfirmCard({
               const ok = await requestApproval();
               setBusy(false);
               if (!ok) return;
-
-              setPhase('sending');
-              haptics.light();
-
-              await new Promise((r) => setTimeout(r, 850));
-              if (finishedRef.current) return;
-              finishedRef.current = true;
-
-              const generatedTxId = mockTransactionId();
-              setTxId(generatedTxId);
-
-              // Record the payroll transaction in local wallet/activity storage
-              await recordSentPayment({
-                payment: {
-                  amount: total,
-                  currency,
-                  recipientName: `Payroll (${employees.length} employees)`,
-                  destination: {
-                    kind: 'bank_account',
-                    label: 'Batch payroll payout',
-                    value: `${employees.length} destination accounts`,
-                  },
-                  reference: `Payroll ${period}`,
-                  purposeCode: 'SALARY',
-                  purposeLabel: 'Salary / payroll',
-                },
-                transactionId: generatedTxId,
-                source: 'chat',
-              });
-
-              // Record in payroll runs storage
-              await recordPayrollRun({
-                period,
-                total,
-                currency,
-                employeeIds: employees.map((e) => e.id),
-                transactionId: generatedTxId,
-              });
-
-              setPhase('paid');
+              setPhase('approved');
               haptics.success();
-
-              appendAgentFollowUp(
-                aui,
-                `Payroll for ${period} paid. ${currency} ${total.toLocaleString()} sent to ${employees.length} employee(s). Ref ${generatedTxId}.`,
-              );
             }}
             style={({ pressed }) => [
               styles.btn,
@@ -170,25 +103,9 @@ function PayrollConfirmCard({
               },
             ]}
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>
-              {busy ? 'Verifying…' : 'Approve payroll'}
-            </Text>
+            <Text style={[styles.btnLabel, { color: colors.background }]}>Approve payroll</Text>
           </Pressable>
-        ) : phase === 'sending' ? (
-          <View style={[styles.statusBox, { backgroundColor: colors.muted }]}>
-            <LoadingIcon color={colors.foreground} />
-            <Text style={[styles.statusText, { color: colors.foreground }]}>
-              Authorizing payment and routing to rails…
-            </Text>
-          </View>
-        ) : (
-          <View style={[styles.statusBox, { backgroundColor: colors.muted }]}>
-            <Icon name="check" size={16} color={colors.foreground} />
-            <Text style={[styles.statusText, { color: colors.foreground }]}>
-              Payment complete. Funds moved from your wallet. Ref {txId}
-            </Text>
-          </View>
-        )}
+        ) : null}
       </View>
       {modal}
     </>
@@ -349,20 +266,6 @@ const styles = StyleSheet.create({
   btnLabel: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 15,
-    fontWeight: '600',
-  },
-  statusBox: {
-    minHeight: 44,
-    borderRadius: Radius.composer,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  statusText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
     fontWeight: '600',
   },
 });

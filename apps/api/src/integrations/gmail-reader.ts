@@ -32,8 +32,10 @@ async function accessToken(db: Database, env: ApiEnv, userId: string) {
     });
     return token.access_token;
   } catch (error) {
-    const errorCode = error instanceof Error ? error.message.split(':', 1)[0] : 'gmail_token_refresh_failed';
-    const requiresReauthorization = errorCode.includes('invalid_grant') || errorCode.includes('401');
+    const errorCode =
+      error instanceof Error ? error.message.split(':', 1)[0] : 'gmail_token_refresh_failed';
+    const requiresReauthorization =
+      errorCode.includes('invalid_grant') || errorCode.includes('401');
     if (requiresReauthorization) {
       await markGmailReauthorizationRequired(db, integration.id, errorCode);
       throw new Error('gmail_reauthorization_required');

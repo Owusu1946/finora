@@ -14,7 +14,7 @@ const en = {
   nav_policies: 'Policies',
   nav_settings: 'Settings',
   nav_security: 'Security',
-  nav_appearance: 'Appearance',
+  nav_display: 'Display',
   nav_wallets: 'Wallets',
   nav_activity: 'Activity',
   nav_recurring: 'Recurring',
@@ -84,7 +84,7 @@ const en = {
 
   // Settings hub
   settings_title: 'Settings',
-  settings_appearance: 'Appearance',
+  settings_display: 'Appearance',
   settings_security: 'Security & Passcode',
   settings_language: 'Language',
   settings_theme: 'Theme',
@@ -104,7 +104,7 @@ const en = {
   settings_memory_label: 'Memory',
   settings_memory_detail: 'What Finora remembers about you',
   settings_notifications_label: 'Notifications',
-  settings_appearance_label: 'Appearance',
+  settings_appearance_label: 'Display',
   settings_integrations_label: 'Integrations',
   settings_integrations_detail: 'Gmail and connected tools',
   settings_approvals_label: 'Approvals',
@@ -132,7 +132,8 @@ const en = {
   sec_passcode_detail_has: 'Used to approve payments and plans',
   sec_passcode_detail_none: 'Required before first send',
   sec_biometrics: 'Biometrics',
-  sec_biometrics_detail: 'Face ID / Touch ID (coming soon)',
+  sec_biometrics_detail: 'Unlock Finora and approve payments',
+  sec_biometrics_enable_failed: 'Could not enable biometrics. Enter your passcode instead.',
   sec_footer_passcode: 'Passcode and biometrics gate Approvals before money moves.',
   sec_trusted_devices: 'Trusted devices',
   sec_trusted_footer: 'Revoke a device to require sign-in again on that device.',
@@ -168,7 +169,7 @@ const fr: Record<TranslationKey, string> = {
   nav_policies: 'R\u00e8gles',
   nav_settings: 'Param\u00e8tres',
   nav_security: 'S\u00e9curit\u00e9',
-  nav_appearance: 'Apparence',
+  nav_display: 'Affichage',
   nav_wallets: 'Portefeuilles',
   nav_activity: 'Activit\u00e9',
   nav_recurring: 'R\u00e9currents',
@@ -241,7 +242,7 @@ const fr: Record<TranslationKey, string> = {
 
   // Settings hub
   settings_title: 'Param\u00e8tres',
-  settings_appearance: 'Apparence',
+  settings_display: 'Apparence',
   settings_security: 'S\u00e9curit\u00e9 & Code secret',
   settings_language: 'Langue',
   settings_theme: 'Th\u00e8me',
@@ -261,7 +262,7 @@ const fr: Record<TranslationKey, string> = {
   settings_memory_label: 'M\u00e9moire',
   settings_memory_detail: 'Ce que Finora retient de vous',
   settings_notifications_label: 'Notifications',
-  settings_appearance_label: 'Apparence',
+  settings_appearance_label: 'Affichage',
   settings_integrations_label: 'Int\u00e9grations',
   settings_integrations_detail: 'Gmail et outils connect\u00e9s',
   settings_approvals_label: 'Approbations',
@@ -289,7 +290,7 @@ const fr: Record<TranslationKey, string> = {
   sec_passcode_detail_has: 'Utilis\u00e9 pour approuver les paiements et plans',
   sec_passcode_detail_none: 'Requis avant le premier envoi',
   sec_biometrics: 'Biom\u00e9trie',
-  sec_biometrics_detail: 'Face ID / Empreinte (bient\u00f4t disponible)',
+  sec_biometrics_detail: 'D\u00e9bloquez Finora et approuvez les paiements',
   sec_footer_passcode:
     'Le code secret et la biom\u00e9trie prot\u00e8gent les approbations avant d\u2019ex\u00e9cuter un paiement.',
   sec_trusted_devices: 'Appareils de confiance',
@@ -300,6 +301,8 @@ const fr: Record<TranslationKey, string> = {
   sec_revoke_confirm: 'Retirer cet appareil des appareils de confiance\u00a0?',
   sec_passcode_updated_title: 'Code secret mis \u00e0 jour',
   sec_passcode_updated_sub: 'Utilisez votre nouveau code secret pour approuver vos transactions.',
+  sec_biometrics_enable_failed:
+    "Impossible d'activer la biom\u00e9trie. Saisissez votre code secret.",
 
   // Account screen
   account_type_title: 'Type de compte',

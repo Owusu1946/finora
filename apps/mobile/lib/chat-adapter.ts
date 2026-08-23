@@ -302,7 +302,11 @@ function filterEventsByRange(
     inputCount: events.length,
     outputCount: filtered.length,
     inputEvents: events.map((event) => ({ id: event.id, title: event.title, dueAt: event.dueAt })),
-    outputEvents: filtered.map((event) => ({ id: event.id, title: event.title, dueAt: event.dueAt })),
+    outputEvents: filtered.map((event) => ({
+      id: event.id,
+      title: event.title,
+      dueAt: event.dueAt,
+    })),
   });
   return filtered;
 }
@@ -1312,70 +1316,13 @@ const finoraMockAdapter = {
     }
 
     if (isPayrollIntent(prompt)) {
-      if (!isBusinessAccount()) {
-        yield { content: [{ type: 'text', text: businessOnlyMessage() }] };
-        return;
-      }
-
-      const period = defaultPayrollPeriod();
-      const employees = await listActiveEmployees();
-      const total = employees.reduce((sum, e) => sum + e.salary, 0);
-      const currency = employees[0]?.currency ?? 'USD';
-      const args = {
-        period,
-        employeeIds: employees.map((e) => e.id),
-      };
-      const argsText = JSON.stringify(args);
-      const reasoning = 'Payroll run requested.\nLoading active employees and summing salaries…';
-
-      yield { content: [{ type: 'reasoning', text: reasoning }] };
-      await wait(400);
-      if (abortSignal.aborted) return;
-
+      // Offline fallback must never render the legacy mock payroll roster.
+      // Imported payrolls are prepared only by the remote API after inspection.
       yield {
         content: [
-          { type: 'reasoning', text: reasoning },
-          {
-            type: 'tool-call',
-            toolCallId: 'call_prepare_payroll',
-            toolName: 'prepare_payroll',
-            args,
-            argsText,
-          },
-        ],
-      };
-
-      await wait(550);
-      if (abortSignal.aborted) return;
-
-      yield {
-        content: [
-          {
-            type: 'reasoning',
-            text: `${reasoning}\nPrepared ${employees.length} salary line(s).`,
-          },
-          {
-            type: 'tool-call',
-            toolCallId: 'call_prepare_payroll',
-            toolName: 'prepare_payroll',
-            args,
-            argsText,
-            result: {
-              period,
-              employees,
-              total,
-              currency,
-              preparationId: `prep_payroll_${Date.now()}`,
-            },
-          },
           {
             type: 'text',
-            text:
-              employees.length > 0
-                ? `Payroll for ${period}: ${employees.length} employee${
-                    employees.length === 1 ? '' : 's'
-                  }, ${currency} ${total.toLocaleString()}. Approve with your passcode — each salary settles as its own payout.`
-                : 'No active employees on the roster. Open Payroll to add your team.',
+            text: 'Attach a payroll file first. I’ll inspect every row, show any issues, and prepare the imported payroll for approval.',
           },
         ],
       };

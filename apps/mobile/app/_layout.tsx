@@ -15,7 +15,7 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -58,9 +58,9 @@ import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeeP
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
 import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
-import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
+import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
@@ -75,7 +75,6 @@ import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { createFinoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
-import { createLocalThreadListAdapter } from '@/lib/local-thread-adapter';
 import { OnboardingGateProvider, useOnboardingGate } from '@/lib/onboarding-gate';
 import { getOnboardingState } from '@/lib/onboarding-storage';
 import { PasscodeGateProvider, usePasscodeGate } from '@/lib/passcode-gate';
@@ -84,7 +83,6 @@ import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import {
   createRemoteThreadAdapter,
   createRemoteThreadRuntimeAdapters,
-  fallbackThreadTitle,
   firstThreadUserText,
   requestRemoteThreadTitle,
   type RemoteThreadConfig,
@@ -107,20 +105,15 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 
 function StatusBarBackdrop() {
   const { top } = useSafeAreaInsets();
-  const { colors } = useTheme();
 
   if (top === 0) return null;
 
-  // Taller than the safe-area inset so the fade extends past the status bar
-  // into the content area, giving a smooth ChatGPT-style disappearing effect.
-  const fadeHeight = top + 28;
-
   return (
-    <LinearGradient
+    <BlurView
       pointerEvents='none'
-      colors={[colors.background, colors.background, `${colors.background}00`]}
-      locations={[0, 0.45, 1]}
-      style={[styles.statusBarBackdrop, { height: fadeHeight }]}
+      intensity={40}
+      tint='systemChromeMaterial'
+      style={[styles.statusBarBackdrop, { height: top }]}
     />
   );
 }
@@ -202,48 +195,30 @@ function RootNavigator() {
   );
 }
 
-function InstantThreadTitleSync({ config }: { config?: RemoteThreadConfig }) {
+function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
   const aui = useAui();
-  const startedRef = useRef(new Set<string>());
+  const generatingRef = useRef(new Set<string>());
 
   useAuiEvent('thread.runStart', () => {
     void (async () => {
       const messages = aui.thread().getState().messages;
-      const userMessages = messages.filter((message) => message.role === 'user');
-      if (userMessages.length !== 1) return;
-      const text = firstThreadUserText(messages);
-      if (!text) return;
+      if (messages.filter((message) => message.role === 'user').length !== 1) return;
+      const message = firstThreadUserText(messages);
+      if (!message) return;
 
-      const mainThreadId = aui.threads?.getState?.()?.mainThreadId;
-      if (!mainThreadId) return;
+      const item = aui.threadListItem.getState();
+      if (item.title && item.title !== 'New chat') return;
+      const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
+      if (generatingRef.current.has(remoteId)) return;
+      generatingRef.current.add(remoteId);
 
-      const threadItem = aui.threads.item({ id: mainThreadId });
-      const itemState = threadItem?.getState?.();
-      if (itemState?.title && itemState.title !== 'New chat') return;
-
-      let remoteId = itemState?.remoteId;
-      if (!remoteId && threadItem?.initialize) {
-        const initResult = await threadItem.initialize();
-        remoteId = initResult?.remoteId;
-      }
-
-      if (remoteId && startedRef.current.has(remoteId)) return;
-      if (remoteId) startedRef.current.add(remoteId);
-
-      if (threadItem?.generateTitle) {
-        void threadItem.generateTitle();
-      }
-
-      if (!config || !remoteId) return;
-
-      const generated = await requestRemoteThreadTitle(config, remoteId, text);
-      if (generated) {
-        if (threadItem?.generateTitle) {
-          void threadItem.generateTitle();
-        } else if (threadItem?.rename) {
-          void threadItem.rename(generated);
-        }
-      }
+      requestRemoteThreadTitle(config, remoteId, message)
+        .then((generated) => {
+          if (generated) aui.threadListItem.generateTitle();
+        })
+        .finally(() => {
+          generatingRef.current.delete(remoteId);
+        });
     })();
   });
 
@@ -254,12 +229,12 @@ function FinoraRuntimeContent({
   runtime,
   remoteConfig,
 }: {
-  runtime: ReturnType<typeof useRemoteThreadListRuntime>;
+  runtime: ReturnType<typeof useLocalRuntime>;
   remoteConfig?: RemoteThreadConfig;
 }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <InstantThreadTitleSync config={remoteConfig} />
+      {remoteConfig ? <InstantRemoteTitleSync config={remoteConfig} /> : null}
       <PreparePaymentToolUI />
       <FundAccountToolUI />
       <ListReceiveMethodsToolUI />
@@ -300,14 +275,8 @@ function FinoraRuntimeContent({
 }
 
 function LocalFinoraAssistantRuntime({ getToken }: { getToken: () => Promise<string | null> }) {
-  const threadListAdapter = useMemo(() => createLocalThreadListAdapter(), []);
-  const runtime = useRemoteThreadListRuntime({
-    adapter: threadListAdapter,
-    runtimeHook: function LocalThreadRuntimeHook() {
-      const adapter = useMemo(() => createFinoraChatAdapter(getToken), [getToken]);
-      return useLocalRuntime(adapter);
-    },
-  });
+  const adapter = useMemo(() => createFinoraChatAdapter(getToken), [getToken]);
+  const runtime = useLocalRuntime(adapter);
   return <FinoraRuntimeContent runtime={runtime} />;
 }
 
@@ -319,11 +288,18 @@ function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime })
   const runtime = useRemoteThreadListRuntime({
     adapter: threadListAdapter,
     runtimeHook: function RemoteThreadRuntimeHook() {
+      const localThreadId = useAuiState((state) => state.threadListItem.id);
       const remoteId = useAuiState((state) => state.threadListItem.remoteId);
       const adapters = useMemo(
-        () => createRemoteThreadRuntimeAdapters(config, remoteId ?? 'pending'),
-        [remoteId],
+        () => createRemoteThreadRuntimeAdapters(config, localThreadId ?? null),
+        [config.apiUrl, config.userId, localThreadId],
       );
+
+      useEffect(() => {
+        if (remoteId) adapters.bindRemoteId(remoteId);
+        return () => adapters.release();
+      }, [adapters, remoteId]);
+
       return useLocalRuntime(adapters.chatModel, { adapters: { history: adapters.history } });
     },
   });
@@ -452,6 +428,7 @@ const styles = StyleSheet.create({
     right: 0,
     left: 0,
     zIndex: 80,
+    overflow: 'hidden',
   },
   securityCover: {
     ...StyleSheet.absoluteFillObject,

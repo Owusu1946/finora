@@ -74,3 +74,4 @@ coverage
 .cache
 tmp
 temp
+--keep-vars_tmp_*

@@ -6,7 +6,11 @@ import { createPreparation } from '../mock/store';
 
 export class PayrollPreparationError extends Error {
   constructor(
-    public readonly code: 'payroll_import_not_found' | 'payroll_import_blocked' | 'payroll_row_not_found' | 'payroll_currency_mismatch',
+    public readonly code:
+      | 'payroll_import_not_found'
+      | 'payroll_import_blocked'
+      | 'payroll_row_not_found'
+      | 'payroll_currency_mismatch',
     public readonly status: 404 | 409,
     public readonly details?: Record<string, unknown>,
   ) {
@@ -54,7 +58,11 @@ export async function preparePayrollImport(input: {
   if (selectedIds && selectedRows.length !== selectedIds.size) {
     throw new PayrollPreparationError('payroll_row_not_found', 404);
   }
-  const currencies = new Set(selectedRows.map(({ payload }) => String(payload.currency ?? payrollImport.currency ?? 'USD').toUpperCase()));
+  const currencies = new Set(
+    selectedRows.map(({ payload }) =>
+      String(payload.currency ?? payrollImport.currency ?? 'USD').toUpperCase(),
+    ),
+  );
   if (currencies.size > 1) throw new PayrollPreparationError('payroll_currency_mismatch', 409);
 
   const employees = selectedRows.map(({ payload }) => ({
@@ -65,8 +73,12 @@ export async function preparePayrollImport(input: {
     currency: String(payload.currency ?? payrollImport.currency ?? 'USD'),
     destination: {
       kind:
-        String(payload.destinationType ?? '').toLowerCase().includes('mobile') ||
-        String(payload.rail ?? '').toLowerCase().includes('momo')
+        String(payload.destinationType ?? '')
+          .toLowerCase()
+          .includes('mobile') ||
+        String(payload.rail ?? '')
+          .toLowerCase()
+          .includes('momo')
           ? 'mobile_money'
           : 'bank_account',
       label: String(payload.rail ?? payload.destinationType ?? 'Payout destination'),
@@ -95,10 +107,32 @@ export async function prepareImportedEmployeePayment(input: {
   reference?: string;
 }) {
   const db = createDb(input.databaseUrl);
-  const [payrollImport] = await db.select().from(payrollImports).where(and(eq(payrollImports.id, input.importId), eq(payrollImports.clerkUserId, input.userId), isNull(payrollImports.deletedAt))).limit(1);
+  const [payrollImport] = await db
+    .select()
+    .from(payrollImports)
+    .where(
+      and(
+        eq(payrollImports.id, input.importId),
+        eq(payrollImports.clerkUserId, input.userId),
+        isNull(payrollImports.deletedAt),
+      ),
+    )
+    .limit(1);
   if (!payrollImport) throw new PayrollPreparationError('payroll_import_not_found', 404);
-  if (payrollImport.status !== 'ready') throw new PayrollPreparationError('payroll_import_blocked', 409, { blockingIssues: payrollImport.blockingIssues });
-  const [stored] = await db.select({ payload: payrollImportRows.payload }).from(payrollImportRows).where(and(eq(payrollImportRows.importId, payrollImport.id), eq(payrollImportRows.rowId, input.rowId))).limit(1);
+  if (payrollImport.status !== 'ready')
+    throw new PayrollPreparationError('payroll_import_blocked', 409, {
+      blockingIssues: payrollImport.blockingIssues,
+    });
+  const [stored] = await db
+    .select({ payload: payrollImportRows.payload })
+    .from(payrollImportRows)
+    .where(
+      and(
+        eq(payrollImportRows.importId, payrollImport.id),
+        eq(payrollImportRows.rowId, input.rowId),
+      ),
+    )
+    .limit(1);
   if (!stored) throw new PayrollPreparationError('payroll_row_not_found', 404);
   const payload = stored.payload;
   const employee = {
@@ -108,14 +142,19 @@ export async function prepareImportedEmployeePayment(input: {
     salary: Number(payload.amount ?? 0),
     currency: String(payload.currency ?? payrollImport.currency ?? 'USD').toUpperCase(),
     destination: {
-      kind: String(payload.destinationType ?? '').toLowerCase().includes('mobile') ? 'mobile_money' : 'bank_account',
+      kind: String(payload.destinationType ?? '')
+        .toLowerCase()
+        .includes('mobile')
+        ? 'mobile_money'
+        : 'bank_account',
       label: String(payload.rail ?? payload.destinationType ?? 'Payout destination'),
       value: String(payload.destination ?? ''),
     },
   };
   const storedCurrency = employee.currency;
   const requestedCurrency = input.currency?.toUpperCase() ?? storedCurrency;
-  if (requestedCurrency !== storedCurrency) throw new PayrollPreparationError('payroll_currency_mismatch', 409);
+  if (requestedCurrency !== storedCurrency)
+    throw new PayrollPreparationError('payroll_currency_mismatch', 409);
   const amount = input.amount ?? employee.salary;
   const memo = input.reference ?? String(payload.reference ?? `Salary · ${employee.name}`);
   return {

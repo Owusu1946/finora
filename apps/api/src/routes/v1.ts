@@ -7,7 +7,6 @@ import {
   previewFxQuote,
   type Currency,
 } from '@finora/shared';
-import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import type { AuthenticatedUser } from '../auth';

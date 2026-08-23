@@ -1,6 +1,7 @@
+import type { RemoteInvoice } from '@finora/shared';
+
 import type { PaymentDestinationKind } from '@/components/chat/PaymentConfirmationCard';
 import type { SupportedCurrency } from '@/components/ui/currency-icon';
-import type { RemoteInvoice } from '@finora/shared';
 
 export type InvoiceStatus = 'due' | 'scheduled' | 'paid' | 'dismissed';
 export type InvoiceSource = 'gmail' | 'manual' | 'agent';

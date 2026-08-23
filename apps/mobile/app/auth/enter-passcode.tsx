@@ -22,11 +22,20 @@ export default function EnterPasscodeScreen() {
     router.replace('/(app)' as Href);
   };
 
+  const handleBiometricUnlock = () => {
+    markTagConfigured();
+    unlock();
+    haptics.success();
+    router.replace('/(app)' as Href);
+    return true;
+  };
+
   return (
     <PasscodeView
       mode='enter'
       onVerify={handleVerify}
       onSuccess={handleSuccess}
+      onBiometricUnlock={handleBiometricUnlock}
     />
   );
 }

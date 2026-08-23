@@ -10,8 +10,6 @@ import { createAssistantStream, type AssistantStream } from 'assistant-stream';
 import * as Crypto from 'expo-crypto';
 import { fetch } from 'expo/fetch';
 
-import type { RemoteChatBootstrap } from './remote-chat-adapter';
-
 import {
   createRemoteChatAdapter,
   createRemoteChatResumeStream,
@@ -19,7 +17,9 @@ import {
 } from './remote-chat-adapter';
 
 const optimisticChatIds = new Set<string>();
+const pendingThreadBindings = new Map<string, { current: string | null }>();
 const generatedTitles = new Map<string, string>();
+const titleRequests = new Map<string, Promise<string | null>>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
 const TITLE_REQUEST_TIMEOUT_MS = 20_000;
 
@@ -59,13 +59,11 @@ function toMetadata(item: {
 
 export function firstThreadUserText(messages: readonly ThreadMessage[]) {
   const firstUser = messages.find((message) => message.role === 'user');
-  const raw = firstUser?.content
+  return firstUser?.content
     .flatMap((part) => (part.type === 'text' ? [part.text] : []))
     .join(' ')
     .replaceAll(/\s+/g, ' ')
     .trim();
-  if (!raw) return '';
-  return raw.replace(/\[Finora uploaded attachment ID:[^\]]+\]/gi, '').trim();
 }
 
 export function fallbackThreadTitle(messages: readonly ThreadMessage[]) {
@@ -80,8 +78,22 @@ export async function requestRemoteThreadTitle(
   remoteId: string,
   message: string,
 ) {
+  const existingRequest = titleRequests.get(remoteId);
+  if (existingRequest) return existingRequest;
+
   const token = await config.getToken();
   if (!token) return null;
+  const request = generateTitle(config, remoteId, message, token);
+  titleRequests.set(remoteId, request);
+  return request;
+}
+
+async function generateTitle(
+  config: RemoteThreadConfig,
+  remoteId: string,
+  message: string,
+  token: string,
+) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TITLE_REQUEST_TIMEOUT_MS);
   try {
@@ -104,18 +116,12 @@ export async function requestRemoteThreadTitle(
     return null;
   } finally {
     clearTimeout(timeout);
+    titleRequests.delete(remoteId);
   }
 }
 
-export function titleAssistantStream(title: string): AssistantStream {
-  return createAssistantStream(async (controller) => {
-    const tokens = title.split(/(\s+)/);
-    for (const token of tokens) {
-      if (!token) continue;
-      controller.appendText(token);
-      await new Promise((resolve) => setTimeout(resolve, 35));
-    }
-  }) as AssistantStream;
+function titleAssistantStream(title: string) {
+  return createAssistantStream((controller) => controller.appendText(title)) as AssistantStream;
 }
 
 async function readCachedThreads(userId: string): Promise<RemoteThreadMetadata[]> {
@@ -178,14 +184,7 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       chats: Array<Parameters<typeof toMetadata>[0]>;
       nextCursor: string | null;
     };
-    const threads = payload.chats.map((item) => {
-      const meta = toMetadata(item);
-      const gen = generatedTitles.get(meta.remoteId);
-      if (gen && (!meta.title || meta.title === 'New chat')) {
-        return { ...meta, title: gen };
-      }
-      return meta;
-    });
+    const threads = payload.chats.map(toMetadata);
     if (!query) {
       cachedList = {
         threads,
@@ -210,18 +209,12 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       if (!params?.after) {
         const persisted = await readCachedThreads(config.userId);
         if (persisted.length > 0) {
-          const merged = persisted.map((thread) => {
-            const gen = generatedTitles.get(thread.remoteId);
-            return gen && (!thread.title || thread.title === 'New chat')
-              ? { ...thread, title: gen }
-              : thread;
-          });
           cachedList = {
-            threads: merged,
+            threads: persisted,
             expiresAt: Date.now() + THREAD_LIST_CACHE_TTL_MS,
           };
           void loadNetworkList(query).catch(() => undefined);
-          return { threads: merged };
+          return { threads: persisted };
         }
       }
 
@@ -242,9 +235,11 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       }
     },
 
-    async initialize() {
+    async initialize(localThreadId: string) {
       const remoteId = `chat_${Crypto.randomUUID().replaceAll('-', '')}`;
       optimisticChatIds.add(remoteId);
+      const binding = pendingThreadBindings.get(localThreadId);
+      if (binding) binding.current = remoteId;
       return { remoteId };
     },
 
@@ -254,15 +249,6 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     },
 
     async rename(remoteId, newTitle) {
-      generatedTitles.set(remoteId, newTitle);
-      if (cachedList) {
-        cachedList = {
-          ...cachedList,
-          threads: cachedList.threads.map((thread) =>
-            thread.remoteId === remoteId ? { ...thread, title: newTitle, lastMessageAt: new Date() } : thread,
-          ),
-        };
-      }
       await request(`/v1/chats/${encodeURIComponent(remoteId)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -293,63 +279,81 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       await request(`/v1/chats/${encodeURIComponent(remoteId)}`, { method: 'DELETE' });
       invalidateListCache();
       generatedTitles.delete(remoteId);
+      titleRequests.delete(remoteId);
       await AsyncStorage.removeItem(threadCacheKey(config.userId));
     },
 
     async generateTitle(remoteId, messages) {
       const title = generatedTitles.get(remoteId) ?? fallbackThreadTitle(messages);
-      generatedTitles.set(remoteId, title);
-      if (cachedList) {
-        cachedList = {
-          ...cachedList,
-          threads: cachedList.threads.map((thread) =>
-            thread.remoteId === remoteId ? { ...thread, title, lastMessageAt: new Date() } : thread,
-          ),
-        };
-        void AsyncStorage.setItem(
-          threadCacheKey(config.userId),
-          JSON.stringify(
-            cachedList.threads.map((thread) => ({
-              id: thread.remoteId,
-              title: thread.title ?? null,
-              titleStatus: 'fallback',
-              status: thread.status,
-              lastMessageAt: thread.lastMessageAt?.toISOString() ?? new Date().toISOString(),
-            })),
-          ),
-        );
-      }
       return titleAssistantStream(title);
     },
   };
 }
 
-export function createRemoteThreadRuntimeAdapters(config: RemoteThreadConfig, chatId: string) {
-  const chatConfig = { apiUrl: config.apiUrl, chatId, getToken: config.getToken };
+export type RemoteThreadRuntimeAdapters = {
+  chatModel: ReturnType<typeof createRemoteChatAdapter>;
+  history: ThreadHistoryAdapter;
+  bindRemoteId: (remoteId: string) => void;
+  release: () => void;
+};
+
+export function createRemoteThreadRuntimeAdapters(
+  config: RemoteThreadConfig,
+  localThreadId: string | null,
+): RemoteThreadRuntimeAdapters {
+  const chatIdRef: { current: string | null } = { current: null };
+  const chatConfig = {
+    apiUrl: config.apiUrl,
+    chatId: '',
+    getToken: config.getToken,
+    getChatId: () => chatIdRef.current,
+    isOptimistic: () => chatIdRef.current !== null && optimisticChatIds.has(chatIdRef.current),
+    markPersisted: () => {
+      if (chatIdRef.current !== null) optimisticChatIds.delete(chatIdRef.current);
+    },
+  };
   const history: ThreadHistoryAdapter = {
     async load() {
-      if (chatId === 'pending') return { messages: [] };
-      if (optimisticChatIds.has(chatId)) return { messages: [] };
-      const bootstrap = await loadRemoteChatBootstrap(chatConfig);
+      const activeChatId = chatIdRef.current;
+      if (!activeChatId || optimisticChatIds.has(activeChatId)) return { messages: [] };
+      const bootstrap = await loadRemoteChatBootstrap({ ...chatConfig, chatId: activeChatId });
       return {
         ...ExportedMessageRepository.fromArray(bootstrap.initialMessages),
         unstable_resume: bootstrap.activeStreamId !== null,
       };
     },
     async *resume(options: ChatModelRunOptions) {
-      const bootstrap: RemoteChatBootstrap = await loadRemoteChatBootstrap(chatConfig);
+      const activeChatId = chatIdRef.current;
+      if (!activeChatId) return;
+      const bootstrap = await loadRemoteChatBootstrap({
+        ...chatConfig,
+        chatId: activeChatId,
+      });
       if (!bootstrap.activeStreamId) return;
-      yield* createRemoteChatResumeStream(chatConfig, bootstrap.activeStreamId)(options);
+      yield* createRemoteChatResumeStream(
+        { ...chatConfig, chatId: activeChatId },
+        bootstrap.activeStreamId,
+      )(options);
     },
     async append() {},
     async update() {},
   };
+
+  if (localThreadId !== null) {
+    pendingThreadBindings.set(localThreadId, chatIdRef);
+  }
+
   return {
-    chatModel: createRemoteChatAdapter({
-      ...chatConfig,
-      isOptimistic: () => optimisticChatIds.has(chatId),
-      markPersisted: () => optimisticChatIds.delete(chatId),
-    }),
+    chatModel: createRemoteChatAdapter(chatConfig),
     history,
+    bindRemoteId(remoteId: string) {
+      chatIdRef.current = remoteId;
+    },
+    release:
+      localThreadId !== null
+        ? () => {
+            pendingThreadBindings.delete(localThreadId);
+          }
+        : () => {},
   };
 }

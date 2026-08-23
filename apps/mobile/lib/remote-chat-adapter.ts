@@ -33,6 +33,7 @@ type GetToken = () => Promise<string | null>;
 type RemoteChatConfig = {
   apiUrl: string;
   chatId: string;
+  getChatId?: () => string | null | Promise<string | null>;
   getToken: GetToken;
   isOptimistic?: () => boolean;
   markPersisted?: () => void;
@@ -229,16 +230,24 @@ async function responseError(response: Response) {
   } satisfies ChatErrorResponse;
 }
 
-function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
-  const chatUrl = `${apiUrl}/v1/chat`;
+async function resolveChatId(config: RemoteChatConfig) {
+  if (!config.getChatId) return config.chatId;
+  const chatId = await config.getChatId();
+  if (!chatId) throw new RemoteChatError('The chat is not ready yet. Please try again.');
+  return chatId;
+}
+
+function createRemoteChatApi(apiConfig: RemoteChatConfig) {
+  const chatUrl = `${apiConfig.apiUrl}/v1/chat`;
 
   async function authHeaders() {
-    const token = await getToken();
+    const token = await apiConfig.getToken();
     if (!token) throw new RemoteChatError('Your session expired. Please sign in again.');
     return { Authorization: `Bearer ${token}` };
   }
 
   async function getState(signal?: AbortSignal) {
+    const chatId = await resolveChatId(apiConfig);
     const response = await fetch(`${chatUrl}/${chatId}`, {
       headers: await authHeaders(),
       signal,
@@ -252,6 +261,7 @@ function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
   }
 
   async function stop(activeStreamId: string | null) {
+    const chatId = await resolveChatId(apiConfig);
     try {
       const response = await fetch(`${chatUrl}/${chatId}/stop`, {
         method: 'POST',
@@ -268,8 +278,8 @@ function createRemoteChatApi({ apiUrl, chatId, getToken }: RemoteChatConfig) {
     return new DefaultChatTransport<UIMessage>({
       api: chatUrl,
       fetch: async (input, init) => {
-        const url =
-          typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        const chatId = await resolveChatId(apiConfig);
+        const url = `${apiConfig.apiUrl}/v1/chat/${encodeURIComponent(chatId)}`;
         const response = await fetch(url, init as Parameters<typeof fetch>[1]);
         if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
         const streamId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
@@ -369,6 +379,13 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
 
   return {
     async *run({ messages, abortSignal }) {
+      if (config.getChatId) {
+        while ((await config.getChatId()) === null) {
+          await new Promise((resolve) => setTimeout(resolve, 25));
+          if (abortSignal.aborted) return;
+        }
+      }
+      const chatId = await resolveChatId(config);
       let activeStreamId: string | null = null;
       const transport = api.transport((streamId) => {
         activeStreamId = streamId;
@@ -382,12 +399,12 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
         if (state?.active && state.resumable && state.activeStreamId) {
           const resumed = await transport.reconnectToStream({
             abortSignal,
-            chatId: config.chatId,
+            chatId,
             headers: await api.authHeaders(),
           });
           if (resumed) {
             yield* assistantResults(resumed);
-            await persistActiveStreamId(config.chatId, null);
+            await persistActiveStreamId(chatId, null);
           }
           state = await api.getState(abortSignal);
         }
@@ -416,7 +433,7 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
             : ('regenerate-message' as const);
         const stream = await transport.sendMessages({
           abortSignal,
-          chatId: config.chatId,
+          chatId,
           messages: requestMessages,
           trigger,
           messageId: trigger === 'regenerate-message' ? requestMessages.at(-1)?.id : undefined,
@@ -428,19 +445,19 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
         if (!currentMessage && !abortSignal.aborted) {
           throw new RemoteChatError('Finora returned an empty response.');
         }
-        await persistActiveStreamId(config.chatId, null);
+        await persistActiveStreamId(chatId, null);
       } catch (error) {
         if (abortSignal.aborted) return;
         if (!activeStreamId) throw error;
 
         const resumed = await transport.reconnectToStream({
           abortSignal,
-          chatId: config.chatId,
+          chatId,
           headers: await api.authHeaders(),
         });
         if (!resumed) throw error;
         yield* assistantResults(resumed);
-        await persistActiveStreamId(config.chatId, null);
+        await persistActiveStreamId(chatId, null);
       } finally {
         abortSignal.removeEventListener('abort', onAbort);
       }

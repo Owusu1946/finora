@@ -37,10 +37,7 @@ import {
   type FinoraTagSuggestion,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
-import {
-  payrollAttachmentContext,
-  uploadPayrollAttachment,
-} from '@/lib/payroll-attachments-api';
+import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
 
 import {

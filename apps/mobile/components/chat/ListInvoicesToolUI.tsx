@@ -2,8 +2,9 @@ import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { RemoteInvoiceSchema } from '@finora/shared';
 import { StyleSheet, View } from 'react-native';
 
-import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import type { Invoice } from '@/components/invoices/types';
+
+import { InvoiceCard } from '@/components/chat/InvoiceCard';
 import { invoiceFromRemote } from '@/components/invoices/types';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
