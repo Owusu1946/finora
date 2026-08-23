@@ -197,7 +197,7 @@ function RootNavigator() {
 
 function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
   const aui = useAui();
-  const startedRef = useRef(new Set<string>());
+  const generatingRef = useRef(new Set<string>());
 
   useAuiEvent('thread.runStart', () => {
     void (async () => {
@@ -209,14 +209,16 @@ function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
       const item = aui.threadListItem.getState();
       if (item.title && item.title !== 'New chat') return;
       const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
-      if (startedRef.current.has(remoteId)) return;
-      startedRef.current.add(remoteId);
+      if (generatingRef.current.has(remoteId)) return;
+      generatingRef.current.add(remoteId);
 
-      // assistant-ui normally generates titles on runEnd. Trigger it now so
-      // the deterministic local title reaches the drawer before the model responds.
-      aui.threadListItem.generateTitle();
-      const generated = await requestRemoteThreadTitle(config, remoteId, message);
-      if (generated) aui.threadListItem.generateTitle();
+      requestRemoteThreadTitle(config, remoteId, message)
+        .then((generated) => {
+          if (generated) aui.threadListItem.generateTitle();
+        })
+        .finally(() => {
+          generatingRef.current.delete(remoteId);
+        });
     })();
   });
 

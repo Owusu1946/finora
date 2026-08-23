@@ -19,6 +19,7 @@ import {
 const optimisticChatIds = new Set<string>();
 const pendingThreadBindings = new Map<string, { current: string | null }>();
 const generatedTitles = new Map<string, string>();
+const titleRequests = new Map<string, Promise<string | null>>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
 const TITLE_REQUEST_TIMEOUT_MS = 20_000;
 
@@ -77,8 +78,22 @@ export async function requestRemoteThreadTitle(
   remoteId: string,
   message: string,
 ) {
+  const existingRequest = titleRequests.get(remoteId);
+  if (existingRequest) return existingRequest;
+
   const token = await config.getToken();
   if (!token) return null;
+  const request = generateTitle(config, remoteId, message, token);
+  titleRequests.set(remoteId, request);
+  return request;
+}
+
+async function generateTitle(
+  config: RemoteThreadConfig,
+  remoteId: string,
+  message: string,
+  token: string,
+) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TITLE_REQUEST_TIMEOUT_MS);
   try {
@@ -101,6 +116,7 @@ export async function requestRemoteThreadTitle(
     return null;
   } finally {
     clearTimeout(timeout);
+    titleRequests.delete(remoteId);
   }
 }
 
@@ -263,31 +279,12 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       await request(`/v1/chats/${encodeURIComponent(remoteId)}`, { method: 'DELETE' });
       invalidateListCache();
       generatedTitles.delete(remoteId);
+      titleRequests.delete(remoteId);
       await AsyncStorage.removeItem(threadCacheKey(config.userId));
     },
 
     async generateTitle(remoteId, messages) {
       const title = generatedTitles.get(remoteId) ?? fallbackThreadTitle(messages);
-      if (cachedList) {
-        cachedList = {
-          ...cachedList,
-          threads: cachedList.threads.map((thread) =>
-            thread.remoteId === remoteId ? { ...thread, title, lastMessageAt: new Date() } : thread,
-          ),
-        };
-        void AsyncStorage.setItem(
-          threadCacheKey(config.userId),
-          JSON.stringify(
-            cachedList.threads.map((thread) => ({
-              id: thread.remoteId,
-              title: thread.title ?? null,
-              titleStatus: 'fallback',
-              status: thread.status,
-              lastMessageAt: thread.lastMessageAt?.toISOString() ?? new Date().toISOString(),
-            })),
-          ),
-        );
-      }
       return titleAssistantStream(title);
     },
   };
