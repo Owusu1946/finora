@@ -1,3 +1,4 @@
+import { VariableContextProvider, vars } from 'nativewind';
 import {
   createContext,
   useCallback,
@@ -34,6 +35,25 @@ type SettingsContextValue = {
   colors: Palette;
   t: (key: TranslationKey) => string;
 };
+
+const themeVariables = (colors: Palette) =>
+  vars({
+    '--color-theme-background': colors.background,
+    '--color-theme-foreground': colors.foreground,
+    '--color-theme-card': colors.card,
+    '--color-theme-card-foreground': colors.cardForeground,
+    '--color-theme-muted': colors.muted,
+    '--color-theme-muted-foreground': colors.mutedForeground,
+    '--color-theme-accent': colors.accent,
+    '--color-theme-border': colors.border,
+    '--color-theme-primary': colors.primary,
+    '--color-theme-primary-foreground': colors.primaryForeground,
+    '--color-theme-composer': colors.composer,
+    '--color-theme-destructive': colors.destructive,
+    '--color-theme-destructive-foreground': colors.destructiveForeground,
+    '--color-theme-destructive-surface': colors.destructiveSurface,
+    '--color-theme-ring': colors.ring,
+  });
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
@@ -122,7 +142,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+  return (
+    <VariableContextProvider value={themeVariables(colors)}>
+      <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
+    </VariableContextProvider>
+  );
 }
 
 export function useSettings(): SettingsContextValue {

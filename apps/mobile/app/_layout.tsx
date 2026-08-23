@@ -124,14 +124,15 @@ function RootNavigator() {
   const { tagConfigured } = useAuthGate();
   const { locked: passcodeLocked } = usePasscodeGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
-  const segments = useSegments();
+  const [firstSegment, ...remainingSegments] = useSegments();
+  const [secondSegment] = remainingSegments as string[];
   const { isDark, colors } = useTheme();
   const isAuthSubScreen =
-    segments[0] === 'auth' &&
-    (String(segments[1]) === 'add-phone' ||
-      String(segments[1]) === 'create-passcode' ||
-      String(segments[1]) === 'enter-passcode');
-  const isEnterPasscodeScreen = segments[0] === 'auth' && String(segments[1]) === 'enter-passcode';
+    firstSegment === 'auth' &&
+    (secondSegment === 'add-phone' ||
+      secondSegment === 'create-passcode' ||
+      secondSegment === 'enter-passcode');
+  const isEnterPasscodeScreen = firstSegment === 'auth' && secondSegment === 'enter-passcode';
   const requiresPasscode =
     onboardingCompleted && authLoaded && isSignedIn && tagConfigured && passcodeLocked;
   const concealProtectedContent =
@@ -160,7 +161,7 @@ function RootNavigator() {
         <Stack.Screen name='pay/r/[id]' />
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
-      {onboardingCompleted && authLoaded && !isSignedIn && segments[0] !== 'auth' ? (
+      {onboardingCompleted && authLoaded && !isSignedIn && firstSegment !== 'auth' ? (
         <Redirect href={'/auth' as Href} />
       ) : null}
       {onboardingCompleted &&
@@ -180,7 +181,7 @@ function RootNavigator() {
       {onboardingCompleted &&
       isSignedIn &&
       tagConfigured &&
-      segments[0] === 'auth' &&
+      firstSegment === 'auth' &&
       !isAuthSubScreen ? (
         <Redirect href={'/(app)' as Href} />
       ) : null}
