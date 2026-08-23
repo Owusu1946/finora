@@ -1,14 +1,14 @@
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import type { ApprovalFilter, ApprovalRequest } from '@/components/approvals/types';
 
 import { ApprovalListItem } from '@/components/approvals/ApprovalListItem';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { listApprovals } from '@/lib/approvals-storage';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 const FILTERS: { id: ApprovalFilter; label: string }[] = [
@@ -19,7 +19,6 @@ const FILTERS: { id: ApprovalFilter; label: string }[] = [
 ];
 
 export default function ApprovalsScreen() {
-  const { colors } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<ApprovalFilter>('pending');
   const [items, setItems] = useState<ApprovalRequest[]>([]);
@@ -62,22 +61,24 @@ export default function ApprovalsScreen() {
   );
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View className='flex-1 bg-background'>
       <CollapsibleList
         title='Approvals'
         data={filtered}
         keyExtractor={(item) => item.id}
         intro={
           <>
-            <Text style={[styles.title, { color: colors.foreground }]}>Approvals</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+              Approvals
+            </Text>
+            <Text className='pb-3.5 pt-1.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
               Agent-prepared payments and plans waiting for you. Confirm with the same passcode as
               chat.{pendingCount > 0 ? ` ${pendingCount} pending.` : ''}
             </Text>
           </>
         }
         controls={
-          <View style={styles.filters}>
+          <View className='flex-row flex-wrap gap-2 pb-2'>
             {FILTERS.map((item) => {
               const active = filter === item.id;
               return (
@@ -87,16 +88,13 @@ export default function ApprovalsScreen() {
                     haptics.selection();
                     setFilter(item.id);
                   }}
-                  style={[
-                    styles.chip,
-                    { backgroundColor: active ? colors.foreground : colors.muted },
-                  ]}
+                  className={cx('rounded-full px-3 py-2', active ? 'bg-foreground' : 'bg-muted')}
                 >
                   <Text
-                    style={[
-                      styles.chipLabel,
-                      { color: active ? colors.background : colors.foreground },
-                    ]}
+                    className={cx(
+                      'font-sans-semibold text-sm',
+                      active ? 'text-background' : 'text-foreground',
+                    )}
                   >
                     {item.label}
                   </Text>
@@ -108,7 +106,7 @@ export default function ApprovalsScreen() {
         onRefresh={refresh}
         refreshing={loading}
         empty={
-          <Text style={[styles.empty, { color: colors.mutedForeground }]}>
+          <Text className='pt-8 text-center font-sans-medium text-[15px] leading-5 text-muted-foreground'>
             {filter === 'pending'
               ? 'No pending agent payments. Ask Claude or ChatGPT via MCP to prepare one.'
               : 'Nothing in this filter yet.'}
@@ -119,47 +117,3 @@ export default function ApprovalsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    paddingTop: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-    paddingBottom: 14,
-  },
-  filters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingBottom: 8,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  chipLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  empty: {
-    paddingTop: 32,
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-});

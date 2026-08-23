@@ -2,12 +2,11 @@ import { useAui } from '@assistant-ui/react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -31,9 +30,11 @@ export default function SuppliersScreen() {
 
   if (!isBusinessAccount()) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Suppliers</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+      <View className='flex-1 bg-background px-5 pt-4'>
+        <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+          Suppliers
+        </Text>
+        <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
           Suppliers are available on Business accounts. Switch account type in Settings.
         </Text>
       </View>
@@ -42,7 +43,7 @@ export default function SuppliersScreen() {
 
   if (!suppliers) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View className='flex-1 bg-background'>
         <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
@@ -57,13 +58,15 @@ export default function SuppliersScreen() {
       keyExtractor={(supplier) => supplier.id}
       recycleItems
       showsVerticalScrollIndicator={false}
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
+      className='flex-1 bg-background'
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
       contentInsetAdjustmentBehavior='automatic'
       ListHeaderComponent={
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Suppliers</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+        <View className='gap-2.5 pb-2.5'>
+          <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+            Suppliers
+          </Text>
+          <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
             Saved vendor beneficiaries. Pay from chat — each payout still needs your passcode.
           </Text>
           <Pressable
@@ -73,37 +76,30 @@ export default function SuppliersScreen() {
               aui.composer.setText('Show suppliers');
               aui.composer.send();
             }}
-            style={({ pressed }) => [
-              styles.btn,
-              {
-                backgroundColor: colors.foreground,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
+            className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
+            <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>
           </Pressable>
         </View>
       }
-      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+      ItemSeparatorComponent={() => <View className='h-2.5' />}
       renderItem={({ item: supplier }) => (
-        <View
-          style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}
-        >
-          <View style={styles.row}>
-            <View style={styles.rowText}>
-              <Text style={[styles.name, { color: colors.foreground }]}>{supplier.name}</Text>
-              <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+        <View className='gap-3 rounded-[26px] border border-border bg-composer p-3.5'>
+          <View className='flex-row items-start gap-2.5'>
+            <View className='min-w-0 flex-1 gap-0.5'>
+              <Text className='font-sans-semibold text-base text-foreground'>{supplier.name}</Text>
+              <Text className='font-sans-medium text-[13px] text-muted-foreground'>
                 {supplier.destination.label} · {supplier.destination.value}
               </Text>
               {supplier.notes ? (
-                <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+                <Text className='font-sans-medium text-[13px] text-muted-foreground'>
                   {supplier.notes}
                 </Text>
               ) : null}
             </View>
             {supplier.defaultAmount != null ? (
-              <Text style={[styles.amount, { color: colors.foreground }]}>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>
                 {formatPaymentAmount(supplier.defaultAmount, supplier.currency)}
               </Text>
             ) : null}
@@ -116,96 +112,13 @@ export default function SuppliersScreen() {
               aui.composer.setText(`Pay ${supplier.name} ${amount} ${supplier.currency}`);
               aui.composer.send();
             }}
-            style={({ pressed }) => [
-              styles.btnGhost,
-              { borderColor: colors.border, opacity: pressed ? 0.7 : 1 },
-            ]}
+            className='min-h-[42px] items-center justify-center rounded-[32px] border border-border'
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           >
-            <Text style={[styles.btnLabel, { color: colors.foreground }]}>Pay in chat</Text>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>Pay in chat</Text>
           </Pressable>
         </View>
       )}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
-  header: {
-    gap: 10,
-    paddingBottom: 10,
-  },
-  itemSeparator: {
-    height: 10,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    marginTop: -4,
-    marginBottom: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  btn: {
-    minHeight: 46,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnGhost: {
-    minHeight: 42,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 14,
-    gap: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  rowText: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  name: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  meta: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
