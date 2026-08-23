@@ -1,7 +1,7 @@
 import type { ReasoningMessagePartComponent } from '@assistant-ui/react-native';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -49,7 +49,10 @@ export function ReasoningRoot({
   const open = userOpen ?? (streaming || defaultOpen);
 
   return (
-    <View style={[styles.root, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+    <View
+      className='w-[100%] mb-2.5 border px-3 py-2 border-border bg-composer'
+      style={[styles.root]}
+    >
       <ReasoningContext.Provider
         value={{
           open,
@@ -81,7 +84,8 @@ export function ReasoningTrigger({
   return (
     <Pressable
       onPress={onToggle}
-      style={({ pressed }) => [styles.trigger, pressed && { opacity: 0.7 }]}
+      className='flex-row items-center gap-2 py-1'
+      style={({ pressed }) => [pressed && { opacity: 0.7 }]}
       accessibilityRole='button'
       accessibilityState={{ expanded: open }}
     >
@@ -91,10 +95,8 @@ export function ReasoningTrigger({
         color={active ? colors.foreground : colors.mutedForeground}
       />
       <Text
-        style={[
-          styles.triggerLabel,
-          { color: active ? colors.foreground : colors.mutedForeground },
-        ]}
+        className='font-sans-medium flex-1 shrink text-[14px] tracking-[-0.1px]'
+        style={[{ color: active ? colors.foreground : colors.mutedForeground }]}
       >
         {active ? `Thinking…${suffix}` : `Reasoning${suffix}`}
       </Text>
@@ -120,7 +122,7 @@ export function ReasoningContent({
   if (!open) return null;
   return (
     <View
-      style={styles.content}
+      className='mt-1.5 pt-1.5 border-t border-t-[rgba(127,127,127,0.25)]'
       accessibilityState={{ busy: ariaBusy === true }}
     >
       {children}
@@ -131,7 +133,7 @@ export function ReasoningContent({
 export function ReasoningText({ children }: { children: ReactNode }) {
   return (
     <ScrollView
-      style={styles.textWrap}
+      className='max-h-[200px]'
       nestedScrollEnabled
       showsVerticalScrollIndicator={false}
     >
@@ -143,46 +145,15 @@ export function ReasoningText({ children }: { children: ReactNode }) {
 export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
   const { colors } = useTheme();
   if (!text?.trim()) return null;
-  return <Text style={[styles.reasoningText, { color: colors.mutedForeground }]}>{text}</Text>;
+  return (
+    <Text className='font-sans text-[14px] leading-[19px] tracking-[-0.1px] mb-1 text-muted-foreground'>
+      {text}
+    </Text>
+  );
 };
 
-const styles = StyleSheet.create({
+const styles = {
   root: {
-    width: '100%',
-    marginBottom: 10,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  triggerLabel: {
-    flex: 1,
-    flexShrink: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  content: {
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(127,127,127,0.25)',
-  },
-  textWrap: {
-    maxHeight: 200,
-  },
-  reasoningText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    lineHeight: 19,
-    letterSpacing: -0.1,
-    marginBottom: 4,
-  },
-});
+};

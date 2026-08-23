@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { Supplier } from '@/lib/suppliers-storage';
 
@@ -23,13 +23,11 @@ export const ListSuppliersToolUI = makeAssistantToolUI<Record<string, never>, Li
     if (status.type === 'running' && !suppliers) {
       return (
         <View
-          style={[
-            styles.preparing,
-            { borderColor: colors.border, backgroundColor: colors.composer },
-          ]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.preparing]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
             Loading suppliers…
           </Text>
         </View>
@@ -39,9 +37,10 @@ export const ListSuppliersToolUI = makeAssistantToolUI<Record<string, never>, Li
     if (!suppliers?.length) {
       return (
         <View
-          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 border p-4 border-border bg-composer'
+          style={[styles.empty]}
         >
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
             No suppliers saved yet. Open Suppliers in the drawer to review the directory.
           </Text>
         </View>
@@ -49,28 +48,33 @@ export const ListSuppliersToolUI = makeAssistantToolUI<Record<string, never>, Li
     }
 
     return (
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-        <Text style={[styles.title, { color: colors.mutedForeground }]}>
+      <View
+        className='my-1.5 border p-4 gap-3 border-border bg-composer'
+        style={[styles.card]}
+      >
+        <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
           {suppliers.length} supplier{suppliers.length === 1 ? '' : 's'}
         </Text>
         {suppliers.map((supplier) => (
           <View
             key={supplier.id}
-            style={styles.row}
+            className='flex-row items-center gap-2.5'
           >
-            <View style={styles.rowText}>
-              <Text style={[styles.name, { color: colors.foreground }]}>{supplier.name}</Text>
-              <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+            <View className='flex-1 gap-0.5 min-w-0'>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>
+                {supplier.name}
+              </Text>
+              <Text className='font-sans-medium text-[13px] text-muted-foreground'>
                 {supplier.destination.label}
                 {supplier.notes ? ` · ${supplier.notes}` : ''}
               </Text>
             </View>
             {supplier.defaultAmount != null ? (
-              <Text style={[styles.amount, { color: colors.foreground }]}>
+              <Text className='font-sans-semibold text-[14px] text-foreground'>
                 {formatPaymentAmount(supplier.defaultAmount, supplier.currency)}
               </Text>
             ) : (
-              <Text style={[styles.amount, { color: colors.mutedForeground }]}>
+              <Text className='font-sans-semibold text-[14px] text-muted-foreground'>
                 {supplier.currency}
               </Text>
             )}
@@ -81,69 +85,14 @@ export const ListSuppliersToolUI = makeAssistantToolUI<Record<string, never>, Li
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   preparing: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-  },
-  preparingText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
   },
   empty: {
-    marginVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-  },
-  emptyText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
   },
   card: {
-    marginVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 12,
   },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  rowText: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  name: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  meta: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+};

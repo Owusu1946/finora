@@ -65,32 +65,35 @@ export function RecurringPaymentCard({
 
   return (
     <>
-      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
-        <View style={styles.header}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+      <View
+        className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+        style={[styles.card]}
+      >
+        <View className='flex-row items-center gap-3'>
+          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
             <Icon
               name='reload'
               size={16}
               color={colors.foreground}
             />
           </View>
-          <View style={styles.headerText}>
-            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
+          <View className='flex-1 gap-0.5'>
+            <Text className='font-sans-medium text-[14px] text-muted-foreground'>
               {cancelled
                 ? 'Cancelled'
                 : created
                   ? 'Recurring payment active'
                   : 'Schedule recurring payment'}
             </Text>
-            <Text style={[styles.amount, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[25px] tracking-[-0.5px] text-foreground'>
               {formatPaymentAmount(draft.amount, draft.currency)}
             </Text>
           </View>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View className='h-px bg-border' />
 
-        <View style={styles.rows}>
+        <View className='gap-2.5'>
           <Row
             label='To'
             value={draft.recipientName}
@@ -125,7 +128,7 @@ export function RecurringPaymentCard({
         </View>
 
         {!created && !cancelled ? (
-          <View style={styles.actions}>
+          <View className='flex-row gap-2.5'>
             <Pressable
               disabled={busy}
               onPress={() => {
@@ -133,13 +136,12 @@ export function RecurringPaymentCard({
                 setCancelled(true);
                 onCancelled?.();
               }}
+              className='flex-1 min-h-[46px] items-center justify-center border'
               style={({ pressed }) => [
-                styles.btn,
-                styles.btnGhost,
                 { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Cancel</Text>
+              <Text className='font-sans-semibold text-[16px] text-foreground'>Cancel</Text>
             </Pressable>
             <Pressable
               disabled={busy}
@@ -171,13 +173,12 @@ export function RecurringPaymentCard({
                   `Scheduled ${formatPaymentAmount(draft.amount, draft.currency)} to ${draft.recipientName} ${FREQ_LABEL[draft.frequency].toLowerCase()}. Next run ${new Date(nextRun).toLocaleDateString()}. Manage it under Recurring in the drawer.`,
                 );
               }}
+              className='flex-1 min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
-                styles.btn,
-                styles.btnPrimary,
                 { backgroundColor: colors.foreground, opacity: pressed || busy ? 0.85 : 1 },
               ]}
             >
-              <Text style={[styles.btnLabel, { color: colors.background }]}>
+              <Text className='font-sans-semibold text-[16px] text-background'>
                 {busy ? <LoadingIcon color={colors.background} /> : 'Confirm schedule'}
               </Text>
             </Pressable>
@@ -199,86 +200,18 @@ function Row({
   colors: { foreground: string; mutedForeground: string };
 }) {
   return (
-    <View style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[styles.rowValue, { color: colors.foreground }]}>{value}</Text>
+    <View className='gap-0.5'>
+      <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
+      <Text className='font-sans-medium text-[16px] text-foreground'>{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.5,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  rows: {
-    gap: 10,
-  },
-  row: {
-    gap: 2,
-  },
-  rowLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  rowValue: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
   },
   btn: {
-    flex: 1,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  btnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnPrimary: {},
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+};

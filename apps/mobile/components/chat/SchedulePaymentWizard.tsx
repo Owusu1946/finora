@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 
@@ -153,17 +153,17 @@ export function SchedulePaymentWizard({
 
   if (step === 'review') {
     return (
-      <View style={styles.review}>
+      <View className='gap-1'>
         <Pressable
           onPress={goBack}
-          style={styles.backLink}
+          className='flex-row items-center gap-0.5 mb-1'
         >
           <Icon
             name='chevron-left'
             size={16}
             color={colors.mutedForeground}
           />
-          <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>Edit details</Text>
+          <Text className='font-semibold text-muted-foreground'>Edit details</Text>
         </Pressable>
         <RecurringPaymentCard
           draft={draft}
@@ -175,7 +175,10 @@ export function SchedulePaymentWizard({
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+    <View
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
+    >
       <WizardStepHeader
         step={stepIndex}
         total={STEPS.length}
@@ -202,7 +205,7 @@ export function SchedulePaymentWizard({
       />
 
       {step === 'purpose' ? (
-        <View style={styles.chips}>
+        <View className='flex-row flex-wrap gap-2'>
           {PURPOSES.map((p) => (
             <WizardChip
               key={p}
@@ -218,8 +221,8 @@ export function SchedulePaymentWizard({
       ) : null}
 
       {step === 'amount' ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
+        <View className='gap-3'>
+          <View className='flex-row flex-wrap gap-2'>
             {CURRENCIES.map((c) => (
               <WizardChip
                 key={c}
@@ -235,7 +238,7 @@ export function SchedulePaymentWizard({
               />
             ))}
           </View>
-          <View style={styles.chips}>
+          <View className='flex-row flex-wrap gap-2'>
             {AMOUNTS.map((a) => (
               <WizardChip
                 key={a}
@@ -255,14 +258,8 @@ export function SchedulePaymentWizard({
             keyboardType='decimal-pad'
             placeholder='Or type amount'
             placeholderTextColor={colors.mutedForeground}
-            style={[
-              styles.input,
-              {
-                color: colors.foreground,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
-            ]}
+            className='font-sans-medium border px-3.5 py-3 text-[16px] text-foreground border-border bg-background'
+            style={[styles.input]}
           />
           <NavRow
             colors={colors}
@@ -278,8 +275,8 @@ export function SchedulePaymentWizard({
       ) : null}
 
       {step === 'recipient' ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
+        <View className='gap-3'>
+          <View className='flex-row flex-wrap gap-2'>
             {['Landlord', 'Office Rent GH', 'TechFlow Ltd', 'Ama Serwah'].map((name) => (
               <WizardChip
                 key={name}
@@ -297,14 +294,8 @@ export function SchedulePaymentWizard({
             onChangeText={setRecipientName}
             placeholder='Type a name'
             placeholderTextColor={colors.mutedForeground}
-            style={[
-              styles.input,
-              {
-                color: colors.foreground,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
-            ]}
+            className='font-sans-medium border px-3.5 py-3 text-[16px] text-foreground border-border bg-background'
+            style={[styles.input]}
           />
           <NavRow
             colors={colors}
@@ -318,7 +309,7 @@ export function SchedulePaymentWizard({
       ) : null}
 
       {step === 'rail' ? (
-        <View style={styles.block}>
+        <View className='gap-3'>
           {(
             [
               { kind: 'mobile_money' as const, label: 'Mobile money', hint: 'MTN / Telecel' },
@@ -340,12 +331,10 @@ export function SchedulePaymentWizard({
                 );
                 setTimeout(goNext, 120);
               }}
+              className='flex-row items-center gap-3 p-3 border bg-background'
               style={[
                 styles.railRow,
-                {
-                  borderColor: rail === opt.kind ? colors.foreground : colors.border,
-                  backgroundColor: colors.background,
-                },
+                { borderColor: rail === opt.kind ? colors.foreground : colors.border },
               ]}
             >
               <Icon
@@ -360,8 +349,8 @@ export function SchedulePaymentWizard({
                 color={colors.foreground}
               />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.railTitle, { color: colors.foreground }]}>{opt.label}</Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{opt.hint}</Text>
+                <Text className='font-sans-semibold text-[16px] text-foreground'>{opt.label}</Text>
+                <Text className='text-[13px] text-muted-foreground'>{opt.hint}</Text>
               </View>
             </Pressable>
           ))}
@@ -377,15 +366,15 @@ export function SchedulePaymentWizard({
       ) : null}
 
       {step === 'destination' ? (
-        <View style={styles.block}>
-          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+        <View className='gap-3'>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
             {rail === 'mobile_money'
               ? 'MoMo number the landlord gets paid on'
               : rail === 'crypto_wallet'
                 ? 'Wallet address (TRC-20 for USDT)'
                 : 'Account number or IBAN'}
           </Text>
-          <View style={styles.chips}>
+          <View className='flex-row flex-wrap gap-2'>
             {rail === 'mobile_money' ? (
               <>
                 <WizardChip
@@ -441,14 +430,8 @@ export function SchedulePaymentWizard({
             placeholder='Or paste / type destination'
             placeholderTextColor={colors.mutedForeground}
             autoCapitalize='none'
-            style={[
-              styles.input,
-              {
-                color: colors.foreground,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
-            ]}
+            className='font-sans-medium border px-3.5 py-3 text-[16px] text-foreground border-border bg-background'
+            style={[styles.input]}
           />
           <NavRow
             colors={colors}
@@ -462,9 +445,11 @@ export function SchedulePaymentWizard({
       ) : null}
 
       {step === 'when' ? (
-        <View style={styles.block}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Cadence</Text>
-          <View style={styles.chips}>
+        <View className='gap-3'>
+          <Text className='font-sans-semibold text-[13px] uppercase tracking-[0.3px] text-muted-foreground'>
+            Cadence
+          </Text>
+          <View className='flex-row flex-wrap gap-2'>
             {(
               [
                 ['weekly', 'Weekly'],
@@ -480,10 +465,10 @@ export function SchedulePaymentWizard({
               />
             ))}
           </View>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-semibold text-[13px] uppercase tracking-[0.3px] text-muted-foreground'>
             {frequency === 'weekly' ? 'Day of week' : 'Day of month'}
           </Text>
-          <View style={styles.chips}>
+          <View className='flex-row flex-wrap gap-2'>
             {DAYS.map((d) => (
               <WizardChip
                 key={d.value}
@@ -497,8 +482,10 @@ export function SchedulePaymentWizard({
               />
             ))}
           </View>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Time</Text>
-          <View style={styles.chips}>
+          <Text className='font-sans-semibold text-[13px] uppercase tracking-[0.3px] text-muted-foreground'>
+            Time
+          </Text>
+          <View className='flex-row flex-wrap gap-2'>
             {TIMES.map((t) => (
               <WizardChip
                 key={t}
@@ -509,17 +496,15 @@ export function SchedulePaymentWizard({
             ))}
           </View>
           <View
-            style={[
-              styles.preview,
-              { backgroundColor: colors.background, borderColor: colors.border },
-            ]}
+            className='flex-row items-start gap-2 p-3 border bg-background border-border'
+            style={[styles.preview]}
           >
             <Icon
               name='check'
               size={14}
               color={colors.foreground}
             />
-            <Text style={[styles.previewText, { color: colors.foreground }]}>
+            <Text className='font-sans-medium flex-1 text-[14px] leading-[18px] text-foreground'>
               Auto-pays {frequency} at {timeOfDay} · next{' '}
               {new Date(computeNextRun(frequency, dayOfMonth, timeOfDay)).toLocaleString(
                 undefined,
@@ -551,117 +536,45 @@ function NavRow({
   nextLabel: string;
 }) {
   return (
-    <View style={styles.nav}>
+    <View className='flex-row gap-2.5 mt-1'>
       <Pressable
         onPress={() => {
           haptics.selection();
           onBack();
         }}
-        style={[styles.navBtn, styles.navGhost, { borderColor: colors.border }]}
+        className='flex-1 min-h-11 items-center justify-center border border-border'
+        style={[styles.navBtn]}
       >
-        <Text style={{ color: colors.foreground, fontWeight: '600' }}>Back</Text>
+        <Text className='font-semibold text-foreground'>Back</Text>
       </Pressable>
       <Pressable
         onPress={() => {
           haptics.selection();
           onNext();
         }}
-        style={[styles.navBtn, { backgroundColor: colors.foreground }]}
+        className='flex-1 min-h-11 items-center justify-center bg-foreground'
+        style={[styles.navBtn]}
       >
-        <Text style={{ color: colors.background, fontWeight: '600' }}>{nextLabel}</Text>
+        <Text className='font-semibold text-background'>{nextLabel}</Text>
       </Pressable>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 8,
-  },
-  block: {
-    gap: 12,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
   },
   input: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  hint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  sectionLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   railRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  railTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
   },
   preview: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    padding: 12,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  previewText: {
-    flex: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  nav: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
   },
   navBtn: {
-    flex: 1,
-    minHeight: 44,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  navGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  review: {
-    gap: 4,
-  },
-  backLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    marginBottom: 4,
-  },
-});
+};

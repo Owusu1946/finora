@@ -109,8 +109,8 @@ export function CreateVirtualCardWizard({
       ) : null}
 
       {step === 'label' ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
+        <View className='gap-3'>
+          <View className='flex-row flex-wrap gap-2'>
             {LABEL_CHIPS.map((chip) => (
               <WizardChip
                 key={chip}
@@ -132,7 +132,8 @@ export function CreateVirtualCardWizard({
             }}
             placeholder='Custom label'
             placeholderTextColor={colors.mutedForeground}
-            style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
+            className='font-sans text-[16px] border px-3 py-3 text-foreground border-border'
+            style={[styles.input]}
           />
           <PrimaryButton
             label='Continue'
@@ -143,8 +144,8 @@ export function CreateVirtualCardWizard({
       ) : null}
 
       {step === 'limit' ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
+        <View className='gap-3'>
+          <View className='flex-row flex-wrap gap-2'>
             {LIMIT_CHIPS.map((n) => (
               <WizardChip
                 key={n}
@@ -167,9 +168,10 @@ export function CreateVirtualCardWizard({
             keyboardType='decimal-pad'
             placeholder='Custom USD limit'
             placeholderTextColor={colors.mutedForeground}
-            style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
+            className='font-sans text-[16px] border px-3 py-3 text-foreground border-border'
+            style={[styles.input]}
           />
-          <View style={styles.rowActions}>
+          <View className='flex-row gap-2'>
             <SecondaryButton
               label='Back'
               onPress={() => setStep('label')}
@@ -184,8 +186,11 @@ export function CreateVirtualCardWizard({
       ) : null}
 
       {step === 'review' && resolvedLimit ? (
-        <View style={styles.block}>
-          <View style={[styles.review, { borderColor: colors.border }]}>
+        <View className='gap-3'>
+          <View
+            className='border p-3 gap-2.5 border-border'
+            style={[styles.review]}
+          >
             <Row
               label='Label'
               value={resolvedLabel}
@@ -199,7 +204,7 @@ export function CreateVirtualCardWizard({
               value={formatCardAmount(resolvedLimit, 'USD')}
             />
           </View>
-          <View style={styles.rowActions}>
+          <View className='flex-row gap-2'>
             <SecondaryButton
               label='Back'
               onPress={() => setStep('limit')}
@@ -213,17 +218,17 @@ export function CreateVirtualCardWizard({
           {onCancelled ? (
             <Pressable
               onPress={onCancelled}
-              style={styles.cancel}
+              className='items-center py-1'
             >
-              <Text style={[styles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+              <Text className='font-sans text-[14px] text-muted-foreground'>Cancel</Text>
             </Pressable>
           ) : null}
         </View>
       ) : null}
 
       {step === 'issued' && issued ? (
-        <View style={styles.issuedBlock}>
-          <View style={[styles.issuedIcon, { backgroundColor: colors.foreground }]}>
+        <View className='w-[100%] gap-3'>
+          <View className='w-11 h-11 rounded-[22px] items-center justify-center bg-foreground'>
             <Icon
               name='check'
               size={24}
@@ -231,11 +236,11 @@ export function CreateVirtualCardWizard({
               weight='bold'
             />
           </View>
-          <View style={styles.issuedCopy}>
-            <Text style={[styles.issuedTitle, { color: colors.foreground }]}>
+          <View className='gap-0.5 px-1'>
+            <Text className='font-sans-semibold text-[18px] tracking-[-0.3px] text-foreground'>
               Request confirmed
             </Text>
-            <Text style={[styles.issuedSub, { color: colors.mutedForeground }]}>
+            <Text className='font-sans text-[14px] leading-[20px] mb-1 text-muted-foreground'>
               We’re issuing your {issued.label} card. You’ll receive its card details as soon as
               they’re ready.
             </Text>
@@ -251,9 +256,9 @@ export function CreateVirtualCardWizard({
 function Row({ label, value }: { label: string; value: string }) {
   const { colors } = useTheme();
   return (
-    <View style={styles.reviewRow}>
-      <Text style={[styles.reviewKey, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[styles.reviewVal, { color: colors.foreground }]}>{value}</Text>
+    <View className='flex-row justify-between gap-3'>
+      <Text className='font-sans text-[14px] text-muted-foreground'>{label}</Text>
+      <Text className='font-sans-semibold text-[14px] text-foreground'>{value}</Text>
     </View>
   );
 }
@@ -276,6 +281,7 @@ function PrimaryButton({
         haptics.selection();
         onPress();
       }}
+      className='flex-1 py-3 items-center'
       style={[
         styles.primary,
         {
@@ -285,10 +291,8 @@ function PrimaryButton({
       ]}
     >
       <Text
-        style={[
-          styles.primaryText,
-          { color: disabled ? colors.mutedForeground : colors.primaryForeground },
-        ]}
+        className='font-sans-semibold text-[15px]'
+        style={[{ color: disabled ? colors.mutedForeground : colors.primaryForeground }]}
       >
         {label}
       </Text>
@@ -304,14 +308,15 @@ function SecondaryButton({ label, onPress }: { label: string; onPress: () => voi
         haptics.selection();
         onPress();
       }}
-      style={[styles.secondary, { borderColor: colors.border }]}
+      className='border py-3 px-4 items-center justify-center border-border'
+      style={[styles.secondary]}
     >
-      <Text style={[styles.secondaryText, { color: colors.foreground }]}>{label}</Text>
+      <Text className='font-sans-medium text-[15px] text-foreground'>{label}</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   shell: {
     marginVertical: 8,
     borderWidth: StyleSheet.hairlineWidth,
@@ -323,99 +328,16 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: 10,
   },
-  block: {
-    gap: 12,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
   input: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  rowActions: {
-    flexDirection: 'row',
-    gap: 8,
   },
   primary: {
-    flex: 1,
     borderRadius: Radius.pill,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  primaryText: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
   },
   secondary: {
     borderRadius: Radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 15,
-  },
-  cancel: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  cancelText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
   },
   review: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.md,
-    padding: 12,
-    gap: 10,
   },
-  reviewRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  reviewKey: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-  },
-  reviewVal: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
-  },
-  issuedTitle: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 18,
-    letterSpacing: -0.3,
-  },
-  issuedSub: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
-  },
-  issuedBlock: {
-    width: '100%',
-    gap: 12,
-  },
-  issuedIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  issuedCopy: {
-    gap: 2,
-    paddingHorizontal: 4,
-  },
-});
+};

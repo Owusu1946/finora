@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import {
   PaymentConfirmationCard,
@@ -311,7 +311,7 @@ export function SendMoneyWizard({
 
   if (step === 'confirm' && payment) {
     return (
-      <View style={styles.wrap}>
+      <View className='gap-2'>
         <PaymentConfirmationCard
           payment={payment}
           status='pending'
@@ -325,16 +325,19 @@ export function SendMoneyWizard({
             onEdit?.();
             setStep(needsFx ? 'fx' : 'purpose');
           }}
-          style={styles.editLink}
+          className='py-1 px-1'
         >
-          <Text style={[styles.editText, { color: colors.mutedForeground }]}>← Edit details</Text>
+          <Text className='text-[14px] font-medium text-muted-foreground'>← Edit details</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+    <View
+      className='my-2 border p-3.5 gap-3 max-w-[420px] self-stretch bg-composer border-border'
+      style={[styles.card]}
+    >
       {step === 'country' ? (
         <CountryStep
           step={stepIndex}
@@ -432,26 +435,22 @@ export function SendMoneyWizard({
       ) : null}
 
       {step === 'rail' || step === 'country' ? (
-        <View style={styles.navSolo}>
+        <View className='flex-row gap-2.5'>
           {step === 'rail' ? (
             <Pressable
               onPress={() => goBackFrom('rail')}
-              style={({ pressed }) => [
-                styles.navBtn,
-                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-              ]}
+              className='flex-1 min-h-[46px] border items-center justify-center'
+              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text style={[styles.navLabel, { color: colors.foreground }]}>Back</Text>
+              <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
             </Pressable>
           ) : (
             <Pressable
               onPress={onCancel}
-              style={({ pressed }) => [
-                styles.navBtn,
-                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-              ]}
+              className='flex-1 min-h-[46px] border items-center justify-center'
+              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text style={[styles.navLabel, { color: colors.foreground }]}>Cancel</Text>
+              <Text className='text-[16px] font-semibold text-foreground'>Cancel</Text>
             </Pressable>
           )}
         </View>
@@ -460,27 +459,11 @@ export function SendMoneyWizard({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { gap: 8 },
+const styles = {
   card: {
-    marginVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
-    padding: 14,
-    gap: 12,
-    maxWidth: 420,
-    alignSelf: 'stretch',
   },
-  editLink: { paddingVertical: 4, paddingHorizontal: 4 },
-  editText: { fontSize: 14, fontWeight: '500' },
-  navSolo: { flexDirection: 'row', gap: 10 },
   navBtn: {
-    flex: 1,
-    minHeight: 46,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  navLabel: { fontSize: 16, fontWeight: '600' },
-});
+};
