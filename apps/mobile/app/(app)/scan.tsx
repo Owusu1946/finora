@@ -29,6 +29,7 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { buildScanPayPrompt, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
+import { ensureMediaLibraryPermission, ensureSaveToLibraryPermission } from '@/lib/permissions';
 import { buildPersonalReceiveMethod } from '@/lib/personal-qr';
 import { getUserProfile } from '@/lib/profile-api';
 import { sendChatPrompt } from '@/lib/send-chat-prompt';
@@ -186,11 +187,10 @@ export default function ScanScreen() {
 
   const scanFromLibrary = async () => {
     haptics.selection();
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError('Allow photo access to scan a QR from your library.');
-      return;
-    }
+    const hasPermission = await ensureMediaLibraryPermission(
+      'Allow photo access in Settings to choose a QR image.',
+    );
+    if (!hasPermission) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -636,10 +636,8 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
 
   const saveCode = async () => {
     await withQrAction(async (qrUri) => {
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        throw new Error('Allow photo access in Settings to save your code.');
-      }
+      const hasPermission = await ensureSaveToLibraryPermission();
+      if (!hasPermission) throw new Error('Photo access was not granted.');
       const asset = await MediaLibrary.createAssetAsync(qrUri);
       await MediaLibrary.createAlbumAsync('Finora', asset, false).catch(() => asset);
       return 'Saved to your photo library.';

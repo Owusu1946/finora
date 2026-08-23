@@ -1,6 +1,8 @@
 import * as Contacts from 'expo-contacts';
 import { Platform } from 'react-native';
 
+import { ensureContactsPermission } from '@/lib/permissions';
+
 /** Strip to digits and normalize Ghana numbers to 0XXXXXXXXX when possible. */
 export function normalizePhoneNumber(raw: string) {
   let digits = raw.replace(/\D/g, '');
@@ -15,10 +17,8 @@ export function normalizePhoneNumber(raw: string) {
  * Uses `presentContactPickerAsync` (Expo SDK 54).
  */
 export async function pickPhoneFromContacts(): Promise<string | null> {
-  if (Platform.OS === 'android') {
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status !== 'granted') return null;
-  }
+  const hasPermission = Platform.OS !== 'android' || (await ensureContactsPermission());
+  if (!hasPermission) return null;
 
   const contact = await Contacts.presentContactPickerAsync();
   if (!contact?.phoneNumbers?.length) return null;
