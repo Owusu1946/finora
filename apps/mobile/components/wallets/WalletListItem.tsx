@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 import { WalletItem } from './types';
@@ -24,30 +25,26 @@ export function WalletListItem({ wallet, hideBalances, isLast, onSelect }: Walle
         haptics.selection();
         onSelect(wallet);
       }}
-      style={({ pressed }) => [
-        styles.walletListItem,
-        !isLast && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        },
-        pressed && { opacity: 0.7 },
-      ]}
+      className={cx(
+        'flex-row items-center justify-between py-3.5 active:opacity-70',
+        !isLast && 'border-b border-border',
+      )}
     >
-      <View style={styles.walletListLeft}>
+      <View className='flex-row items-center gap-3'>
         <CurrencyIcon
           currency={wallet.currency}
           size={38}
         />
-        <View style={styles.walletMetaText}>
-          <Text style={[styles.walletCode, { color: colors.foreground }]}>{wallet.currency}</Text>
-          <Text style={[styles.walletBadgeText, { color: colors.mutedForeground }]}>
+        <View className='gap-0.5'>
+          <Text className='font-sans-semibold text-base text-foreground'>{wallet.currency}</Text>
+          <Text className='font-sans text-[13px] text-muted-foreground'>
             {wallet.name} • {wallet.badge}
           </Text>
         </View>
       </View>
 
-      <View style={styles.walletListRight}>
-        <Text style={[styles.walletAmount, { color: colors.foreground }]}>
+      <View className='items-end gap-0.5'>
+        <Text className='font-sans-semibold text-base text-foreground'>
           {hideBalances
             ? '••••'
             : `${wallet.symbol}${wallet.balance.toLocaleString(undefined, {
@@ -55,7 +52,7 @@ export function WalletListItem({ wallet, hideBalances, isLast, onSelect }: Walle
                 maximumFractionDigits: 2,
               })}`}
         </Text>
-        <Text style={[styles.walletUsdEst, { color: colors.mutedForeground }]}>
+        <Text className='font-sans text-[13px] text-muted-foreground'>
           {hideBalances
             ? '••••'
             : `≈ $${wallet.usdEquivalent.toLocaleString(undefined, {
@@ -67,44 +64,3 @@ export function WalletListItem({ wallet, hideBalances, isLast, onSelect }: Walle
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  walletListItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-  },
-  walletListLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  walletMetaText: {
-    gap: 2,
-  },
-  walletCode: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  walletBadgeText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '400',
-  },
-  walletListRight: {
-    alignItems: 'flex-end',
-    gap: 2,
-  },
-  walletAmount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  walletUsdEst: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '400',
-  },
-});
