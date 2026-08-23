@@ -1,9 +1,9 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 type AuthButtonProps = {
@@ -34,34 +34,23 @@ export function AuthButton({
         haptics.selection();
         onPress();
       }}
-      style={({ pressed }) => [
-        styles.btn,
-        isPrimary && {
-          backgroundColor: inactive ? colors.muted : colors.foreground,
-        },
-        isOutline && {
-          backgroundColor: 'transparent',
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
-        },
-        variant === 'ghost' && { backgroundColor: 'transparent' },
-        { opacity: pressed && !inactive ? 0.85 : 1 },
-      ]}
+      className={cx(
+        'h-[54px] w-full items-center justify-center rounded-full px-5 py-4',
+        !inactive && 'active:opacity-85',
+        isPrimary && (inactive ? 'bg-muted' : 'bg-foreground'),
+        (isOutline || variant === 'ghost') && 'bg-transparent',
+        isOutline && 'border border-border',
+      )}
     >
       {loading ? (
         <LoadingIcon color={isPrimary ? colors.background : colors.foreground} />
       ) : (
         <Text
-          style={[
-            styles.label,
-            {
-              color: isPrimary
-                ? inactive
-                  ? colors.mutedForeground
-                  : colors.background
-                : colors.foreground,
-            },
-          ]}
+          className={cx(
+            'font-sans-semibold text-[17px] tracking-[-0.2px]',
+            isPrimary && (inactive ? 'text-muted-foreground' : 'text-background'),
+            !isPrimary && 'text-foreground',
+          )}
         >
           {label}
         </Text>
@@ -69,22 +58,3 @@ export function AuthButton({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  btn: {
-    width: '100%',
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: Radius.composer,
-    minHeight: 54,
-  },
-  label: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-});
