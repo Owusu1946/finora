@@ -1,5 +1,5 @@
 import { BranchPickerPrimitive, useAuiState } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { View, type TextStyle } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -51,11 +51,11 @@ export function MessageBranchPicker({
   );
 }
 
-const styles = {
+const styles: { button: object; label: TextStyle } = {
   button: {
     padding: 4,
   },
   label: {
-    fontVariant: ['tabular-nums'],
+    fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
   },
 };

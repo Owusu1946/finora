@@ -598,7 +598,7 @@ const styles = {
     borderRadius: Radius.card,
   },
   mono: {
-    fontVariant: ['tabular-nums'],
+    fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
     letterSpacing: -0.1,
   },
   btn: {
