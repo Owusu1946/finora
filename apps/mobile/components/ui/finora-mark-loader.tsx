@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, View } from 'react-native';
 import {
   cancelAnimation,
   Easing,
@@ -73,7 +73,8 @@ export function FinoraMarkLoader({ size = 72, color, looping = true }: FinoraMar
   if (reducedMotion) {
     return (
       <View
-        style={[styles.box, { width: size, height: size }]}
+        className='items-center justify-center'
+        style={{ width: size, height: size }}
         accessibilityRole='progressbar'
         accessibilityLabel='Waiting'
       >
@@ -88,7 +89,8 @@ export function FinoraMarkLoader({ size = 72, color, looping = true }: FinoraMar
 
   return (
     <View
-      style={[styles.box, { width: size, height: size }]}
+      className='items-center justify-center'
+      style={{ width: size, height: size }}
       accessibilityRole='progressbar'
       accessibilityLabel='Waiting'
     >
@@ -100,10 +102,3 @@ export function FinoraMarkLoader({ size = 72, color, looping = true }: FinoraMar
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  box: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
