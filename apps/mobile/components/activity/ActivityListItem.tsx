@@ -1,12 +1,12 @@
 import { memo } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 import type { Transaction } from './types';
@@ -49,15 +49,13 @@ export const ActivityListItem = memo(function ActivityListItem({
   isLast,
   onPress,
 }: ActivityListItemProps) {
-  const { colors } = useTheme();
-
   const sign = tx.direction === 'received' ? '+' : '-';
   const amountColor =
     tx.status === 'failed'
-      ? colors.mutedForeground
+      ? 'text-muted-foreground'
       : tx.direction === 'received'
-        ? '#10B981'
-        : colors.foreground;
+        ? 'text-[#10B981]'
+        : 'text-foreground';
 
   return (
     <Pressable
@@ -65,71 +63,73 @@ export const ActivityListItem = memo(function ActivityListItem({
         haptics.selection();
         onPress?.(tx);
       }}
-      style={({ pressed }) => [
-        styles.row,
-        !isLast && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        },
-        pressed && { opacity: 0.7 },
-      ]}
+      className={cx(
+        'flex-row items-center justify-between py-3.5',
+        !isLast && 'border-b border-border active:opacity-70',
+      )}
     >
       {/* Left: icon + details */}
-      <View style={styles.left}>
-        <View style={styles.iconWrap}>
+      <View className='flex-row shrink items-center gap-3'>
+        <View className='relative'>
           <CurrencyIcon
             currency={tx.currency}
             size={36}
           />
-          <View style={[styles.directionBadge, { backgroundColor: colors.background }]}>
+          <View className='absolute -bottom-0.5 -right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-background'>
             <Icon
               name={DIRECTION_ICON[tx.direction]}
               size={10}
-              color={colors.mutedForeground}
+              color='#71717A'
             />
           </View>
         </View>
 
-        <View style={styles.meta}>
+        <View className='shrink gap-0.5'>
           <Text
-            style={[styles.counterparty, { color: colors.foreground }]}
+            className='font-sans-semibold text-base text-foreground'
             numberOfLines={1}
           >
             {tx.counterparty}
           </Text>
-          <Text style={[styles.detail, { color: colors.mutedForeground }]}>
+          <Text className='font-sans text-[13px] text-muted-foreground'>
             {tx.method} • {formatTime(tx.timestamp)}
           </Text>
         </View>
       </View>
 
       {/* Right: amount + status */}
-      <View style={styles.right}>
+      <View className='items-end gap-0.5'>
         {tx.direction === 'swap' && tx.toCurrency ? (
           <>
-            <Text style={[styles.amount, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-base text-foreground'>
               {formatAmount(tx.toSymbol ?? '', tx.toAmount ?? 0)}
             </Text>
-            <Text style={[styles.detail, { color: colors.mutedForeground }]}>
+            <Text className='font-sans text-[13px] text-muted-foreground'>
               {formatAmount(tx.symbol, tx.amount)} → {tx.toCurrency}
             </Text>
           </>
         ) : (
           <>
             <Text
-              style={[
-                styles.amount,
-                { color: amountColor },
-                tx.status === 'failed' && styles.strikethrough,
-              ]}
+              className={cx(
+                'font-sans-semibold text-base',
+                amountColor,
+                tx.status === 'failed' && 'line-through',
+              )}
             >
               {sign}
               {formatAmount(tx.symbol, tx.amount)}
             </Text>
             {tx.status !== 'completed' && (
-              <View style={styles.statusRow}>
-                <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[tx.status] }]} />
-                <Text style={[styles.statusLabel, { color: STATUS_COLOR[tx.status] }]}>
+              <View className='flex-row items-center gap-1'>
+                <View
+                  className='h-[5px] w-[5px] rounded-full'
+                  style={{ backgroundColor: STATUS_COLOR[tx.status] }}
+                />
+                <Text
+                  className='font-sans-medium text-xs capitalize'
+                  style={{ color: STATUS_COLOR[tx.status] }}
+                >
                   {tx.status}
                 </Text>
               </View>
@@ -139,74 +139,4 @@ export const ActivityListItem = memo(function ActivityListItem({
       </View>
     </Pressable>
   );
-});
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-  },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flexShrink: 1,
-  },
-  iconWrap: {
-    position: 'relative',
-  },
-  directionBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  meta: {
-    gap: 2,
-    flexShrink: 1,
-  },
-  counterparty: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  detail: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '400',
-  },
-  right: {
-    alignItems: 'flex-end',
-    gap: 2,
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  strikethrough: {
-    textDecorationLine: 'line-through',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statusDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  statusLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'capitalize',
-  },
 });
