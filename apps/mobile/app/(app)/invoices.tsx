@@ -1,16 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
 import type { Invoice, InvoiceFilter } from '@/components/invoices/types';
 
@@ -21,6 +12,7 @@ import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import {
   getCachedRemoteInvoices,
@@ -111,21 +103,23 @@ export default function InvoicesScreen() {
   );
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View className='flex-1 bg-background'>
       <CollapsibleList
         title='Invoices'
         data={filtered}
         intro={
           <>
-            <Text style={[styles.title, { color: colors.foreground }]}>Invoices</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+              Invoices
+            </Text>
+            <Text className='mb-0 mt-1.5 pb-3.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
               Supplier bills from Gmail and chat. Pay with the same passcode as sends.
             </Text>
           </>
         }
         controls={
-          <View style={styles.controls}>
-            <View style={styles.filters}>
+          <View className='gap-2 pb-2'>
+            <View className='flex-row flex-wrap gap-2 pb-2'>
               {FILTERS.map((item) => {
                 const active = filter === item.id;
                 return (
@@ -135,16 +129,13 @@ export default function InvoicesScreen() {
                       haptics.selection();
                       setFilter(item.id);
                     }}
-                    style={[
-                      styles.chip,
-                      { backgroundColor: active ? colors.foreground : colors.muted },
-                    ]}
+                    className={cx('rounded-full px-3 py-2', active ? 'bg-foreground' : 'bg-muted')}
                   >
                     <Text
-                      style={[
-                        styles.chipLabel,
-                        { color: active ? colors.background : colors.foreground },
-                      ]}
+                      className={cx(
+                        'font-sans-semibold text-sm',
+                        active ? 'text-background' : 'text-foreground',
+                      )}
                     >
                       {item.label}
                     </Text>
@@ -152,7 +143,7 @@ export default function InvoicesScreen() {
                 );
               })}
             </View>
-            <View style={styles.rangeRow}>
+            <View className='flex-row flex-wrap gap-2'>
               {['30', '90', '365'].map((days) => (
                 <Pressable
                   key={days}
@@ -172,22 +163,22 @@ export default function InvoicesScreen() {
                       .then(refresh)
                       .catch(() => undefined);
                   }}
-                  style={[styles.rangeButton, { borderColor: colors.border }]}
+                  className='rounded-lg border border-border px-2.5 py-2'
                 >
-                  <Text style={{ color: colors.foreground }}>
+                  <Text className='text-foreground'>
                     {days === '365' ? 'This year' : `${days} days`}
                   </Text>
                 </Pressable>
               ))}
               <Pressable
                 onPress={() => setRangeModal(true)}
-                style={[styles.rangeButton, { borderColor: colors.border }]}
+                className='rounded-lg border border-border px-2.5 py-2'
               >
-                <Text style={{ color: colors.foreground }}>Custom</Text>
+                <Text className='text-foreground'>Custom</Text>
               </Pressable>
             </View>
             {syncStatus ? (
-              <Text style={[styles.syncStatus, { color: colors.mutedForeground }]}>
+              <Text className='font-sans-medium text-xs text-muted-foreground'>
                 Gmail: {syncStatus}
               </Text>
             ) : null}
@@ -197,7 +188,7 @@ export default function InvoicesScreen() {
         onRefresh={refresh}
         refreshing={loading}
         empty={
-          <Text style={[styles.empty, { color: colors.mutedForeground }]}>
+          <Text className='pt-8 text-center font-sans-medium text-[15px] leading-5 text-muted-foreground'>
             No invoices here. Try “Find unpaid invoices” in chat after connecting Gmail.
           </Text>
         }
@@ -210,23 +201,23 @@ export default function InvoicesScreen() {
         keyboardAvoiding
       >
         <ScrollView
-          contentContainerStyle={styles.rangeModal}
+          contentContainerStyle={{ marginTop: 'auto', gap: 12, padding: 20 }}
           keyboardShouldPersistTaps='handled'
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={[styles.modalTitle, { color: colors.foreground }]}>Invoice date range</Text>
+          <Text className='font-sans-semibold text-[19px] text-foreground'>Invoice date range</Text>
           <TextInput
             value={range.startDate}
             onChangeText={(value) => setRange((current) => ({ ...current, startDate: value }))}
             placeholder='Start date: YYYY-MM-DD'
-            style={[styles.dateInput, { borderColor: colors.border, color: colors.foreground }]}
+            className='rounded-lg border border-border p-3 text-base text-foreground'
           />
           <TextInput
             value={range.endDate}
             onChangeText={(value) => setRange((current) => ({ ...current, endDate: value }))}
             placeholder='End date: YYYY-MM-DD'
-            style={[styles.dateInput, { borderColor: colors.border, color: colors.foreground }]}
+            className='rounded-lg border border-border p-3 text-base text-foreground'
           />
           <Pressable
             onPress={() => {
@@ -241,9 +232,9 @@ export default function InvoicesScreen() {
                   ),
                 );
             }}
-            style={[styles.applyButton, { backgroundColor: colors.foreground }]}
+            className='min-h-[46px] items-center justify-center rounded-[10px] bg-foreground'
           >
-            <Text style={{ color: colors.background, fontWeight: '600' }}>Apply</Text>
+            <Text className='font-sans-semibold text-background'>Apply</Text>
           </Pressable>
         </ScrollView>
       </SheetModal>
@@ -254,16 +245,16 @@ export default function InvoicesScreen() {
         presentationStyle='pageSheet'
         onRequestClose={() => setSelected(null)}
       >
-        <View style={[styles.modal, { backgroundColor: colors.background }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Pay invoice</Text>
+        <View className='flex-1 bg-background px-5 pt-5'>
+          <View className='mb-2 flex-row items-center justify-between'>
+            <Text className='font-sans-semibold text-[19px] text-foreground'>Pay invoice</Text>
             <Pressable
               onPress={() => {
                 haptics.selection();
                 setSelected(null);
               }}
             >
-              <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>Close</Text>
+              <Text className='font-sans-semibold text-muted-foreground'>Close</Text>
             </Pressable>
           </View>
           {selected ? (
@@ -282,101 +273,3 @@ export default function InvoicesScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    marginTop: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-    paddingBottom: 14,
-  },
-  filters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingBottom: 8,
-  },
-  controls: {
-    gap: 8,
-    paddingBottom: 8,
-  },
-  rangeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  rangeButton: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  syncStatus: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  chipLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  empty: {
-    paddingTop: 32,
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  modal: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 19,
-    fontWeight: '600',
-  },
-  rangeModal: {
-    marginTop: 'auto',
-    padding: 20,
-    gap: 12,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  dateInput: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  applyButton: {
-    minHeight: 46,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
