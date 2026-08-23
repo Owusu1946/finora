@@ -54,7 +54,12 @@ export async function updateInvoicePreferences(
 export async function listStoredInvoices(
   db: Database,
   clerkUserId: string,
-  input: { startDate: Date; endDateExclusive: Date; limit: number; cursor?: { receivedAt: Date; id: string } },
+  input: {
+    startDate: Date;
+    endDateExclusive: Date;
+    limit: number;
+    cursor?: { receivedAt: Date; id: string };
+  },
 ) {
   const cursorCondition = input.cursor
     ? or(
@@ -89,10 +94,7 @@ export async function getInvoiceSyncState(db: Database, clerkUserId: string) {
   return integration ?? null;
 }
 
-export async function upsertGmailInvoice(
-  db: Database,
-  input: typeof invoices.$inferInsert,
-) {
+export async function upsertGmailInvoice(db: Database, input: typeof invoices.$inferInsert) {
   await db
     .insert(invoices)
     .values(input)

@@ -1,4 +1,8 @@
-import type { CalendarIntegrationStatus, DriveIntegrationStatus, GmailIntegrationStatus } from '@finora/shared';
+import type {
+  CalendarIntegrationStatus,
+  DriveIntegrationStatus,
+  GmailIntegrationStatus,
+} from '@finora/shared';
 
 import { useAui } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
@@ -24,6 +28,11 @@ import {
   syncCalendarIntegration,
 } from '@/lib/calendar-integration-api';
 import {
+  beginDriveConnection,
+  disconnectDriveIntegration,
+  getDriveIntegrationStatus,
+} from '@/lib/drive-integration-api';
+import {
   beginGmailConnection,
   disconnectGmailIntegration,
   getGmailIntegrationStatus,
@@ -37,7 +46,6 @@ import {
   type IntegrationsState,
 } from '@/lib/integrations-storage';
 import { listOpenSmsPaymentRequests } from '@/lib/sms-requests-storage';
-import { beginDriveConnection, disconnectDriveIntegration, getDriveIntegrationStatus } from '@/lib/drive-integration-api';
 
 type IntegrationCardProps = {
   title: string;
@@ -226,17 +234,36 @@ export default function IntegrationsScreen() {
       const returnUrl = Linking.createURL('/integrations');
       const { authorizationUrl } = await beginDriveConnection(getToken, returnUrl);
       const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, returnUrl);
-      if (result.type === 'success' && new URL(result.url).searchParams.get('drive') !== 'connected') throw new Error('Google Drive connection failed.');
+      if (
+        result.type === 'success' &&
+        new URL(result.url).searchParams.get('drive') !== 'connected'
+      )
+        throw new Error('Google Drive connection failed.');
       await refresh();
-    } catch (error) { Alert.alert('Could not connect Google Drive', error instanceof Error ? error.message : 'Try again.'); }
-    finally { setBusyKey(null); }
+    } catch (error) {
+      Alert.alert(
+        'Could not connect Google Drive',
+        error instanceof Error ? error.message : 'Try again.',
+      );
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   const runDisconnectDrive = async () => {
     setBusyKey('drive');
-    try { await disconnectDriveIntegration(getToken); setDriveStatus(null); await refresh(); }
-    catch (error) { Alert.alert('Could not disconnect Google Drive', error instanceof Error ? error.message : 'Try again.'); }
-    finally { setBusyKey(null); }
+    try {
+      await disconnectDriveIntegration(getToken);
+      setDriveStatus(null);
+      await refresh();
+    } catch (error) {
+      Alert.alert(
+        'Could not disconnect Google Drive',
+        error instanceof Error ? error.message : 'Try again.',
+      );
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   useFocusEffect(
@@ -462,14 +489,22 @@ export default function IntegrationsScreen() {
 
       <IntegrationCard
         title='Google Drive'
-        detail={driveStatus?.connected ? `Connected as ${driveStatus.email ?? 'account'}` : 'Find contracts, receipts, and financial documents'}
+        detail={
+          driveStatus?.connected
+            ? `Connected as ${driveStatus.email ?? 'account'}`
+            : 'Find contracts, receipts, and financial documents'
+        }
         connected={driveStatus?.connected ?? false}
         icon={<GoogleDriveLogo />}
         busy={busyKey === 'drive'}
         connectLabel='Connect Google Drive'
         onConnect={() => void runConnectDrive()}
         onDisconnect={() => void runDisconnectDrive()}
-        connectedBody={<Text style={[styles.found, { color: colors.foreground }]}>{driveStatus?.fileCount ?? 0} files indexed. Ask Finora to find a document in chat.</Text>}
+        connectedBody={
+          <Text style={[styles.found, { color: colors.foreground }]}>
+            {driveStatus?.fileCount ?? 0} files indexed. Ask Finora to find a document in chat.
+          </Text>
+        }
       />
 
       <IntegrationCard

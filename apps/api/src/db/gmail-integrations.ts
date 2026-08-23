@@ -22,14 +22,32 @@ export async function createGmailOAuthAttempt(
   return attempt;
 }
 
-export async function createOAuthAttempt(db: Database, input: Parameters<typeof createGmailOAuthAttempt>[1], provider: string) {
-  const [attempt] = await db.insert(oauthConnectionAttempts).values({ ...input, provider }).returning();
+export async function createOAuthAttempt(
+  db: Database,
+  input: Parameters<typeof createGmailOAuthAttempt>[1],
+  provider: string,
+) {
+  const [attempt] = await db
+    .insert(oauthConnectionAttempts)
+    .values({ ...input, provider })
+    .returning();
   if (!attempt) throw new Error('OAuth connection attempt was not created.');
   return attempt;
 }
 
 export async function consumeOAuthAttempt(db: Database, stateHash: string, provider: string) {
-  const [attempt] = await db.update(oauthConnectionAttempts).set({ consumedAt: new Date() }).where(and(eq(oauthConnectionAttempts.provider, provider), eq(oauthConnectionAttempts.stateHash, stateHash), isNull(oauthConnectionAttempts.consumedAt), gt(oauthConnectionAttempts.expiresAt, new Date()))).returning();
+  const [attempt] = await db
+    .update(oauthConnectionAttempts)
+    .set({ consumedAt: new Date() })
+    .where(
+      and(
+        eq(oauthConnectionAttempts.provider, provider),
+        eq(oauthConnectionAttempts.stateHash, stateHash),
+        isNull(oauthConnectionAttempts.consumedAt),
+        gt(oauthConnectionAttempts.expiresAt, new Date()),
+      ),
+    )
+    .returning();
   return attempt ?? null;
 }
 
@@ -141,7 +159,11 @@ export async function markGmailSyncFailed(
     .where(eq(gmailIntegrations.id, id));
 }
 
-export async function markGmailReauthorizationRequired(db: Database, id: string, errorCode: string) {
+export async function markGmailReauthorizationRequired(
+  db: Database,
+  id: string,
+  errorCode: string,
+) {
   await markGmailSyncFailed(db, id, errorCode, true);
 }
 

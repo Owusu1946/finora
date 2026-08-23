@@ -7,7 +7,9 @@ export const InvoiceDateRangeSchema = z.object({
 });
 export type InvoiceDateRange = z.infer<typeof InvoiceDateRangeSchema>;
 
-export const InvoicePreferencesSchema = InvoiceDateRangeSchema.extend({ updatedAt: z.iso.datetime() });
+export const InvoicePreferencesSchema = InvoiceDateRangeSchema.extend({
+  updatedAt: z.iso.datetime(),
+});
 export type InvoicePreferences = z.infer<typeof InvoicePreferencesSchema>;
 
 export const RemoteInvoiceSchema = z.object({

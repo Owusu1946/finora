@@ -1,5 +1,5 @@
-import { fetch } from 'expo/fetch';
 import { File as ExpoFile } from 'expo-file-system';
+import { fetch } from 'expo/fetch';
 
 import { getApiUrl } from './api-url';
 
@@ -36,9 +36,11 @@ export async function uploadPayrollAttachment(
     headers: { Authorization: `Bearer ${token}` },
     body: form,
   });
-  const payload = (await response.json().catch(() => null)) as
-    | { ok?: boolean; attachmentId?: string; errorCode?: string }
-    | null;
+  const payload = (await response.json().catch(() => null)) as {
+    ok?: boolean;
+    attachmentId?: string;
+    errorCode?: string;
+  } | null;
   if (!response.ok || !payload?.ok || !payload.attachmentId) {
     throw new Error(payload?.errorCode ?? 'Attachment upload failed.');
   }

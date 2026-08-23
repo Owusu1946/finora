@@ -19,8 +19,9 @@ export const MemorySettingsSchema = z.object({ enabled: z.boolean() });
 
 function containsSensitiveMemoryData(value: string) {
   return (
-    /\b(pin|password|passcode|otp|one[- ]time password|api key|private key|recovery code|secret)\b/i.test(value) ||
-    /\d{8,}/.test(value.replaceAll(/[\s()+-]/g, ''))
+    /\b(pin|password|passcode|otp|one[- ]time password|api key|private key|recovery code|secret)\b/i.test(
+      value,
+    ) || /\d{8,}/.test(value.replaceAll(/[\s()+-]/g, ''))
   );
 }
 
@@ -29,13 +30,19 @@ const SafeMemoryTitleSchema = z
   .trim()
   .min(1)
   .max(120)
-  .refine((value) => !containsSensitiveMemoryData(value), 'Sensitive data cannot be stored in memory.');
+  .refine(
+    (value) => !containsSensitiveMemoryData(value),
+    'Sensitive data cannot be stored in memory.',
+  );
 const SafeMemoryContentSchema = z
   .string()
   .trim()
   .min(1)
   .max(1_000)
-  .refine((value) => !containsSensitiveMemoryData(value), 'Sensitive data cannot be stored in memory.');
+  .refine(
+    (value) => !containsSensitiveMemoryData(value),
+    'Sensitive data cannot be stored in memory.',
+  );
 
 export const MemoryListResponseSchema = z.object({
   enabled: z.boolean(),
@@ -61,9 +68,12 @@ export const UpdateMemoryInputSchema = z
     content: SafeMemoryContentSchema.optional(),
   })
   .strict()
-  .refine((value) => value.kind !== undefined || value.title !== undefined || value.content !== undefined, {
-    message: 'At least one memory field is required.',
-  });
+  .refine(
+    (value) => value.kind !== undefined || value.title !== undefined || value.content !== undefined,
+    {
+      message: 'At least one memory field is required.',
+    },
+  );
 export type UpdateMemoryInput = z.infer<typeof UpdateMemoryInputSchema>;
 
 export const ListMemoriesInputSchema = z

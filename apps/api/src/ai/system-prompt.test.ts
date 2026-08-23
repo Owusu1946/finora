@@ -12,7 +12,7 @@ describe('FINORA_SYSTEM_PROMPT', () => {
     'Never invent balances',
     'prepare -> policy check -> human approval -> PIN or biometrics -> execute -> audit',
     'Never request, accept, repeat, store, or expose a PIN',
-    'Use a tool proactively whenever the user\'s answer depends on current account data',
+    "Use a tool proactively whenever the user's answer depends on current account data",
     'Do not reveal chain-of-thought',
     'Only the authenticated approval control in the proposal card can apply changes',
     'For one uniquely matched employee, call prepare_employee_payment',
@@ -39,10 +39,35 @@ describe('chat tools', () => {
 
   it('gives imported employees stable UI identities', async () => {
     const tools = createChatAgentTools(undefined, undefined, undefined, {
-      inspectAttachment: async () => ({}), prepareImport: async () => ({}), prepareEmployee: async () => ({}), proposeChanges: async () => ({}),
-      listImports: async () => ({ imports: [{ importId: '11111111-1111-4111-8111-111111111111', currency: 'GHS', rows: [{ rowId: 'row-1', employeeName: 'Ama', amount: 100, currency: 'GHS', destination: '0240000000', destinationType: 'mobile_money', rail: 'MTN' }] }] }),
+      inspectAttachment: async () => ({}),
+      prepareImport: async () => ({}),
+      prepareEmployee: async () => ({}),
+      proposeChanges: async () => ({}),
+      listImports: async () => ({
+        imports: [
+          {
+            importId: '11111111-1111-4111-8111-111111111111',
+            currency: 'GHS',
+            rows: [
+              {
+                rowId: 'row-1',
+                employeeName: 'Ama',
+                amount: 100,
+                currency: 'GHS',
+                destination: '0240000000',
+                destinationType: 'mobile_money',
+                rail: 'MTN',
+              },
+            ],
+          },
+        ],
+      }),
     });
-    const result = await tools.list_employees.execute!({}, { toolCallId: 'test', messages: [], abortSignal: new AbortController().signal } as never) as { employees: Array<{ id: string }> };
+    const result = (await tools.list_employees.execute!({}, {
+      toolCallId: 'test',
+      messages: [],
+      abortSignal: new AbortController().signal,
+    } as never)) as { employees: Array<{ id: string }> };
     expect(result.employees[0]?.id).toBe('11111111-1111-4111-8111-111111111111:row-1');
   });
 });
