@@ -10,7 +10,7 @@ import * as Linking from 'expo-linking';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import { GmailLogo } from '@/components/integrations/gmail-logo';
 import { GoogleCalendarLogo } from '@/components/integrations/google-calendar-logo';
@@ -18,7 +18,6 @@ import { GoogleDriveLogo } from '@/components/integrations/google-drive-logo';
 import { IMessageLogo } from '@/components/integrations/imessage-logo';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   beginCalendarConnection,
@@ -73,58 +72,40 @@ function IntegrationCard({
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-      <View style={styles.cardHeader}>
-        <View
-          style={[
-            styles.iconWrap,
-            {
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-            },
-          ]}
-        >
+    <View className='gap-3.5 rounded-[26px] border border-border bg-composer p-4'>
+      <View className='flex-row items-center gap-3'>
+        <View className='size-10 items-center justify-center rounded-xl border border-border bg-background'>
           {icon}
         </View>
-        <View style={styles.cardMeta}>
-          <Text style={[styles.cardTitle, { color: colors.foreground }]}>{title}</Text>
-          <Text style={[styles.cardDetail, { color: colors.mutedForeground }]}>{detail}</Text>
+        <View className='flex-1 gap-0.5'>
+          <Text className='font-sans-semibold text-[17px] text-foreground'>{title}</Text>
+          <Text className='font-sans-medium text-sm text-muted-foreground'>{detail}</Text>
         </View>
         <View
-          style={[styles.statusDot, { backgroundColor: connected ? '#10B981' : colors.border }]}
+          className={connected ? 'size-2 rounded bg-emerald-500' : 'size-2 rounded bg-border'}
         />
       </View>
 
       {connected ? (
-        <View style={styles.connectedBody}>
+        <View className='gap-3'>
           {connectedBody}
           <Pressable
             disabled={busy}
             onPress={onDisconnect}
-            style={({ pressed }) => [
-              styles.btn,
-              styles.btnGhost,
-              { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
-            ]}
+            className='min-h-[46px] items-center justify-center rounded-[32px] border border-border px-3'
+            style={({ pressed }) => ({ opacity: pressed || busy ? 0.7 : 1 })}
           >
-            <Text style={[styles.btnLabel, { color: colors.foreground }]}>Disconnect</Text>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>Disconnect</Text>
           </Pressable>
         </View>
       ) : (
         <Pressable
           disabled={busy}
           onPress={onConnect}
-          style={({ pressed }) => [
-            styles.btn,
-            styles.btnPrimary,
-            {
-              backgroundColor: colors.foreground,
-              opacity: pressed || busy ? 0.85 : 1,
-              marginTop: 4,
-            },
-          ]}
+          className='mt-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+          style={({ pressed }) => ({ opacity: pressed || busy ? 0.85 : 1 })}
         >
-          <Text style={[styles.btnLabel, { color: colors.background }]}>
+          <Text className='font-sans-semibold text-[15px] text-background'>
             {busy ? 'Connecting…' : connectLabel}
           </Text>
         </Pressable>
@@ -274,7 +255,7 @@ export default function IntegrationsScreen() {
 
   if (!state) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View className='flex-1 bg-background'>
         <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
@@ -409,12 +390,14 @@ export default function IntegrationsScreen() {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
+      className='flex-1 bg-background'
+      contentContainerStyle={{ gap: 12, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
       contentInsetAdjustmentBehavior='automatic'
     >
-      <Text style={[styles.title, { color: colors.foreground }]}>Integrations</Text>
-      <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+      <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+        Integrations
+      </Text>
+      <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
         Connect tools so Finora can surface invoices, due dates, and payment requests for you.
       </Text>
 
@@ -435,7 +418,7 @@ export default function IntegrationsScreen() {
         onDisconnect={() => void runDisconnectGmail()}
         connectedBody={
           <>
-            <Text style={[styles.found, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
               {gmail?.status === 'syncing'
                 ? 'Scanning recent messages for invoice candidates'
                 : `${gmail?.candidateCount ?? 0} invoice candidate${gmail?.candidateCount === 1 ? '' : 's'} found`}
@@ -447,16 +430,10 @@ export default function IntegrationsScreen() {
                 aui.composer.setText('Find unpaid invoices from suppliers');
                 aui.composer.send();
               }}
-              style={({ pressed }) => [
-                styles.btn,
-                styles.btnPrimary,
-                {
-                  backgroundColor: colors.foreground,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
+              className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
-              <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
+              <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -472,15 +449,12 @@ export default function IntegrationsScreen() {
                   .finally(() => setBusyKey(null));
               }}
               disabled={busyKey === 'gmail'}
-              style={({ pressed }) => [
-                styles.btn,
-                styles.btnGhost,
-                { borderColor: colors.border, opacity: pressed || busyKey === 'gmail' ? 0.7 : 1 },
-              ]}
+              className='min-h-[46px] items-center justify-center rounded-[32px] border border-border px-3'
+              style={({ pressed }) => ({ opacity: pressed || busyKey === 'gmail' ? 0.7 : 1 })}
             >
-              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Sync now</Text>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>Sync now</Text>
             </Pressable>
-            <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
               In chat, say “Find unpaid invoices” or open Invoices in the drawer.
             </Text>
           </>
@@ -501,7 +475,7 @@ export default function IntegrationsScreen() {
         onConnect={() => void runConnectDrive()}
         onDisconnect={() => void runDisconnectDrive()}
         connectedBody={
-          <Text style={[styles.found, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[15px] text-foreground'>
             {driveStatus?.fileCount ?? 0} files indexed. Ask Finora to find a document in chat.
           </Text>
         }
@@ -522,7 +496,7 @@ export default function IntegrationsScreen() {
         onDisconnect={() => void runDisconnectCalendar()}
         connectedBody={
           <>
-            <Text style={[styles.found, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
               {calendarStatus?.status === 'syncing'
                 ? 'Syncing upcoming calendar events'
                 : `${calendarStatus?.eventCount ?? calendarCount} calendar event${(calendarStatus?.eventCount ?? calendarCount) === 1 ? '' : 's'} synced`}
@@ -534,16 +508,10 @@ export default function IntegrationsScreen() {
                 aui.composer.setText('What’s due on my calendar this week?');
                 aui.composer.send();
               }}
-              style={({ pressed }) => [
-                styles.btn,
-                styles.btnPrimary,
-                {
-                  backgroundColor: colors.foreground,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
+              className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
-              <Text style={[styles.btnLabel, { color: colors.background }]}>Ask in chat</Text>
+              <Text className='font-sans-semibold text-[15px] text-background'>Ask in chat</Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -559,18 +527,12 @@ export default function IntegrationsScreen() {
                   .finally(() => setBusyKey(null));
               }}
               disabled={busyKey === 'calendar'}
-              style={({ pressed }) => [
-                styles.btn,
-                styles.btnGhost,
-                {
-                  borderColor: colors.border,
-                  opacity: pressed || busyKey === 'calendar' ? 0.7 : 1,
-                },
-              ]}
+              className='min-h-[46px] items-center justify-center rounded-[32px] border border-border px-3'
+              style={({ pressed }) => ({ opacity: pressed || busyKey === 'calendar' ? 0.7 : 1 })}
             >
-              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Sync now</Text>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>Sync now</Text>
             </Pressable>
-            <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
               Finora can prepare payments around due dates — it still needs your approval.
             </Text>
           </>
@@ -592,7 +554,7 @@ export default function IntegrationsScreen() {
         onDisconnect={() => void runDisconnect('sms', () => disconnectSmsInbox())}
         connectedBody={
           <>
-            <Text style={[styles.found, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
               {smsCount} open payment request{smsCount === 1 ? '' : 's'} in SMS
             </Text>
             <Pressable
@@ -602,18 +564,12 @@ export default function IntegrationsScreen() {
                 aui.composer.setText('Show payment requests from my SMS inbox');
                 aui.composer.send();
               }}
-              style={({ pressed }) => [
-                styles.btn,
-                styles.btnPrimary,
-                {
-                  backgroundColor: colors.foreground,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}
+              className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
-              <Text style={[styles.btnLabel, { color: colors.background }]}>Ask in chat</Text>
+              <Text className='font-sans-semibold text-[15px] text-background'>Ask in chat</Text>
             </Pressable>
-            <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
               SMS composer is ready on this device. Ask in chat for MoMo prompts, or tap Text SMS on
               payment links to share them.
             </Text>
@@ -623,97 +579,3 @@ export default function IntegrationsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-    gap: 12,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    marginTop: -4,
-    marginBottom: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardMeta: {
-    flex: 1,
-    gap: 2,
-  },
-  cardTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  cardDetail: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  connectedBody: {
-    gap: 12,
-  },
-  found: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  btn: {
-    minHeight: 46,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-  },
-  btnPrimary: {},
-  btnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  hint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-});
