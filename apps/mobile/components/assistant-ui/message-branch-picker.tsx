@@ -58,4 +58,4 @@ const styles = {
   label: {
     fontVariant: ['tabular-nums'],
   },
-} as const;
+};

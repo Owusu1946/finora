@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, View } from 'react-native';
+import { Animated, Easing, Pressable, View, type TextStyle } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
