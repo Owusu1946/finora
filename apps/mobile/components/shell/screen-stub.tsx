@@ -1,7 +1,6 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 
 type ScreenStubProps = {
   title: string;
@@ -9,34 +8,14 @@ type ScreenStubProps = {
 };
 
 export function ScreenStub({ title, description }: ScreenStubProps) {
-  const { colors } = useTheme();
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-      <Text style={[styles.description, { color: colors.mutedForeground }]}>{description}</Text>
+    <View className='flex-1 bg-background px-6 pt-6'>
+      <Text className='mb-2 font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+        {title}
+      </Text>
+      <Text className='max-w-[340px] font-sans text-[17px] leading-6 tracking-[-0.2px] text-muted-foreground'>
+        {description}
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-    marginBottom: 8,
-  },
-  description: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    lineHeight: 24,
-    letterSpacing: -0.2,
-    maxWidth: 340,
-  },
-});
