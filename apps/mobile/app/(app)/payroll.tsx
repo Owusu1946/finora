@@ -14,7 +14,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -72,12 +71,14 @@ export default function PayrollScreen() {
   );
 
   const selectionCount =
-    selection?.kind === 'imports' ? selection.ids.length : selection?.rowIds.length ?? 0;
+    selection?.kind === 'imports' ? selection.ids.length : (selection?.rowIds.length ?? 0);
 
   const selectedNames = useMemo(() => {
     if (!selection || !imports) return [];
     if (selection.kind === 'imports') {
-      return imports.filter((item) => selection.ids.includes(item.id)).map((item) => item.sourceName);
+      return imports
+        .filter((item) => selection.ids.includes(item.id))
+        .map((item) => item.sourceName);
     }
     return (
       imports
@@ -103,14 +104,17 @@ export default function PayrollScreen() {
   if (!imports) {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <LoadingIcon style={{ marginTop: 40 }} color={colors.mutedForeground} />
+        <LoadingIcon
+          style={{ marginTop: 40 }}
+          color={colors.mutedForeground}
+        />
       </View>
     );
   }
 
   const replaceImport = (updated: PayrollImport) =>
-    setImports((current) =>
-      current?.map((item) => (item.id === updated.id ? updated : item)) ?? current,
+    setImports(
+      (current) => current?.map((item) => (item.id === updated.id ? updated : item)) ?? current,
     );
 
   const mutationError = async (cause: unknown, fallback: string) => {
@@ -129,7 +133,12 @@ export default function PayrollScreen() {
     const key = `${selected.importId}:${selected.row.rowId}`;
     setBusy(key);
     try {
-      const updated = await updatePayrollRow(selected.importId, selected.row.rowId, patch, getToken);
+      const updated = await updatePayrollRow(
+        selected.importId,
+        selected.row.rowId,
+        patch,
+        getToken,
+      );
       replaceImport(updated);
       const row = updated.rows.find((candidate) => candidate.rowId === selected.row.rowId);
       if (row) setSelected({ importId: selected.importId, row });
@@ -232,11 +241,15 @@ export default function PayrollScreen() {
           targets.map((item) => ({ importId: item.id, version: item.version })),
           getToken,
         );
-        setImports((current) => current?.filter((item) => !selection.ids.includes(item.id)) ?? current);
+        setImports(
+          (current) => current?.filter((item) => !selection.ids.includes(item.id)) ?? current,
+        );
       } else {
         const item = imports.find((candidate) => candidate.id === selection.importId);
         if (!item) throw new Error('payroll_import_not_found');
-        replaceImport(await bulkDeletePayrollRows(item.id, selection.rowIds, item.version, getToken));
+        replaceImport(
+          await bulkDeletePayrollRows(item.id, selection.rowIds, item.version, getToken),
+        );
       }
       setSelection(null);
       haptics.success();
@@ -298,7 +311,9 @@ export default function PayrollScreen() {
                 </Pressable>
               ) : null}
             </View>
-            {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
+            {error ? (
+              <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
+            ) : null}
             {!selection ? (
               <Pressable
                 onPress={() => {
@@ -326,7 +341,10 @@ export default function PayrollScreen() {
         }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => (
-          <Animated.View layout={LinearTransition.springify()} exiting={FadeOutLeft.duration(180)}>
+          <Animated.View
+            layout={LinearTransition.springify()}
+            exiting={FadeOutLeft.duration(180)}
+          >
             <ImportCard
               item={item}
               colors={colors}
@@ -358,17 +376,21 @@ export default function PayrollScreen() {
             </Text>
           </View>
           <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Delete selected"
+            accessibilityRole='button'
+            accessibilityLabel='Delete selected'
             disabled={busy === 'bulk'}
             onPress={confirmDeleteBulk}
             style={[styles.bulkDelete, { backgroundColor: colors.destructive }]}
           >
             {busy === 'bulk' ? (
-              <LoadingIcon color="#fff" />
+              <LoadingIcon color='#fff' />
             ) : (
               <>
-                <Icon name="remove" size={18} color="#fff" />
+                <Icon
+                  name='remove'
+                  size={18}
+                  color='#fff'
+                />
                 <Text style={styles.bulkDeleteText}>Delete</Text>
               </>
             )}
@@ -424,10 +446,22 @@ function ImportCard({
       ]}
     >
       <View style={styles.cardHeader}>
-        <Pressable disabled={!selection} onPress={onToggleImport} style={styles.cardHeadingPress}>
-          {selection ? <SelectionMark selected={importSelected} colors={colors} /> : null}
+        <Pressable
+          disabled={!selection}
+          onPress={onToggleImport}
+          style={styles.cardHeadingPress}
+        >
+          {selection ? (
+            <SelectionMark
+              selected={importSelected}
+              colors={colors}
+            />
+          ) : null}
           <View style={styles.rowText}>
-            <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={1}>
+            <Text
+              style={[styles.cardTitle, { color: colors.foreground }]}
+              numberOfLines={1}
+            >
               {item.sourceName}
             </Text>
             <Text style={[styles.meta, { color: colors.mutedForeground }]}>
@@ -441,8 +475,10 @@ function ImportCard({
           </Text>
           {selection?.kind === 'rows' && selection.importId === item.id ? (
             <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={allRowsSelected ? 'Clear employee selection' : 'Select all employees'}
+              accessibilityRole='button'
+              accessibilityLabel={
+                allRowsSelected ? 'Clear employee selection' : 'Select all employees'
+              }
               onPress={onToggleAllRows}
               style={styles.selectAll}
             >
@@ -469,8 +505,8 @@ function ImportCard({
       ))}
       {item.blockingIssues.length ? (
         <Text style={[styles.error, { color: colors.destructive }]}>
-          {item.blockingIssues.length} issue{item.blockingIssues.length === 1 ? '' : 's'} must be fixed
-          before preparation.
+          {item.blockingIssues.length} issue{item.blockingIssues.length === 1 ? '' : 's'} must be
+          fixed before preparation.
         </Text>
       ) : null}
     </View>
@@ -502,12 +538,6 @@ function EmployeeRow({
   const isThresholdPassed = useSharedValue(false);
   const ACTION_WIDTH = -76;
   const FULL_SWIPE_TRIGGER = -170;
-
-  const resetSwipe = () => {
-    'worklet';
-    x.value = withSpring(0, { damping: 20, stiffness: 220 });
-    isThresholdPassed.value = false;
-  };
 
   const handleTriggerDelete = () => {
     runOnJS(onRequestDelete)(() => {
@@ -567,12 +597,16 @@ function EmployeeRow({
   });
 
   return (
-    <Animated.View layout={LinearTransition.springify()} exiting={FadeOutLeft.duration(160)} style={styles.swipeFrame}>
+    <Animated.View
+      layout={LinearTransition.springify()}
+      exiting={FadeOutLeft.duration(160)}
+      style={styles.swipeFrame}
+    >
       {/* Background delete action button */}
       {!selecting ? (
         <View style={styles.deleteRevealContainer}>
           <Pressable
-            accessibilityRole="button"
+            accessibilityRole='button'
             accessibilityLabel={`Delete ${row.employeeName ?? 'employee'}`}
             disabled={busy}
             onPress={() => {
@@ -584,7 +618,11 @@ function EmployeeRow({
             style={[styles.deleteActionButton, { backgroundColor: colors.destructive }]}
           >
             <Animated.View style={[styles.deleteActionInner, deleteButtonStyle]}>
-              <Icon name="remove" size={18} color="#ffffff" />
+              <Icon
+                name='remove'
+                size={18}
+                color='#ffffff'
+              />
               <Text style={styles.deleteActionText}>Delete</Text>
             </Animated.View>
           </Pressable>
@@ -611,7 +649,10 @@ function EmployeeRow({
             style={styles.rowPress}
           >
             {selecting ? (
-              <SelectionMark selected={selected} colors={colors} />
+              <SelectionMark
+                selected={selected}
+                colors={colors}
+              />
             ) : (
               <View style={[styles.avatar, { backgroundColor: colors.muted }]}>
                 <Text style={[styles.avatarText, { color: colors.foreground }]}>
@@ -632,7 +673,7 @@ function EmployeeRow({
 
           {!selecting ? (
             <Pressable
-              accessibilityRole="button"
+              accessibilityRole='button'
               accessibilityLabel={`Delete ${row.employeeName ?? 'employee'}`}
               disabled={busy}
               onPress={() => {
@@ -642,7 +683,11 @@ function EmployeeRow({
               }}
               style={styles.deleteButton}
             >
-              <Icon name="remove" size={17} color={colors.destructive} />
+              <Icon
+                name='remove'
+                size={17}
+                color={colors.destructive}
+              />
             </Pressable>
           ) : null}
         </Animated.View>
@@ -668,7 +713,13 @@ function SelectionMark({ selected, colors }: { selected: boolean; colors: Colors
         style,
       ]}
     >
-      {selected ? <Icon name="check" size={14} color={colors.background} /> : null}
+      {selected ? (
+        <Icon
+          name='check'
+          size={14}
+          color={colors.background}
+        />
+      ) : null}
     </Animated.View>
   );
 }
@@ -722,7 +773,12 @@ function Editor({
   ];
 
   return (
-    <SheetModal visible={Boolean(row)} onClose={onClose} keyboardAvoiding style={styles.sheet}>
+    <SheetModal
+      visible={Boolean(row)}
+      onClose={onClose}
+      keyboardAvoiding
+      style={styles.sheet}
+    >
       <View style={styles.sheetHeader}>
         <View>
           <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Employee details</Text>
@@ -731,7 +787,11 @@ function Editor({
           </Text>
         </View>
         <Pressable onPress={onClose}>
-          <Icon name="close-circle" size={22} color={colors.mutedForeground} />
+          <Icon
+            name='close-circle'
+            size={22}
+            color={colors.mutedForeground}
+          />
         </Pressable>
       </View>
       {row ? (
@@ -800,7 +860,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   rowPress: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: { fontSize: 15, fontWeight: '700' },
   selectionMark: {
     width: 24,

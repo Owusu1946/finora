@@ -96,8 +96,8 @@ export default function SettingsLayout() {
         options={{ title: t('nav_notifications') }}
       />
       <Stack.Screen
-        name='appearance'
-        options={{ title: t('nav_appearance') }}
+        name='display'
+        options={{ title: t('nav_display') }}
       />
       <Stack.Screen
         name='memory'

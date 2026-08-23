@@ -77,20 +77,25 @@ calendarIntegrations.get('/events', async (c) => {
   const events = (
     await listCalendarMoneyEvents(createDb(c.get('env').DATABASE_URL), c.get('auth').userId)
   ).map((event) => ({
-      id: event.id,
-      title: event.title,
-      kind: event.kind,
-      dueAt: event.dueAt.toISOString(),
-      amount: event.amount ? Number(event.amount) : null,
-      currency: event.currency,
-      counterparty: event.counterparty,
-      notes: event.notes,
-      sourceUrl: event.sourceUrl,
-    }));
+    id: event.id,
+    title: event.title,
+    kind: event.kind,
+    dueAt: event.dueAt.toISOString(),
+    amount: event.amount ? Number(event.amount) : null,
+    currency: event.currency,
+    counterparty: event.counterparty,
+    notes: event.notes,
+    sourceUrl: event.sourceUrl,
+  }));
   console.info('[Calendar] API events response', {
     userId: c.get('auth').userId,
     count: events.length,
-    events: events.map((event) => ({ id: event.id, title: event.title, kind: event.kind, dueAt: event.dueAt })),
+    events: events.map((event) => ({
+      id: event.id,
+      title: event.title,
+      kind: event.kind,
+      dueAt: event.dueAt,
+    })),
   });
   return c.json({ events });
 });

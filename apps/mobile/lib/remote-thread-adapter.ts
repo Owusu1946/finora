@@ -17,7 +17,7 @@ import {
 } from './remote-chat-adapter';
 
 const optimisticChatIds = new Set<string>();
-const pendingThreadChatIdRefs = new Map<string, { current: string | null }>();
+const pendingThreadBindings = new Map<string, { current: string | null }>();
 const generatedTitles = new Map<string, string>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
 const TITLE_REQUEST_TIMEOUT_MS = 20_000;
@@ -222,8 +222,8 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     async initialize(localThreadId: string) {
       const remoteId = `chat_${Crypto.randomUUID().replaceAll('-', '')}`;
       optimisticChatIds.add(remoteId);
-      const chatIdRef = pendingThreadChatIdRefs.get(localThreadId);
-      if (chatIdRef) chatIdRef.current = remoteId;
+      const binding = pendingThreadBindings.get(localThreadId);
+      if (binding) binding.current = remoteId;
       return { remoteId };
     },
 
@@ -293,24 +293,21 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
   };
 }
 
+export type RemoteThreadRuntimeAdapters = {
+  chatModel: ReturnType<typeof createRemoteChatAdapter>;
+  history: ThreadHistoryAdapter;
+  bindRemoteId: (remoteId: string) => void;
+  release: () => void;
+};
+
 export function createRemoteThreadRuntimeAdapters(
   config: RemoteThreadConfig,
-  localThreadId: string,
-  chatId: string,
-) {
-  pendingThreadChatIdRefs.delete(localThreadId);
-  const chatIdRef: { current: string | null } = {
-    current: chatId === 'pending' ? null : chatId,
-  };
-  if (chatId === 'pending') {
-    pendingThreadChatIdRefs.set(localThreadId, chatIdRef);
-  }
-  if (chatIdRef.current !== null) {
-    optimisticChatIds.delete(chatIdRef.current);
-  }
+  localThreadId: string | null,
+): RemoteThreadRuntimeAdapters {
+  const chatIdRef: { current: string | null } = { current: null };
   const chatConfig = {
     apiUrl: config.apiUrl,
-    chatId,
+    chatId: '',
     getToken: config.getToken,
     getChatId: () => chatIdRef.current,
     isOptimistic: () => chatIdRef.current !== null && optimisticChatIds.has(chatIdRef.current),
@@ -320,9 +317,9 @@ export function createRemoteThreadRuntimeAdapters(
   };
   const history: ThreadHistoryAdapter = {
     async load() {
-      if (chatId === 'pending') return { messages: [] };
-      if (optimisticChatIds.has(chatId)) return { messages: [] };
-      const bootstrap = await loadRemoteChatBootstrap(chatConfig);
+      const activeChatId = chatIdRef.current;
+      if (!activeChatId || optimisticChatIds.has(activeChatId)) return { messages: [] };
+      const bootstrap = await loadRemoteChatBootstrap({ ...chatConfig, chatId: activeChatId });
       return {
         ...ExportedMessageRepository.fromArray(bootstrap.initialMessages),
         unstable_resume: bootstrap.activeStreamId !== null,
@@ -344,8 +341,22 @@ export function createRemoteThreadRuntimeAdapters(
     async append() {},
     async update() {},
   };
+
+  if (localThreadId !== null) {
+    pendingThreadBindings.set(localThreadId, chatIdRef);
+  }
+
   return {
     chatModel: createRemoteChatAdapter(chatConfig),
     history,
+    bindRemoteId(remoteId: string) {
+      chatIdRef.current = remoteId;
+    },
+    release:
+      localThreadId !== null
+        ? () => {
+            pendingThreadBindings.delete(localThreadId);
+          }
+        : () => {},
   };
 }

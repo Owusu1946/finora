@@ -1,5 +1,5 @@
-import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@clerk/expo';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
@@ -23,7 +23,13 @@ import {
 } from '@/lib/memory-api';
 
 function memoryKindLabel(kind: FinoraMemory['kind']): string {
-  return kind === 'preference' ? 'Preference' : kind === 'contact' ? 'Contact' : kind === 'supplier' ? 'Supplier' : 'Note';
+  return kind === 'preference'
+    ? 'Preference'
+    : kind === 'contact'
+      ? 'Contact'
+      : kind === 'supplier'
+        ? 'Supplier'
+        : 'Note';
 }
 
 function relativeDay(iso: string): string {
@@ -41,7 +47,10 @@ export default function MemorySettingsScreen() {
   const { colors } = useTheme();
   const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [store, setStore] = useState<{ enabled: boolean; items: FinoraMemory[] }>({ enabled: true, items: [] });
+  const [store, setStore] = useState<{ enabled: boolean; items: FinoraMemory[] }>({
+    enabled: true,
+    items: [],
+  });
 
   const refresh = useCallback(async () => {
     try {
@@ -82,7 +91,10 @@ export default function MemorySettingsScreen() {
         onPress: async () => {
           try {
             await forgetMemory(getToken, item.id);
-            setStore((current) => ({ ...current, items: current.items.filter((memory) => memory.id !== item.id) }));
+            setStore((current) => ({
+              ...current,
+              items: current.items.filter((memory) => memory.id !== item.id),
+            }));
             haptics.success();
           } catch {
             Alert.alert('Could not forget memory', 'Check your connection and try again.');

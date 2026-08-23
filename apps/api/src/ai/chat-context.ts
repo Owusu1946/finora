@@ -77,7 +77,7 @@ export function redactSensitiveContext(value: string) {
       '[REDACTED PRIVATE KEY]',
     )
     .replaceAll(
-      /\b(pin|password|passcode|otp|one[- ]time password|api key|recovery code|secret)\b\s*[:=\-]?\s*[^\s,;]+/gi,
+      /\b(pin|password|passcode|otp|one[- ]time password|api key|recovery code|secret)\b\s*[:=-]?\s*[^\s,;]+/gi,
       '$1: [REDACTED]',
     )
     .replaceAll(/\bsk-(?:or-)?[a-z0-9_-]{12,}\b/gi, '[REDACTED API KEY]')

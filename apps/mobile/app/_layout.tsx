@@ -15,7 +15,7 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { useFonts } from 'expo-font';
 import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -58,9 +58,9 @@ import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeeP
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
 import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
-import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
+import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
@@ -105,20 +105,15 @@ void SplashScreen.preventAutoHideAsync().catch(() => {
 
 function StatusBarBackdrop() {
   const { top } = useSafeAreaInsets();
-  const { colors } = useTheme();
 
   if (top === 0) return null;
 
-  // Taller than the safe-area inset so the fade extends past the status bar
-  // into the content area, giving a smooth ChatGPT-style disappearing effect.
-  const fadeHeight = top + 28;
-
   return (
-    <LinearGradient
+    <BlurView
       pointerEvents='none'
-      colors={[colors.background, colors.background, `${colors.background}00`]}
-      locations={[0, 0.45, 1]}
-      style={[styles.statusBarBackdrop, { height: fadeHeight }]}
+      intensity={40}
+      tint='systemChromeMaterial'
+      style={[styles.statusBarBackdrop, { height: top }]}
     />
   );
 }
@@ -291,12 +286,18 @@ function RemoteFinoraAssistantRuntime({ config }: { config: RemoteChatRuntime })
   const runtime = useRemoteThreadListRuntime({
     adapter: threadListAdapter,
     runtimeHook: function RemoteThreadRuntimeHook() {
+      const localThreadId = useAuiState((state) => state.threadListItem.id);
       const remoteId = useAuiState((state) => state.threadListItem.remoteId);
       const adapters = useMemo(
-        () =>
-          createRemoteThreadRuntimeAdapters(config, remoteId ?? 'pending', remoteId ?? 'pending'),
-        [remoteId],
+        () => createRemoteThreadRuntimeAdapters(config, localThreadId ?? null),
+        [config.apiUrl, config.userId, localThreadId],
       );
+
+      useEffect(() => {
+        if (remoteId) adapters.bindRemoteId(remoteId);
+        return () => adapters.release();
+      }, [adapters, remoteId]);
+
       return useLocalRuntime(adapters.chatModel, { adapters: { history: adapters.history } });
     },
   });
@@ -425,6 +426,7 @@ const styles = StyleSheet.create({
     right: 0,
     left: 0,
     zIndex: 80,
+    overflow: 'hidden',
   },
   securityCover: {
     ...StyleSheet.absoluteFillObject,

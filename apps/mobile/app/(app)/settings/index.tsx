@@ -169,7 +169,7 @@ export default function SettingsHubScreen() {
           icon='eye'
           showChevron
           isLast
-          onPress={() => router.push('/settings/appearance' as Href)}
+          onPress={() => router.push('/settings/display' as Href)}
         />
       </SettingsSection>
 

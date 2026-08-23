@@ -385,6 +385,7 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
           if (abortSignal.aborted) return;
         }
       }
+      const chatId = await resolveChatId(config);
       let activeStreamId: string | null = null;
       const transport = api.transport((streamId) => {
         activeStreamId = streamId;
@@ -398,12 +399,12 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
         if (state?.active && state.resumable && state.activeStreamId) {
           const resumed = await transport.reconnectToStream({
             abortSignal,
-            chatId: config.chatId,
+            chatId,
             headers: await api.authHeaders(),
           });
           if (resumed) {
             yield* assistantResults(resumed);
-            await persistActiveStreamId(config.chatId, null);
+            await persistActiveStreamId(chatId, null);
           }
           state = await api.getState(abortSignal);
         }
@@ -432,7 +433,7 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
             : ('regenerate-message' as const);
         const stream = await transport.sendMessages({
           abortSignal,
-          chatId: config.chatId,
+          chatId,
           messages: requestMessages,
           trigger,
           messageId: trigger === 'regenerate-message' ? requestMessages.at(-1)?.id : undefined,
@@ -444,19 +445,19 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
         if (!currentMessage && !abortSignal.aborted) {
           throw new RemoteChatError('Finora returned an empty response.');
         }
-        await persistActiveStreamId(config.chatId, null);
+        await persistActiveStreamId(chatId, null);
       } catch (error) {
         if (abortSignal.aborted) return;
         if (!activeStreamId) throw error;
 
         const resumed = await transport.reconnectToStream({
           abortSignal,
-          chatId: config.chatId,
+          chatId,
           headers: await api.authHeaders(),
         });
         if (!resumed) throw error;
         yield* assistantResults(resumed);
-        await persistActiveStreamId(config.chatId, null);
+        await persistActiveStreamId(chatId, null);
       } finally {
         abortSignal.removeEventListener('abort', onAbort);
       }

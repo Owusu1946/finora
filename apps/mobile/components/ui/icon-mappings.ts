@@ -35,6 +35,7 @@ import {
   QrCodeIcon,
   QuoteDownIcon,
   RefreshIcon,
+  ScanFaceIcon,
   SentIcon,
   Share01Icon,
   Settings01Icon,
@@ -99,6 +100,7 @@ export type IconName =
   | 'thumb-down'
   | 'quote'
   | 'biometric'
+  | 'face-id'
   | 'eraser';
 
 export type IconProps = {
@@ -158,5 +160,6 @@ export const HUGE_ICONS = {
   'thumb-down': ThumbsDownIcon,
   quote: QuoteDownIcon,
   biometric: FingerPrintScanIcon,
+  'face-id': ScanFaceIcon,
   eraser: Eraser01Icon,
 } as const;

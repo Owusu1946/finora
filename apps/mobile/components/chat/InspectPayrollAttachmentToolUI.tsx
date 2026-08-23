@@ -1,5 +1,6 @@
-import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import type { PayrollInspectionResponse } from '@finora/shared';
+
+import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -18,7 +19,13 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
     const { colors } = useTheme();
     if (status.type === 'running' || !result) {
       return (
-        <View style={[styles.card, styles.loading, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.card,
+            styles.loading,
+            { backgroundColor: colors.composer, borderColor: colors.border },
+          ]}
+        >
           <LoadingIcon color={colors.mutedForeground} />
           <Text style={{ color: colors.mutedForeground }}>Reading payroll attachment...</Text>
         </View>
@@ -26,38 +33,76 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
     }
     if (!result.ok) {
       return (
-        <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Payroll file could not be read</Text>
-          <Text style={{ color: colors.mutedForeground }}>{result.errorCode ?? 'Please check the file and try again.'}</Text>
+        <View
+          style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}
+        >
+          <Text style={[styles.title, { color: colors.foreground }]}>
+            Payroll file could not be read
+          </Text>
+          <Text style={{ color: colors.mutedForeground }}>
+            {result.errorCode ?? 'Please check the file and try again.'}
+          </Text>
         </View>
       );
     }
     const blocked = (result.blockingIssues?.length ?? 0) > 0;
     return (
       <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
-        <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{blocked ? 'Needs review' : 'Payroll extracted'}</Text>
+        <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
+          {blocked ? 'Needs review' : 'Payroll extracted'}
+        </Text>
         <Text style={[styles.title, { color: colors.foreground }]}>{result.sourceName}</Text>
         <View style={styles.summary}>
           <Text style={{ color: colors.foreground }}>{result.rows?.length ?? 0} employees</Text>
-          {result.totals ? <Text style={[styles.total, { color: colors.foreground }]}>{formatPaymentAmount(result.totals.total, result.totals.currency)}</Text> : null}
+          {result.totals ? (
+            <Text style={[styles.total, { color: colors.foreground }]}>
+              {formatPaymentAmount(result.totals.total, result.totals.currency)}
+            </Text>
+          ) : null}
         </View>
         {result.rows?.map((row) => (
-          <View key={row.rowId} style={styles.row}>
+          <View
+            key={row.rowId}
+            style={styles.row}
+          >
             <View style={styles.rowText}>
-              <Text style={{ color: colors.foreground }}>{row.employeeName ?? 'Unnamed employee'}</Text>
-              <Text style={[styles.meta, { color: colors.mutedForeground }]}>{row.citations[0]?.location ?? 'Imported row'}</Text>
+              <Text style={{ color: colors.foreground }}>
+                {row.employeeName ?? 'Unnamed employee'}
+              </Text>
+              <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+                {row.citations[0]?.location ?? 'Imported row'}
+              </Text>
             </View>
-            <Text style={{ color: colors.foreground }}>{row.amount == null ? 'Amount needed' : formatPaymentAmount(row.amount, row.currency ?? 'USD')}</Text>
+            <Text style={{ color: colors.foreground }}>
+              {row.amount == null
+                ? 'Amount needed'
+                : formatPaymentAmount(row.amount, row.currency ?? 'USD')}
+            </Text>
           </View>
         ))}
-        {blocked ? <Text style={[styles.issue, { color: colors.destructive }]}>{result.blockingIssues?.[0]?.message} Fix the flagged rows before approval.</Text> : <Text style={{ color: colors.mutedForeground }}>Validated and ready for payroll preparation. Approval is still required.</Text>}
+        {blocked ? (
+          <Text style={[styles.issue, { color: colors.destructive }]}>
+            {result.blockingIssues?.[0]?.message} Fix the flagged rows before approval.
+          </Text>
+        ) : (
+          <Text style={{ color: colors.mutedForeground }}>
+            Validated and ready for payroll preparation. Approval is still required.
+          </Text>
+        )}
       </View>
     );
   },
 });
 
 const styles = StyleSheet.create({
-  card: { width: '100%', borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, padding: 16, gap: 10, marginVertical: 6 },
+  card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.card,
+    padding: 16,
+    gap: 10,
+    marginVertical: 6,
+  },
   loading: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontSize: 12, fontWeight: '600' },
   title: { fontSize: 16, fontWeight: '700' },

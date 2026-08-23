@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { useBiometricUnlock } from '@/lib/biometrics';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
 
@@ -22,6 +23,8 @@ type PasscodeViewProps = {
   subtitle?: string;
   onSuccess: (passcode: string) => void | Promise<void>;
   onVerify?: (passcode: string) => Promise<boolean> | boolean;
+  /** Called after device biometrics succeed. Resolve false to show a PIN error. */
+  onBiometricUnlock?: () => Promise<boolean> | boolean;
   onBack?: () => void;
   showBack?: boolean;
 };
@@ -32,10 +35,12 @@ export function PasscodeView({
   subtitle: customSubtitle,
   onSuccess,
   onVerify,
+  onBiometricUnlock,
   onBack,
   showBack = false,
 }: PasscodeViewProps) {
   const { colors } = useTheme();
+  const { authenticate, isAvailable: biometricAvailable, method } = useBiometricUnlock();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
 
@@ -169,6 +174,29 @@ export function PasscodeView({
     setValue((v) => v.slice(0, -1));
   };
 
+  const handleBiometricUnlock = async () => {
+    if (loading || submittingRef.current) return;
+    submittingRef.current = true;
+    setLoading(true);
+
+    try {
+      const result = await authenticate(
+        step === 'enter' ? 'Unlock Finora' : 'Confirm your identity',
+      );
+      if (result === 'success') {
+        const ok = onBiometricUnlock ? await onBiometricUnlock() : true;
+        if (!onBiometricUnlock || ok) {
+          await onSuccess('');
+          return;
+        }
+        triggerFailure('Could not verify your account. Enter your passcode.');
+      }
+    } finally {
+      setLoading(false);
+      submittingRef.current = false;
+    }
+  };
+
   return (
     <View
       style={[
@@ -249,6 +277,29 @@ export function PasscodeView({
         <View style={[styles.pad, { width: keypadWidth, opacity: loading ? 0.5 : 1 }]}>
           {KEYS.map((key) => {
             if (key === 'empty') {
+              if (mode === 'enter' && biometricAvailable) {
+                return (
+                  <Pressable
+                    key='biometric'
+                    accessibilityLabel={
+                      method === 'face' ? 'Unlock with Face ID' : 'Unlock with fingerprint'
+                    }
+                    disabled={loading}
+                    onPress={() => void handleBiometricUnlock()}
+                    style={({ pressed }) => [
+                      styles.key,
+                      { width: keySize, height: keySize },
+                      pressed && { opacity: 0.55 },
+                    ]}
+                  >
+                    <Icon
+                      name={method === 'face' ? 'face-id' : 'biometric'}
+                      size={28}
+                      color={colors.foreground}
+                    />
+                  </Pressable>
+                );
+              }
               return (
                 <View
                   key='empty'

@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { useBiometricUnlock } from '@/lib/biometrics';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
 import { useSettings } from '@/lib/settings-context';
@@ -39,6 +40,8 @@ type PasscodeModalProps = {
   onComplete: (passcode: string) => void;
   /** Start forgot-passcode recovery (unlock mode). */
   onForgot?: () => void;
+  /** Called after device biometrics succeed in unlock mode. */
+  onBiometricUnlock?: () => void;
   /** Open verified phone setup when recovery is unavailable. */
   onAddPhone?: () => void;
   /** Clear a stale error when the user starts typing again. */
@@ -63,11 +66,13 @@ export function PasscodeModal({
   onClose,
   onComplete,
   onForgot,
+  onBiometricUnlock,
   onAddPhone,
   onClearError,
 }: PasscodeModalProps) {
   const { colors } = useTheme();
   const { t } = useSettings();
+  const { authenticate, isAvailable: biometricAvailable, method } = useBiometricUnlock();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [value, setValue] = useState('');
@@ -75,6 +80,7 @@ export function PasscodeModal({
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
   const lastSubmittedRef = useRef<string | null>(null);
+  const biometricPromptedRef = useRef(false);
   const keySize = Math.min(
     72,
     Math.max(
@@ -88,6 +94,7 @@ export function PasscodeModal({
     if (!visible) return;
     setValue('');
     lastSubmittedRef.current = null;
+    biometricPromptedRef.current = false;
   }, [visible, mode, title, subtitle]);
 
   useEffect(() => {
@@ -105,6 +112,28 @@ export function PasscodeModal({
       withTiming(0, { duration: 36 }),
     );
   }, [failureSignal, shakeX, visible]);
+
+  useEffect(() => {
+    if (
+      !visible ||
+      mode !== 'unlock' ||
+      !biometricAvailable ||
+      locked ||
+      biometricPromptedRef.current
+    ) {
+      return;
+    }
+
+    biometricPromptedRef.current = true;
+    let active = true;
+    void authenticate('Approve with biometrics').then((result) => {
+      if (active && result === 'success') onBiometricUnlock?.();
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [authenticate, biometricAvailable, locked, mode, onBiometricUnlock, visible]);
 
   const copy = useMemo(() => {
     if (title && subtitle) return { title, subtitle };
@@ -304,21 +333,26 @@ export function PasscodeModal({
             <View style={[styles.pad, { width: keypadWidth, opacity: locked ? 0.45 : 1 }]}>
               {KEYS.map((key) => {
                 if (key === 'bio') {
-                  if (mode !== 'unlock' || locked) {
+                  if (mode !== 'unlock' || locked || !biometricAvailable) {
                     return (
                       <View
-                        key='bio'
+                        key='biometric'
                         style={{ width: keySize, height: keySize }}
                       />
                     );
                   }
                   return (
                     <Pressable
-                      key='bio'
-                      accessibilityLabel='Biometric unlock (coming soon)'
-                      accessibilityHint='Biometric authentication is not available yet. Enter your passcode.'
+                      key='biometric'
+                      accessibilityLabel={
+                        method === 'face' ? 'Unlock with Face ID' : 'Unlock with fingerprint'
+                      }
+                      disabled={locked}
                       onPress={() => {
                         haptics.selection();
+                        void authenticate('Approve with biometrics').then((result) => {
+                          if (result === 'success') onBiometricUnlock?.();
+                        });
                       }}
                       style={({ pressed }) => [
                         styles.key,
@@ -327,7 +361,7 @@ export function PasscodeModal({
                       ]}
                     >
                       <Icon
-                        name='biometric'
+                        name={method === 'face' ? 'face-id' : 'biometric'}
                         size={28}
                         color={colors.mutedForeground}
                       />

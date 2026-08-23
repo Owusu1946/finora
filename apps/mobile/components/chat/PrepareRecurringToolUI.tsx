@@ -31,8 +31,7 @@ function asDraft(args: PrepareRecurringArgs): RecurringDraft {
       : typeof args.amount?.amount === 'number'
         ? args.amount.amount
         : 0;
-  const currency =
-    typeof args.amount === 'object' ? args.amount.currency : undefined;
+  const currency = typeof args.amount === 'object' ? args.amount.currency : undefined;
   return {
     amount,
     currency: currency ?? args.currency ?? 'GHS',

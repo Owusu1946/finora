@@ -1,4 +1,4 @@
-import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
+import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -37,7 +37,6 @@ function PayrollConfirmCard({
   currency: string;
 }) {
   const { colors } = useTheme();
-  const aui = useAui();
   const { requestApproval, modal } = usePasscodeApproval();
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'approved'>('idle');
