@@ -61,7 +61,6 @@ function SuggestionChip({ prompt }: { prompt: string }) {
 }
 
 function EmptyState() {
-  const { colors } = useTheme();
   const suggestions = isBusinessAccount() ? BUSINESS_SUGGESTIONS : PERSONAL_SUGGESTIONS;
   return (
     <Pressable
@@ -126,7 +125,6 @@ export function Thread() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const isFocused = useIsFocused();
-  const { colors } = useTheme();
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
 
   useEffect(() => {

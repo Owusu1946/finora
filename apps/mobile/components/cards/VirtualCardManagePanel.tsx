@@ -303,7 +303,6 @@ export function VirtualCardManagePanel({
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-  const { colors } = useTheme();
   return (
     <View className='flex-1 gap-1'>
       <Text className='font-sans text-xs text-muted-foreground'>{label}</Text>
@@ -344,12 +343,6 @@ function ActionButton({
   flex?: boolean;
 }) {
   const { colors } = useTheme();
-  const bg =
-    tone === 'primary'
-      ? colors.primary
-      : tone === 'danger'
-        ? colors.destructiveSurface
-        : colors.muted;
   const fg =
     tone === 'primary'
       ? colors.primaryForeground

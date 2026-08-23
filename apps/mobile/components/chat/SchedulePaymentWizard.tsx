@@ -525,7 +525,7 @@ export function SchedulePaymentWizard({
 }
 
 function NavRow({
-  colors,
+  colors: _colors,
   onBack,
   onNext,
   nextLabel,

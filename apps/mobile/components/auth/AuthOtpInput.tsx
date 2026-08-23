@@ -2,7 +2,6 @@ import { useRef, type ElementRef } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 
 const OTP_LENGTH = 6;
@@ -15,7 +14,6 @@ type AuthOtpInputProps = {
 };
 
 export function AuthOtpInput({ value, onChange, error, autoFocus = true }: AuthOtpInputProps) {
-  const { colors } = useTheme();
   const inputRef = useRef<ElementRef<typeof TextInput>>(null);
   const digits = value.padEnd(OTP_LENGTH).slice(0, OTP_LENGTH).split('');
 

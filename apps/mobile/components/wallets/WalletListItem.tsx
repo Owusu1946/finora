@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
@@ -17,8 +16,6 @@ interface WalletListItemProps {
 }
 
 export function WalletListItem({ wallet, hideBalances, isLast, onSelect }: WalletListItemProps) {
-  const { colors } = useTheme();
-
   return (
     <Pressable
       onPress={() => {

@@ -53,7 +53,6 @@ export function SettingsSection({
   children: ReactNode;
   footer?: string;
 }) {
-  const { colors } = useTheme();
   return (
     <View className='gap-2'>
       {title ? (

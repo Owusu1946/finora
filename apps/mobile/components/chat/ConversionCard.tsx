@@ -362,7 +362,7 @@ function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conver
 function MetaRow({
   label,
   value,
-  colors,
+  colors: _colors,
 }: {
   label: string;
   value: string;

@@ -29,7 +29,6 @@ const USER_MESSAGE_COLLAPSED_LINES = 6;
 const USER_MESSAGE_COLLAPSED_CHARACTERS = 240;
 
 const UserText: TextMessagePartComponent = ({ text }) => {
-  const { colors } = useTheme();
   const likelyLong =
     text.length > USER_MESSAGE_COLLAPSED_CHARACTERS ||
     text.split('\n').length > USER_MESSAGE_COLLAPSED_LINES;
@@ -75,7 +74,7 @@ const UserText: TextMessagePartComponent = ({ text }) => {
 function TypingIndicator() {
   const isRunning = useAuiState((s) => s.message.status?.type === 'running');
   const parts = useAuiState((s) => s.message.parts);
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
   if (!isRunning) return null;
   const activity = resolveChatActivity(parts);
 
@@ -100,7 +99,6 @@ function TypingIndicator() {
 }
 
 function UserMessage() {
-  const { colors } = useTheme();
   return (
     <MessagePrimitive.Root style={styles.userContainer}>
       {/* Normal view (not editing) */}

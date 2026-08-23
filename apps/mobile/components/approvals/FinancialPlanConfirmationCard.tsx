@@ -262,7 +262,7 @@ export function FinancialPlanConfirmationCard({
 
 function PlanItemRow({
   item,
-  colors,
+  colors: _colors,
   isLast,
 }: {
   item: FinancialPlanItem;

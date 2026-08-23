@@ -69,8 +69,6 @@ function IntegrationCard({
   onConnect,
   onDisconnect,
 }: IntegrationCardProps) {
-  const { colors } = useTheme();
-
   return (
     <View className='gap-3.5 rounded-[26px] border border-border bg-composer p-4'>
       <View className='flex-row items-center gap-3'>

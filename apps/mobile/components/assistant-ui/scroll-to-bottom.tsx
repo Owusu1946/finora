@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -95,14 +94,3 @@ export function ScrollToBottomButton({
     </Animated.View>
   );
 }
-
-const styles = {
-  button: {
-    borderRadius: Radius.pill,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-};

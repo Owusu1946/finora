@@ -23,7 +23,7 @@ const FILTERS: { id: VirtualCardFilter; label: string }[] = [
 ];
 
 export default function CardsScreen() {
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<VirtualCardFilter>('all');
   const [items, setItems] = useState<VirtualCard[]>([]);

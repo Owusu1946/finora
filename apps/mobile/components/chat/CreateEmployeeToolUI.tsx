@@ -23,7 +23,6 @@ type CreateEmployeeResult = {
 };
 
 function EmployeeAddedCard({ employee }: { employee: Employee }) {
-  const { colors } = useTheme();
   const aui = useAui();
   const followedUp = useRef(false);
 

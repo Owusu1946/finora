@@ -37,7 +37,6 @@ export function ReasoningRoot({
   defaultOpen = false,
   children,
 }: ReasoningRootProps) {
-  const { colors } = useTheme();
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -143,7 +142,6 @@ export function ReasoningText({ children }: { children: ReactNode }) {
 }
 
 export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
-  const { colors } = useTheme();
   if (!text?.trim()) return null;
   return (
     <Text className='font-sans text-[14px] leading-[19px] tracking-[-0.1px] mb-1 text-muted-foreground'>

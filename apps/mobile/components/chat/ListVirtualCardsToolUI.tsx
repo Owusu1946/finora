@@ -31,7 +31,6 @@ function PreparingCard() {
 }
 
 function ListVirtualCardsView({ cards }: { cards: VirtualCard[] }) {
-  const { colors } = useTheme();
   const router = useRouter();
 
   if (cards.length === 0) {

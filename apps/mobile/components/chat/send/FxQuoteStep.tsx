@@ -93,7 +93,7 @@ export function FxQuoteStep({
 function Row({
   label,
   value,
-  colors,
+  colors: _colors,
   emphasize,
 }: {
   label: string;

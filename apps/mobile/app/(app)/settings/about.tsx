@@ -76,7 +76,6 @@ function FaqItem({
 }
 
 export default function AboutFinoraScreen() {
-  const { colors } = useTheme();
   const [openId, setOpenId] = useState<number | null>(0);
 
   return (

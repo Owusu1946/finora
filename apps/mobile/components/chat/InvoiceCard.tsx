@@ -357,7 +357,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
 function Row({
   label,
   value,
-  colors,
+  colors: _colors,
 }: {
   label: string;
   value: string;

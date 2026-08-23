@@ -67,7 +67,7 @@ export function PurposeCodeStep({
   );
 }
 
-const styles = {
+const _styles = {
   navBtn: {
     borderRadius: Radius.composer,
   },

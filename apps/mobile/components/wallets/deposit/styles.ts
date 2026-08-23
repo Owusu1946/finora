@@ -1,8 +1,8 @@
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
 import { Radius } from '@/constants/theme';
 
-export const depositStyles = StyleSheet.create({
+export const depositStyles = {
   flex: {
     flex: 1,
   },
@@ -321,4 +321,4 @@ export const depositStyles = StyleSheet.create({
     textAlign: 'center',
     width: '100%',
   },
-});
+} satisfies Record<string, ViewStyle | TextStyle>;

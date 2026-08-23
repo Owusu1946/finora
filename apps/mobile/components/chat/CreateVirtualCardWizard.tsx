@@ -253,7 +253,6 @@ export function CreateVirtualCardWizard({
 }
 
 function Row({ label, value }: { label: string; value: string }) {
-  const { colors } = useTheme();
   return (
     <View className='flex-row justify-between gap-3'>
       <Text className='font-sans text-[14px] text-muted-foreground'>{label}</Text>
@@ -300,7 +299,6 @@ function PrimaryButton({
 }
 
 function SecondaryButton({ label, onPress }: { label: string; onPress: () => void }) {
-  const { colors } = useTheme();
   return (
     <Pressable
       onPress={() => {

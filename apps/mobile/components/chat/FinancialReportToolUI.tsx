@@ -93,7 +93,7 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
 function Metric({
   label,
   value,
-  colors,
+  colors: _colors,
 }: {
   label: string;
   value: string;

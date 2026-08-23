@@ -1,6 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
 
@@ -193,7 +193,7 @@ export function RecurringPaymentCard({
 function Row({
   label,
   value,
-  colors,
+  colors: _colors,
 }: {
   label: string;
   value: string;

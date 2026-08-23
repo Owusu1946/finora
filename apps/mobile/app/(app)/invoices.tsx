@@ -11,7 +11,6 @@ import { invoiceFromRemote } from '@/components/invoices/types';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import {
@@ -32,7 +31,6 @@ const FILTERS: { id: InvoiceFilter; label: string }[] = [
 export default function InvoicesScreen() {
   const { getToken } = useAuth();
   const getTokenRef = useRef(getToken);
-  const { colors } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<InvoiceFilter>('due');
   const [items, setItems] = useState<Invoice[]>([]);

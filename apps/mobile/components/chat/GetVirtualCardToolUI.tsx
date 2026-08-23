@@ -34,7 +34,6 @@ function PreparingCard() {
 }
 
 function MissingCard() {
-  const { colors } = useTheme();
   return (
     <View
       className='my-2 border p-4 gap-1.5 border-border bg-composer'
