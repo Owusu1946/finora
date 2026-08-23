@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -194,10 +194,7 @@ export function PaymentConfirmationCard({
             </View>
           </View>
 
-          <View
-            className='w-[100%] bg-border'
-            className='h-px bg-border'
-          />
+          <View className='h-px w-full bg-border' />
 
           <View className='gap-3'>
             <DetailRow
@@ -613,4 +610,4 @@ const styles = {
   saveContactBtn: {
     borderRadius: Radius.composer,
   },
-};
+} as const;

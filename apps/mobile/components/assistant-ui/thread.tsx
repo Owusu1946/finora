@@ -97,7 +97,7 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
         <View className='flex-1'>
           <ThreadPrimitive.MessagesFlatList
             ref={flatListRef}
-            style={styles.flex}
+            style={{ flex: 1 }}
             contentContainerStyle={[styles.messageList, { paddingTop: headerHeight + 20 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps='handled'
@@ -191,4 +191,4 @@ const styles = {
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-};
+} as const;

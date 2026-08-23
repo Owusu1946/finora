@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import {
   formatCardAmount,
@@ -81,11 +81,10 @@ export function CreateVirtualCardWizard({
 
   return (
     <View
-      style={
-        step === 'issued'
-          ? styles.issuedShell
-          : [styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]
+      className={
+        step === 'issued' ? 'my-2.5 w-full' : 'my-2 gap-3 border border-border bg-composer p-3.5'
       }
+      style={step === 'issued' ? undefined : styles.shell}
     >
       {step !== 'issued' ? (
         <WizardStepHeader
@@ -318,15 +317,7 @@ function SecondaryButton({ label, onPress }: { label: string; onPress: () => voi
 
 const styles = {
   shell: {
-    marginVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 14,
-    gap: 12,
-  },
-  issuedShell: {
-    width: '100%',
-    marginVertical: 10,
   },
   input: {
     borderRadius: Radius.md,
@@ -340,4 +331,4 @@ const styles = {
   review: {
     borderRadius: Radius.md,
   },
-};
+} as const;

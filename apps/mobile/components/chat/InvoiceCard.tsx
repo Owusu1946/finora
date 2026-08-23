@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
@@ -186,10 +186,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
           </View>
         </View>
 
-        <View
-          className='w-[100%] bg-border'
-          className='h-px bg-border'
-        />
+        <View className='h-px w-full bg-border' />
 
         <View className='gap-2.5'>
           <Row
@@ -393,4 +390,4 @@ const styles = {
   linkBtn: {
     borderRadius: Radius.composer,
   },
-};
+} as const;

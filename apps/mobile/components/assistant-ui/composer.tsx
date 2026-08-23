@@ -831,4 +831,4 @@ const styles = {
     ...Rounded,
     borderRadius: Radius.lg,
   },
-};
+} as const;

@@ -226,4 +226,4 @@ const styles = {
     fontSize: 15,
     lineHeight: 20,
   },
-};
+} as const;

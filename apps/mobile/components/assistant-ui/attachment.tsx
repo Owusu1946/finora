@@ -293,4 +293,4 @@ const styles = {
     fontWeight: '600',
     textTransform: 'uppercase',
   },
-};
+} as const;
