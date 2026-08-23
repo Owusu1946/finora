@@ -2,7 +2,7 @@ import { useAui } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -44,22 +44,9 @@ export default function PayRequestDeepLinkScreen() {
   }, [preparationId, isSignedIn, onboardingCompleted, aui, router]);
 
   return (
-    <View style={[styles.wrap, { backgroundColor: colors.background }]}>
+    <View className='flex-1 items-center justify-center gap-3 bg-background'>
       <LoadingIcon color={colors.mutedForeground} />
-      <Text style={[styles.label, { color: colors.mutedForeground }]}>Opening payment…</Text>
+      <Text className='font-sans text-base text-muted-foreground'>Opening payment…</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  label: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-  },
-});

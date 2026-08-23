@@ -21,7 +21,7 @@ import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
@@ -113,7 +113,8 @@ function StatusBarBackdrop() {
       pointerEvents='none'
       intensity={40}
       tint='systemChromeMaterial'
-      style={[styles.statusBarBackdrop, { height: top }]}
+      className='absolute inset-x-0 top-0 z-[80] overflow-hidden'
+      style={{ height: top }}
     />
   );
 }
@@ -188,7 +189,8 @@ function RootNavigator() {
       {concealProtectedContent ? (
         <View
           pointerEvents='auto'
-          style={[styles.securityCover, { backgroundColor: colors.background }]}
+          className='absolute inset-0 z-[90] bg-background'
+          style={{ elevation: 90 }}
         />
       ) : null}
       <StatusBar style='auto' />
@@ -421,22 +423,6 @@ function RootApp() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  statusBarBackdrop: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
-    zIndex: 80,
-    overflow: 'hidden',
-  },
-  securityCover: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 90,
-    elevation: 90,
-  },
-});
 
 function ProfileSyncBridge() {
   useProfileSync();
