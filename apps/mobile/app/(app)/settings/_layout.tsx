@@ -21,7 +21,7 @@ function MenuHeaderButton() {
         haptics.selection();
         navigation.dispatch(DrawerActions.openDrawer());
       }}
-      style={styles.headerAction}
+      className='ml-3 size-10 items-center justify-center rounded-full'
     >
       <Icon
         name='menu'
@@ -46,7 +46,7 @@ function NewChatHeaderButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={styles.headerAction}
+      className='mr-3 size-10 items-center justify-center rounded-full'
     >
       <Icon
         name='compose'
@@ -110,13 +110,3 @@ export default function SettingsLayout() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  headerAction: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-  },
-});

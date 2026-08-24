@@ -97,7 +97,7 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
         <View className='flex-1'>
           <ThreadPrimitive.MessagesFlatList
             ref={flatListRef}
-            style={styles.flex}
+            className='flex-1'
             contentContainerStyle={[
               styles.messageList,
               { paddingTop: headerHeight + 20, backgroundColor: colors.background },
@@ -151,7 +151,7 @@ export function Thread() {
   }, [isFocused]);
 
   return (
-    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+    <View className='flex-1 bg-transparent'>
       <KeyboardAvoidingView
         className='flex-1'
         // Android `height` resizes the whole tree when the picker/keyboard
