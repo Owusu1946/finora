@@ -70,17 +70,18 @@ export default function SecuritySettingsScreen() {
   const handleBiometrics = async (next: boolean) => {
     if (!next) {
       await update({ biometricsEnabled: false });
-      return;
+      return true;
     }
 
     const confirmation = await confirmBiometricEnable();
     if (!confirmation.confirmed) {
       Alert.alert(t('sec_biometrics'), t('sec_biometrics_enable_failed'));
-      return;
+      return false;
     }
 
     await update({ biometricsEnabled: true });
     haptics.success();
+    return true;
   };
 
   const handleRevokeDevice = (id: string, name: string) => {

@@ -75,11 +75,30 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
   }, [refresh]);
 
-  const update = useCallback(async (patch: Partial<FinoraSettings>) => {
-    const next = await saveSettings(patch);
-    setSettings(next);
-    return next;
-  }, []);
+  const update = useCallback(
+    async (patch: Partial<FinoraSettings>) => {
+      const optimistic: FinoraSettings = {
+        ...settings,
+        ...patch,
+        notifications: {
+          ...settings.notifications,
+          ...patch.notifications,
+        },
+        trustedDevices: patch.trustedDevices ?? settings.trustedDevices,
+      };
+      setSettings(optimistic);
+
+      try {
+        const next = await saveSettings(patch);
+        setSettings(next);
+        return next;
+      } catch (error) {
+        await refresh();
+        throw error;
+      }
+    },
+    [refresh, settings],
+  );
 
   const setTheme = useCallback(
     async (theme: ThemePreference) => {

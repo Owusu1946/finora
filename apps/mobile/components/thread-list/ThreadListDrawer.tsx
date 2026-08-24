@@ -23,6 +23,7 @@ import { countPendingApprovals } from '@/lib/approvals-storage';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
+import { usePressGuard } from '@/lib/use-press-guard';
 import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
 import { ThreadListItem } from './ThreadListItem';
@@ -110,6 +111,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const [activeTab, setActiveTab] = useState<NavTab>(() =>
     tabForPathname(pathname, buildNavTabs(isBusinessAccount())),
   );
+  const navigateOnce = usePressGuard();
 
   useEffect(() => {
     if (drawerStatus === 'closed') {
@@ -139,9 +141,11 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
 
   const payHasPending = pendingApprovals > 0;
   const selectThread = useCallback(() => {
-    router.push('/');
-    navigation.closeDrawer();
-  }, [navigation, router]);
+    navigateOnce(() => {
+      router.push('/');
+      navigation.closeDrawer();
+    });
+  }, [navigation, navigateOnce, router]);
   const renderThread = useCallback(
     ({ index }: { index: number }) => (
       <ThreadListItemByIndexProvider
@@ -186,8 +190,10 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           onPressIn={haptics.selection}
           onPress={() => {
             aui.threads.switchToNewThread();
-            router.push('/');
-            navigation.closeDrawer();
+            navigateOnce(() => {
+              router.push('/');
+              navigation.closeDrawer();
+            });
           }}
           className='mx-2 mb-1 h-10 flex-row items-center gap-2.5 rounded-[18px] px-3 active:bg-muted'
         >
@@ -257,7 +263,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               key={href}
               onPressIn={haptics.selection}
               onPress={() => {
-                router.push(item.href);
+                navigateOnce(() => router.push(item.href));
                 navigation.closeDrawer();
               }}
               className={cx(

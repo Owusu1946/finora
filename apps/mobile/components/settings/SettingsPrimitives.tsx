@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
@@ -9,6 +9,7 @@ import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
+import { usePressGuard } from '@/lib/use-press-guard';
 
 /** Shared scroll chrome for settings hub + detail screens. */
 export function SettingsScreen({
@@ -33,12 +34,16 @@ export function SettingsScreen({
   return (
     <View className='flex-1 bg-background'>
       <ScrollView
-        contentContainerClassName='gap-[22px] px-5 pb-12 pt-3'
-        contentContainerStyle={contentStyle}
+        contentContainerClassName='grow pb-12'
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps='handled'
       >
-        {children}
+        <View
+          className='gap-[22px] px-5 pb-12 pt-3'
+          style={contentStyle}
+        >
+          {children}
+        </View>
       </ScrollView>
     </View>
   );
@@ -99,6 +104,7 @@ export function SettingsRow({
   isLast,
 }: RowProps) {
   const { colors } = useTheme();
+  const guard = usePressGuard();
   const labelColor = destructive ? colors.destructive : colors.foreground;
   const content = (
     <>
@@ -142,10 +148,12 @@ export function SettingsRow({
     return (
       <Pressable
         disabled={disabled}
-        onPress={() => {
-          haptics.selection();
-          onPress();
-        }}
+        onPress={() =>
+          guard(() => {
+            haptics.selection();
+            onPress();
+          })
+        }
         className={cx(
           'min-h-[52px] flex-row items-center gap-3 px-3.5 py-3.5 active:opacity-70 disabled:opacity-45',
           !isLast && 'border-b border-border',
@@ -182,11 +190,17 @@ export function SettingsSwitchRow({
   detail?: string;
   icon?: IconName;
   value: boolean;
-  onValueChange: (next: boolean) => void;
+  onValueChange: (next: boolean) => void | boolean | Promise<void | boolean>;
   disabled?: boolean;
   isLast?: boolean;
 }) {
   const { colors } = useTheme();
+  const [optimisticValue, setOptimisticValue] = useState(value);
+
+  useEffect(() => {
+    setOptimisticValue(value);
+  }, [value]);
+
   return (
     <SettingsRow
       label={label}
@@ -196,11 +210,18 @@ export function SettingsSwitchRow({
       isLast={isLast}
       right={
         <Switch
-          value={value}
+          value={optimisticValue}
           disabled={disabled}
-          onValueChange={(next) => {
+          onValueChange={async (next) => {
+            const previous = optimisticValue;
+            setOptimisticValue(next);
             haptics.selection();
-            onValueChange(next);
+            try {
+              const accepted = await onValueChange(next);
+              if (accepted === false) setOptimisticValue(previous);
+            } catch {
+              setOptimisticValue(previous);
+            }
           }}
           trackColor={{ false: colors.muted, true: colors.foreground }}
           thumbColor={colors.background}
@@ -233,8 +254,8 @@ export function SettingsSegmented({
               onChange(opt.id);
             }}
             className={cx(
-              'flex-1 items-center justify-center rounded-full py-2',
-              active && 'bg-background',
+              'flex-1 items-center justify-center rounded-full py-2 active:opacity-75',
+              active && 'border border-border bg-background',
             )}
           >
             <Text

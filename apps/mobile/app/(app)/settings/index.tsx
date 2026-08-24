@@ -21,6 +21,7 @@ import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { hasPasscode } from '@/lib/passcode-storage';
 import { resetFinoraSession } from '@/lib/reset-session';
 import { useSettings } from '@/lib/settings-context';
+import { usePressGuard } from '@/lib/use-press-guard';
 
 export default function SettingsHubScreen() {
   const { colors } = useTheme();
@@ -32,6 +33,7 @@ export default function SettingsHubScreen() {
   const { markIncomplete } = useOnboardingGate();
   const [hasPin, setHasPin] = useState(false);
   const [accountType, setAccountTypeLocal] = useState(getAccountType());
+  const navigateOnce = usePressGuard();
 
   useFocusEffect(
     useCallback(() => {
@@ -106,7 +108,7 @@ export default function SettingsHubScreen() {
         <Pressable
           onPress={() => {
             haptics.selection();
-            router.push('/settings/account' as Href);
+            navigateOnce(() => router.push('/settings/account' as Href));
           }}
           className='flex-row items-center gap-3.5 px-3.5 py-4'
           style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
@@ -148,21 +150,21 @@ export default function SettingsHubScreen() {
           detail={hasPin ? t('settings_passcode_on') : t('settings_passcode_off')}
           icon='shield'
           showChevron
-          onPress={() => router.push('/settings/security' as Href)}
+          onPress={() => navigateOnce(() => router.push('/settings/security' as Href))}
         />
         <SettingsRow
           label={t('settings_memory_label')}
           detail={t('settings_memory_detail')}
           icon='brain'
           showChevron
-          onPress={() => router.push('/settings/memory' as Href)}
+          onPress={() => navigateOnce(() => router.push('/settings/memory' as Href))}
         />
         <SettingsRow
           label={t('settings_notifications_label')}
           detail={notifSummary()}
           icon='activity'
           showChevron
-          onPress={() => router.push('/settings/notifications' as Href)}
+          onPress={() => navigateOnce(() => router.push('/settings/notifications' as Href))}
         />
         <SettingsRow
           label={t('settings_appearance_label')}
@@ -170,7 +172,7 @@ export default function SettingsHubScreen() {
           icon='eye'
           showChevron
           isLast
-          onPress={() => router.push('/settings/display' as Href)}
+          onPress={() => navigateOnce(() => router.push('/settings/display' as Href))}
         />
       </SettingsSection>
 
@@ -180,14 +182,14 @@ export default function SettingsHubScreen() {
           detail={t('settings_integrations_detail')}
           icon='integrations'
           showChevron
-          onPress={() => router.push('/integrations' as Href)}
+          onPress={() => navigateOnce(() => router.push('/integrations' as Href))}
         />
         <SettingsRow
           label={t('settings_approvals_label')}
           detail={t('settings_approvals_detail')}
           icon='shield'
           showChevron
-          onPress={() => router.push('/approvals' as Href)}
+          onPress={() => navigateOnce(() => router.push('/approvals' as Href))}
         />
         <SettingsRow
           label={t('settings_about_label')}
@@ -195,7 +197,7 @@ export default function SettingsHubScreen() {
           icon='info'
           showChevron
           isLast
-          onPress={() => router.push('/settings/about' as Href)}
+          onPress={() => navigateOnce(() => router.push('/settings/about' as Href))}
         />
       </SettingsSection>
 

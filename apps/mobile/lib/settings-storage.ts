@@ -138,7 +138,7 @@ export async function getSettings(): Promise<FinoraSettings> {
 }
 
 export async function saveSettings(patch: Partial<FinoraSettings>): Promise<FinoraSettings> {
-  const current = await getSettings();
+  const current = cached ?? (await getSettings());
   const next: FinoraSettings = {
     ...current,
     ...patch,

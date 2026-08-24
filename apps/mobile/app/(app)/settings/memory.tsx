@@ -75,9 +75,11 @@ export default function MemorySettingsScreen() {
       const next = await setMemoriesEnabled(getToken, enabled);
       setStore((current) => ({ ...current, enabled: next }));
       haptics.selection();
+      return true;
     } catch {
       setStore((current) => ({ ...current, enabled: previous }));
       Alert.alert('Could not update memory', 'Check your connection and try again.');
+      return false;
     }
   };
 

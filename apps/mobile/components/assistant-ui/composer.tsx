@@ -820,6 +820,10 @@ const styles = {
     paddingBottom: 4,
   },
   actionButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: Radius.pill,
   },
   doneButton: {
