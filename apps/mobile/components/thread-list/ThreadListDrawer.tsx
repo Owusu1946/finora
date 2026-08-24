@@ -17,6 +17,7 @@ import type { TranslationKey } from '@/lib/i18n';
 import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
 import { cx } from '@/lib/cx';
@@ -95,6 +96,7 @@ function tabForPathname(pathname: string, tabs: ReturnType<typeof buildNavTabs>)
 
 export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const { t } = useSettings();
+  const { colors } = useTheme();
   const aui = useAui();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
@@ -172,7 +174,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           <Icon
             name='remove'
             size={20}
-            color='#18181B'
+            color={colors.foreground}
           />
         </Pressable>
       </View>
@@ -190,7 +192,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           <Icon
             name='compose'
             size={18}
-            color='#18181B'
+            color={colors.foreground}
           />
           <Text className='font-sans-medium text-base tracking-[-0.2px] text-foreground'>
             New chat
@@ -264,7 +266,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               <Icon
                 name={item.icon}
                 size={18}
-                color={active ? '#18181B' : '#71717A'}
+                color={active ? colors.foreground : colors.mutedForeground}
               />
               <Text
                 className={cx(

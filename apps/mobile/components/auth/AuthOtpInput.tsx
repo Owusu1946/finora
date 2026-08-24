@@ -31,7 +31,7 @@ export function AuthOtpInput({ value, onChange, error, autoFocus = true }: AuthO
             <View
               key={index}
               className={cx(
-                'max-h-14 flex-1 items-center justify-center rounded-[22px] border bg-composer',
+                'max-h-14 flex-1 aspect-[0.85] items-center justify-center rounded-[22px] border bg-composer',
                 error ? 'border-destructive' : active ? 'border-foreground' : 'border-border',
               )}
             >

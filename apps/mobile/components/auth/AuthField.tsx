@@ -34,7 +34,7 @@ export function AuthField({
       </Text>
       <View
         className={cx(
-          'min-h-[54px] flex-row items-center gap-2.5 rounded-full border bg-composer px-4 py-[15px]',
+          'min-h-[54px] flex-row items-center gap-2.5 rounded-[32px] border bg-composer px-4 py-[15px]',
           focused ? 'border-foreground' : error ? 'border-destructive' : 'border-border',
         )}
       >

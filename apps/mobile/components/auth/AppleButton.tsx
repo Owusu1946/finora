@@ -28,8 +28,8 @@ export function AppleButton({ onPress, loading = false, disabled = false }: Appl
         onPress();
       }}
       className={cx(
-        'w-full items-center justify-center rounded-full border border-border bg-background px-5 py-3.5',
-        inactive ? 'opacity-60' : 'active:opacity-90',
+        'h-[54px] w-full items-center justify-center rounded-[32px] border border-border bg-background px-5 py-3.5',
+        inactive ? 'opacity-60' : 'active:opacity-[0.88]',
       )}
     >
       {loading ? (
