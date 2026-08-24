@@ -30,15 +30,7 @@ function NewChatButton() {
         aui.threads.switchToNewThread();
         navigateOnce(() => router.push('/'));
       }}
-      className='size-10 items-center justify-center rounded-full border border-border bg-muted'
-      style={({ pressed }) => [
-        styles.headerAction,
-        {
-          backgroundColor: colors.muted,
-          borderColor: colors.border,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
+      className='size-10 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='compose'
@@ -62,15 +54,7 @@ function ScanHeaderButton() {
         haptics.selection();
         navigateOnce(() => router.push('/scan'));
       }}
-      className='size-10 items-center justify-center rounded-full border border-border bg-muted'
-      style={({ pressed }) => [
-        styles.headerAction,
-        {
-          backgroundColor: colors.muted,
-          borderColor: colors.border,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
+      className='size-10 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='qr'
@@ -97,12 +81,7 @@ function DrawerTrigger() {
         haptics.selection();
         navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
       }}
-      className='size-10 items-center justify-center overflow-hidden rounded-full border border-border bg-muted'
-      style={[
-        styles.headerAction,
-        styles.drawerAction,
-        { backgroundColor: colors.muted, borderColor: colors.border },
-      ]}
+      className='size-10 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='menu'
@@ -340,17 +319,3 @@ export default function AppLayout() {
     </Drawer>
   );
 }
-
-const styles = StyleSheet.create({
-  headerAction: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  drawerAction: {
-    overflow: 'hidden',
-  },
-});
