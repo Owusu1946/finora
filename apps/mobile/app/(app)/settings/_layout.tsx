@@ -21,7 +21,7 @@ function MenuHeaderButton() {
         haptics.selection();
         navigation.dispatch(DrawerActions.openDrawer());
       }}
-      style={[styles.headerAction, styles.headerLeftAction]}
+      style={styles.headerAction}
     >
       <Icon
         name='menu'
@@ -46,7 +46,7 @@ function NewChatHeaderButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={[styles.headerAction, styles.headerRightAction]}
+      style={styles.headerAction}
     >
       <Icon
         name='compose'
@@ -118,11 +118,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 999,
-  },
-  headerLeftAction: {
-    marginLeft: 12,
-  },
-  headerRightAction: {
-    marginRight: 12,
   },
 });

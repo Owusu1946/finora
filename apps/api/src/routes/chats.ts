@@ -142,7 +142,7 @@ chats.post('/:id/title', async (c) => {
   if (!provider) return c.json({ title: fallback, titleStatus: 'fallback' as const });
 
   try {
-    const generated = await generateAndPersistChatTitle({
+    const title = await generateAndPersistChatTitle({
       db,
       chatId: id.data,
       userId,
@@ -151,8 +151,8 @@ chats.post('/:id/title', async (c) => {
       referer: env.WELCOME_EMAIL_CTA_URL,
     });
     return c.json({
-      title: generated ?? fallback,
-      titleStatus: generated ? ('generated' as const) : ('fallback' as const),
+      title,
+      titleStatus: title ? ('generated' as const) : ('fallback' as const),
     });
   } catch (error) {
     console.error('[chat:title]', {
