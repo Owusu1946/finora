@@ -1,10 +1,11 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { CurrencyIcon, SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -31,10 +32,10 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
     <SheetModal
       visible={visible}
       onClose={onClose}
-      style={{ paddingHorizontal: 20, gap: 16 }}
+      style={styles.sheet}
     >
-      <View className='flex-row items-center justify-between'>
-        <Text className='font-sans-semibold text-lg text-foreground'>Add Currency Wallet</Text>
+      <View style={styles.sheetHeader}>
+        <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Add Currency Wallet</Text>
         <Pressable
           onPress={onClose}
           hitSlop={8}
@@ -47,7 +48,7 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
         </Pressable>
       </View>
 
-      <View className='gap-2'>
+      <View style={{ gap: 8 }}>
         {options.map((item) => (
           <Pressable
             key={item.code}
@@ -55,13 +56,13 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
               haptics.selection();
               onClose();
             }}
-            className='flex-row items-center gap-3 rounded-xl bg-muted p-3'
+            style={[styles.addOptionRow, { backgroundColor: colors.muted }]}
           >
             <CurrencyIcon
               currency={item.code}
               size={30}
             />
-            <Text className='flex-1 font-sans-semibold text-[15px] text-foreground'>
+            <Text style={[styles.addOptionText, { color: colors.foreground }]}>
               {item.code} • {item.name}
             </Text>
             <Icon
@@ -75,3 +76,33 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
     </SheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  sheet: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sheetTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  addOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: Radius.md,
+  },
+  addOptionText: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

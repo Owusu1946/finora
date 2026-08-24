@@ -2,10 +2,11 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
+import { useTheme } from '@/hooks/use-theme';
 
 type Row<Item> =
   | { kind: 'intro' }
@@ -16,7 +17,9 @@ type Row<Item> =
 const bodyTitleTopGap = 16;
 
 function HeaderBackground() {
-  return <View className='absolute inset-0 bg-background' />;
+  const { colors } = useTheme();
+
+  return <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]} />;
 }
 
 export function CollapsibleList<Item>({
@@ -42,6 +45,7 @@ export function CollapsibleList<Item>({
   onRefresh?: () => void;
   refreshing?: boolean;
 }) {
+  const { colors, isDark } = useTheme();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -80,20 +84,25 @@ export function CollapsibleList<Item>({
 
   const renderRow = useCallback(
     ({ item, index }: { item: Row<Item>; index: number }) => {
-      if (item.kind === 'intro') return <View className='px-5'>{intro}</View>;
+      if (item.kind === 'intro') return <View style={styles.intro}>{intro}</View>;
       if (item.kind === 'controls') {
-        return <View className='bg-background px-5 pt-0.5'>{controls}</View>;
+        return (
+          <View style={[styles.controls, { backgroundColor: colors.background }]}>{controls}</View>
+        );
       }
-      if (item.kind === 'empty') return <View className='px-5'>{empty}</View>;
+      if (item.kind === 'empty') return <View style={styles.empty}>{empty}</View>;
       return (
-        <View className='px-5'>{renderItem(item.item, index - 2, index === rows.length - 1)}</View>
+        <View style={styles.item}>
+          {renderItem(item.item, index - 2, index === rows.length - 1)}
+        </View>
       );
     },
-    [controls, empty, intro, renderItem, rows.length],
+    [colors.background, controls, empty, intro, renderItem, rows.length],
   );
 
   return (
     <LegendList
+      key={isDark ? 'collapsible-list-dark' : 'collapsible-list-light'}
       data={rows}
       extraData={controls}
       renderItem={renderRow}
@@ -103,10 +112,13 @@ export function CollapsibleList<Item>({
       getItemType={(row) => (row.kind === 'item' ? (getItemType?.(row.item) ?? 'item') : row.kind)}
       recycleItems
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{
-        paddingTop: headerHeight + bodyTitleTopGap,
-        paddingBottom: headerHeight + bodyTitleTopGap,
-      }}
+      contentContainerStyle={[
+        styles.list,
+        {
+          paddingTop: headerHeight + bodyTitleTopGap,
+          paddingBottom: headerHeight + bodyTitleTopGap,
+        },
+      ]}
       contentInsetAdjustmentBehavior='never'
       stickyHeaderIndices={[1]}
       stickyHeaderConfig={{ offset: headerHeight }}
@@ -119,3 +131,11 @@ export function CollapsibleList<Item>({
     />
   );
 }
+
+const styles = StyleSheet.create({
+  list: {},
+  intro: { paddingHorizontal: 20 },
+  controls: { paddingHorizontal: 20, paddingTop: 2 },
+  empty: { paddingHorizontal: 20 },
+  item: { paddingHorizontal: 20 },
+});

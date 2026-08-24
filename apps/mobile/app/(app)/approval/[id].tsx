@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { ApprovalRequest } from '@/components/approvals/types';
 
@@ -127,7 +127,7 @@ export default function ApprovalDetailScreen() {
 
   if (loading) {
     return (
-      <View className='flex-1 items-center justify-center bg-background'>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
         <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
@@ -135,8 +135,8 @@ export default function ApprovalDetailScreen() {
 
   if (!approval) {
     return (
-      <View className='flex-1 items-center justify-center bg-background'>
-        <Text className='text-muted-foreground'>Approval not found.</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.mutedForeground }}>Approval not found.</Text>
       </View>
     );
   }
@@ -179,24 +179,17 @@ export default function ApprovalDetailScreen() {
 
   return (
     <SwipeBackView>
-      <View className='flex-1 bg-background'>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
         <ScrollView
-          contentContainerStyle={{
-            gap: 12,
-            paddingHorizontal: 20,
-            paddingTop: 12,
-            paddingBottom: 40,
-          }}
+          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <View className='gap-1 rounded-2xl bg-muted p-3.5'>
-            <Text className='font-sans-semibold text-[13px] tracking-[-0.1px] text-muted-foreground'>
+          <View style={[styles.banner, { backgroundColor: colors.muted }]}>
+            <Text style={[styles.bannerEyebrow, { color: colors.mutedForeground }]}>
               {isPlan ? 'Agent plan' : 'Agent request'}
             </Text>
-            <Text className='font-sans-semibold text-[19px] tracking-[-0.3px] text-foreground'>
-              {approval.agent}
-            </Text>
-            <Text className='font-sans-medium text-sm text-muted-foreground'>
+            <Text style={[styles.bannerTitle, { color: colors.foreground }]}>{approval.agent}</Text>
+            <Text style={[styles.bannerMeta, { color: colors.mutedForeground }]}>
               Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
             </Text>
           </View>
@@ -224,16 +217,18 @@ export default function ApprovalDetailScreen() {
               onCancel={onCancel}
             />
           ) : (
-            <Text className='text-muted-foreground'>Invalid approval payload.</Text>
+            <Text style={{ color: colors.mutedForeground }}>Invalid approval payload.</Text>
           )}
 
           {status === 'sent' ? (
             <Pressable
               onPress={openTransaction}
-              className='min-h-[46px] items-center justify-center rounded-[14px] border border-border'
-              style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+              style={({ pressed }) => [
+                styles.linkBtn,
+                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+              ]}
             >
-              <Text className='font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
+              <Text style={[styles.linkLabel, { color: colors.foreground }]}>
                 View transaction detail
               </Text>
             </Pressable>
@@ -245,12 +240,12 @@ export default function ApprovalDetailScreen() {
                 haptics.selection();
                 router.back();
               }}
-              className='min-h-[46px] items-center justify-center rounded-[14px] border border-border'
-              style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+              style={({ pressed }) => [
+                styles.linkBtn,
+                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+              ]}
             >
-              <Text className='font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
-                Back to inbox
-              </Text>
+              <Text style={[styles.linkLabel, { color: colors.foreground }]}>Back to inbox</Text>
             </Pressable>
           ) : null}
         </ScrollView>
@@ -259,3 +254,55 @@ export default function ApprovalDetailScreen() {
     </SwipeBackView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 40,
+    gap: 12,
+  },
+  banner: {
+    borderRadius: 16,
+    padding: 14,
+    gap: 4,
+  },
+  bannerEyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+  bannerTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 19,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  bannerMeta: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  linkBtn: {
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  linkLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+});

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -28,9 +29,9 @@ export function WalletHeader({
   const { colors } = useTheme();
 
   return (
-    <View className='gap-1.5 pt-1'>
-      <View className='flex-row items-center justify-between'>
-        <Text className='font-sans-medium text-sm text-muted-foreground'>
+    <View style={styles.headerSection}>
+      <View style={styles.topMetaRow}>
+        <Text style={[styles.accountLabelText, { color: colors.mutedForeground }]}>
           {accountLabel} Net Worth
         </Text>
 
@@ -40,7 +41,7 @@ export function WalletHeader({
             haptics.selection();
             onToggleHideBalances();
           }}
-          className='p-1'
+          style={styles.eyeBtn}
         >
           <Icon
             name={hideBalances ? 'eye-off' : 'eye'}
@@ -50,7 +51,7 @@ export function WalletHeader({
         </Pressable>
       </View>
 
-      <Text className='my-1 font-sans-semibold text-[35px] text-foreground'>
+      <Text style={[styles.balanceDisplay, { color: colors.foreground }]}>
         {hideBalances
           ? '••••••••'
           : `$${totalNetWorthUSD.toLocaleString(undefined, {
@@ -60,20 +61,24 @@ export function WalletHeader({
       </Text>
 
       {/* Minimal Quick Actions Row */}
-      <View className='mt-2 flex-row gap-2.5'>
+      <View style={styles.actionRow}>
         <Pressable
           onPress={() => {
             haptics.selection();
             onOpenSend();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-transparent bg-foreground py-2.5 active:opacity-80'
+          style={({ pressed }) => [
+            styles.actionBtn,
+            { backgroundColor: colors.foreground },
+            pressed && styles.pressed,
+          ]}
         >
           <Icon
             name='arrow-up'
             size={15}
             color={colors.background}
           />
-          <Text className='font-sans-semibold text-sm text-background'>Payout</Text>
+          <Text style={[styles.actionBtnText, { color: colors.background }]}>Payout</Text>
         </Pressable>
 
         <Pressable
@@ -81,14 +86,18 @@ export function WalletHeader({
             haptics.selection();
             onOpenDeposit();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-border bg-muted py-2.5 active:opacity-80'
+          style={({ pressed }) => [
+            styles.actionBtn,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+            pressed && styles.pressed,
+          ]}
         >
           <Icon
             name='arrow-down-left'
             size={15}
             color={colors.foreground}
           />
-          <Text className='font-sans-semibold text-sm text-foreground'>Deposit</Text>
+          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Deposit</Text>
         </Pressable>
 
         <Pressable
@@ -96,16 +105,71 @@ export function WalletHeader({
             haptics.selection();
             onOpenConvert();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-border bg-muted py-2.5 active:opacity-80'
+          style={({ pressed }) => [
+            styles.actionBtn,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+            pressed && styles.pressed,
+          ]}
         >
           <Icon
             name='swap'
             size={15}
             color={colors.foreground}
           />
-          <Text className='font-sans-semibold text-sm text-foreground'>Convert</Text>
+          <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Convert</Text>
         </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  headerSection: {
+    gap: 6,
+    paddingTop: 4,
+  },
+  topMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  accountLabelText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  eyeBtn: {
+    padding: 4,
+  },
+  balanceDisplay: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 35,
+    fontWeight: '700',
+    letterSpacing: -1,
+    marginVertical: 4,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  actionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: Radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+  },
+  actionBtnText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+});

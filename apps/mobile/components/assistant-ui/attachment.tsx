@@ -62,8 +62,7 @@ export function ComposerImageAttachment() {
   return (
     <AttachmentPrimitive.Root style={styles.imageChipContainer}>
       <View
-        className='w-16 h-16 border overflow-hidden bg-muted border-border'
-        style={[styles.imageChip]}
+        style={[styles.imageChip, { backgroundColor: colors.muted, borderColor: colors.border }]}
       >
         {imageUri ? (
           <ExpoImage
@@ -72,7 +71,7 @@ export function ComposerImageAttachment() {
             contentFit='cover'
           />
         ) : (
-          <View className='flex-1 items-center justify-center'>
+          <View style={styles.imagePlaceholder}>
             <Icon
               name='image'
               size={20}
@@ -105,7 +104,7 @@ export function ComposerDocumentAttachment() {
     <AttachmentPrimitive.Root
       style={[styles.chip, { backgroundColor: colors.muted, borderColor: colors.border }]}
     >
-      <View className='flex-row items-center gap-1.5 shrink'>
+      <View style={styles.chipContent}>
         <Icon
           name='file'
           size={15}
@@ -163,8 +162,10 @@ export function MessageImageAttachment() {
         />
       ) : (
         <View
-          className='flex-row items-center gap-2 p-2.5 border bg-muted border-border'
-          style={[styles.messageImagePlaceholder]}
+          style={[
+            styles.messageImagePlaceholder,
+            { backgroundColor: colors.muted, borderColor: colors.border },
+          ]}
         >
           <Icon
             name='image'
@@ -215,17 +216,27 @@ export function MessageAttachmentPill() {
   return <MessageDocumentAttachment />;
 }
 
-const styles = {
+const styles = StyleSheet.create({
+  /* Composer Image */
   imageChipContainer: {
     position: 'relative',
     flexShrink: 0,
   },
   imageChip: {
+    width: 64,
+    height: 64,
     borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
   },
   imagePreview: {
     width: '100%',
     height: '100%',
+  },
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   imageRemoveBadge: {
     position: 'absolute',
@@ -239,6 +250,8 @@ const styles = {
     shadowRadius: 2,
     elevation: 3,
   },
+
+  /* Composer Document */
   chip: {
     flexDirection: 'row',
     flexShrink: 0,
@@ -251,6 +264,12 @@ const styles = {
     paddingVertical: 6,
     gap: 6,
   },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+  },
   chipName: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
@@ -259,6 +278,8 @@ const styles = {
   removeButton: {
     padding: 2,
   },
+
+  /* Message Image */
   messageImageContainer: {
     marginTop: 6,
     marginBottom: 4,
@@ -269,8 +290,15 @@ const styles = {
     borderRadius: Radius.card,
   },
   messageImagePlaceholder: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
     borderRadius: Radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
   },
+
+  /* Message Document */
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,4 +321,4 @@ const styles = {
     fontWeight: '600',
     textTransform: 'uppercase',
   },
-} as const;
+});

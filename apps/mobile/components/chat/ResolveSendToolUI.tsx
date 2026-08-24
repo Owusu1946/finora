@@ -1,7 +1,7 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { PaymentConfirmation } from '@/components/chat/PaymentConfirmationCard';
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
@@ -195,8 +195,7 @@ function ResolveSendFlow({
   if (loadingContacts) {
     return (
       <View
-        className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-        style={[styles.preparing]}
+        style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
       >
         <LoadingIcon color={colors.mutedForeground} />
       </View>
@@ -205,10 +204,7 @@ function ResolveSendFlow({
 
   if (!contact) {
     return (
-      <View
-        className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
-        style={[styles.card]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
         <WizardStepHeader
           step={1}
           total={2}
@@ -223,7 +219,7 @@ function ResolveSendFlow({
                 : `${candidates.length} contacts — pick one to continue.`
           }
         />
-        <View className='gap-2'>
+        <View style={styles.list}>
           {candidates.map((c, index) => (
             <Pressable
               key={c.id}
@@ -231,8 +227,8 @@ function ResolveSendFlow({
                 haptics.selection();
                 setContact(c);
               }}
-              className='flex-row items-center gap-3 p-3 border'
               style={({ pressed }) => [
+                styles.contactRow,
                 {
                   borderColor: colors.border,
                   backgroundColor: colors.background,
@@ -241,18 +237,20 @@ function ResolveSendFlow({
               ]}
             >
               <View
-                className='w-10 h-10 rounded-[20px] items-center justify-center'
-                style={[{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}
+                style={[
+                  styles.avatar,
+                  { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+                ]}
               >
-                <Text className='font-sans-semibold text-white text-[14px]'>{c.initials}</Text>
+                <Text style={styles.initials}>{c.initials}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text className='font-sans-semibold text-[16px] text-foreground'>{c.name}</Text>
-                <Text className='text-[13px] text-muted-foreground'>
+                <Text style={[styles.contactName, { color: colors.foreground }]}>{c.name}</Text>
+                <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>
                   {c.method} · {c.identifier}
                 </Text>
               </View>
-              <Text className='text-[13px] text-muted-foreground'>{c.currency}</Text>
+              <Text style={{ color: colors.mutedForeground, fontSize: 13 }}>{c.currency}</Text>
             </Pressable>
           ))}
         </View>
@@ -262,7 +260,9 @@ function ResolveSendFlow({
             onCancelled();
           }}
         >
-          <Text className='text-center font-semibold text-muted-foreground'>Cancel</Text>
+          <Text style={{ color: colors.mutedForeground, fontWeight: '600', textAlign: 'center' }}>
+            Cancel
+          </Text>
         </Pressable>
       </View>
     );
@@ -280,9 +280,9 @@ function ResolveSendFlow({
             setConfirmedPayment(null);
             setLocalStatus(null);
           }}
-          className='ml-2 mb-0.5'
+          style={styles.editLink}
         >
-          <Text className='font-semibold text-muted-foreground'>← Change contact</Text>
+          <Text style={{ color: colors.mutedForeground, fontWeight: '600' }}>← Change contact</Text>
         </Pressable>
       ) : null}
       <SendMoneyWizard
@@ -342,8 +342,10 @@ export const ResolveSendToolUI = makeAssistantToolUI<ResolveSendArgs, ResolveSen
     if (status.type === 'running' && !hasCandidates) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-          style={[styles.preparing]}
+          style={[
+            styles.preparing,
+            { borderColor: colors.border, backgroundColor: colors.composer },
+          ]}
         >
           <LoadingIcon color={colors.mutedForeground} />
         </View>
@@ -364,14 +366,54 @@ export const ResolveSendToolUI = makeAssistantToolUI<ResolveSendArgs, ResolveSen
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 14,
+    marginVertical: 8,
   },
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: {
+    gap: 8,
   },
   contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
     borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-};
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: {
+    color: '#fff',
+    fontWeight: '700',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+  },
+  contactName: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  editLink: {
+    marginLeft: 8,
+    marginBottom: 2,
+  },
+});

@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
@@ -8,6 +8,7 @@ import { VirtualCardManagePanel } from '@/components/cards/VirtualCardManagePane
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getVirtualCard, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
@@ -39,17 +40,17 @@ export default function CardDetailScreen() {
   return (
     <SwipeBackView>
       {loading ? (
-        <View className='flex-1 items-center justify-center bg-background p-6'>
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
           <LoadingIcon color={colors.mutedForeground} />
         </View>
       ) : !card ? (
-        <View className='flex-1 items-center justify-center bg-background p-6'>
-          <Text className='font-sans-semibold text-[17px] text-foreground'>Card not found</Text>
+        <View style={[styles.centered, { backgroundColor: colors.background }]}>
+          <Text style={[styles.missing, { color: colors.foreground }]}>Card not found</Text>
         </View>
       ) : (
         <ScrollView
-          className='bg-background'
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 48 }}
+          style={{ backgroundColor: colors.background }}
+          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
           <VirtualCardManagePanel
@@ -61,3 +62,21 @@ export default function CardDetailScreen() {
     </SwipeBackView>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: Spacing.gutter,
+    paddingTop: 12,
+    paddingBottom: 48,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  missing: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 17,
+  },
+});

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -199,10 +199,16 @@ export function PasscodeView({
 
   return (
     <View
-      className='flex-1 bg-background px-6'
-      style={{ paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16) + 12 }}
+      style={[
+        styles.root,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top + 12,
+          paddingBottom: Math.max(insets.bottom, 16) + 12,
+        },
+      ]}
     >
-      <View className='h-9 items-start justify-center'>
+      <View style={styles.topBar}>
         {showBack && onBack ? (
           <Pressable
             accessibilityLabel='Back'
@@ -223,63 +229,52 @@ export function PasscodeView({
         ) : null}
       </View>
 
-      <View className='flex-1 items-center justify-center gap-6 py-3'>
-        <View className='items-center'>
-          <View className='mb-6 items-center gap-2.5'>
-            <View className='mb-1 h-14 w-14 items-center justify-center rounded-full bg-muted'>
+      <View style={styles.content}>
+        <View style={styles.prompt}>
+          <View style={styles.hero}>
+            <View style={[styles.shield, { backgroundColor: colors.muted }]}>
               <Icon
                 name='shield'
                 size={24}
                 color={colors.foreground}
               />
             </View>
-            <Text className='text-center font-sans-semibold text-[27px] text-foreground'>
-              {copy.title}
-            </Text>
-            <Text className='max-w-[300px] text-center font-sans-medium text-base leading-[22px] text-muted-foreground'>
+            <Text style={[styles.title, { color: colors.foreground }]}>{copy.title}</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
               {copy.subtitle}
             </Text>
           </View>
 
-          <Animated.View
-            className='mb-2.5 flex-row justify-center gap-3.5'
-            style={shakeStyle}
-          >
+          <Animated.View style={[styles.dots, shakeStyle]}>
             {Array.from({ length: PASSCODE_LENGTH }).map((_, i) => {
               const filled = i < value.length;
               return (
                 <View
                   key={i}
-                  className='h-3.5 w-3.5 rounded-full border'
-                  style={{
-                    borderColor: error ? colors.destructive : colors.border,
-                    backgroundColor: filled
-                      ? error
-                        ? colors.destructive
-                        : colors.foreground
-                      : 'transparent',
-                  }}
+                  style={[
+                    styles.dot,
+                    {
+                      borderColor: error ? colors.destructive : colors.border,
+                      backgroundColor: filled
+                        ? error
+                          ? colors.destructive
+                          : colors.foreground
+                        : 'transparent',
+                    },
+                  ]}
                 />
               );
             })}
           </Animated.View>
 
           {error ? (
-            <Text
-              className='min-h-5 text-center font-sans-medium text-sm'
-              style={{ color: colors.destructive }}
-            >
-              {error}
-            </Text>
+            <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
           ) : (
-            <View className='h-5' />
+            <View style={styles.errorSpacer} />
           )}
         </View>
 
-        <View
-          className='flex-row flex-wrap justify-between gap-y-3'
-          style={{ width: keypadWidth, opacity: loading ? 0.5 : 1 }}
-        >
+        <View style={[styles.pad, { width: keypadWidth, opacity: loading ? 0.5 : 1 }]}>
           {KEYS.map((key) => {
             if (key === 'empty') {
               if (mode === 'enter' && biometricAvailable) {
@@ -291,8 +286,11 @@ export function PasscodeView({
                     }
                     disabled={loading}
                     onPress={() => void handleBiometricUnlock()}
-                    className='items-center justify-center rounded-full active:opacity-[0.55]'
-                    style={{ width: keySize, height: keySize }}
+                    style={({ pressed }) => [
+                      styles.key,
+                      { width: keySize, height: keySize },
+                      pressed && { opacity: 0.55 },
+                    ]}
                   >
                     <Icon
                       name={method === 'face' ? 'face-id' : 'biometric'}
@@ -316,8 +314,11 @@ export function PasscodeView({
                   accessibilityLabel='Delete digit'
                   disabled={loading}
                   onPress={backspace}
-                  className='items-center justify-center rounded-full active:opacity-[0.55]'
-                  style={{ width: keySize, height: keySize }}
+                  style={({ pressed }) => [
+                    styles.key,
+                    { width: keySize, height: keySize },
+                    pressed && { opacity: 0.55 },
+                  ]}
                 >
                   <View style={{ transform: [{ rotate: '180deg' }] }}>
                     <Icon
@@ -335,15 +336,18 @@ export function PasscodeView({
                 accessibilityLabel={`Digit ${key}`}
                 disabled={loading}
                 onPress={() => void handleDigit(key)}
-                className='items-center justify-center rounded-full border active:bg-muted'
-                style={{
-                  width: keySize,
-                  height: keySize,
-                  backgroundColor: colors.composer,
-                  borderColor: colors.border,
-                }}
+                style={({ pressed }) => [
+                  styles.key,
+                  styles.keyDigit,
+                  {
+                    width: keySize,
+                    height: keySize,
+                    backgroundColor: pressed ? colors.muted : colors.composer,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
-                <Text className='font-sans-medium text-[29px] text-foreground'>{key}</Text>
+                <Text style={[styles.keyLabel, { color: colors.foreground }]}>{key}</Text>
               </Pressable>
             );
           })}
@@ -352,3 +356,96 @@ export function PasscodeView({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  topBar: {
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+    paddingVertical: 12,
+  },
+  prompt: {
+    alignItems: 'center',
+  },
+  hero: {
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 24,
+  },
+  shield: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 27,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: 300,
+  },
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+    marginBottom: 10,
+  },
+  dot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  error: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    minHeight: 20,
+  },
+  errorSpacer: {
+    height: 20,
+  },
+  pad: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
+  },
+  key: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+  },
+  keyDigit: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  keyLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '500',
+    letterSpacing: -0.4,
+  },
+});

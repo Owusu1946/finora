@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AppState, View, type AppStateStatus } from 'react-native';
+import { AppState, StyleSheet, View, type AppStateStatus } from 'react-native';
 
 import { FinoraMark } from '@/components/ui/finora-mark';
 import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
@@ -36,8 +36,7 @@ export function AppSwitcherPrivacy() {
 
   return (
     <View
-      className='absolute inset-0 items-center justify-center'
-      style={{ backgroundColor: SPLASH_BACKGROUND, zIndex: 10_000, elevation: 10_000 }}
+      style={styles.root}
       accessibilityElementsHidden
       importantForAccessibility='no-hide-descendants'
     >
@@ -49,3 +48,14 @@ export function AppSwitcherPrivacy() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: SPLASH_BACKGROUND,
+    zIndex: 10_000,
+    elevation: 10_000,
+  },
+});

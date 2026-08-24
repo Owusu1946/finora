@@ -1,13 +1,21 @@
 import { type ReactNode } from 'react';
-import { Pressable, ScrollView, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 /** Shared scroll chrome for settings hub + detail screens. */
@@ -24,17 +32,18 @@ export function SettingsScreen({
 
   if (loading) {
     return (
-      <View className='flex-1 items-center justify-center bg-background'>
+      <View
+        style={[styles.screenRoot, styles.screenCenter, { backgroundColor: colors.background }]}
+      >
         <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
   }
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.screenRoot, { backgroundColor: colors.background }]}>
       <ScrollView
-        contentContainerClassName='gap-[22px] px-5 pb-12 pt-3'
-        contentContainerStyle={contentStyle}
+        contentContainerStyle={[styles.screenContent, contentStyle]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps='handled'
       >
@@ -53,23 +62,22 @@ export function SettingsSection({
   children: ReactNode;
   footer?: string;
 }) {
+  const { colors } = useTheme();
   return (
-    <View className='gap-2'>
+    <View style={styles.section}>
       {title ? (
-        <Text className='ml-1 font-sans-semibold text-sm uppercase text-muted-foreground'>
-          {title}
-        </Text>
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>{title}</Text>
       ) : null}
       <View
-        className='overflow-hidden rounded-2xl border border-border bg-composer'
-        style={{ borderCurve: 'continuous' }}
+        style={[
+          styles.sectionCard,
+          { backgroundColor: colors.composer, borderColor: colors.border },
+        ]}
       >
         {children}
       </View>
       {footer ? (
-        <Text className='mx-1 font-sans-medium text-[13px] leading-[17px] text-muted-foreground'>
-          {footer}
-        </Text>
+        <Text style={[styles.sectionFooter, { color: colors.mutedForeground }]}>{footer}</Text>
       ) : null}
     </View>
   );
@@ -103,7 +111,7 @@ export function SettingsRow({
   const content = (
     <>
       {icon ? (
-        <View className='h-8 w-8 items-center justify-center rounded-full bg-muted'>
+        <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
           <Icon
             name={icon}
             size={16}
@@ -111,16 +119,11 @@ export function SettingsRow({
           />
         </View>
       ) : null}
-      <View className='min-w-0 flex-1 gap-0.5'>
-        <Text
-          className='font-sans-medium text-[17px]'
-          style={{ color: labelColor }}
-        >
-          {label}
-        </Text>
+      <View style={styles.rowMeta}>
+        <Text style={[styles.rowLabel, { color: labelColor }]}>{label}</Text>
         {detail ? (
           <Text
-            className='font-sans-medium text-sm text-muted-foreground'
+            style={[styles.rowDetail, { color: colors.mutedForeground }]}
             numberOfLines={2}
           >
             {detail}
@@ -146,10 +149,14 @@ export function SettingsRow({
           haptics.selection();
           onPress();
         }}
-        className={cx(
-          'min-h-[52px] flex-row items-center gap-3 px-3.5 py-3.5 active:opacity-70 disabled:opacity-45',
-          !isLast && 'border-b border-border',
-        )}
+        style={({ pressed }) => [
+          styles.row,
+          !isLast && {
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: colors.border,
+          },
+          (pressed || disabled) && { opacity: disabled ? 0.45 : 0.7 },
+        ]}
       >
         {content}
       </Pressable>
@@ -158,11 +165,14 @@ export function SettingsRow({
 
   return (
     <View
-      className={cx(
-        'min-h-[52px] flex-row items-center gap-3 px-3.5 py-3.5',
-        !isLast && 'border-b border-border',
-        disabled && 'opacity-45',
-      )}
+      style={[
+        styles.row,
+        !isLast && {
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+        disabled && { opacity: 0.45 },
+      ]}
     >
       {content}
     </View>
@@ -222,7 +232,7 @@ export function SettingsSegmented({
 }) {
   const { colors } = useTheme();
   return (
-    <View className='flex-row gap-0.5 rounded-full bg-muted p-[3px]'>
+    <View style={[styles.segment, { backgroundColor: colors.muted }]}>
       {options.map((opt) => {
         const active = opt.id === value;
         return (
@@ -232,14 +242,13 @@ export function SettingsSegmented({
               haptics.selection();
               onChange(opt.id);
             }}
-            className={cx(
-              'flex-1 items-center justify-center rounded-full py-2',
-              active && 'bg-background',
-            )}
+            style={[styles.segmentItem, active && { backgroundColor: colors.background }]}
           >
             <Text
-              className='font-sans-semibold text-sm'
-              style={{ color: active ? colors.foreground : colors.mutedForeground }}
+              style={[
+                styles.segmentLabel,
+                { color: active ? colors.foreground : colors.mutedForeground },
+              ]}
             >
               {opt.label}
             </Text>
@@ -249,3 +258,94 @@ export function SettingsSegmented({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screenRoot: {
+    flex: 1,
+  },
+  screenCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  screenContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 48,
+    gap: 22,
+  },
+  section: {
+    gap: 8,
+  },
+  sectionTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+    marginLeft: 4,
+  },
+  sectionCard: {
+    borderRadius: Radius.card,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  sectionFooter: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 17,
+    marginHorizontal: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    minHeight: 52,
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowMeta: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  rowLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+  },
+  rowDetail: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  segment: {
+    flexDirection: 'row',
+    borderRadius: Radius.pill,
+    padding: 3,
+    gap: 2,
+  },
+  segmentItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+  },
+  segmentLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+  },
+});

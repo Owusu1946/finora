@@ -1,7 +1,7 @@
 import type { PayrollInspectionResponse } from '@finora/shared';
 
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -20,24 +20,26 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
     if (status.type === 'running' || !result) {
       return (
         <View
-          className='w-[100%] border p-4 gap-2.5 my-1.5 min-h-[72px] flex-row items-center justify-center bg-composer border-border'
-          style={[styles.card]}
+          style={[
+            styles.card,
+            styles.loading,
+            { backgroundColor: colors.composer, borderColor: colors.border },
+          ]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='text-muted-foreground'>Reading payroll attachment...</Text>
+          <Text style={{ color: colors.mutedForeground }}>Reading payroll attachment...</Text>
         </View>
       );
     }
     if (!result.ok) {
       return (
         <View
-          className='w-[100%] border p-4 gap-2.5 my-1.5 bg-composer border-border'
-          style={[styles.card]}
+          style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}
         >
-          <Text className='text-[16px] font-bold text-foreground'>
+          <Text style={[styles.title, { color: colors.foreground }]}>
             Payroll file could not be read
           </Text>
-          <Text className='text-muted-foreground'>
+          <Text style={{ color: colors.mutedForeground }}>
             {result.errorCode ?? 'Please check the file and try again.'}
           </Text>
         </View>
@@ -45,18 +47,15 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
     }
     const blocked = (result.blockingIssues?.length ?? 0) > 0;
     return (
-      <View
-        className='w-[100%] border p-4 gap-2.5 my-1.5 bg-composer border-border'
-        style={[styles.card]}
-      >
-        <Text className='text-[12px] font-semibold text-muted-foreground'>
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+        <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
           {blocked ? 'Needs review' : 'Payroll extracted'}
         </Text>
-        <Text className='text-[16px] font-bold text-foreground'>{result.sourceName}</Text>
-        <View className='flex-row items-center justify-between'>
-          <Text className='text-foreground'>{result.rows?.length ?? 0} employees</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{result.sourceName}</Text>
+        <View style={styles.summary}>
+          <Text style={{ color: colors.foreground }}>{result.rows?.length ?? 0} employees</Text>
           {result.totals ? (
-            <Text className='font-bold text-foreground'>
+            <Text style={[styles.total, { color: colors.foreground }]}>
               {formatPaymentAmount(result.totals.total, result.totals.currency)}
             </Text>
           ) : null}
@@ -64,15 +63,17 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
         {result.rows?.map((row) => (
           <View
             key={row.rowId}
-            className='flex-row items-center gap-3'
+            style={styles.row}
           >
-            <View className='flex-1 min-w-0'>
-              <Text className='text-foreground'>{row.employeeName ?? 'Unnamed employee'}</Text>
-              <Text className='text-[12px] text-muted-foreground'>
+            <View style={styles.rowText}>
+              <Text style={{ color: colors.foreground }}>
+                {row.employeeName ?? 'Unnamed employee'}
+              </Text>
+              <Text style={[styles.meta, { color: colors.mutedForeground }]}>
                 {row.citations[0]?.location ?? 'Imported row'}
               </Text>
             </View>
-            <Text className='text-foreground'>
+            <Text style={{ color: colors.foreground }}>
               {row.amount == null
                 ? 'Amount needed'
                 : formatPaymentAmount(row.amount, row.currency ?? 'USD')}
@@ -80,11 +81,11 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
           </View>
         ))}
         {blocked ? (
-          <Text className='text-[13px] leading-[18px] text-destructive'>
+          <Text style={[styles.issue, { color: colors.destructive }]}>
             {result.blockingIssues?.[0]?.message} Fix the flagged rows before approval.
           </Text>
         ) : (
-          <Text className='text-muted-foreground'>
+          <Text style={{ color: colors.mutedForeground }}>
             Validated and ready for payroll preparation. Approval is still required.
           </Text>
         )}
@@ -93,8 +94,22 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 10,
+    marginVertical: 6,
   },
-};
+  loading: { minHeight: 72, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  eyebrow: { fontSize: 12, fontWeight: '600' },
+  title: { fontSize: 16, fontWeight: '700' },
+  summary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  total: { fontWeight: '700' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rowText: { flex: 1, minWidth: 0 },
+  meta: { fontSize: 12 },
+  issue: { fontSize: 13, lineHeight: 18 },
+});

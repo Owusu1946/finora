@@ -1,12 +1,12 @@
 import { memo } from 'react';
-import { View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import type { RecurringPayment } from '@/components/recurring/types';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
-import { cx } from '@/lib/cx';
+import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
 const STATUS_COLOR: Record<RecurringPayment['status'], string> = {
@@ -32,24 +32,34 @@ export const RecurringListItem = memo(function RecurringListItem({
   onPause?: (item: RecurringPayment) => void;
   onResume?: (item: RecurringPayment) => void;
 }) {
+  const { colors } = useTheme();
+
   return (
-    <View className={cx('flex-row items-center gap-3 py-3.5', !isLast && 'border-b border-border')}>
-      <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
+    <View
+      style={[
+        styles.row,
+        !isLast && {
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+      ]}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
         <Icon
           name='reload'
           size={16}
-          color='#18181B'
+          color={colors.foreground}
         />
       </View>
-      <View className='min-w-0 flex-1 gap-0.5'>
+      <View style={styles.meta}>
         <Text
-          className='font-sans-semibold text-base text-foreground'
+          style={[styles.title, { color: colors.foreground }]}
           numberOfLines={1}
         >
           {item.recipientName}
         </Text>
         <Text
-          className='font-sans text-[13px] text-muted-foreground'
+          style={[styles.detail, { color: colors.mutedForeground }]}
           numberOfLines={1}
         >
           {FREQ[item.frequency]} · next{' '}
@@ -59,8 +69,8 @@ export const RecurringListItem = memo(function RecurringListItem({
           })}
         </Text>
       </View>
-      <View className='items-end gap-1'>
-        <Text className='font-sans-semibold text-base text-foreground'>
+      <View style={styles.right}>
+        <Text style={[styles.amount, { color: colors.foreground }]}>
           {formatPaymentAmount(item.amount, item.currency)}
         </Text>
         {item.status === 'active' ? (
@@ -70,7 +80,7 @@ export const RecurringListItem = memo(function RecurringListItem({
               onPause?.(item);
             }}
           >
-            <Text className='font-sans-semibold text-[13px] text-muted-foreground'>Pause</Text>
+            <Text style={[styles.action, { color: colors.mutedForeground }]}>Pause</Text>
           </Pressable>
         ) : item.status === 'paused' ? (
           <Pressable
@@ -79,17 +89,62 @@ export const RecurringListItem = memo(function RecurringListItem({
               onResume?.(item);
             }}
           >
-            <Text className='font-sans-semibold text-[13px] text-[#10B981]'>Resume</Text>
+            <Text style={[styles.action, { color: '#10B981' }]}>Resume</Text>
           </Pressable>
         ) : (
-          <Text
-            className='font-sans-semibold text-xs capitalize'
-            style={{ color: STATUS_COLOR[item.status] }}
-          >
-            {item.status}
-          </Text>
+          <Text style={[styles.status, { color: STATUS_COLOR[item.status] }]}>{item.status}</Text>
         )}
       </View>
     </View>
   );
+});
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  meta: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  detail: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+  },
+  right: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  amount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  action: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  status: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
 });

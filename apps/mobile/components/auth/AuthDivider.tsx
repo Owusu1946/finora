@@ -1,13 +1,33 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 
 export function AuthDivider() {
+  const { colors } = useTheme();
+
   return (
-    <View className='flex-row items-center gap-3'>
-      <View className='h-px flex-1 bg-border' />
-      <Text className='font-sans-medium text-sm text-muted-foreground'>or</Text>
-      <View className='h-px flex-1 bg-border' />
+    <View style={styles.row}>
+      <View style={[styles.line, { backgroundColor: colors.border }]} />
+      <Text style={[styles.label, { color: colors.mutedForeground }]}>or</Text>
+      <View style={[styles.line, { backgroundColor: colors.border }]} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  line: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  label: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});

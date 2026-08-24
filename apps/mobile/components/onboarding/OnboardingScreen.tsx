@@ -1,6 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn,
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AccountType } from '@/lib/account';
 
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -148,7 +149,7 @@ export function OnboardingScreen() {
   }, [goToStep]);
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <OnboardingCanvas
         progress={progress}
         accountSelection={accountSelection}
@@ -159,14 +160,17 @@ export function OnboardingScreen() {
 
       <GestureDetector gesture={pan}>
         <View
-          className='flex-1 px-6'
-          style={{
-            paddingTop: insets.top + 12,
-            paddingBottom: insets.bottom + 16,
-            minHeight: height,
-          }}
+          style={[
+            styles.content,
+            {
+              paddingTop: insets.top + 12,
+              paddingBottom: insets.bottom + 16,
+              // Keep layout stable across device heights
+              minHeight: height,
+            },
+          ]}
         >
-          <View className='h-7 items-end justify-center'>
+          <View style={styles.topBar}>
             {!isLast ? (
               <Pressable
                 accessibilityLabel='Skip to account selection'
@@ -174,7 +178,7 @@ export function OnboardingScreen() {
                 onPress={handleSkip}
                 style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
               >
-                <Text className='font-sans-medium text-base text-muted-foreground'>Skip</Text>
+                <Text style={[styles.skip, { color: colors.mutedForeground }]}>Skip</Text>
               </Pressable>
             ) : (
               <View />
@@ -183,32 +187,28 @@ export function OnboardingScreen() {
 
           {/* Skia hero lives visually here — no text overlaid */}
           <View
-            className='h-[240px] w-full'
+            style={styles.hero}
             pointerEvents='none'
           />
 
-          <View className='flex-1 items-center justify-start gap-5 pt-2'>
+          <View style={styles.copyBlock}>
             <Animated.View
               key={stepIndex}
               entering={FadeIn.duration(240)}
               exiting={FadeOut.duration(140)}
-              className='items-center gap-3 px-2'
+              style={styles.copy}
             >
               {step.brand ? (
                 <>
-                  <Text className='font-sans-semibold text-sm uppercase text-muted-foreground'>
+                  <Text style={[styles.brandTitle, { color: colors.mutedForeground }]}>
                     {step.title}
                   </Text>
-                  <Text className='text-center font-sans-semibold text-[29px] text-foreground'>
-                    {step.subtitle}
-                  </Text>
+                  <Text style={[styles.title, { color: colors.foreground }]}>{step.subtitle}</Text>
                 </>
               ) : (
                 <>
-                  <Text className='text-center font-sans-semibold text-[29px] text-foreground'>
-                    {step.title}
-                  </Text>
-                  <Text className='max-w-[320px] text-center font-sans-medium text-[17px] leading-[23px] text-muted-foreground'>
+                  <Text style={[styles.title, { color: colors.foreground }]}>{step.title}</Text>
+                  <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
                     {step.subtitle}
                   </Text>
                 </>
@@ -223,19 +223,28 @@ export function OnboardingScreen() {
             ) : null}
           </View>
 
-          <View className='items-center gap-5 pt-3'>
+          <View style={styles.footer}>
             <ProgressDots progress={progress} />
 
             <Pressable
               accessibilityRole='button'
               disabled={!canContinue || finishing}
               onPress={handleContinue}
-              className='self-stretch items-center justify-center rounded-full py-4 active:opacity-85'
-              style={{ backgroundColor: canContinue ? colors.foreground : colors.muted }}
+              style={({ pressed }) => [
+                styles.cta,
+                {
+                  backgroundColor: canContinue ? colors.foreground : colors.muted,
+                  opacity: pressed && canContinue ? 0.85 : 1,
+                },
+              ]}
             >
               <Text
-                style={[{ color: canContinue ? colors.background : colors.mutedForeground }]}
-                className='font-sans-semibold text-[17px]'
+                style={[
+                  styles.ctaLabel,
+                  {
+                    color: canContinue ? colors.background : colors.mutedForeground,
+                  },
+                ]}
               >
                 {isLast ? (finishing ? 'Continuing…' : 'Get Started') : 'Continue'}
               </Text>
@@ -246,3 +255,81 @@ export function OnboardingScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  topBar: {
+    height: 28,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  skip: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  hero: {
+    height: HERO_HEIGHT,
+    width: '100%',
+  },
+  copyBlock: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 20,
+    paddingTop: 8,
+  },
+  copy: {
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 8,
+  },
+  brandTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    lineHeight: 23,
+    textAlign: 'center',
+    maxWidth: 320,
+  },
+  footer: {
+    gap: 20,
+    alignItems: 'center',
+    paddingTop: 12,
+  },
+  cta: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: Radius.pill,
+  },
+  ctaLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+});

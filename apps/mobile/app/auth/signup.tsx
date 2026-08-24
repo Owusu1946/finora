@@ -1,7 +1,7 @@
 import { useSignUp } from '@clerk/expo';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppleButton } from '@/components/auth/AppleButton';
 import { AuthButton } from '@/components/auth/AuthButton';
@@ -10,6 +10,7 @@ import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 import { setPendingAuthProfile } from '@/lib/auth-profile';
 import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
@@ -18,6 +19,7 @@ import { useGoogleAuth } from '@/lib/use-google-auth';
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { signUp, errors, fetchStatus } = useSignUp();
   const google = useGoogleAuth();
   const apple = useAppleAuth();
@@ -80,7 +82,7 @@ export default function SignupScreen() {
     <AuthShell
       showBack
       footer={
-        <View className='w-full items-stretch gap-4'>
+        <View style={styles.footer}>
           <AuthButton
             label='Create account'
             onPress={handleSignup}
@@ -93,19 +95,17 @@ export default function SignupScreen() {
               router.push('/auth/login');
             }}
           >
-            <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
+            <Text style={[styles.linkRow, { color: colors.mutedForeground }]}>
               Already have an account?{' '}
-              <Text className='font-sans-semibold text-foreground'>Sign in</Text>
+              <Text style={{ color: colors.foreground, fontWeight: '600' }}>Sign in</Text>
             </Text>
           </Pressable>
         </View>
       }
     >
-      <View className='mb-1 gap-2'>
-        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
-          Create your account
-        </Text>
-        <Text className='font-sans-medium text-[17px] leading-[22px] tracking-[-0.2px] text-muted-foreground'>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.foreground }]}>Create your account</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           A few details to get started.
         </Text>
       </View>
@@ -122,7 +122,7 @@ export default function SignupScreen() {
       />
       <AuthDivider />
 
-      <View className='gap-4'>
+      <View style={styles.form}>
         <AuthField
           label='Name'
           value={name}
@@ -170,3 +170,38 @@ export default function SignupScreen() {
     </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    gap: 8,
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    lineHeight: 22,
+  },
+  form: {
+    gap: 16,
+  },
+  footer: {
+    gap: 16,
+    width: '100%',
+    alignItems: 'stretch',
+  },
+  linkRow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
+});

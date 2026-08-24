@@ -1,7 +1,7 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 import type { PurposeCode, SettlementMethod } from '@/lib/send-corridors';
@@ -40,8 +40,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-      style={[styles.preparing]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <LoadingIcon color={colors.mutedForeground} />
     </View>
@@ -252,8 +251,13 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+});

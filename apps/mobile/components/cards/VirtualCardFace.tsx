@@ -5,14 +5,7 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  LayoutChangeEvent,
-  Pressable,
-  StyleSheet,
-  type TextStyle,
-  type ViewStyle,
-  View,
-} from 'react-native';
+import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -612,7 +605,7 @@ export function VirtualCardMiniFace({ card }: { card: VirtualCard }) {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   shadowWrap: {
     width: '100%',
     borderRadius: CARD_RADIUS,
@@ -882,4 +875,4 @@ const styles = {
     color: 'rgba(255,255,255,0.9)',
     zIndex: 1,
   },
-} satisfies Record<string, ViewStyle | TextStyle>;
+});

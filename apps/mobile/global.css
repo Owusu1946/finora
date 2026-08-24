@@ -6,21 +6,14 @@
 
 @theme {
   --default-font-family: 'DMSans_400Regular';
-  --color-background: var(--color-theme-background);
-  --color-foreground: var(--color-theme-foreground);
-  --color-card: var(--color-theme-card);
-  --color-card-foreground: var(--color-theme-card-foreground);
-  --color-muted: var(--color-theme-muted);
-  --color-muted-foreground: var(--color-theme-muted-foreground);
-  --color-accent: var(--color-theme-accent);
-  --color-border: var(--color-theme-border);
-  --color-primary: var(--color-theme-primary);
-  --color-primary-foreground: var(--color-theme-primary-foreground);
-  --color-composer: var(--color-theme-composer);
-  --color-destructive: var(--color-theme-destructive);
-  --color-destructive-foreground: var(--color-theme-destructive-foreground);
-  --color-destructive-surface: var(--color-theme-destructive-surface);
-  --color-ring: var(--color-theme-ring);
+  --color-canvas: #f7f5f2;
+  --color-surface: #ffffff;
+  --color-ink: #141414;
+  --color-muted: #6b6560;
+  --color-line: #e7e2db;
+  --color-accent: #1f4d3a;
+  --color-accent-soft: #e8f0eb;
+  --color-user-bubble: #1f4d3a;
   --font-sans: 'DMSans_400Regular';
   --font-sans-medium: 'DMSans_500Medium';
   --font-sans-semibold: 'DMSans_600SemiBold';

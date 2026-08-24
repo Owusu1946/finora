@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { VirtualCardCurrency } from '@/components/cards/types';
 
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput } from '@/components/ui/text';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { createVirtualCard } from '@/lib/virtual-cards-storage';
@@ -34,17 +35,16 @@ function OptionChip({
         haptics.selection();
         onPress();
       }}
-      className='rounded-full border px-3.5 py-2.5 active:opacity-70'
-      style={{
-        backgroundColor: selected ? colors.foreground : colors.muted,
-        borderColor: selected ? colors.foreground : colors.border,
-        borderCurve: 'continuous',
-      }}
+      style={({ pressed }) => [
+        styles.chip,
+        {
+          backgroundColor: selected ? colors.foreground : colors.muted,
+          borderColor: selected ? colors.foreground : colors.border,
+          opacity: pressed ? 0.72 : 1,
+        },
+      ]}
     >
-      <Text
-        className='font-sans-medium text-sm'
-        style={{ color: selected ? colors.background : colors.foreground }}
-      >
+      <Text style={[styles.chipText, { color: selected ? colors.background : colors.foreground }]}>
         {label}
       </Text>
     </Pressable>
@@ -61,29 +61,21 @@ function VirtualCardPreview({
   limit: string;
 }) {
   return (
-    <View className='min-h-[210px] justify-between overflow-hidden rounded-[25px] bg-[#24283d] p-[22px] shadow-xl'>
-      <View className='flex-row items-center justify-between'>
-        <Text className='font-sans-semibold text-[15px] tracking-[1.5px] text-[#f8f8fb]'>
-          FINORA
-        </Text>
-        <Text className='font-sans-semibold text-[11px] tracking-[1px] text-[#aeb4ce]'>
-          VIRTUAL
-        </Text>
+    <View style={styles.cardPreview}>
+      <View style={styles.cardTopRow}>
+        <Text style={styles.cardBrand}>FINORA</Text>
+        <Text style={styles.cardNetwork}>VIRTUAL</Text>
       </View>
-      <View className='mt-3 h-[27px] w-9 rounded-[7px] bg-[#d0b67c]' />
-      <Text className='mt-3 font-sans-medium text-lg tracking-[1.6px] text-[#f8f8fb]'>
-        •••• •••• •••• 4821
-      </Text>
-      <View className='mt-5 flex-row justify-between'>
+      <View style={styles.cardChip} />
+      <Text style={styles.cardNumber}>•••• •••• •••• 4821</Text>
+      <View style={styles.cardBottomRow}>
         <View>
-          <Text className='font-sans-medium text-[9px] tracking-[1px] text-[#aeb4ce]'>PURPOSE</Text>
-          <Text className='mt-1 font-sans-medium text-[13px] text-[#f8f8fb]'>{purpose}</Text>
+          <Text style={styles.cardCaption}>PURPOSE</Text>
+          <Text style={styles.cardValue}>{purpose}</Text>
         </View>
-        <View className='items-end'>
-          <Text className='font-sans-medium text-[9px] tracking-[1px] text-[#aeb4ce]'>
-            MONTHLY LIMIT
-          </Text>
-          <Text className='mt-1 font-sans-medium text-[13px] text-[#f8f8fb]'>
+        <View style={styles.cardLimit}>
+          <Text style={styles.cardCaption}>MONTHLY LIMIT</Text>
+          <Text style={styles.cardValue}>
             {currency} {limit || '500'}
           </Text>
         </View>
@@ -128,20 +120,18 @@ export function VirtualCardRequestFlow() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior='automatic'
-        contentContainerClassName='gap-[22px] px-5 pb-11 pt-[18px]'
+        contentContainerStyle={styles.content}
       >
-        <View className='items-center gap-4 pt-[34px]'>
-          <View className='h-[52px] w-[52px] items-center justify-center rounded-full bg-foreground'>
+        <View style={styles.successWrap}>
+          <View style={[styles.successIcon, { backgroundColor: colors.foreground }]}>
             <Icon
               name='check'
               size={24}
               color={colors.background}
             />
           </View>
-          <Text className='font-sans-semibold text-[29px] leading-[34px] text-foreground'>
-            Your request is in
-          </Text>
-          <Text className='font-sans text-base leading-[22px] text-muted-foreground'>
+          <Text style={[styles.title, { color: colors.foreground }]}>Your request is in</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
             We’re setting up your virtual card for {purpose.toLowerCase()}. You’ll see its details
             in Cards when it’s ready.
           </Text>
@@ -155,9 +145,14 @@ export function VirtualCardRequestFlow() {
               haptics.selection();
               router.back();
             }}
-            className='mt-0.5 min-h-[54px] flex-row items-center justify-center gap-[9px] rounded-full bg-foreground px-[18px] active:opacity-75'
+            style={({ pressed }) => [
+              styles.primaryButton,
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.76 : 1 },
+            ]}
           >
-            <Text className='font-sans-semibold text-base text-background'>Back to wallets</Text>
+            <Text style={[styles.primaryButtonText, { color: colors.background }]}>
+              Back to wallets
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -169,16 +164,14 @@ export function VirtualCardRequestFlow() {
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior='automatic'
-      contentContainerClassName='gap-[22px] px-5 pb-11 pt-[18px]'
+      contentContainerStyle={styles.content}
     >
-      <View className='gap-[7px]'>
-        <Text className='font-sans-semibold text-xs tracking-[1.1px] text-muted-foreground'>
-          VIRTUAL CARD
-        </Text>
-        <Text className='font-sans-semibold text-[29px] leading-[34px] text-foreground'>
+      <View style={styles.intro}>
+        <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>VIRTUAL CARD</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>
           A card for the way you spend
         </Text>
-        <Text className='font-sans text-base leading-[22px] text-muted-foreground'>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           Create a separate card for online purchases, travel, or recurring expenses.
         </Text>
       </View>
@@ -191,42 +184,43 @@ export function VirtualCardRequestFlow() {
 
       {isReview ? (
         <View
-          className='gap-3.5 rounded-2xl border border-border bg-muted p-[18px]'
-          style={{ borderCurve: 'continuous' }}
+          style={[styles.reviewCard, { backgroundColor: colors.muted, borderColor: colors.border }]}
         >
-          <Text className='mb-0.5 font-sans-semibold text-lg text-foreground'>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
             Review your request
           </Text>
-          <View className='flex-row items-center justify-between'>
-            <Text className='font-sans text-[15px] text-muted-foreground'>Purpose</Text>
-            <Text className='font-sans-semibold text-[15px] text-foreground'>{purpose}</Text>
+          <View style={styles.reviewRow}>
+            <Text style={[styles.reviewLabel, { color: colors.mutedForeground }]}>Purpose</Text>
+            <Text style={[styles.reviewValue, { color: colors.foreground }]}>{purpose}</Text>
           </View>
-          <View className='flex-row items-center justify-between'>
-            <Text className='font-sans text-[15px] text-muted-foreground'>Currency</Text>
-            <Text className='font-sans-semibold text-[15px] text-foreground'>{currency}</Text>
+          <View style={styles.reviewRow}>
+            <Text style={[styles.reviewLabel, { color: colors.mutedForeground }]}>Currency</Text>
+            <Text style={[styles.reviewValue, { color: colors.foreground }]}>{currency}</Text>
           </View>
-          <View className='flex-row items-center justify-between'>
-            <Text className='font-sans text-[15px] text-muted-foreground'>Monthly limit</Text>
-            <Text className='font-sans-semibold text-[15px] text-foreground'>
+          <View style={styles.reviewRow}>
+            <Text style={[styles.reviewLabel, { color: colors.mutedForeground }]}>
+              Monthly limit
+            </Text>
+            <Text style={[styles.reviewValue, { color: colors.foreground }]}>
               {currency} {limit}
             </Text>
           </View>
-          <View className='flex-row items-start gap-2 border-t border-border pt-3.5'>
+          <View style={[styles.note, { borderTopColor: colors.border }]}>
             <Icon
               name='shield'
               size={16}
               color={colors.mutedForeground}
             />
-            <Text className='flex-1 font-sans text-[13px] leading-[18px] text-muted-foreground'>
+            <Text style={[styles.noteText, { color: colors.mutedForeground }]}>
               You’ll confirm with your passcode before the card is created.
             </Text>
           </View>
         </View>
       ) : (
         <>
-          <View className='gap-2.5'>
-            <Text className='font-sans-semibold text-base text-foreground'>What’s it for?</Text>
-            <View className='flex-row flex-wrap gap-2'>
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>What’s it for?</Text>
+            <View style={styles.chips}>
               {purposes.map((item) => (
                 <OptionChip
                   key={item}
@@ -237,9 +231,9 @@ export function VirtualCardRequestFlow() {
               ))}
             </View>
           </View>
-          <View className='gap-2.5'>
-            <Text className='font-sans-semibold text-base text-foreground'>Card currency</Text>
-            <View className='flex-row flex-wrap gap-2'>
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>Card currency</Text>
+            <View style={styles.chips}>
               {currencies.map((item) => (
                 <OptionChip
                   key={item}
@@ -250,22 +244,22 @@ export function VirtualCardRequestFlow() {
               ))}
             </View>
           </View>
-          <View className='gap-2.5'>
-            <Text className='font-sans-semibold text-base text-foreground'>
-              Monthly spending limit
-            </Text>
+          <View style={styles.fieldGroup}>
+            <Text style={[styles.label, { color: colors.foreground }]}>Monthly spending limit</Text>
             <View
-              className='min-h-[54px] flex-row items-center rounded-xl border border-border bg-muted px-3.5'
-              style={{ borderCurve: 'continuous' }}
+              style={[
+                styles.limitInput,
+                { backgroundColor: colors.muted, borderColor: colors.border },
+              ]}
             >
-              <Text className='mr-[9px] font-sans-semibold text-base text-muted-foreground'>
+              <Text style={[styles.currencyPrefix, { color: colors.mutedForeground }]}>
                 {currency}
               </Text>
               <AppTextInput
                 value={limit}
                 onChangeText={(value) => setLimit(value.replace(/[^0-9]/g, ''))}
                 keyboardType='number-pad'
-                className='flex-1 py-0 font-sans-semibold text-[19px] text-foreground'
+                style={[styles.input, { color: colors.foreground }]}
               />
             </View>
           </View>
@@ -275,9 +269,15 @@ export function VirtualCardRequestFlow() {
       <Pressable
         disabled={busy || (!isReview && !canReview)}
         onPress={() => (isReview ? void submit() : setStep('review'))}
-        className='mt-0.5 min-h-[54px] flex-row items-center justify-center gap-[9px] rounded-full bg-foreground px-[18px] active:opacity-75 disabled:opacity-40'
+        style={({ pressed }) => [
+          styles.primaryButton,
+          {
+            backgroundColor: colors.foreground,
+            opacity: busy || (!isReview && !canReview) ? 0.4 : pressed ? 0.76 : 1,
+          },
+        ]}
       >
-        <Text className='font-sans-semibold text-base text-background'>
+        <Text style={[styles.primaryButtonText, { color: colors.background }]}>
           {isReview ? (busy ? 'Requesting…' : 'Request virtual card') : 'Review request'}
         </Text>
         <Icon
@@ -289,12 +289,114 @@ export function VirtualCardRequestFlow() {
       {isReview ? (
         <Pressable
           onPress={() => setStep('details')}
-          className='items-center py-0.5'
+          style={styles.secondaryButton}
         >
-          <Text className='font-sans-medium text-sm text-muted-foreground'>Edit details</Text>
+          <Text style={[styles.secondaryButtonText, { color: colors.mutedForeground }]}>
+            Edit details
+          </Text>
         </Pressable>
       ) : null}
       {modal}
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  content: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 44, gap: 22 },
+  intro: { gap: 7 },
+  eyebrow: { fontFamily: 'DMSans_600SemiBold', fontSize: 12, letterSpacing: 1.1 },
+  title: { fontFamily: 'DMSans_600SemiBold', fontSize: 29, letterSpacing: -0.8, lineHeight: 34 },
+  subtitle: { fontFamily: 'DMSans_400Regular', fontSize: 16, lineHeight: 22, letterSpacing: -0.15 },
+  cardPreview: {
+    minHeight: 210,
+    borderRadius: 25,
+    padding: 22,
+    justifyContent: 'space-between',
+    backgroundColor: '#24283d',
+    overflow: 'hidden',
+    boxShadow: '0 10px 24px rgba(28, 32, 57, 0.22)',
+  },
+  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardBrand: { color: '#f8f8fb', fontFamily: 'DMSans_700Bold', fontSize: 15, letterSpacing: 1.5 },
+  cardNetwork: {
+    color: '#aeb4ce',
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  cardChip: { width: 36, height: 27, borderRadius: 7, backgroundColor: '#d0b67c', marginTop: 12 },
+  cardNumber: {
+    color: '#f8f8fb',
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 18,
+    letterSpacing: 1.6,
+    marginTop: 12,
+  },
+  cardBottomRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
+  cardLimit: { alignItems: 'flex-end' },
+  cardCaption: { color: '#aeb4ce', fontFamily: 'DMSans_500Medium', fontSize: 9, letterSpacing: 1 },
+  cardValue: { color: '#f8f8fb', fontFamily: 'DMSans_500Medium', fontSize: 13, marginTop: 4 },
+  fieldGroup: { gap: 10 },
+  label: { fontFamily: 'DMSans_600SemiBold', fontSize: 16, letterSpacing: -0.2 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    ...Rounded,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  chipText: { fontFamily: 'DMSans_500Medium', fontSize: 14 },
+  limitInput: {
+    ...Rounded,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    minHeight: 54,
+  },
+  currencyPrefix: { fontFamily: 'DMSans_600SemiBold', fontSize: 16, marginRight: 9 },
+  input: { flex: 1, fontFamily: 'DMSans_600SemiBold', fontSize: 19, paddingVertical: 0 },
+  reviewCard: {
+    ...Rounded,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.card,
+    padding: 18,
+    gap: 14,
+  },
+  sectionTitle: { fontFamily: 'DMSans_600SemiBold', fontSize: 18, marginBottom: 2 },
+  reviewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  reviewLabel: { fontFamily: 'DMSans_400Regular', fontSize: 15 },
+  reviewValue: { fontFamily: 'DMSans_600SemiBold', fontSize: 15 },
+  note: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 14,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  noteText: { flex: 1, fontFamily: 'DMSans_400Regular', fontSize: 13, lineHeight: 18 },
+  primaryButton: {
+    ...Rounded,
+    borderRadius: Radius.pill,
+    minHeight: 54,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 9,
+    marginTop: 2,
+  },
+  primaryButtonText: { fontFamily: 'DMSans_600SemiBold', fontSize: 16 },
+  secondaryButton: { alignItems: 'center', paddingVertical: 2 },
+  secondaryButtonText: { fontFamily: 'DMSans_500Medium', fontSize: 14 },
+  successWrap: { gap: 16, alignItems: 'center', paddingTop: 34 },
+  successIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

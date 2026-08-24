@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
-  type TextStyle,
-  type ViewStyle,
   View,
   ScrollView,
   Pressable,
@@ -448,7 +446,7 @@ export function FxConvertModal({
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
@@ -669,4 +667,4 @@ const styles = {
     fontSize: 15,
     fontWeight: '600',
   },
-} satisfies Record<string, ViewStyle | TextStyle>;
+});

@@ -1,5 +1,5 @@
 import { BranchPickerPrimitive, useAuiState } from '@assistant-ui/react-native';
-import { View, type TextStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -17,10 +17,7 @@ export function MessageBranchPicker({
   if (branchCount <= 1) return null;
 
   return (
-    <View
-      className='flex-row items-center gap-0.5'
-      style={[{ justifyContent: align }]}
-    >
+    <View style={[styles.container, { justifyContent: align }]}>
       <BranchPickerPrimitive.Previous
         style={[styles.button, { opacity: branchNumber <= 1 ? 0.35 : 1 }]}
         hitSlop={4}
@@ -31,10 +28,7 @@ export function MessageBranchPicker({
           color={colors.mutedForeground}
         />
       </BranchPickerPrimitive.Previous>
-      <Text
-        className='font-sans text-[13px] text-muted-foreground'
-        style={[styles.label]}
-      >
+      <Text style={[styles.label, { color: colors.mutedForeground }]}>
         <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
       </Text>
       <BranchPickerPrimitive.Next
@@ -51,11 +45,18 @@ export function MessageBranchPicker({
   );
 }
 
-const styles: { button: object; label: TextStyle } = {
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   button: {
     padding: 4,
   },
   label: {
-    fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
   },
-};
+});

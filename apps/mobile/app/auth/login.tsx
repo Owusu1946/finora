@@ -1,7 +1,7 @@
 import { useClerk, useSignIn } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppleButton } from '@/components/auth/AppleButton';
 import { AuthButton } from '@/components/auth/AuthButton';
@@ -10,6 +10,7 @@ import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 import { setPendingAuthProfile } from '@/lib/auth-profile';
 import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
@@ -19,6 +20,7 @@ import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const postAuthNavigate = usePostAuthNavigate();
   const clerk = useClerk();
   const { signIn, errors, fetchStatus } = useSignIn();
@@ -76,7 +78,7 @@ export default function LoginScreen() {
     <AuthShell
       showBack
       footer={
-        <View className='w-full items-stretch gap-4'>
+        <View style={styles.footer}>
           <AuthButton
             label='Sign in'
             onPress={handleSignIn}
@@ -96,9 +98,7 @@ export default function LoginScreen() {
               }
             }}
           >
-            <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
-              Forgot password?
-            </Text>
+            <Text style={[styles.link, { color: colors.mutedForeground }]}>Forgot password?</Text>
           </Pressable>
           <Pressable
             onPress={() => {
@@ -106,23 +106,21 @@ export default function LoginScreen() {
               router.push('/auth/signup');
             }}
           >
-            <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
+            <Text style={[styles.linkRow, { color: colors.mutedForeground }]}>
               Don’t have an account?{' '}
-              <Text className='font-sans-semibold text-foreground'>Create one</Text>
+              <Text style={{ color: colors.foreground, fontWeight: '600' }}>Create one</Text>
             </Text>
           </Pressable>
         </View>
       }
     >
-      <View className='mb-1 gap-2'>
-        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
-          Welcome back
-        </Text>
-        <Text className='font-sans-medium text-[17px] leading-[22px] tracking-[-0.2px] text-muted-foreground'>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.foreground }]}>Welcome back</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           Sign in to continue to Finora.
         </Text>
         {showResetSuccess ? (
-          <Text className='mt-1 font-sans-medium text-[15px] leading-5 tracking-[-0.1px] text-foreground'>
+          <Text style={[styles.success, { color: colors.foreground }]}>
             Password updated. Sign in with your new password.
           </Text>
         ) : null}
@@ -140,7 +138,7 @@ export default function LoginScreen() {
       />
       <AuthDivider />
 
-      <View className='gap-4'>
+      <View style={styles.form}>
         <AuthField
           label='Email'
           value={email}
@@ -170,3 +168,53 @@ export default function LoginScreen() {
     </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    gap: 8,
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    lineHeight: 22,
+  },
+  success: {
+    marginTop: 4,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+    lineHeight: 20,
+  },
+  form: {
+    gap: 16,
+  },
+  footer: {
+    gap: 16,
+    width: '100%',
+    alignItems: 'stretch',
+  },
+  link: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
+  linkRow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
+});

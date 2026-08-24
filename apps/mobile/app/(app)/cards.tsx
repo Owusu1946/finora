@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { AppState, Pressable, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
 
@@ -8,7 +8,6 @@ import { VirtualCardListItem } from '@/components/cards/VirtualCardListItem';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import {
   clearUnreadVirtualCards,
@@ -23,7 +22,7 @@ const FILTERS: { id: VirtualCardFilter; label: string }[] = [
 ];
 
 export default function CardsScreen() {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<VirtualCardFilter>('all');
   const [items, setItems] = useState<VirtualCard[]>([]);
@@ -80,33 +79,36 @@ export default function CardsScreen() {
   );
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <CollapsibleList
         title='Cards'
         data={filtered}
         intro={
-          <View className='mb-4 flex-row items-start gap-3'>
-            <View className='flex-1 gap-1.5'>
-              <Text className='font-sans-semibold text-[28px] tracking-[-0.6px] text-foreground'>
-                Cards
-              </Text>
-              <Text className='font-sans text-sm leading-5 text-muted-foreground'>
+          <View style={styles.header}>
+            <View style={styles.headerCopy}>
+              <Text style={[styles.title, { color: colors.foreground }]}>Cards</Text>
+              <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
                 Issue virtual cards with spend limits. Reveal details with your passcode.
               </Text>
             </View>
             <Pressable
               onPress={createCard}
-              className='rounded-full bg-primary px-4 py-2.5'
-              style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+              style={({ pressed }) => [
+                styles.newBtn,
+                {
+                  backgroundColor: colors.primary,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
             >
-              <Text className='font-sans-semibold text-sm text-primary-foreground'>New</Text>
+              <Text style={[styles.newBtnText, { color: colors.primaryForeground }]}>New</Text>
             </Pressable>
           </View>
         }
         controls={
           <View
             key={`cards-filters-${isDark ? 'dark' : 'light'}`}
-            className='mb-2 flex-row gap-2 bg-background'
+            style={[styles.filters, { backgroundColor: colors.background }]}
           >
             {FILTERS.map((item) => {
               const active = filter === item.id;
@@ -117,13 +119,16 @@ export default function CardsScreen() {
                     haptics.selection();
                     setFilter(item.id);
                   }}
-                  className={cx('rounded-full px-3 py-2', active ? 'bg-foreground' : 'bg-muted')}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: active ? colors.foreground : colors.muted },
+                  ]}
                 >
                   <Text
-                    className={cx(
-                      'font-sans-medium text-[13px]',
-                      active ? 'text-background' : 'text-foreground',
-                    )}
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.background : colors.foreground },
+                    ]}
                   >
                     {item.label}
                   </Text>
@@ -134,12 +139,12 @@ export default function CardsScreen() {
         }
         keyExtractor={(item) => item.id}
         empty={
-          <View className='gap-2 pt-12'>
-            <Text className='font-sans-semibold text-[17px] text-foreground'>
+          <View style={styles.empty}>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
               {loading ? 'Loading…' : 'No cards yet'}
             </Text>
             {!loading ? (
-              <Text className='font-sans text-sm leading-5 text-muted-foreground'>
+              <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
                 Start with a purpose, currency, and spend limit, or type “create virtual card” in
                 chat for the guided chat flow.
               </Text>
@@ -151,3 +156,69 @@ export default function CardsScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    paddingTop: 0,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 16,
+  },
+  headerCopy: {
+    flex: 1,
+    gap: 6,
+  },
+  title: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 28,
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  newBtn: {
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  newBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  chip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  chipLabel: {
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+  },
+  list: {
+    paddingBottom: 40,
+  },
+  empty: {
+    paddingTop: 48,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 17,
+  },
+  emptySub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+});

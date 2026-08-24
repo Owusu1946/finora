@@ -1,6 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -97,12 +97,9 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
 
   return (
     <>
-      <View
-        className='w-[100%] border p-4 gap-3 my-1.5 bg-composer border-border'
-        style={[styles.card]}
-      >
-        <View className='flex-row items-center gap-3'>
-          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+        <View style={styles.header}>
+          <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             {phase === 'sending' ? (
               <LoadingIcon
                 size='small'
@@ -116,8 +113,8 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
               />
             )}
           </View>
-          <View className='flex-1 gap-0.5 min-w-0'>
-            <Text className='font-sans-semibold text-[12px] text-muted-foreground'>
+          <View style={styles.headerText}>
+            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
               {phase === 'paid'
                 ? 'Paid from SMS'
                 : phase === 'sending'
@@ -126,33 +123,29 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                     ? 'Dismissed'
                     : 'SMS payment request'}
             </Text>
-            <Text className='font-sans-semibold text-[16px] text-foreground'>
-              {request.fromName}
-            </Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>{request.fromName}</Text>
           </View>
           {request.amount != null && request.currency ? (
-            <Text className='font-sans-semibold text-[16px] text-foreground'>
+            <Text style={[styles.amount, { color: colors.foreground }]}>
               {formatPaymentAmount(request.amount, request.currency)}
             </Text>
           ) : null}
         </View>
 
-        <Text className='font-sans-medium text-[14px] leading-[20px] text-foreground'>
-          {request.body}
-        </Text>
+        <Text style={[styles.body, { color: colors.foreground }]}>{request.body}</Text>
 
-        <View className='gap-0.5'>
-          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+        <View style={styles.meta}>
+          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
             {request.fromPhone}
             {request.network ? ` · ${request.network}` : ''}
           </Text>
-          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
             Received {formatReceived(request.receivedAt)}
           </Text>
         </View>
 
         {idle ? (
-          <View className='flex-row flex-wrap gap-2.5'>
+          <View style={styles.actions}>
             {canPay ? (
               <Pressable
                 disabled={busy}
@@ -163,15 +156,16 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                   if (!ok) return;
                   setPhase('sending');
                 }}
-                className='grow min-h-11 items-center justify-center'
                 style={({ pressed }) => [
+                  styles.btn,
+                  styles.btnPrimary,
                   {
                     backgroundColor: colors.foreground,
                     opacity: pressed || busy ? 0.85 : 1,
                   },
                 ]}
               >
-                <Text className='font-sans-semibold text-[15px] text-background'>Pay now</Text>
+                <Text style={[styles.btnLabel, { color: colors.background }]}>Pay now</Text>
               </Pressable>
             ) : null}
             <Pressable
@@ -192,12 +186,13 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                   haptics.success();
                 }
               }}
-              className='grow min-h-11 items-center justify-center border'
               style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
                 { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>Reply SMS</Text>
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Reply SMS</Text>
             </Pressable>
             <Pressable
               disabled={busy}
@@ -209,12 +204,13 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                 setPhase('dismissed');
                 setBusy(false);
               }}
-              className='grow min-h-11 items-center justify-center border'
               style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
                 { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>Dismiss</Text>
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Dismiss</Text>
             </Pressable>
           </View>
         ) : null}
@@ -224,12 +220,81 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 12,
+    marginVertical: 6,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  eyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  amount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  body: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  meta: {
+    gap: 2,
+  },
+  metaText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
   btn: {
+    flexGrow: 1,
     flexBasis: '30%',
+    minHeight: 44,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+  btnPrimary: {},
+  btnGhost: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  btnLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

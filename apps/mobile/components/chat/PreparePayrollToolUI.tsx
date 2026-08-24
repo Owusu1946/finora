@@ -1,6 +1,6 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -43,12 +43,9 @@ function PayrollConfirmCard({
 
   return (
     <>
-      <View
-        className='w-[100%] border p-4 gap-3.5 my-1.5 bg-composer border-border'
-        style={[styles.card]}
-      >
-        <View className='flex-row items-center gap-3'>
-          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+        <View style={styles.header}>
+          <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             {
               <Icon
                 name={phase === 'approved' ? 'check' : 'contacts'}
@@ -57,32 +54,30 @@ function PayrollConfirmCard({
               />
             }
           </View>
-          <View className='flex-1 gap-0.5 min-w-0'>
-            <Text className='font-sans-semibold text-[12px] text-muted-foreground'>
+          <View style={styles.headerText}>
+            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
               {phase === 'approved' ? 'Approval recorded' : 'Payroll ready'}
             </Text>
-            <Text className='font-sans-semibold text-[16px] text-foreground'>{period}</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>{period}</Text>
           </View>
-          <Text className='font-sans-semibold text-[16px] text-foreground'>
+          <Text style={[styles.amount, { color: colors.foreground }]}>
             {formatPaymentAmount(total, currency)}
           </Text>
         </View>
 
-        <View className='gap-2.5'>
+        <View style={styles.lines}>
           {employees.map((employee, index) => (
             <View
               key={`${employee.id}:${index}`}
-              className='flex-row items-center gap-2.5'
+              style={styles.line}
             >
-              <View className='flex-1 gap-0.5 min-w-0'>
-                <Text className='font-sans-semibold text-[15px] text-foreground'>
-                  {employee.name}
-                </Text>
-                <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+              <View style={styles.lineText}>
+                <Text style={[styles.lineName, { color: colors.foreground }]}>{employee.name}</Text>
+                <Text style={[styles.lineMeta, { color: colors.mutedForeground }]}>
                   {employee.role} · {employee.destination.label}
                 </Text>
               </View>
-              <Text className='font-sans-semibold text-[14px] text-foreground'>
+              <Text style={[styles.lineAmount, { color: colors.foreground }]}>
                 {formatPaymentAmount(employee.salary, employee.currency)}
               </Text>
             </View>
@@ -100,15 +95,15 @@ function PayrollConfirmCard({
               setPhase('approved');
               haptics.success();
             }}
-            className='min-h-11 items-center justify-center'
             style={({ pressed }) => [
+              styles.btn,
               {
                 backgroundColor: colors.foreground,
                 opacity: pressed || busy ? 0.85 : 1,
               },
             ]}
           >
-            <Text className='font-sans-semibold text-[15px] text-background'>Approve payroll</Text>
+            <Text style={[styles.btnLabel, { color: colors.background }]}>Approve payroll</Text>
           </Pressable>
         ) : null}
       </View>
@@ -130,11 +125,13 @@ export const PreparePayrollToolUI = makeAssistantToolUI<PreparePayrollArgs, Prep
     if (status.type === 'running' && !employees) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.preparing]}
+          style={[
+            styles.preparing,
+            { borderColor: colors.border, backgroundColor: colors.composer },
+          ]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
+          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
             Preparing payroll…
           </Text>
         </View>
@@ -144,10 +141,9 @@ export const PreparePayrollToolUI = makeAssistantToolUI<PreparePayrollArgs, Prep
     if (!employees?.length || total == null) {
       return (
         <View
-          className='my-2 border p-4 border-border bg-composer'
-          style={[styles.empty]}
+          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
+          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
             Payroll could not be prepared. Resolve the import validation issues and try again.
           </Text>
         </View>
@@ -165,17 +161,111 @@ export const PreparePayrollToolUI = makeAssistantToolUI<PreparePayrollArgs, Prep
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+  },
+  preparingText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
   },
   empty: {
+    marginVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+  },
+  emptyText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 14,
+    marginVertical: 6,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  eyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  amount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  lines: {
+    gap: 10,
+  },
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  lineText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  lineName: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  lineMeta: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  lineAmount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
   },
   btn: {
+    minHeight: 44,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+  btnLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

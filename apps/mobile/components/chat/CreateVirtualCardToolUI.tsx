@@ -1,6 +1,6 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRef } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
@@ -24,8 +24,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-      style={[styles.preparing]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <LoadingIcon color={colors.mutedForeground} />
     </View>
@@ -83,8 +82,13 @@ export const CreateVirtualCardToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+});

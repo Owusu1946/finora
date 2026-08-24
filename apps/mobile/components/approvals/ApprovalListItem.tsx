@@ -1,11 +1,10 @@
 import { memo } from 'react';
-import { Pressable, View } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 import type { ApprovalRequest } from './types';
@@ -71,12 +70,16 @@ export const ApprovalListItem = memo(function ApprovalListItem({
         haptics.selection();
         onPress?.(approval);
       }}
-      className={cx(
-        'flex-row items-center gap-3 py-3.5 active:opacity-70',
-        !isLast && 'border-b border-border',
-      )}
+      style={({ pressed }) => [
+        styles.row,
+        !isLast && {
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+        pressed && { opacity: 0.7 },
+      ]}
     >
-      <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
+      <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
         <Icon
           name={isPlan ? 'activity' : 'shield'}
           size={16}
@@ -84,33 +87,25 @@ export const ApprovalListItem = memo(function ApprovalListItem({
         />
       </View>
 
-      <View className='min-w-0 flex-1 gap-0.5'>
+      <View style={styles.meta}>
         <Text
-          className='font-sans-semibold text-base text-foreground'
+          style={[styles.title, { color: colors.foreground }]}
           numberOfLines={1}
         >
           {titleFor(approval)}
         </Text>
         <Text
-          className='font-sans text-[13px] text-muted-foreground'
+          style={[styles.detail, { color: colors.mutedForeground }]}
           numberOfLines={1}
         >
           {detailFor(approval)}
         </Text>
       </View>
 
-      <View className='items-end gap-1'>
-        <View className='flex-row items-center gap-1'>
-          <View
-            className='h-[5px] w-[5px] rounded-full'
-            style={{ backgroundColor: STATUS_COLOR[status] }}
-          />
-          <Text
-            className='font-sans-semibold text-xs capitalize'
-            style={{ color: STATUS_COLOR[status] }}
-          >
-            {status}
-          </Text>
+      <View style={styles.right}>
+        <View style={styles.statusRow}>
+          <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[status] }]} />
+          <Text style={[styles.statusLabel, { color: STATUS_COLOR[status] }]}>{status}</Text>
         </View>
         <Icon
           name='chevron-right'
@@ -120,4 +115,56 @@ export const ApprovalListItem = memo(function ApprovalListItem({
       </View>
     </Pressable>
   );
+});
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  meta: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  detail: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  right: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statusDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  statusLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
 });

@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { RecurringFrequency } from '@/components/recurring/types';
 
@@ -32,8 +32,10 @@ export const SchedulePaymentWizardToolUI = makeAssistantToolUI<
     if (status.type === 'running' && args == null) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-          style={[styles.preparing]}
+          style={[
+            styles.preparing,
+            { borderColor: colors.border, backgroundColor: colors.composer },
+          ]}
         >
           <LoadingIcon color={colors.mutedForeground} />
         </View>
@@ -54,8 +56,13 @@ export const SchedulePaymentWizardToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+});

@@ -1,10 +1,10 @@
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { AccountType } from '@/lib/account';
 
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 type AccountPickerProps = {
@@ -29,7 +29,7 @@ export function AccountPicker({ value, onChange }: AccountPickerProps) {
   const { colors } = useTheme();
 
   return (
-    <View className='mt-2 w-full gap-2.5'>
+    <View style={styles.list}>
       {OPTIONS.map((option) => {
         const selected = value === option.type;
         return (
@@ -41,19 +41,27 @@ export function AccountPicker({ value, onChange }: AccountPickerProps) {
               haptics.selection();
               onChange(option.type);
             }}
-            className={cx(
-              'gap-1.5 rounded-2xl border px-4 py-3.5 active:opacity-[0.88]',
-              selected ? 'border-foreground bg-muted' : 'border-border bg-background',
-            )}
+            style={({ pressed }) => [
+              styles.card,
+              {
+                borderColor: selected ? colors.foreground : colors.border,
+                backgroundColor: selected ? colors.muted : colors.background,
+                opacity: pressed ? 0.88 : 1,
+              },
+            ]}
           >
-            <View className='flex-row items-center gap-2'>
+            <View style={styles.cardHeader}>
               <View
-                className='h-1.5 w-1.5 rounded-full'
-                style={{ backgroundColor: selected ? colors.foreground : colors.mutedForeground }}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: selected ? colors.foreground : colors.mutedForeground,
+                  },
+                ]}
               />
-              <Text className='font-sans-semibold text-[17px] text-foreground'>{option.label}</Text>
+              <Text style={[styles.label, { color: colors.foreground }]}>{option.label}</Text>
             </View>
-            <Text className='pl-3.5 font-sans text-[15px] leading-5 text-muted-foreground'>
+            <Text style={[styles.description, { color: colors.mutedForeground }]}>
               {option.description}
             </Text>
           </Pressable>
@@ -62,3 +70,41 @@ export function AccountPicker({ value, onChange }: AccountPickerProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  list: {
+    width: '100%',
+    gap: 10,
+    marginTop: 8,
+  },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.card,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 6,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  label: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  description: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 20,
+    letterSpacing: -0.1,
+    paddingLeft: 14,
+  },
+});

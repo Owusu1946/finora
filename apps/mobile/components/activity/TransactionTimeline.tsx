@@ -1,11 +1,10 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { TransactionTimelineStep } from '@/components/activity/types';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 
 function formatStepTime(iso?: string): string {
   if (!iso) return '';
@@ -22,7 +21,7 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
   const { colors } = useTheme();
 
   return (
-    <View>
+    <View style={styles.root}>
       {steps.map((step, index) => {
         const isLast = index === steps.length - 1;
         const done = step.status === 'done';
@@ -33,15 +32,17 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
         return (
           <View
             key={step.id}
-            className='flex-row gap-3'
+            style={styles.row}
           >
-            <View className='w-[22px] items-center'>
+            <View style={styles.rail}>
               <View
-                className='h-[22px] w-[22px] items-center justify-center rounded-full border'
-                style={{
-                  borderColor: accent,
-                  backgroundColor: done || failed ? accent : 'transparent',
-                }}
+                style={[
+                  styles.dot,
+                  {
+                    borderColor: accent,
+                    backgroundColor: done || failed ? accent : 'transparent',
+                  },
+                ]}
               >
                 {done ? (
                   <Icon
@@ -59,24 +60,29 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
               </View>
               {!isLast ? (
                 <View
-                  className='my-1 min-h-[18px] flex-1 border-l'
-                  style={{ borderColor: done ? colors.foreground : colors.border }}
+                  style={[
+                    styles.line,
+                    { backgroundColor: done ? colors.foreground : colors.border },
+                  ]}
                 />
               ) : null}
             </View>
 
-            <View className={cx('flex-1 gap-0.5 pt-0.5', !isLast && 'pb-3.5')}>
+            <View style={[styles.body, !isLast && styles.bodyPad]}>
               <Text
-                className={cx('text-[15px]', active ? 'font-sans-semibold' : 'font-sans-medium')}
-                style={{
-                  color: failed || done || active ? colors.foreground : colors.mutedForeground,
-                }}
+                style={[
+                  styles.label,
+                  {
+                    color: failed || done || active ? colors.foreground : colors.mutedForeground,
+                    fontWeight: active ? '600' : '500',
+                  },
+                ]}
               >
                 {step.label}
                 {active ? '…' : ''}
               </Text>
               {step.at ? (
-                <Text className='font-sans text-[13px] text-muted-foreground'>
+                <Text style={[styles.time, { color: colors.mutedForeground }]}>
                   {formatStepTime(step.at)}
                 </Text>
               ) : null}
@@ -87,3 +93,49 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    gap: 0,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  rail: {
+    width: 22,
+    alignItems: 'center',
+  },
+  dot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  line: {
+    width: StyleSheet.hairlineWidth,
+    flex: 1,
+    minHeight: 18,
+    marginVertical: 4,
+  },
+  body: {
+    flex: 1,
+    paddingTop: 2,
+    gap: 2,
+  },
+  bodyPad: {
+    paddingBottom: 14,
+  },
+  label: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    letterSpacing: -0.2,
+  },
+  time: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '400',
+  },
+});

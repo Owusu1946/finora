@@ -8,7 +8,7 @@ import {
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';
@@ -17,9 +17,10 @@ import type { TranslationKey } from '@/lib/i18n';
 import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
 import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
@@ -94,6 +95,7 @@ function tabForPathname(pathname: string, tabs: ReturnType<typeof buildNavTabs>)
 }
 
 export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
+  const { colors } = useTheme();
   const { t } = useSettings();
   const aui = useAui();
   const insets = useSafeAreaInsets();
@@ -154,12 +156,14 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
 
   return (
     <View
-      className='flex-1 bg-background'
-      style={{ paddingTop: insets.top + 12 }}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background, paddingTop: insets.top + 12 },
+      ]}
     >
-      <View className='mb-3 flex-row items-center justify-between gap-2.5 px-5'>
-        <View className='gap-px'>
-          <Text className='font-bold text-[21px] tracking-[-0.4px] text-foreground'>Finora</Text>
+      <View style={styles.brandRow}>
+        <View style={styles.brandCopy}>
+          <Text style={[styles.brand, { color: colors.foreground }]}>Finora</Text>
           <AccountBadge variant='text' />
         </View>
         <Pressable
@@ -167,17 +171,20 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           hitSlop={10}
           onPressIn={haptics.selection}
           onPress={() => navigation.closeDrawer()}
-          className='h-8 w-8 items-center justify-center rounded-full active:bg-muted'
+          style={({ pressed }) => [
+            styles.closeButton,
+            { backgroundColor: pressed ? colors.muted : 'transparent' },
+          ]}
         >
           <Icon
             name='remove'
             size={20}
-            color='#18181B'
+            color={colors.foreground}
           />
         </Pressable>
       </View>
 
-      <ThreadListPrimitive.Root className='flex-1'>
+      <ThreadListPrimitive.Root style={styles.root}>
         <Pressable
           onPressIn={haptics.selection}
           onPress={() => {
@@ -185,35 +192,39 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
             router.push('/');
             navigation.closeDrawer();
           }}
-          className='mx-2 mb-1 h-10 flex-row items-center gap-2.5 rounded-[18px] px-3 active:bg-muted'
+          style={({ pressed }) => [
+            styles.newButton,
+            { backgroundColor: pressed ? colors.muted : 'transparent' },
+          ]}
         >
           <Icon
             name='compose'
             size={18}
-            color='#18181B'
+            color={colors.foreground}
           />
-          <Text className='font-sans-medium text-base tracking-[-0.2px] text-foreground'>
-            New chat
-          </Text>
+          <Text style={[styles.newLabel, { color: colors.foreground }]}>New chat</Text>
         </Pressable>
 
-        <Text className='px-5 pb-1.5 pt-3 font-sans-medium text-[13px] text-muted-foreground'>
-          Recent
-        </Text>
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Recent</Text>
 
         <ThreadListPrimitive.Items
           renderItem={renderThread}
-          className='flex-1'
-          contentContainerClassName='pb-2'
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
       </ThreadListPrimitive.Root>
 
       <View
-        className='gap-0.5 border-t border-border px-2 pt-2.5'
-        style={{ paddingBottom: insets.bottom + 12 }}
+        style={[
+          styles.navSection,
+          {
+            borderTopColor: colors.border,
+            paddingBottom: insets.bottom + 12,
+          },
+        ]}
       >
-        <View className='mb-1.5 flex-row gap-0.5 rounded-[18px] bg-muted p-[3px]'>
+        <View style={[styles.tabBar, { backgroundColor: colors.muted }]}>
           {navTabs.map((tab) => {
             const selected = tab.id === activeTab;
             const showDot = tab.id === 'pay' && payHasPending;
@@ -222,22 +233,28 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
                 key={tab.id}
                 onPressIn={haptics.selection}
                 onPress={() => setActiveTab(tab.id)}
-                className={cx(
-                  'h-8 flex-1 flex-row items-center justify-center gap-[5px] rounded-[14px] border border-transparent',
-                  selected && 'border-border bg-card',
-                )}
+                style={[
+                  styles.tab,
+                  selected && {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}
               >
                 <Text
-                  className={cx(
-                    'text-sm tracking-[-0.2px]',
-                    selected
-                      ? 'font-sans-semibold text-foreground'
-                      : 'font-sans-medium text-muted-foreground',
-                  )}
+                  style={[
+                    styles.tabLabel,
+                    {
+                      color: selected ? colors.foreground : colors.mutedForeground,
+                      fontWeight: selected ? '600' : '500',
+                    },
+                  ]}
                 >
                   {t(tab.labelKey)}
                 </Text>
-                {showDot ? <View className='h-1.5 w-1.5 rounded-full bg-foreground' /> : null}
+                {showDot ? (
+                  <View style={[styles.tabDot, { backgroundColor: colors.foreground }]} />
+                ) : null}
               </Pressable>
             );
           })}
@@ -256,30 +273,36 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
                 router.push(item.href);
                 navigation.closeDrawer();
               }}
-              className={cx(
-                'h-10 flex-row items-center gap-2.5 rounded-[18px] px-3 active:bg-muted',
-                active && 'bg-muted',
-              )}
+              style={({ pressed }) => [
+                styles.navItem,
+                (active || pressed) && { backgroundColor: colors.muted },
+              ]}
             >
               <Icon
                 name={item.icon}
                 size={18}
-                color={active ? '#18181B' : '#71717A'}
+                color={active ? colors.foreground : colors.mutedForeground}
               />
               <Text
-                className={cx(
-                  'flex-1 text-base tracking-[-0.2px] text-foreground',
-                  active ? 'font-sans-semibold' : 'font-sans',
-                )}
+                style={[
+                  styles.navLabel,
+                  {
+                    color: colors.foreground,
+                    fontWeight: active ? '600' : '400',
+                    flex: 1,
+                  },
+                ]}
               >
                 {t(item.key)}
               </Text>
               {showApprovalBadge ? (
-                <View className='min-w-5 h-5 items-center justify-center rounded-full bg-foreground px-1.5'>
-                  <Text className='font-sans-bold text-xs text-background'>{pendingApprovals}</Text>
+                <View style={[styles.badge, { backgroundColor: colors.foreground }]}>
+                  <Text style={[styles.badgeText, { color: colors.background }]}>
+                    {pendingApprovals}
+                  </Text>
                 </View>
               ) : showCardBadge ? (
-                <View className='mr-2 h-2 w-2 rounded-full bg-foreground' />
+                <View style={[styles.unreadDot, { backgroundColor: colors.foreground }]} />
               ) : null}
             </Pressable>
           );
@@ -288,3 +311,132 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.pill,
+  },
+  brandCopy: {
+    gap: 1,
+  },
+  brand: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 21,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+  },
+  root: {
+    flex: 1,
+  },
+  newButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    height: 40,
+    paddingHorizontal: 12,
+    marginHorizontal: 8,
+    marginBottom: 4,
+    borderRadius: Radius.md,
+  },
+  newLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+  },
+  sectionLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 8,
+  },
+  navSection: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 10,
+    paddingHorizontal: 8,
+    gap: 2,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderRadius: Radius.md,
+    padding: 3,
+    marginBottom: 6,
+    gap: 2,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    height: 32,
+    borderRadius: Radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+  },
+  tabLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    letterSpacing: -0.2,
+  },
+  tabDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  navItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    height: 40,
+    paddingHorizontal: 12,
+    borderRadius: Radius.md,
+  },
+  navLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    letterSpacing: -0.2,
+  },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+});

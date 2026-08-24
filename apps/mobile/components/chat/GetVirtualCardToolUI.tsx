@@ -1,6 +1,6 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
@@ -25,8 +25,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-      style={[styles.preparing]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <LoadingIcon color={colors.mutedForeground} />
     </View>
@@ -34,13 +33,11 @@ function PreparingCard() {
 }
 
 function MissingCard() {
+  const { colors } = useTheme();
   return (
-    <View
-      className='my-2 border p-4 gap-1.5 border-border bg-composer'
-      style={[styles.empty]}
-    >
-      <Text className='font-sans-semibold text-[16px] text-foreground'>Card not found</Text>
-      <Text className='font-sans text-[14px] leading-[20px] text-muted-foreground'>
+    <View style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+      <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Card not found</Text>
+      <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
         Try “Show my cards” or create a new virtual card.
       </Text>
     </View>
@@ -51,20 +48,20 @@ function CardPreview({ card }: { card: VirtualCard }) {
   const { colors } = useTheme();
   const router = useRouter();
   return (
-    <View className='w-[100%] gap-2.5'>
-      <View className='w-[100%] max-w-[420px] self-center px-0.5 py-1.5'>
+    <View style={styles.preview}>
+      <View style={styles.cardFrame}>
         <VirtualCardFace
           card={card}
           compact
           tilt={false}
         />
       </View>
-      <View className='flex-row items-center gap-3 px-1'>
-        <View className='flex-1 gap-0.5'>
-          <Text className='font-sans-semibold text-[15px] capitalize text-foreground'>
+      <View style={styles.previewFooter}>
+        <View style={styles.previewCopy}>
+          <Text style={[styles.previewTitle, { color: colors.foreground }]}>
             {card.label} · {card.status}
           </Text>
-          <Text className='font-sans text-[13px] text-muted-foreground'>
+          <Text style={[styles.previewSub, { color: colors.mutedForeground }]}>
             {formatCardAmount(card.spent, card.currency)} spent of{' '}
             {formatCardAmount(card.spendLimit, card.currency)}
           </Text>
@@ -74,8 +71,8 @@ function CardPreview({ card }: { card: VirtualCard }) {
             haptics.selection();
             router.push(`/card/${card.id}` as Href);
           }}
-          className='border px-3.5 py-2'
           style={({ pressed }) => [
+            styles.openButton,
             {
               backgroundColor: colors.muted,
               borderColor: colors.border,
@@ -83,7 +80,7 @@ function CardPreview({ card }: { card: VirtualCard }) {
             },
           ]}
         >
-          <Text className='font-sans-semibold text-[13px] text-foreground'>Open</Text>
+          <Text style={[styles.openButtonText, { color: colors.foreground }]}>Open</Text>
         </Pressable>
       </View>
     </View>
@@ -103,21 +100,79 @@ export const GetVirtualCardToolUI = makeAssistantToolUI<GetVirtualCardArgs, GetV
     }
 
     return (
-      <View className='my-2'>
+      <View style={styles.wrap}>
         <CardPreview card={result.card} />
       </View>
     );
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wrap: {
+    marginVertical: 8,
+  },
+  preview: {
+    width: '100%',
+    gap: 10,
+  },
+  cardFrame: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+    paddingHorizontal: 2,
+    paddingVertical: 6,
+  },
+  previewFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 4,
+  },
+  previewCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  previewTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    textTransform: 'capitalize',
+  },
+  previewSub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
   },
   openButton: {
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  openButtonText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 13,
   },
   empty: {
+    marginVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 6,
   },
-};
+  emptyTitle: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 16,
+  },
+  emptySub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+});

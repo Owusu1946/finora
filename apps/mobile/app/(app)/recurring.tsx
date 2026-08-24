@@ -1,13 +1,13 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { RecurringFilter, RecurringPayment } from '@/components/recurring/types';
 
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { RecurringListItem } from '@/components/recurring/RecurringListItem';
 import { AppText as Text } from '@/components/ui/text';
-import { cx } from '@/lib/cx';
+import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { listRecurring, subscribeRecurring, updateRecurringStatus } from '@/lib/recurring-storage';
 
@@ -18,6 +18,7 @@ const FILTERS: { id: RecurringFilter; label: string }[] = [
 ];
 
 export default function RecurringScreen() {
+  const { colors } = useTheme();
   const [filter, setFilter] = useState<RecurringFilter>('active');
   const [items, setItems] = useState<RecurringPayment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,23 +68,21 @@ export default function RecurringScreen() {
   );
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <CollapsibleList
         title='Recurring'
         data={filtered}
         intro={
           <>
-            <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
-              Recurring
-            </Text>
-            <Text className='mb-0 mt-1.5 pb-3.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+            <Text style={[styles.title, { color: colors.foreground }]}>Recurring</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
               Scheduled supplier and contractor payouts. Create from chat: “Pay TechFlow 780 GBP
               every month”.
             </Text>
           </>
         }
         controls={
-          <View className='flex-row gap-2 pb-2'>
+          <View style={styles.filters}>
             {FILTERS.map((item) => {
               const active = filter === item.id;
               return (
@@ -93,13 +92,16 @@ export default function RecurringScreen() {
                     haptics.selection();
                     setFilter(item.id);
                   }}
-                  className={cx('rounded-full px-3 py-2', active ? 'bg-foreground' : 'bg-muted')}
+                  style={[
+                    styles.chip,
+                    { backgroundColor: active ? colors.foreground : colors.muted },
+                  ]}
                 >
                   <Text
-                    className={cx(
-                      'font-sans-semibold text-sm',
-                      active ? 'text-background' : 'text-foreground',
-                    )}
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.background : colors.foreground },
+                    ]}
                   >
                     {item.label}
                   </Text>
@@ -112,7 +114,7 @@ export default function RecurringScreen() {
         onRefresh={refresh}
         refreshing={loading}
         empty={
-          <Text className='pt-8 text-center font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+          <Text style={[styles.empty, { color: colors.mutedForeground }]}>
             No recurring payments yet.
           </Text>
         }
@@ -121,3 +123,46 @@ export default function RecurringScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    marginTop: 6,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+    paddingBottom: 14,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  chipLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  empty: {
+    paddingTop: 32,
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+});

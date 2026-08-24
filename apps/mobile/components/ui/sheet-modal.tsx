@@ -4,6 +4,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  StyleSheet,
   View,
   type StyleProp,
   type ViewStyle,
@@ -18,6 +19,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTheme } from '@/hooks/use-theme';
 
 const OPEN_MS = 280;
 const CLOSE_MS = 220;
@@ -48,6 +51,7 @@ export function SheetModal({
   keyboardAvoiding = false,
   dimOpacity = DIM_OPACITY,
 }: SheetModalProps) {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible);
   const closingRef = useRef(false);
@@ -174,12 +178,20 @@ export function SheetModal({
   const panel = (
     <GestureDetector gesture={pan}>
       <Animated.View
-        className='overflow-hidden rounded-t-[22px] border border-border bg-card'
-        style={[{ paddingBottom: Math.max(insets.bottom, 16) }, style, sheetStyle]}
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, 16),
+          },
+          style,
+          sheetStyle,
+        ]}
       >
         {showHandle ? (
-          <View className='items-center pb-1.5 pt-2.5'>
-            <View className='h-[4px] w-10 rounded-full bg-border' />
+          <View style={styles.handleHit}>
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
           </View>
         ) : null}
         {children}
@@ -195,14 +207,13 @@ export function SheetModal({
       statusBarTranslucent
       onRequestClose={requestDismiss}
     >
-      <View className='flex-1 justify-end'>
+      <View style={styles.root}>
         <Animated.View
           pointerEvents='box-none'
-          className='absolute inset-0 bg-black'
-          style={scrimStyle}
+          style={[styles.scrim, scrimStyle]}
         >
           <Pressable
-            className='absolute inset-0'
+            style={StyleSheet.absoluteFill}
             onPress={requestDismiss}
             accessibilityRole='button'
             accessibilityLabel='Dismiss'
@@ -211,7 +222,7 @@ export function SheetModal({
 
         {keyboardAvoiding ? (
           <KeyboardAvoidingView
-            className='absolute inset-0 justify-end'
+            style={styles.sheetHost}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             pointerEvents='box-none'
           >
@@ -219,7 +230,7 @@ export function SheetModal({
           </KeyboardAvoidingView>
         ) : (
           <View
-            className='absolute inset-0 justify-end'
+            style={styles.sheetHost}
             pointerEvents='box-none'
           >
             {panel}
@@ -229,3 +240,35 @@ export function SheetModal({
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
+  },
+  sheetHost: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
+    maxHeight: '92%',
+    overflow: 'hidden',
+  },
+  handleHit: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
+});

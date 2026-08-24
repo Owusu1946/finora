@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ReceiveMoneyCard, type ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -19,8 +19,7 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
-      style={[styles.preparing]}
+      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
     >
       <LoadingIcon color={colors.mutedForeground} />
     </View>
@@ -54,8 +53,13 @@ export const ListReceiveMethodsToolUI = makeAssistantToolUI<ListReceiveArgs, Lis
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+});

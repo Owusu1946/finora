@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { WizardStepHeader } from '@/components/chat/WizardChrome';
@@ -32,7 +32,7 @@ export function FxQuoteStep({
   const { colors } = useTheme();
 
   return (
-    <View className='gap-3'>
+    <View style={styles.block}>
       <WizardStepHeader
         step={step}
         total={total}
@@ -40,8 +40,7 @@ export function FxQuoteStep({
         subtitle='Indicative rate · finalised at settlement'
       />
       <View
-        className='border p-3.5 gap-2.5 bg-background border-border'
-        style={[styles.card]}
+        style={[styles.card, { backgroundColor: colors.background, borderColor: colors.border }]}
       >
         <Row
           label='You send'
@@ -65,25 +64,27 @@ export function FxQuoteStep({
           emphasize
         />
       </View>
-      <View className='flex-row gap-2.5 mt-1'>
+      <View style={styles.nav}>
         <Pressable
           onPress={onBack}
-          className='flex-1 min-h-[46px] border items-center justify-center'
-          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          style={({ pressed }) => [
+            styles.navBtn,
+            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+          ]}
         >
-          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+          <Text style={[styles.navLabel, { color: colors.foreground }]}>Back</Text>
         </Pressable>
         <Pressable
           onPress={onContinue}
-          className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
+            styles.navBtnPrimary,
             {
               backgroundColor: colors.foreground,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text className='text-[16px] font-semibold text-background'>Review payment</Text>
+          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>Review payment</Text>
         </Pressable>
       </View>
     </View>
@@ -93,7 +94,7 @@ export function FxQuoteStep({
 function Row({
   label,
   value,
-  colors: _colors,
+  colors,
   emphasize,
 }: {
   label: string;
@@ -102,12 +103,13 @@ function Row({
   emphasize?: boolean;
 }) {
   return (
-    <View className='flex-row justify-between items-center gap-3'>
-      <Text className='text-[14px] font-medium text-muted-foreground'>{label}</Text>
+    <View style={styles.row}>
+      <Text style={[styles.rowLabel, { color: colors.mutedForeground }]}>{label}</Text>
       <Text
-        className='text-[15px] tracking-[-0.2px] text-foreground'
         style={[
+          styles.rowValue,
           {
+            color: colors.foreground,
             fontWeight: emphasize ? '700' : '600',
             fontFamily: 'DMSans_400Regular',
             fontSize: emphasize ? 17 : 14,
@@ -120,14 +122,38 @@ function Row({
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
+  block: { gap: 12 },
   card: {
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
+    padding: 14,
+    gap: 10,
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  rowLabel: { fontSize: 14, fontWeight: '500' },
+  rowValue: { fontSize: 15, letterSpacing: -0.2 },
+  nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
   navBtn: {
+    flex: 1,
+    minHeight: 46,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navBtnPrimary: {
+    flex: 1.4,
+    minHeight: 46,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+  navLabel: { fontSize: 16, fontWeight: '600' },
+  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
+});

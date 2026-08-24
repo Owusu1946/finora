@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { ActivityFilter, Transaction } from '@/components/activity/types';
 
@@ -8,9 +8,11 @@ import { ActivityFilterTabs } from '@/components/activity/ActivityFilterTabs';
 import { ActivityListItem } from '@/components/activity/ActivityListItem';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 import { listTransactions } from '@/lib/transactions-storage';
 
 export default function ActivityScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [txs, setTxs] = useState<Transaction[]>([]);
@@ -35,16 +37,14 @@ export default function ActivityScreen() {
   );
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <CollapsibleList
         title='Activity'
         data={filtered}
         intro={
           <>
-            <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
-              Activity
-            </Text>
-            <Text className='pb-3.5 pt-1.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+            <Text style={[styles.title, { color: colors.foreground }]}>Activity</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
               Every send, receive, and conversion — tap a row for status, WeWire id, and rail.
             </Text>
           </>
@@ -57,7 +57,7 @@ export default function ActivityScreen() {
         }
         empty={
           !loading ? (
-            <Text className='pt-8 text-center font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+            <Text style={[styles.empty, { color: colors.mutedForeground }]}>
               No transactions yet.
             </Text>
           ) : null
@@ -77,3 +77,29 @@ export default function ActivityScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    paddingTop: 6,
+    paddingBottom: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  empty: {
+    paddingTop: 32,
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+});

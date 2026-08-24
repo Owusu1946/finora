@@ -1,7 +1,7 @@
 import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import {
@@ -69,7 +69,7 @@ export default function AccountSettingsScreen() {
   return (
     <SettingsScreen loading={loading}>
       <SettingsSection>
-        <View className='flex-row items-center gap-3.5 px-3.5 py-4'>
+        <View style={styles.profile}>
           <UserAvatar
             accountType={accountType}
             backgroundColor={colors.muted}
@@ -79,11 +79,11 @@ export default function AccountSettingsScreen() {
             seed={user?.id ?? settings.email}
             size={52}
           />
-          <View className='min-w-0 flex-1 gap-0.5'>
-            <Text className='font-sans-semibold text-lg tracking-[-0.3px] text-foreground'>
+          <View style={styles.profileMeta}>
+            <Text style={[styles.profileName, { color: colors.foreground }]}>
               {settings.displayName}
             </Text>
-            <Text className='font-sans-medium text-[15px] text-muted-foreground'>
+            <Text style={[styles.profileEmail, { color: colors.mutedForeground }]}>
               @{settings.finoraTag} · {settings.email}
             </Text>
           </View>
@@ -94,7 +94,7 @@ export default function AccountSettingsScreen() {
         title={t('account_type_title')}
         footer={t('account_type_footer')}
       >
-        <View className='px-3.5 py-3.5'>
+        <View style={styles.segmentPad}>
           <SettingsSegmented
             value={accountType}
             onChange={(id) => void handleAccountType(id as 'personal' | 'business')}
@@ -119,3 +119,33 @@ export default function AccountSettingsScreen() {
     </SettingsScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  profile: {
+    flexDirection: 'row',
+    gap: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  profileMeta: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  profileName: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+  },
+  profileEmail: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  segmentPad: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+});

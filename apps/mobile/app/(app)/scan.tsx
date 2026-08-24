@@ -25,6 +25,7 @@ import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { buildScanPayPrompt, parsePaymentQr, type ParsedPaymentQr } from '@/lib/payment-qr';
@@ -266,13 +267,13 @@ export default function ScanScreen() {
           />
           <Pressable
             onPress={loadPersonalProfile}
-            className='mt-2 items-center rounded-full bg-foreground py-3.5'
+            style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
           >
-            <Text className='font-sans text-[17px] font-bold text-background'>Retry</Text>
+            <Text style={[styles.primaryBtnText, { color: colors.background }]}>Retry</Text>
           </Pressable>
           <Pressable
             onPress={openScanner}
-            className='items-center py-2'
+            style={styles.linkBtn}
           >
             <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
           </Pressable>
@@ -289,7 +290,7 @@ export default function ScanScreen() {
           />
           <Pressable
             onPress={openScanner}
-            className='items-center py-2'
+            style={styles.linkBtn}
           >
             <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
           </Pressable>
@@ -306,9 +307,9 @@ export default function ScanScreen() {
           />
           <Pressable
             onPress={openScanner}
-            className='mt-2 items-center rounded-full bg-foreground py-3.5'
+            style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
           >
-            <Text className='font-sans text-[17px] font-bold text-background'>Back to scan</Text>
+            <Text style={[styles.primaryBtnText, { color: colors.background }]}>Back to scan</Text>
           </Pressable>
         </>
       );
@@ -326,7 +327,7 @@ export default function ScanScreen() {
       </>
     );
   } else if (!permission) {
-    return <View className='flex-1 bg-background' />;
+    return <View style={[styles.screen, { backgroundColor: colors.background }]} />;
   } else if (!permission.granted) {
     content = (
       <>
@@ -341,20 +342,20 @@ export default function ScanScreen() {
             haptics.selection();
             void requestPermission();
           }}
-          className='mt-2 items-center rounded-full bg-foreground py-3.5'
+          style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
         >
-          <Text className='font-sans text-[17px] font-bold text-background'>Allow camera</Text>
+          <Text style={[styles.primaryBtnText, { color: colors.background }]}>Allow camera</Text>
         </Pressable>
         <Pressable
           onPress={openPayloadEntry}
-          className='items-center py-2'
+          style={styles.linkBtn}
         >
           <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Enter payload instead</Text>
         </Pressable>
         {user?.id ? (
           <Pressable
             onPress={openMyCode}
-            className='items-center py-2'
+            style={styles.linkBtn}
           >
             <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Show my code</Text>
           </Pressable>
@@ -385,14 +386,14 @@ export default function ScanScreen() {
     );
   } else {
     content = (
-      <View className='mt-[-8px] min-h-[620px] flex-1 gap-[18px] bg-background px-5 pb-3 pt-5'>
-        <View className='items-center gap-1'>
-          <Text className='font-sans text-[25px] font-bold text-foreground'>Scan to pay</Text>
-          <Text className='font-sans text-[15px] text-muted-foreground'>
+      <View style={[styles.scannerShell, { backgroundColor: colors.background }]}>
+        <View style={styles.scannerTop}>
+          <Text style={[styles.scannerTitle, { color: colors.foreground }]}>Scan to pay</Text>
+          <Text style={[styles.scannerSubtitle, { color: colors.mutedForeground }]}>
             Point at a Finora QR code
           </Text>
         </View>
-        <View className='aspect-square max-h-[360px] w-full self-center overflow-hidden rounded-[26px] bg-[#151515]'>
+        <View style={styles.cameraWrap}>
           <CameraView
             style={StyleSheet.absoluteFill}
             facing='back'
@@ -400,24 +401,22 @@ export default function ScanScreen() {
             onBarcodeScanned={locked ? undefined : onBarcodeScanned}
           />
           <View
-            className='absolute inset-12'
+            style={styles.reticle}
             pointerEvents='none'
           >
-            <View className='absolute left-0 top-0 size-7 border-l-[3px] border-t-[3px] border-foreground' />
-            <View className='absolute right-0 top-0 size-7 border-r-[3px] border-t-[3px] border-foreground' />
-            <View className='absolute bottom-0 left-0 size-7 border-b-[3px] border-l-[3px] border-foreground' />
-            <View className='absolute bottom-0 right-0 size-7 border-b-[3px] border-r-[3px] border-foreground' />
+            <View style={[styles.reticleCorner, styles.tl, { borderColor: colors.foreground }]} />
+            <View style={[styles.reticleCorner, styles.tr, { borderColor: colors.foreground }]} />
+            <View style={[styles.reticleCorner, styles.bl, { borderColor: colors.foreground }]} />
+            <View style={[styles.reticleCorner, styles.br, { borderColor: colors.foreground }]} />
           </View>
         </View>
-        {error ? (
-          <Text className='font-sans text-sm leading-[18px] text-destructive'>{error}</Text>
-        ) : null}
-        <View className='min-h-16 flex-row items-center'>
-          <View className='flex-1 items-start'>
+        {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
+        <View style={styles.scannerActions}>
+          <View style={styles.scannerActionStart}>
             <Pressable
               accessibilityLabel='Choose QR from photo library'
               onPress={() => void scanFromLibrary()}
-              className='size-[52px] items-center justify-center rounded-full bg-muted'
+              style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
             >
               <Icon
                 name='image'
@@ -428,16 +427,16 @@ export default function ScanScreen() {
           </View>
           <Pressable
             onPress={openPayloadEntry}
-            className='rounded-full bg-foreground px-7 py-3.5'
+            style={[styles.primaryPillButton, { backgroundColor: colors.foreground }]}
           >
-            <Text className='font-sans text-[17px] font-bold text-background'>Enter payload</Text>
+            <Text style={[styles.myCodeText, { color: colors.background }]}>Enter payload</Text>
           </Pressable>
-          <View className='flex-1 items-end'>
+          <View style={styles.scannerActionEnd}>
             {user?.id ? (
               <Pressable
                 accessibilityLabel='Show my receive QR code'
                 onPress={openMyCode}
-                className='size-[52px] items-center justify-center rounded-full bg-muted'
+                style={[styles.scannerIconButton, { backgroundColor: colors.muted }]}
               >
                 <Icon
                   name='qr'
@@ -455,29 +454,23 @@ export default function ScanScreen() {
   if (phase === 'scan' && Platform.OS !== 'web') {
     return (
       <SwipeBackView>
-        <View className='flex-1 bg-background'>{content}</View>
+        <View style={[styles.flex, { backgroundColor: colors.background }]}>{content}</View>
       </SwipeBackView>
     );
   }
 
   return (
     <SwipeBackView>
-      <View className='flex-1 bg-background'>
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
         <KeyboardAvoidingView
-          className='flex-1'
+          style={styles.flex}
           behavior={
             Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined
           }
           keyboardVerticalOffset={headerHeight}
         >
           <ScrollView
-            contentContainerStyle={{
-              flexGrow: 1,
-              gap: 12,
-              paddingHorizontal: 16,
-              paddingTop: 8,
-              paddingBottom: 24,
-            }}
+            contentContainerStyle={styles.screenContent}
             contentInsetAdjustmentBehavior='automatic'
             keyboardShouldPersistTaps='handled'
             keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -521,7 +514,7 @@ function AmountStep({
         title='How much to send?'
         subtitle={`${parsed.destination.label} · ${parsed.destination.value}`}
       />
-      <View className='flex-row flex-wrap gap-2'>
+      <View style={styles.chips}>
         {CURRENCIES.map((c) => (
           <WizardChip
             key={c}
@@ -531,7 +524,7 @@ function AmountStep({
           />
         ))}
       </View>
-      <View className='flex-row flex-wrap gap-2'>
+      <View style={styles.chips}>
         {AMOUNTS.map((n) => (
           <WizardChip
             key={n}
@@ -554,19 +547,33 @@ function AmountStep({
         keyboardType='decimal-pad'
         placeholder='Custom amount'
         placeholderTextColor={colors.mutedForeground}
-        className='rounded-[18px] border border-border bg-composer px-3 py-2.5 font-sans text-[17px] text-foreground'
+        style={[
+          styles.input,
+          {
+            color: colors.foreground,
+            borderColor: colors.border,
+            backgroundColor: colors.composer,
+          },
+        ]}
       />
       <Pressable
         onPress={onContinue}
         disabled={amount == null || amount <= 0}
-        className='mt-2 items-center rounded-full bg-foreground py-3.5'
-        style={{ opacity: amount == null || amount <= 0 ? 0.4 : 1 }}
+        style={[
+          styles.primaryBtn,
+          {
+            backgroundColor: colors.foreground,
+            opacity: amount == null || amount <= 0 ? 0.4 : 1,
+          },
+        ]}
       >
-        <Text className='font-sans text-[17px] font-bold text-background'>Continue to confirm</Text>
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+          Continue to confirm
+        </Text>
       </Pressable>
       <Pressable
         onPress={onBack}
-        className='items-center py-2'
+        style={styles.linkBtn}
       >
         <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan again</Text>
       </Pressable>
@@ -645,10 +652,7 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
         title='My code'
         subtitle={method.subtitle}
       />
-      <View
-        className='self-center rounded-[26px] p-3.5'
-        style={{ backgroundColor: isDark ? '#fff' : colors.background }}
-      >
+      <View style={[styles.myCodeCard, { backgroundColor: isDark ? '#fff' : colors.background }]}>
         <MockQrCode
           ref={qrRef}
           value={method.qrPayload}
@@ -657,37 +661,37 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
           backgroundColor='#ffffff'
         />
       </View>
-      <Text className='text-center font-sans text-sm text-muted-foreground'>
+      <Text style={[styles.myCodeHint, { color: colors.mutedForeground }]}>
         Save or scan this code to receive GHS.
       </Text>
       {actionState.error ? (
-        <Text className='-mt-1 px-6 text-center font-sans-semibold text-[13px] text-destructive'>
+        <Text style={[styles.actionFeedback, styles.actionError, { color: colors.destructive }]}>
           {actionState.error}
         </Text>
       ) : actionState.status ? (
-        <Text className='-mt-1 px-6 text-center font-sans-medium text-[13px] text-muted-foreground'>
+        <Text style={[styles.actionFeedback, { color: colors.mutedForeground }]}>
           {actionState.status}
         </Text>
       ) : null}
       <Pressable
         onPress={() => void shareCode()}
         disabled={actionState.busy}
-        className='mt-2 items-center rounded-full bg-foreground py-3.5'
+        style={[styles.primaryBtn, { backgroundColor: colors.foreground }]}
       >
-        <Text className='font-sans text-[17px] font-bold text-background'>
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>
           {actionState.busy ? 'Working…' : 'Share code'}
         </Text>
       </Pressable>
       <Pressable
         onPress={() => void saveCode()}
         disabled={actionState.busy}
-        className='flex-row items-center justify-center rounded-full border border-border py-3'
+        style={[styles.secondaryBtn, { borderColor: colors.border }]}
       >
-        <Text className='font-sans-semibold text-base text-foreground'>Save image</Text>
+        <Text style={[styles.secondaryBtnText, { color: colors.foreground }]}>Save image</Text>
       </Pressable>
       <Pressable
         onPress={onBack}
-        className='items-center py-2'
+        style={styles.linkBtn}
       >
         <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
       </Pressable>
@@ -722,33 +726,27 @@ function PasteBlock({
 
   return (
     <ScrollView
-      contentContainerStyle={{
-        flexGrow: 1,
-        gap: 12,
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: 24,
-      }}
+      contentContainerStyle={styles.screenContent}
       contentInsetAdjustmentBehavior='automatic'
       keyboardShouldPersistTaps='handled'
       keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       showsVerticalScrollIndicator={false}
       style={{ backgroundColor: colors.background }}
     >
-      <View className='min-h-[180px] flex-1 items-center justify-center gap-2 pt-6'>
-        <View className='size-[52px] items-center justify-center rounded-[18px] bg-muted'>
+      <View style={styles.payloadHero}>
+        <View style={[styles.payloadIconWrap, { backgroundColor: colors.muted }]}>
           <Icon
             name='clipboard'
             size={24}
             color={colors.foreground}
           />
         </View>
-        <Text className='font-sans text-2xl font-bold text-foreground'>Enter payload</Text>
-        <Text className='px-2 text-center font-sans text-[15px] leading-5 text-muted-foreground'>
+        <Text style={[styles.payloadTitle, { color: colors.foreground }]}>Enter payload</Text>
+        <Text style={[styles.payloadSubtitle, { color: colors.mutedForeground }]}>
           Paste the code or payload from a Finora receive QR or payment request.
         </Text>
       </View>
-      <View className='relative justify-center'>
+      <View style={styles.payloadInputWrap}>
         <TextInput
           value={paste}
           onChangeText={setPaste}
@@ -758,14 +756,23 @@ function PasteBlock({
           returnKeyType='go'
           placeholder='finora:momo:ghs:0550123456'
           placeholderTextColor={colors.mutedForeground}
-          className='rounded-[18px] border border-border bg-composer py-3.5 pl-3.5 pr-[52px] font-sans text-[17px] text-foreground'
+          style={[
+            styles.payloadInput,
+            {
+              color: colors.foreground,
+              borderColor: colors.border,
+              backgroundColor: colors.composer,
+            },
+          ]}
         />
         <Pressable
           accessibilityLabel='Paste from clipboard'
           hitSlop={8}
           onPress={() => void pasteFromClipboard()}
-          className='absolute right-1.5 size-9 items-center justify-center rounded-[14px] bg-muted'
-          style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}
+          style={({ pressed }) => [
+            styles.clipboardBtn,
+            { backgroundColor: colors.muted, opacity: pressed ? 0.65 : 1 },
+          ]}
         >
           <Icon
             name='clipboard'
@@ -774,19 +781,19 @@ function PasteBlock({
           />
         </Pressable>
       </View>
-      {error ? (
-        <Text className='font-sans text-sm leading-[18px] text-destructive'>{error}</Text>
-      ) : null}
+      {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
       <Pressable
         onPress={() => {
           haptics.selection();
           onSubmit();
         }}
         disabled={!paste.trim()}
-        className='mt-2 items-center rounded-full bg-foreground py-3.5'
-        style={{ opacity: paste.trim() ? 1 : 0.4 }}
+        style={[
+          styles.primaryBtn,
+          { backgroundColor: colors.foreground, opacity: paste.trim() ? 1 : 0.4 },
+        ]}
       >
-        <Text className='font-sans text-[17px] font-bold text-background'>Use payload</Text>
+        <Text style={[styles.primaryBtnText, { color: colors.background }]}>Use payload</Text>
       </Pressable>
       {onScanQr ? (
         <Pressable
@@ -794,7 +801,7 @@ function PasteBlock({
             haptics.selection();
             onScanQr();
           }}
-          className='items-center py-2'
+          style={styles.linkBtn}
         >
           <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
         </Pressable>
@@ -802,3 +809,212 @@ function PasteBlock({
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  flex: {
+    flex: 1,
+  },
+  screenContent: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
+    gap: 12,
+  },
+  cameraWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    maxHeight: 360,
+    borderRadius: 26,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    backgroundColor: '#151515',
+  },
+  reticle: {
+    ...StyleSheet.absoluteFillObject,
+    margin: 48,
+  },
+  reticleCorner: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderWidth: 3,
+  },
+  tl: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0 },
+  tr: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0 },
+  bl: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0 },
+  br: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0 },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+  },
+  primaryBtn: {
+    marginTop: 8,
+    borderRadius: Radius.pill,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  primaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  linkBtn: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  payloadLink: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingVertical: 10,
+  },
+  payloadLinkText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  payloadHero: {
+    flex: 1,
+    minHeight: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingTop: 24,
+  },
+  payloadIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payloadTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  payloadSubtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+  },
+  payloadInputWrap: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  payloadInput: {
+    paddingRight: 52,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+  },
+  clipboardBtn: {
+    position: 'absolute',
+    right: 6,
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pasteLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  error: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  scannerShell: {
+    flex: 1,
+    minHeight: 620,
+    marginTop: -8,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
+    gap: 18,
+  },
+  scannerTop: { gap: 4, alignItems: 'center' },
+  scannerTitle: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '700' },
+  scannerSubtitle: { fontFamily: 'DMSans_400Regular', fontSize: 15 },
+  scannerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 64,
+  },
+  scannerActionStart: { flex: 1, alignItems: 'flex-start' },
+  scannerActionEnd: { flex: 1, alignItems: 'flex-end' },
+  scannerIconButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myCodeCard: {
+    alignSelf: 'center',
+    padding: 14,
+    borderRadius: Radius.card,
+  },
+  myCodeHint: {
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+  },
+  actionFeedback: {
+    marginTop: -4,
+    textAlign: 'center',
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 13,
+    paddingHorizontal: 24,
+  },
+  actionError: {
+    fontFamily: 'DMSans_600SemiBold',
+  },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: Radius.pill,
+    paddingVertical: 12,
+  },
+  secondaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryPillButton: {
+    borderRadius: Radius.pill,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+  },
+  myCodeButton: {
+    borderRadius: 999,
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+  },
+  myCodeText: { fontFamily: 'DMSans_400Regular', fontSize: 17, fontWeight: '700' },
+});

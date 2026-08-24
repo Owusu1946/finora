@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
 
@@ -20,11 +20,10 @@ export const ListVirtualAccountsToolUI = makeAssistantToolUI<Record<string, neve
     if (status.type === 'running' && !accounts) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.box]}
+          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
+          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
             Loading virtual accounts…
           </Text>
         </View>
@@ -34,10 +33,9 @@ export const ListVirtualAccountsToolUI = makeAssistantToolUI<Record<string, neve
     if (!accounts?.length) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.box]}
+          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
+          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
             No virtual accounts yet. Fund via bank transfer to issue one.
           </Text>
         </View>
@@ -45,30 +43,25 @@ export const ListVirtualAccountsToolUI = makeAssistantToolUI<Record<string, neve
     }
 
     return (
-      <View
-        className='my-1.5 border p-4 gap-3 border-border bg-composer'
-        style={[styles.card]}
-      >
-        <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
+      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+        <Text style={[styles.title, { color: colors.mutedForeground }]}>
           {accounts.length} virtual account{accounts.length === 1 ? '' : 's'}
         </Text>
         {accounts.map((account) => (
           <View
             key={account.id}
-            className='flex-row items-start gap-2.5'
+            style={styles.row}
           >
-            <View className='flex-1 gap-0.5 min-w-0'>
-              <Text className='font-sans-semibold text-[15px] text-foreground'>
-                {account.title}
-              </Text>
-              <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
+            <View style={styles.flex}>
+              <Text style={[styles.name, { color: colors.foreground }]}>{account.title}</Text>
+              <Text style={[styles.muted, { color: colors.mutedForeground }]}>
                 {account.fields
                   .slice(0, 2)
                   .map((f) => `${f.label}: ${f.value}`)
                   .join(' · ')}
               </Text>
             </View>
-            <Text className='font-sans-semibold text-[14px] text-muted-foreground'>
+            <Text style={[styles.amount, { color: colors.mutedForeground }]}>
               {account.currency}
             </Text>
           </View>
@@ -78,11 +71,28 @@ export const ListVirtualAccountsToolUI = makeAssistantToolUI<Record<string, neve
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   box: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
   },
   card: {
+    marginVertical: 6,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 12,
   },
-};
+  title: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  flex: { flex: 1, gap: 2, minWidth: 0 },
+  name: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
+  muted: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500', lineHeight: 18 },
+  amount: { fontFamily: 'DMSans_400Regular', fontSize: 14, fontWeight: '600' },
+});

@@ -19,6 +19,7 @@ import {
   ActionSheetIOS,
   Alert,
   Keyboard,
+  StyleSheet,
   Pressable,
   ScrollView,
   TextInput,
@@ -179,8 +180,8 @@ function AttachButton() {
       accessibilityLabel='Attach file or photo'
       hitSlop={8}
       onPress={handlePress}
-      className='w-[38px] h-[38px] items-center justify-center'
       style={({ pressed }) => [
+        styles.actionButton,
         {
           backgroundColor: pressed ? colors.muted : 'transparent',
         },
@@ -207,8 +208,10 @@ function ScanButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      className='w-[38px] h-[38px] items-center justify-center'
-      style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
+      style={({ pressed }) => [
+        styles.actionButton,
+        { backgroundColor: pressed ? colors.muted : 'transparent' },
+      ]}
     >
       <Icon
         name='qr'
@@ -442,8 +445,10 @@ function MicButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel='Dictate message'
       hitSlop={8}
       onPress={onPress}
-      className='w-[38px] h-[38px] items-center justify-center'
-      style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
+      style={({ pressed }) => [
+        styles.actionButton,
+        { backgroundColor: pressed ? colors.muted : 'transparent' },
+      ]}
     >
       <Icon
         name='mic'
@@ -481,8 +486,8 @@ function VoiceComposer({
       accessibilityLabel={label}
       accessibilityRole='button'
       onPress={onPress}
-      className='w-[38%] min-w-[104px] max-w-36 h-20 border items-center justify-center self-center p-2'
       style={({ pressed }) => [
+        styles.voiceShell,
         {
           backgroundColor: colors.composer,
           borderColor: colors.border,
@@ -622,13 +627,15 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
         : 'No recent match. Type the exact Finora Tag to send.';
 
     return (
-      <View className='w-[100%]'>
+      <View style={styles.inputWrap}>
         {mentionQuery !== null && directoryLoaded && (
           <View
-            className='border mb-2 p-1.5 bg-background border-border'
-            style={[styles.mentionMenu]}
+            style={[
+              styles.mentionMenu,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
           >
-            <Text className='font-sans-semibold text-[11px] tracking-[0.7px] px-2 py-[5px] uppercase text-muted-foreground'>
+            <Text style={[styles.mentionEyebrow, { color: colors.mutedForeground }]}>
               Recent Finora Tags
             </Text>
             {tagProfiles.length ? (
@@ -637,27 +644,29 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
                   key={profile.accountId}
                   accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
                   onPress={() => selectTag(profile)}
-                  className='min-h-[50px] flex-row items-center gap-2.5 px-2 py-1.5'
-                  style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+                  style={({ pressed }) => [
+                    styles.mentionRow,
+                    pressed && { backgroundColor: colors.muted },
+                  ]}
                 >
                   <View
-                    className='w-[34px] h-[34px] rounded-[17px] items-center justify-center'
-                    style={[{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}
+                    style={[
+                      styles.mentionAvatar,
+                      { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
+                    ]}
                   >
-                    <Text className='font-sans-semibold text-white text-[13px]'>
-                      {profile.initials}
-                    </Text>
+                    <Text style={styles.mentionInitials}>{profile.initials}</Text>
                   </View>
-                  <View className='flex-1 gap-px'>
+                  <View style={styles.mentionMeta}>
                     <Text
                       numberOfLines={1}
-                      className='font-sans-semibold text-[14px] text-foreground'
+                      style={[styles.mentionName, { color: colors.foreground }]}
                     >
                       {profile.displayName}
                     </Text>
                     <Text
                       numberOfLines={1}
-                      className='font-sans text-[12px] text-muted-foreground'
+                      style={[styles.mentionHandle, { color: colors.mutedForeground }]}
                     >
                       @{profile.tag} ·{' '}
                       {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
@@ -666,7 +675,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
                 </Pressable>
               ))
             ) : (
-              <Text className='font-sans text-[13px] px-2 py-3 text-muted-foreground'>
+              <Text style={[styles.mentionEmpty, { color: colors.mutedForeground }]}>
                 {emptyHint}
               </Text>
             )}
@@ -708,10 +717,7 @@ export function Composer() {
   }, []);
 
   return (
-    <View
-      className='w-[100%] self-center px-3 pt-2'
-      style={[styles.container]}
-    >
+    <View style={styles.container}>
       {voiceState !== 'idle' ? (
         <VoiceComposer
           state={voiceState}
@@ -720,14 +726,13 @@ export function Composer() {
         />
       ) : (
         <View
-          className='flex-col gap-2.5 border px-3 pt-3 pb-2.5 bg-composer border-border'
-          style={[styles.shell]}
+          style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}
         >
           {hasAttachments ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              className='max-h-[84px] grow-0'
+              style={styles.attachmentsScroller}
               contentContainerStyle={styles.attachmentsRow}
               keyboardShouldPersistTaps='handled'
             >
@@ -746,10 +751,10 @@ export function Composer() {
             onBlur={() => setInputFocused(false)}
           />
 
-          <View className='flex-row items-center gap-1 pt-0.5'>
+          <View style={styles.actionRow}>
             <AttachButton />
             <ScanButton />
-            <View className='flex-1' />
+            <View style={styles.spacer} />
             {inputFocused ? (
               <Pressable
                 accessibilityLabel='Hide keyboard'
@@ -758,12 +763,12 @@ export function Composer() {
                   inputRef.current?.blur();
                   Keyboard.dismiss();
                 }}
-                className='min-w-12 h-[38px] items-center justify-center px-2'
                 style={({ pressed }) => [
+                  styles.doneButton,
                   { backgroundColor: pressed ? colors.muted : 'transparent' },
                 ]}
               >
-                <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
+                <Text style={[styles.doneButtonText, { color: colors.foreground }]}>Done</Text>
               </Pressable>
             ) : null}
             <AuiIf condition={(s) => !s.thread.isRunning}>
@@ -785,14 +790,25 @@ export function Composer() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
+    width: '100%',
     maxWidth: Spacing.threadMaxWidth + 24,
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 8,
   },
   shell: {
     ...Rounded,
+    flexDirection: 'column',
+    gap: 10,
     borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
   },
+
   input: {
     fontFamily: 'DMSans_400Regular',
     fontSize: 17,
@@ -807,11 +823,74 @@ const styles = {
       default: {},
     }),
   },
+  inputWrap: {
+    width: '100%',
+  },
   mentionMenu: {
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
+    marginBottom: 8,
+    padding: 6,
+  },
+  mentionEyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.7,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    textTransform: 'uppercase',
   },
   mentionRow: {
+    minHeight: 50,
     borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  mentionAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mentionInitials: {
+    color: '#FFFFFF',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  mentionMeta: {
+    flex: 1,
+    gap: 1,
+  },
+  mentionName: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  mentionHandle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+  },
+  mentionEmpty: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingTop: 2,
+  },
+  attachmentsScroller: {
+    maxHeight: 84,
+    flexGrow: 0,
   },
   attachmentsRow: {
     flexDirection: 'row',
@@ -821,14 +900,40 @@ const styles = {
     paddingTop: 8,
     paddingBottom: 4,
   },
+  spacer: {
+    flex: 1,
+  },
   actionButton: {
+    width: 38,
+    height: 38,
     borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   doneButton: {
+    minWidth: 48,
+    height: 38,
     borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  doneButtonText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
   },
   voiceShell: {
     ...Rounded,
+    width: '38%',
+    minWidth: 104,
+    maxWidth: 144,
+    height: 80,
     borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    padding: 8,
   },
-} as const;
+});

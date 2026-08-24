@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 
@@ -26,7 +26,9 @@ export function SwipeBackView({ children }: { children: ReactNode }) {
 
   return (
     <GestureDetector gesture={gesture}>
-      <View className='flex-1'>{children}</View>
+      <View style={styles.container}>{children}</View>
     </GestureDetector>
   );
 }
+
+const styles = StyleSheet.create({ container: { flex: 1 } });

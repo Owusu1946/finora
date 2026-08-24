@@ -1,7 +1,7 @@
 import { ActionBarPrimitive, AuiIf, useAui } from '@assistant-ui/react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -36,8 +36,7 @@ function FeedbackButton({ type }: { type: 'positive' | 'negative' }) {
     <Pressable
       accessibilityLabel={isPositive ? 'Helpful response' : 'Unhelpful response'}
       onPress={handlePress}
-      className='p-1.5'
-      style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+      style={({ pressed }) => [styles.button, pressed && { backgroundColor: colors.muted }]}
     >
       <Icon
         name={isPositive ? 'thumb-up' : 'thumb-down'}
@@ -59,7 +58,7 @@ export function MessageActionBar() {
   ];
 
   return (
-    <View className='flex-row items-center gap-0.5'>
+    <View style={styles.container}>
       <ActionBarPrimitive.Copy
         copyToClipboard={copyToClipboard}
         onPressIn={haptics.selection}
@@ -108,8 +107,14 @@ export function MessageActionBar() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
   button: {
+    padding: 6,
     borderRadius: Radius.sm,
   },
-};
+});

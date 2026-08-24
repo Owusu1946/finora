@@ -1,6 +1,6 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { Employee } from '@/lib/employees-storage';
 
@@ -23,6 +23,7 @@ type CreateEmployeeResult = {
 };
 
 function EmployeeAddedCard({ employee }: { employee: Employee }) {
+  const { colors } = useTheme();
   const aui = useAui();
   const followedUp = useRef(false);
 
@@ -39,13 +40,10 @@ function EmployeeAddedCard({ employee }: { employee: Employee }) {
   }, [aui, employee]);
 
   return (
-    <View
-      className='my-1.5 border p-4 gap-1 border-border bg-composer'
-      style={[styles.card]}
-    >
-      <Text className='font-sans-semibold text-[12px] text-muted-foreground'>Employee added</Text>
-      <Text className='font-sans-semibold text-[16px] text-foreground'>{employee.name}</Text>
-      <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+    <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+      <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Employee added</Text>
+      <Text style={[styles.name, { color: colors.foreground }]}>{employee.name}</Text>
+      <Text style={[styles.meta, { color: colors.mutedForeground }]}>
         {employee.role} · {formatPaymentAmount(employee.salary, employee.currency)} ·{' '}
         {employee.destination.label}
       </Text>
@@ -63,11 +61,13 @@ export const CreateEmployeeToolUI = makeAssistantToolUI<CreateEmployeeArgs, Crea
     if (status.type === 'running' && !employee) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.preparing]}
+          style={[
+            styles.preparing,
+            { borderColor: colors.border, backgroundColor: colors.composer },
+          ]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
+          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
             Adding employee…
           </Text>
         </View>
@@ -77,10 +77,9 @@ export const CreateEmployeeToolUI = makeAssistantToolUI<CreateEmployeeArgs, Crea
     if (!employee) {
       return (
         <View
-          className='my-2 border p-4 border-border bg-composer'
-          style={[styles.empty]}
+          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
+          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
             Couldn’t add that employee. Try “Add employee Ama Boateng designer 2500 USD”.
           </Text>
         </View>
@@ -91,14 +90,54 @@ export const CreateEmployeeToolUI = makeAssistantToolUI<CreateEmployeeArgs, Crea
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+  },
+  preparingText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
   },
   empty: {
+    marginVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+  },
+  emptyText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   card: {
+    marginVertical: 6,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 4,
   },
-};
+  eyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  name: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  meta: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+});

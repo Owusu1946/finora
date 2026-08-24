@@ -1,8 +1,9 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { getAccountFullLabel, getAccountLabel, getAccountType } from '@/lib/account';
-import { cx } from '@/lib/cx';
 
 type AccountBadgeProps = {
   /** Compact pill for headers; full label for drawer. */
@@ -10,12 +11,13 @@ type AccountBadgeProps = {
 };
 
 export function AccountBadge({ variant = 'pill' }: AccountBadgeProps) {
+  const { colors } = useTheme();
   const type = getAccountType();
   const label = getAccountLabel(type);
 
   if (variant === 'text') {
     return (
-      <Text className='mt-0.5 font-sans-medium text-[13px] text-muted-foreground'>
+      <Text style={[styles.text, { color: colors.mutedForeground }]}>
         {getAccountFullLabel(type)}
       </Text>
     );
@@ -23,18 +25,24 @@ export function AccountBadge({ variant = 'pill' }: AccountBadgeProps) {
 
   return (
     <View
-      className='flex-row items-center gap-[5px] rounded-full border border-border bg-muted px-2 py-0.5'
+      style={[
+        styles.pill,
+        {
+          backgroundColor: colors.muted,
+          borderColor: colors.border,
+        },
+      ]}
       accessibilityLabel={`${label} account`}
     >
       <View
-        className={cx(
-          'h-[5px] w-[5px] rounded-full',
-          type === 'business' ? 'bg-foreground' : 'bg-muted-foreground',
-        )}
+        style={[
+          styles.dot,
+          {
+            backgroundColor: type === 'business' ? colors.foreground : colors.mutedForeground,
+          },
+        ]}
       />
-      <Text className='font-sans-semibold text-xs tracking-[0.1px] text-muted-foreground'>
-        {label}
-      </Text>
+      <Text style={[styles.pillLabel, { color: colors.mutedForeground }]}>{label}</Text>
     </View>
   );
 }
@@ -45,11 +53,13 @@ type HeaderTitleProps = {
 
 /** Centered header title with account type pill underneath. */
 export function HeaderTitleWithAccount({ title }: HeaderTitleProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className='items-center justify-center gap-[3px]'>
+    <View style={styles.headerTitle}>
       <Text
         numberOfLines={1}
-        className='font-sans-semibold text-lg tracking-[-0.2px] text-foreground'
+        style={[styles.title, { color: colors.foreground }]}
       >
         {title}
       </Text>
@@ -57,3 +67,43 @@ export function HeaderTitleWithAccount({ title }: HeaderTitleProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  headerTitle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  pillLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.1,
+  },
+  text: {
+    marginTop: 2,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+});

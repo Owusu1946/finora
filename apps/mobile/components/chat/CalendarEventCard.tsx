@@ -1,6 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -103,12 +103,9 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
 
   return (
     <>
-      <View
-        className='w-[100%] border p-4 gap-3 my-1.5 bg-composer border-border'
-        style={[styles.card]}
-      >
-        <View className='flex-row items-center gap-3'>
-          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+        <View style={styles.header}>
+          <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
             {phase === 'sending' ? (
               <LoadingIcon
                 size='small'
@@ -122,8 +119,8 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
               />
             )}
           </View>
-          <View className='flex-1 gap-0.5 min-w-0'>
-            <Text className='font-sans-semibold text-[12px] text-muted-foreground'>
+          <View style={styles.headerText}>
+            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
               {phase === 'paid'
                 ? 'Paid from calendar'
                 : phase === 'sending'
@@ -132,33 +129,31 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                     ? 'Dismissed'
                     : kindLabel(event.kind)}
             </Text>
-            <Text className='font-sans-semibold text-[16px] text-foreground'>{event.title}</Text>
+            <Text style={[styles.title, { color: colors.foreground }]}>{event.title}</Text>
           </View>
           {event.amount != null && event.currency ? (
-            <Text className='font-sans-semibold text-[16px] text-foreground'>
+            <Text style={[styles.amount, { color: colors.foreground }]}>
               {formatPaymentAmount(event.amount, event.currency)}
             </Text>
           ) : null}
         </View>
 
-        <View className='gap-1'>
-          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+        <View style={styles.meta}>
+          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
             Starts {formatDue(event.dueAt)}
           </Text>
           {event.counterparty ? (
-            <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+            <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
               {event.counterparty}
             </Text>
           ) : null}
           {event.notes ? (
-            <Text className='font-sans text-[13px] leading-[18px] text-muted-foreground'>
-              {event.notes}
-            </Text>
+            <Text style={[styles.notes, { color: colors.mutedForeground }]}>{event.notes}</Text>
           ) : null}
         </View>
 
         {idle ? (
-          <View className='flex-row gap-2.5'>
+          <View style={styles.actions}>
             {canPay ? (
               <Pressable
                 disabled={busy}
@@ -169,15 +164,16 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                   if (!ok) return;
                   setPhase('sending');
                 }}
-                className='flex-1 min-h-11 items-center justify-center'
                 style={({ pressed }) => [
+                  styles.btn,
+                  styles.btnPrimary,
                   {
                     backgroundColor: colors.foreground,
                     opacity: pressed || busy ? 0.85 : 1,
                   },
                 ]}
               >
-                <Text className='font-sans-semibold text-[15px] text-background'>Pay now</Text>
+                <Text style={[styles.btnLabel, { color: colors.background }]}>Pay now</Text>
               </Pressable>
             ) : null}
             <Pressable
@@ -190,12 +186,13 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                 setPhase('dismissed');
                 setBusy(false);
               }}
-              className='flex-1 min-h-11 items-center justify-center border'
               style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
                 { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>Dismiss</Text>
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Dismiss</Text>
             </Pressable>
           </View>
         ) : null}
@@ -205,11 +202,79 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 12,
+    marginVertical: 6,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  eyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  amount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  meta: {
+    gap: 4,
+  },
+  metaText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  notes: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '400',
+    lineHeight: 18,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
   },
   btn: {
+    flex: 1,
+    minHeight: 44,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+  btnPrimary: {},
+  btnGhost: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  btnLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

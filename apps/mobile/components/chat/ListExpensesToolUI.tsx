@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { BusinessExpense } from '@/lib/expenses-storage';
 
@@ -21,11 +21,10 @@ export const ListExpensesToolUI = makeAssistantToolUI<Record<string, never>, Res
     if (status.type === 'running' && !expenses) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.box]}
+          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
             Loading business expenses…
           </Text>
         </View>
@@ -35,10 +34,9 @@ export const ListExpensesToolUI = makeAssistantToolUI<Record<string, never>, Res
     if (!expenses?.length) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.box]}
+          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
             No business expenses this month.
           </Text>
         </View>
@@ -49,26 +47,23 @@ export const ListExpensesToolUI = makeAssistantToolUI<Record<string, never>, Res
     const currency = result?.currency ?? expenses[0]?.currency ?? 'USD';
 
     return (
-      <View
-        className='my-1.5 border p-4 gap-3 border-border bg-composer'
-        style={[styles.card]}
-      >
-        <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
+      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+        <Text style={[styles.title, { color: colors.mutedForeground }]}>
           Business expenses · {formatPaymentAmount(total, currency)}
         </Text>
         {expenses.map((e) => (
           <View
             key={e.id}
-            className='flex-row items-center gap-2.5'
+            style={styles.row}
           >
-            <View className='flex-1 gap-0.5 min-w-0'>
-              <Text className='font-sans-semibold text-[15px] text-foreground'>{e.merchant}</Text>
-              <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+            <View style={styles.flex}>
+              <Text style={[styles.name, { color: colors.foreground }]}>{e.merchant}</Text>
+              <Text style={[styles.muted, { color: colors.mutedForeground }]}>
                 {e.category}
                 {e.cardLabel ? ` · ${e.cardLabel}` : ''}
               </Text>
             </View>
-            <Text className='font-sans-semibold text-[14px] text-foreground'>
+            <Text style={[styles.amount, { color: colors.foreground }]}>
               {formatPaymentAmount(e.amount, e.currency)}
             </Text>
           </View>
@@ -78,11 +73,28 @@ export const ListExpensesToolUI = makeAssistantToolUI<Record<string, never>, Res
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   box: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
   },
   card: {
+    marginVertical: 6,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 12,
   },
-};
+  title: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  flex: { flex: 1, gap: 2, minWidth: 0 },
+  name: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
+  muted: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500' },
+  amount: { fontFamily: 'DMSans_400Regular', fontSize: 14, fontWeight: '600' },
+});

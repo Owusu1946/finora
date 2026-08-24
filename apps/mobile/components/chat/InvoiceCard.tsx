@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
@@ -138,14 +138,16 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
 
   return (
     <>
-      <View
-        className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
-        style={[styles.card]}
-      >
-        <View className='flex-row items-center gap-3'>
+      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+        <View style={styles.header}>
           <Animated.View
-            className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'
-            style={[{ opacity: phase === 'sending' ? pulse : 1 }]}
+            style={[
+              styles.iconWrap,
+              {
+                backgroundColor: colors.muted,
+                opacity: phase === 'sending' ? pulse : 1,
+              },
+            ]}
           >
             {phase === 'sending' ? (
               <LoadingIcon
@@ -160,8 +162,8 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               />
             )}
           </Animated.View>
-          <View className='flex-1 gap-0.5'>
-            <Text className='font-sans-medium text-[14px] text-muted-foreground'>
+          <View style={styles.headerText}>
+            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
               {paid
                 ? 'Invoice paid'
                 : phase === 'sending'
@@ -172,23 +174,20 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                       ? 'Scheduled'
                       : 'Supplier invoice'}
             </Text>
-            <Text className='font-sans-semibold text-[25px] tracking-[-0.5px] text-foreground'>
+            <Text style={[styles.amount, { color: colors.foreground }]}>
               {formatPaymentAmount(invoice.amount, invoice.currency)}
             </Text>
           </View>
-          <View
-            className='px-2.5 py-[5px] bg-muted'
-            style={[styles.sourcePill]}
-          >
-            <Text className='font-sans-semibold text-[12px] capitalize text-muted-foreground'>
+          <View style={[styles.sourcePill, { backgroundColor: colors.muted }]}>
+            <Text style={[styles.sourceText, { color: colors.mutedForeground }]}>
               {invoice.source === 'gmail' ? 'Gmail' : invoice.source}
             </Text>
           </View>
         </View>
 
-        <View className='h-px w-full bg-border' />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        <View className='gap-2.5'>
+        <View style={styles.rows}>
           <Row
             label='Vendor'
             value={invoice.vendor}
@@ -234,18 +233,18 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
         </View>
 
         {phase === 'sending' ? (
-          <View className='gap-2.5'>
+          <View style={styles.steps}>
             {SEND_STEPS.map((label, index) => {
               const done = index < sendingStep;
               const active = index === sendingStep;
               return (
                 <View
                   key={label}
-                  className='flex-row items-center gap-2.5'
+                  style={styles.stepRow}
                 >
                   <View
-                    className='w-[22px] h-[22px] rounded-[11px] border items-center justify-center'
                     style={[
+                      styles.stepDot,
                       {
                         borderColor: done || active ? colors.foreground : colors.border,
                         backgroundColor: done ? colors.foreground : 'transparent',
@@ -266,8 +265,8 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                     ) : null}
                   </View>
                   <Text
-                    className='font-sans text-[15px]'
                     style={[
+                      styles.stepLabel,
                       {
                         color: done || active ? colors.foreground : colors.mutedForeground,
                         fontWeight: active ? '600' : '500',
@@ -284,7 +283,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
         ) : null}
 
         {due && invoice.destination ? (
-          <View className='flex-row gap-2.5'>
+          <View style={styles.actions}>
             <Pressable
               disabled={busy}
               onPress={async () => {
@@ -296,12 +295,13 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 onUpdated?.({ ...invoice, status: 'dismissed' });
                 setBusy(false);
               }}
-              className='flex-1 min-h-[46px] items-center justify-center border'
               style={({ pressed }) => [
+                styles.btn,
+                styles.btnGhost,
                 { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[16px] text-foreground'>Dismiss</Text>
+              <Text style={[styles.btnLabel, { color: colors.foreground }]}>Dismiss</Text>
             </Pressable>
             <Pressable
               disabled={busy}
@@ -315,18 +315,19 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 finishedRef.current = false;
                 setPhase('sending');
               }}
-              className='flex-1 min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
+                styles.btn,
+                styles.btnPrimary,
                 { backgroundColor: colors.foreground, opacity: pressed || busy ? 0.85 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[16px] text-background'>
+              <Text style={[styles.btnLabel, { color: colors.background }]}>
                 {busy ? '…' : 'Pay now'}
               </Text>
             </Pressable>
           </View>
         ) : due ? (
-          <Text className='font-sans text-[13px] leading-[18px] text-muted-foreground'>
+          <Text style={[styles.paymentNotice, { color: colors.mutedForeground }]}>
             Add verified supplier payment details before preparing payment.
           </Text>
         ) : null}
@@ -337,15 +338,17 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               haptics.selection();
               router.push(`/transaction/${txRecordId ?? transactionId}` as Href);
             }}
-            className='min-h-11 border flex-row items-center justify-center gap-2'
-            style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [
+              styles.linkBtn,
+              { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+            ]}
           >
             <Icon
               name='activity'
               size={16}
               color={colors.foreground}
             />
-            <Text className='font-sans-semibold text-[15px] text-foreground'>View transaction</Text>
+            <Text style={[styles.linkLabel, { color: colors.foreground }]}>View transaction</Text>
           </Pressable>
         ) : null}
       </View>
@@ -357,18 +360,17 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
 function Row({
   label,
   value,
-  colors: _colors,
+  colors,
 }: {
   label: string;
   value: string;
   colors: { foreground: string; mutedForeground: string };
 }) {
   return (
-    <View className='gap-0.5'>
-      <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
+    <View style={styles.row}>
+      <Text style={[styles.rowLabel, { color: colors.mutedForeground }]}>{label}</Text>
       <Text
-        className='font-sans-medium text-[16px] tracking-[-0.2px] text-foreground'
-
+        style={[styles.rowValue, { color: colors.foreground }]}
         numberOfLines={2}
       >
         {value}
@@ -377,17 +379,131 @@ function Row({
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   card: {
+    width: '100%',
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
+    gap: 14,
+    marginVertical: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+    gap: 2,
+  },
+  eyebrow: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  amount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
+    fontWeight: '600',
+    letterSpacing: -0.5,
   },
   sourcePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: Radius.pill,
   },
+  sourceText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    width: '100%',
+  },
+  rows: {
+    gap: 10,
+  },
+  row: {
+    gap: 2,
+  },
+  rowLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  rowValue: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
   btn: {
+    flex: 1,
+    minHeight: 46,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnGhost: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  btnPrimary: {},
+  btnLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  paymentNotice: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  steps: {
+    gap: 10,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  stepDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
   },
   linkBtn: {
+    minHeight: 44,
     borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-} as const;
+  linkLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

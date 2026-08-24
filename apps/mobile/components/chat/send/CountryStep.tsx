@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -39,7 +39,7 @@ export function CountryStep({
   const popular = SEND_CORRIDORS.filter((c) => POPULAR.includes(c.code));
 
   return (
-    <View className='gap-3'>
+    <View style={styles.block}>
       <WizardStepHeader
         step={step}
         total={total}
@@ -51,14 +51,19 @@ export function CountryStep({
         onChangeText={onQueryChange}
         placeholder='Search countries'
         placeholderTextColor={colors.mutedForeground}
-        className='font-sans-medium border rounded-[12px] px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
+        style={[
+          styles.input,
+          {
+            color: colors.foreground,
+            borderColor: colors.border,
+            backgroundColor: colors.background,
+          },
+        ]}
       />
       {!q ? (
         <>
-          <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase mt-1 text-muted-foreground'>
-            Popular
-          </Text>
-          <View className='flex-row flex-wrap gap-2'>
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Popular</Text>
+          <View style={styles.chips}>
             {popular.map((c) => (
               <WizardChip
                 key={c.code}
@@ -89,10 +94,10 @@ export function CountryStep({
           </View>
         </>
       ) : null}
-      <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase mt-1 text-muted-foreground'>
+      <Text style={[styles.section, { color: colors.mutedForeground }]}>
         {q ? 'Results' : 'All corridors'}
       </Text>
-      <View className='flex-row flex-wrap gap-2'>
+      <View style={styles.chips}>
         {filtered.map((c) => (
           <WizardChip
             key={c.code}
@@ -112,3 +117,25 @@ export function CountryStep({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  block: { gap: 12 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  section: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+});

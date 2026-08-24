@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 
 import { useChangePasscode } from '@/components/passcode/use-change-passcode';
 import {
@@ -10,6 +10,7 @@ import {
   SettingsSwitchRow,
 } from '@/components/settings/SettingsPrimitives';
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 import { confirmBiometricEnable, getBiometricAvailability } from '@/lib/biometrics';
 import { haptics } from '@/lib/haptics';
 import { hasPasscode } from '@/lib/passcode-storage';
@@ -34,6 +35,7 @@ function relativeTime(iso: string): string {
 export default function SecuritySettingsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ changePasscode?: string }>();
+  const { colors } = useTheme();
   const { settings, loading, update, refresh, t } = useSettings();
   const { requestChange, modal: passcodeModal } = useChangePasscode();
   const [hasPin, setHasPin] = useState(false);
@@ -102,7 +104,7 @@ export default function SecuritySettingsScreen() {
     <>
       <SettingsScreen
         loading={loading}
-        contentStyle={{ gap: 22 }}
+        contentStyle={styles.content}
       >
         <SettingsSection footer={t('sec_footer_passcode')}>
           <SettingsRow
@@ -143,7 +145,7 @@ export default function SecuritySettingsScreen() {
               }
               right={
                 device.current ? (
-                  <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
+                  <Text style={[styles.currentPill, { color: colors.mutedForeground }]}>
                     {t('sec_current')}
                   </Text>
                 ) : undefined
@@ -156,3 +158,14 @@ export default function SecuritySettingsScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    gap: 22,
+  },
+  currentPill: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+});

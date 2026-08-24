@@ -1,12 +1,13 @@
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
 import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { subscribeVirtualCardIssuance } from '@/lib/virtual-cards-storage';
@@ -25,19 +26,19 @@ export function VirtualCardIssuedPopup() {
       animationType='fade'
       onRequestClose={() => setCard(null)}
     >
-      <View className='flex-1 justify-center bg-black/[0.52] p-5'>
+      <View style={styles.backdrop}>
         {card ? (
-          <View className='w-full max-w-[440px] gap-[18px] self-center rounded-2xl bg-background p-5'>
-            <View className='items-center gap-2'>
-              <View className='h-[52px] w-[52px] items-center justify-center rounded-full bg-foreground'>
+          <View style={[styles.popup, { backgroundColor: colors.background }]}>
+            <View style={styles.copy}>
+              <View style={[styles.successIcon, { backgroundColor: colors.foreground }]}>
                 <Icon
                   name='check'
                   size={24}
                   color={colors.background}
                 />
               </View>
-              <Text className='font-sans-semibold text-2xl text-foreground'>Card ready</Text>
-              <Text className='text-center font-sans text-[15px] leading-[21px] text-muted-foreground'>
+              <Text style={[styles.title, { color: colors.foreground }]}>Card ready</Text>
+              <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
                 Your {card.label.toLowerCase()} card is ready. Open Cards to reveal its details.
               </Text>
             </View>
@@ -52,9 +53,12 @@ export function VirtualCardIssuedPopup() {
                 setCard(null);
                 router.push('/cards' as Href);
               }}
-              className='min-h-[54px] items-center justify-center rounded-full bg-foreground px-[18px] active:opacity-75'
+              style={({ pressed }) => [
+                styles.button,
+                { backgroundColor: colors.foreground, opacity: pressed ? 0.76 : 1 },
+              ]}
             >
-              <Text className='font-sans-semibold text-base text-background'>View cards</Text>
+              <Text style={[styles.buttonText, { color: colors.background }]}>View cards</Text>
             </Pressable>
           </View>
         ) : null}
@@ -62,3 +66,43 @@ export function VirtualCardIssuedPopup() {
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
+  popup: {
+    borderRadius: Radius.card,
+    padding: 20,
+    gap: 18,
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  copy: { alignItems: 'center', gap: 8 },
+  successIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: { fontFamily: 'DMSans_600SemiBold', fontSize: 24, letterSpacing: -0.5 },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  button: {
+    borderRadius: Radius.pill,
+    minHeight: 54,
+    paddingHorizontal: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonText: { fontFamily: 'DMSans_600SemiBold', fontSize: 16 },
+});

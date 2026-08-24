@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Share, View } from 'react-native';
+import { Pressable, Share, StyleSheet, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -165,19 +165,16 @@ export function FundAccountWizard({
   })();
 
   return (
-    <View
-      className='my-2 border p-3.5 gap-3 max-w-[420px] self-stretch bg-composer border-border'
-      style={[styles.card]}
-    >
+    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
       {step === 'source' ? (
-        <View className='gap-3'>
+        <View style={styles.block}>
           <WizardStepHeader
             step={stepMeta.step}
             total={stepMeta.total}
             title='Add money'
             subtitle='Pick how funds should reach your Finora wallet'
           />
-          <View className='gap-2'>
+          <View style={styles.sourceList}>
             {allSources.map((s) => {
               const copy = FUNDING_SOURCE_COPY[s];
               const icon = s === 'bank' ? 'bank' : s === 'crypto' ? 'wallet' : 'phone';
@@ -212,8 +209,8 @@ export function FundAccountWizard({
                       setStep('details');
                     }
                   }}
-                  className='flex-row items-center gap-3 p-3 border'
                   style={({ pressed }) => [
+                    styles.sourceRow,
                     {
                       borderColor: colors.border,
                       backgroundColor: colors.background,
@@ -221,7 +218,7 @@ export function FundAccountWizard({
                     },
                   ]}
                 >
-                  <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+                  <View style={[styles.sourceIcon, { backgroundColor: colors.muted }]}>
                     <Icon
                       name={icon}
                       size={16}
@@ -229,8 +226,10 @@ export function FundAccountWizard({
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text className='text-[16px] font-semibold text-foreground'>{copy.label}</Text>
-                    <Text className='text-[13px] font-medium mt-0.5 leading-[16px] text-muted-foreground'>
+                    <Text style={[styles.sourceTitle, { color: colors.foreground }]}>
+                      {copy.label}
+                    </Text>
+                    <Text style={[styles.sourceBlurb, { color: colors.mutedForeground }]}>
                       {copy.blurb}
                     </Text>
                   </View>
@@ -239,15 +238,13 @@ export function FundAccountWizard({
             })}
           </View>
           <Pressable onPress={onCancelled}>
-            <Text className='text-center font-semibold text-[15px] text-muted-foreground'>
-              Cancel
-            </Text>
+            <Text style={[styles.cancel, { color: colors.mutedForeground }]}>Cancel</Text>
           </Pressable>
         </View>
       ) : null}
 
       {step === 'method' && (source === 'bank' || source === 'crypto') ? (
-        <View className='gap-3'>
+        <View style={styles.block}>
           <WizardStepHeader
             step={stepMeta.step}
             total={stepMeta.total}
@@ -258,7 +255,7 @@ export function FundAccountWizard({
                 : 'Each virtual account credits its matching wallet'
             }
           />
-          <View className='flex-row flex-wrap gap-2'>
+          <View style={styles.chips}>
             {(source === 'crypto' ? methodsForSource('crypto') : bankMethods).map((m) => (
               <WizardChip
                 key={m.id}
@@ -285,17 +282,14 @@ export function FundAccountWizard({
       ) : null}
 
       {step === 'details' && method ? (
-        <View className='gap-3'>
+        <View style={styles.block}>
           <WizardStepHeader
             step={stepMeta.step}
             total={stepMeta.total}
             title={method.title}
             subtitle={method.subtitle}
           />
-          <View
-            className='self-center p-2.5'
-            style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
-          >
+          <View style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}>
             <MockQrCode
               value={method.qrPayload}
               size={140}
@@ -309,23 +303,22 @@ export function FundAccountWizard({
               }
             />
           </View>
-          <View className='gap-2'>
+          <View style={styles.fields}>
             {method.fields.map((field) => {
               const key = field.label;
               const copied = copiedKey === key;
               return (
                 <View
                   key={key}
-                  className='flex-row items-center gap-2.5 border px-3 py-2.5 border-border'
-                  style={[styles.field]}
+                  style={[styles.field, { borderColor: colors.border }]}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text className='text-[12px] font-semibold mb-0.5 text-muted-foreground'>
+                    <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
                       {field.label}
                     </Text>
                     <Text
                       selectable
-                      className='text-[15px] font-medium text-foreground'
+                      style={[styles.fieldValue, { color: colors.foreground }]}
                     >
                       {field.value}
                     </Text>
@@ -334,7 +327,7 @@ export function FundAccountWizard({
                     <Pressable
                       hitSlop={8}
                       onPress={() => void copyValue(field.value, key)}
-                      className='w-[34px] h-[34px] rounded-[17px] items-center justify-center bg-muted'
+                      style={[styles.copyBtn, { backgroundColor: colors.muted }]}
                     >
                       <Icon
                         name={copied ? 'check' : 'copy'}
@@ -347,17 +340,19 @@ export function FundAccountWizard({
               );
             })}
           </View>
-          <Text className='text-[13px] font-medium leading-[17px] text-muted-foreground'>
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
             Send from your {source === 'crypto' ? 'wallet' : 'bank or app'} using these details.
             We’ll credit you when it lands.
           </Text>
-          <View className='flex-row gap-2.5'>
+          <View style={styles.actions}>
             <Pressable
               onPress={() => void shareMethod(method)}
-              className='flex-1 min-h-[46px] border items-center justify-center'
-              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+              ]}
             >
-              <Text className='text-[16px] font-semibold text-foreground'>Share</Text>
+              <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share</Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -365,12 +360,12 @@ export function FundAccountWizard({
                 setAmount(null);
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
+                styles.primaryBtn,
                 { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text className='text-[16px] font-semibold text-background'>I’ve sent it</Text>
+              <Text style={[styles.primaryLabel, { color: colors.background }]}>I’ve sent it</Text>
             </Pressable>
           </View>
           <NavBack
@@ -387,17 +382,15 @@ export function FundAccountWizard({
       ) : null}
 
       {step === 'momo_pull' ? (
-        <View className='gap-3'>
+        <View style={styles.block}>
           <WizardStepHeader
             step={stepMeta.step}
             total={stepMeta.total}
             title='Charge mobile money'
             subtitle='We’ll send a prompt to your phone — approve to fund GHS'
           />
-          <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
-            Network
-          </Text>
-          <View className='flex-row flex-wrap gap-2'>
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Network</Text>
+          <View style={styles.chips}>
             {['MTN', 'VODAFONE', 'TELECEL'].map((n) => (
               <WizardChip
                 key={n}
@@ -407,22 +400,24 @@ export function FundAccountWizard({
               />
             ))}
           </View>
-          <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
-            Phone
-          </Text>
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Phone</Text>
           <TextInput
             value={phone}
             onChangeText={setPhone}
             keyboardType='phone-pad'
             placeholder='0550123456'
             placeholderTextColor={colors.mutedForeground}
-            className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
-            style={[styles.input]}
+            style={[
+              styles.input,
+              {
+                color: colors.foreground,
+                borderColor: colors.border,
+                backgroundColor: colors.background,
+              },
+            ]}
           />
-          <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
-            Amount (GHS)
-          </Text>
-          <View className='flex-row flex-wrap gap-2'>
+          <Text style={[styles.section, { color: colors.mutedForeground }]}>Amount (GHS)</Text>
+          <View style={styles.chips}>
             {PULL_AMOUNTS.map((n) => (
               <WizardChip
                 key={n}
@@ -444,16 +439,24 @@ export function FundAccountWizard({
             keyboardType='decimal-pad'
             placeholder='Custom amount'
             placeholderTextColor={colors.mutedForeground}
-            className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
-            style={[styles.input]}
+            style={[
+              styles.input,
+              {
+                color: colors.foreground,
+                borderColor: colors.border,
+                backgroundColor: colors.background,
+              },
+            ]}
           />
-          <View className='flex-row gap-2.5'>
+          <View style={styles.actions}>
             <Pressable
               onPress={() => setStep('source')}
-              className='flex-1 min-h-[46px] border items-center justify-center'
-              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+              ]}
             >
-              <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+              <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Back</Text>
             </Pressable>
             <Pressable
               disabled={
@@ -470,8 +473,8 @@ export function FundAccountWizard({
                 }
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
+                styles.primaryBtn,
                 {
                   backgroundColor: colors.foreground,
                   opacity:
@@ -484,14 +487,14 @@ export function FundAccountWizard({
                 },
               ]}
             >
-              <Text className='text-[16px] font-semibold text-background'>Send prompt</Text>
+              <Text style={[styles.primaryLabel, { color: colors.background }]}>Send prompt</Text>
             </Pressable>
           </View>
         </View>
       ) : null}
 
       {step === 'waiting' ? (
-        <View className='gap-3'>
+        <View style={styles.block}>
           <WizardStepHeader
             step={stepMeta.step}
             total={stepMeta.total}
@@ -502,9 +505,9 @@ export function FundAccountWizard({
                 : `Watching ${method?.currency ?? ''} · usually lands in seconds to a day`
             }
           />
-          <View className='items-center gap-3 py-6'>
+          <View style={styles.waitingBox}>
             <LoadingIcon color={colors.foreground} />
-            <Text className='text-[14px] font-medium text-muted-foreground'>
+            <Text style={[styles.waitingText, { color: colors.mutedForeground }]}>
               {source === 'momo_pull' ? 'Collection pending…' : 'Listening for an inbound credit…'}
             </Text>
           </View>
@@ -512,25 +515,23 @@ export function FundAccountWizard({
       ) : null}
 
       {step === 'credited' && method && creditAmount != null ? (
-        <View className='gap-3'>
-          <View className='w-12 h-12 rounded-[24px] items-center justify-center self-center bg-muted'>
+        <View style={styles.block}>
+          <View style={[styles.successIcon, { backgroundColor: colors.muted }]}>
             <Icon
               name='check'
               size={22}
               color={colors.foreground}
             />
           </View>
-          <Text className='font-sans-semibold text-center text-[14px] tracking-[0.2px] uppercase text-foreground'>
-            Funds received
-          </Text>
-          <Text className='font-sans-semibold text-center text-[29px] tracking-[-0.5px] text-foreground'>
+          <Text style={[styles.successTitle, { color: colors.foreground }]}>Funds received</Text>
+          <Text style={[styles.successAmount, { color: colors.foreground }]}>
             {formatPaymentAmount(creditAmount, method.currency)}
           </Text>
-          <Text className='text-[13px] font-medium leading-[17px] text-muted-foreground'>
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
             Added to your {method.currency} wallet
             {transactionId ? ` · ${transactionId}` : ''}
           </Text>
-          <Text className='text-[13px] font-medium leading-[17px] text-muted-foreground'>
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
             You can send, convert, or hold it — say “send …” when you’re ready.
           </Text>
         </View>
@@ -549,37 +550,140 @@ function NavBack({
   return (
     <Pressable
       onPress={onBack}
-      className='min-h-10 border items-center justify-center'
-      style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+      style={({ pressed }) => [
+        styles.backOnly,
+        { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
+      ]}
     >
-      <Text className='font-semibold text-[15px] text-foreground'>Back</Text>
+      <Text style={{ color: colors.foreground, fontWeight: '600', fontSize: 15 }}>Back</Text>
     </Pressable>
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   card: {
+    marginVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
+    padding: 14,
+    gap: 12,
+    maxWidth: 420,
+    alignSelf: 'stretch',
   },
+  block: { gap: 12 },
+  sourceList: { gap: 8 },
   sourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
     borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  sourceIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sourceTitle: { fontSize: 16, fontWeight: '600' },
+  sourceBlurb: { fontSize: 13, fontWeight: '500', marginTop: 2, lineHeight: 16 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  section: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   qrWrap: {
+    alignSelf: 'center',
+    padding: 10,
     borderRadius: Radius.lg,
   },
+  fields: { gap: 8 },
   field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
+  fieldLabel: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
+  fieldValue: { fontSize: 15, fontWeight: '500' },
+  copyBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hint: { fontSize: 13, fontWeight: '500', lineHeight: 17 },
+  actions: { flexDirection: 'row', gap: 10 },
   primaryBtn: {
+    flex: 1.4,
+    minHeight: 46,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   secondaryBtn: {
+    flex: 1,
+    minHeight: 46,
     borderRadius: Radius.composer,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  primaryLabel: { fontSize: 16, fontWeight: '600' },
+  secondaryLabel: { fontSize: 16, fontWeight: '600' },
   input: {
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
   },
+  waitingBox: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 24,
+  },
+  waitingText: { fontSize: 14, fontWeight: '500' },
+  successIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  successTitle: {
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  successAmount: {
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  cancel: { textAlign: 'center', fontWeight: '600', fontSize: 15 },
   backOnly: {
+    minHeight: 40,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-};
+});

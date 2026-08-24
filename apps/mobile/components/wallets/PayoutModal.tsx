@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Platform, Pressable, ScrollView, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -29,7 +30,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
     if (!sendAmount || !sendRecipient) return;
     haptics.impact();
     const amountNum = parseFloat(sendAmount);
-    const sourceWallet = wallets.find((wallet) => wallet.id === sendWalletId);
+    const sourceWallet = wallets.find((w) => w.id === sendWalletId);
 
     if (!sourceWallet || sourceWallet.balance < amountNum) {
       alert('Insufficient wallet balance.');
@@ -51,10 +52,10 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
       visible={visible}
       onClose={onClose}
       keyboardAvoiding
-      style={{ paddingHorizontal: 20, gap: 16 }}
+      style={styles.sheet}
     >
-      <View className='flex-row items-center justify-between'>
-        <Text className='font-sans-semibold text-lg text-foreground'>Send Payout</Text>
+      <View style={styles.sheetHeader}>
+        <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Send Payout</Text>
         <Pressable
           onPress={onClose}
           hitSlop={8}
@@ -73,54 +74,59 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
         showsVerticalScrollIndicator={false}
       >
         {sendSuccess ? (
-          <View className='items-center gap-2 py-5'>
+          <View style={styles.successState}>
             <Icon
               name='check'
               size={36}
               color={colors.foreground}
             />
-            <Text className='font-sans-semibold text-lg text-foreground'>Payout Submitted</Text>
-            <Text className='text-center font-sans text-sm text-muted-foreground'>
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>
+              Payout Submitted
+            </Text>
+            <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               Sent ${sendAmount} via WeWire infrastructure. Policy verified.
             </Text>
           </View>
         ) : (
-          <View className='gap-3.5'>
-            <Text className='mb-1 font-sans-medium text-[13px] text-muted-foreground'>
-              Source Wallet
-            </Text>
+          <View style={{ gap: 14 }}>
+            <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>Source Wallet</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
             >
-              <View className='flex-row gap-2'>
-                {wallets.map((wallet) => {
-                  const selected = sendWalletId === wallet.id;
-                  return (
-                    <Pressable
-                      key={`send-src-${wallet.id}`}
-                      onPress={() => setSendWalletId(wallet.id)}
-                      className='flex-row items-center gap-1.5 rounded-full px-2.5 py-1.5'
-                      style={{ backgroundColor: selected ? colors.foreground : colors.muted }}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {wallets.map((w) => (
+                  <Pressable
+                    key={`send-src-${w.id}`}
+                    onPress={() => setSendWalletId(w.id)}
+                    style={[
+                      styles.walletChip,
+                      {
+                        backgroundColor: sendWalletId === w.id ? colors.foreground : colors.muted,
+                      },
+                    ]}
+                  >
+                    <CurrencyIcon
+                      currency={w.currency}
+                      size={18}
+                    />
+                    <Text
+                      style={[
+                        styles.walletChipText,
+                        {
+                          color: sendWalletId === w.id ? colors.background : colors.foreground,
+                        },
+                      ]}
                     >
-                      <CurrencyIcon
-                        currency={wallet.currency}
-                        size={18}
-                      />
-                      <Text
-                        className='font-sans-semibold text-[13px]'
-                        style={{ color: selected ? colors.background : colors.foreground }}
-                      >
-                        {wallet.currency}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                      {w.currency}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             </ScrollView>
 
             <View>
-              <Text className='mb-1 font-sans-medium text-[13px] text-muted-foreground'>
+              <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>
                 Recipient (IBAN / MoMo / Address)
               </Text>
               <TextInput
@@ -128,29 +134,45 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 onChangeText={setSendRecipient}
                 placeholder='e.g. GB82 CLRB ... or +233 24 ...'
                 placeholderTextColor={colors.mutedForeground}
-                className='rounded-xl border border-border bg-muted px-3 py-2.5 font-sans text-base text-foreground'
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: colors.muted,
+                    borderColor: colors.border,
+                    color: colors.foreground,
+                  },
+                ]}
               />
             </View>
 
             <View>
-              <Text className='mb-1 font-sans-medium text-[13px] text-muted-foreground'>
-                Amount
-              </Text>
+              <Text style={[styles.formLabel, { color: colors.mutedForeground }]}>Amount</Text>
               <TextInput
                 value={sendAmount}
                 onChangeText={setSendAmount}
                 placeholder='0.00'
                 keyboardType='numeric'
                 placeholderTextColor={colors.mutedForeground}
-                className='rounded-xl border border-border bg-muted px-3 py-2.5 font-sans text-base text-foreground'
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: colors.muted,
+                    borderColor: colors.border,
+                    color: colors.foreground,
+                  },
+                ]}
               />
             </View>
 
             <Pressable
               onPress={handleExecuteSend}
-              className='mt-3 flex-row items-center justify-center gap-1.5 rounded-full bg-foreground py-3 active:opacity-80'
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { backgroundColor: colors.foreground },
+                pressed && styles.pressed,
+              ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-background'>
+              <Text style={[styles.primaryBtnText, { color: colors.background }]}>
                 Confirm & Send Payout
               </Text>
             </Pressable>
@@ -160,3 +182,79 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
     </SheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  sheet: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sheetTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  formLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  textInput: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+  },
+  walletChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+  },
+  walletChipText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: Radius.pill,
+    marginTop: 12,
+  },
+  primaryBtnText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  successState: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    gap: 8,
+  },
+  successTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  successSub: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+});

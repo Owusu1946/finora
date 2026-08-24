@@ -2,11 +2,12 @@ import { useAui } from '@assistant-ui/react-native';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { listExpenses, type BusinessExpense } from '@/lib/expenses-storage';
@@ -28,11 +29,9 @@ export default function ExpensesScreen() {
 
   if (!isBusinessAccount()) {
     return (
-      <View className='flex-1 bg-background px-5 pt-4'>
-        <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
-          Expenses
-        </Text>
-        <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <Text style={[styles.title, { color: colors.foreground }]}>Expenses</Text>
+        <Text style={[styles.sub, { color: colors.mutedForeground }]}>
           Business expenses are available on Business accounts.
         </Text>
       </View>
@@ -41,7 +40,7 @@ export default function ExpensesScreen() {
 
   if (!items) {
     return (
-      <View className='flex-1 bg-background'>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
         <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
@@ -56,15 +55,13 @@ export default function ExpensesScreen() {
       keyExtractor={(item) => item.id}
       recycleItems
       showsVerticalScrollIndicator={false}
-      className='flex-1 bg-background'
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
+      style={[styles.root, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior='automatic'
       ListHeaderComponent={
-        <View className='gap-2.5 pb-2.5'>
-          <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
-            Expenses
-          </Text>
-          <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Expenses</Text>
+          <Text style={[styles.sub, { color: colors.mutedForeground }]}>
             Card and vendor spend this month · {formatPaymentAmount(total, 'USD')}
           </Text>
           <Pressable
@@ -74,24 +71,28 @@ export default function ExpensesScreen() {
               aui.composer.setText('Show business expenses this month');
               aui.composer.send();
             }}
-            className='mb-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
-            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+            style={({ pressed }) => [
+              styles.btn,
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+            ]}
           >
-            <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>
+            <Text style={[styles.btnLabel, { color: colors.background }]}>Review in chat</Text>
           </Pressable>
         </View>
       }
-      ItemSeparatorComponent={() => <View className='h-2.5' />}
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
       renderItem={({ item: e }) => (
-        <View className='flex-row items-center gap-2.5 rounded-[26px] border border-border bg-composer p-3.5'>
-          <View className='min-w-0 flex-1 gap-0.5'>
-            <Text className='font-sans-semibold text-base text-foreground'>{e.merchant}</Text>
-            <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+        <View
+          style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
+        >
+          <View style={styles.flex}>
+            <Text style={[styles.name, { color: colors.foreground }]}>{e.merchant}</Text>
+            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
               {e.category}
               {e.cardLabel ? ` · ${e.cardLabel}` : ''}
             </Text>
           </View>
-          <Text className='font-sans-semibold text-[15px] text-foreground'>
+          <Text style={[styles.amount, { color: colors.foreground }]}>
             {formatPaymentAmount(e.amount, e.currency)}
           </Text>
         </View>
@@ -99,3 +100,39 @@ export default function ExpensesScreen() {
     />
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+  header: { gap: 10, paddingBottom: 10 },
+  itemSeparator: { height: 10 },
+  title: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '600', letterSpacing: -0.4 },
+  sub: {
+    marginTop: -4,
+    marginBottom: 6,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  btn: {
+    minHeight: 46,
+    borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  btnLabel: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
+  row: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.card,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  flex: { flex: 1, gap: 2, minWidth: 0 },
+  name: { fontFamily: 'DMSans_400Regular', fontSize: 16, fontWeight: '600' },
+  meta: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500' },
+  amount: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
+});

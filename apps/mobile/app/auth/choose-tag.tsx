@@ -1,17 +1,17 @@
 import { useAuth, useUser } from '@clerk/expo';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthGate } from '@/lib/auth-gate';
 import { clearPendingAuthProfile, getPendingAuthProfile } from '@/lib/auth-profile';
 import { setTagConfigured } from '@/lib/auth-storage';
-import { cx } from '@/lib/cx';
 import {
   checkFinoraTagAvailability,
   registerCurrentUserFinoraTag,
@@ -153,29 +153,27 @@ export default function ChooseTagScreen() {
         />
       }
     >
-      <View className='mb-1 gap-2.5'>
-        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
-          Choose your Finora tag
-        </Text>
-        <Text className='font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.foreground }]}>Choose your Finora tag</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           {pending?.name ? `${pending.name}, pick` : 'Pick'} a unique @name so others can send you
           money instantly.
         </Text>
       </View>
 
-      <View className='gap-2'>
-        <Text className='font-sans-medium text-sm tracking-[-0.1px] text-muted-foreground'>
-          Finora tag
-        </Text>
+      <View style={styles.form}>
+        <Text style={[styles.label, { color: colors.mutedForeground }]}>Finora tag</Text>
         <View
-          className={cx(
-            'min-h-[54px] flex-row items-center gap-1 rounded-full border bg-composer px-4 py-[15px]',
-            submitError || hint.tone === 'error' ? 'border-destructive' : 'border-border',
-          )}
+          style={[
+            styles.field,
+            {
+              backgroundColor: colors.composer,
+              borderColor:
+                submitError || hint.tone === 'error' ? colors.destructive : colors.border,
+            },
+          ]}
         >
-          <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
-            @
-          </Text>
+          <Text style={[styles.prefix, { color: colors.foreground }]}>@</Text>
           <TextInput
             value={tagInput}
             onChangeText={(text) => {
@@ -188,7 +186,7 @@ export default function ChooseTagScreen() {
             textContentType='username'
             placeholder='yourname'
             placeholderTextColor={colors.mutedForeground}
-            className='flex-1 font-sans py-0 text-[17px] tracking-[-0.2px] text-foreground'
+            style={[styles.input, { color: colors.foreground }]}
           />
           {availability.ok ? (
             <Icon
@@ -200,14 +198,17 @@ export default function ChooseTagScreen() {
         </View>
 
         <Text
-          className={cx(
-            'font-sans-medium text-[13px] leading-[18px]',
-            hint.tone === 'error'
-              ? 'text-destructive'
-              : hint.tone === 'ok'
-                ? 'text-foreground'
-                : 'text-muted-foreground',
-          )}
+          style={[
+            styles.hint,
+            {
+              color:
+                hint.tone === 'error'
+                  ? colors.destructive
+                  : hint.tone === 'ok'
+                    ? colors.foreground
+                    : colors.mutedForeground,
+            },
+          ]}
         >
           {submitError ?? hint.text}
         </Text>
@@ -215,3 +216,61 @@ export default function ChooseTagScreen() {
     </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    gap: 10,
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    lineHeight: 23,
+  },
+  form: {
+    gap: 8,
+  },
+  label: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.composer,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    minHeight: 54,
+  },
+  prefix: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  input: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    letterSpacing: -0.2,
+    paddingVertical: 0,
+  },
+  hint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+});

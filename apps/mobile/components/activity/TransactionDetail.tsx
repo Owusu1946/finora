@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Transaction } from '@/components/activity/types';
 
@@ -8,8 +8,8 @@ import { TransactionTimeline } from '@/components/activity/TransactionTimeline';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 function formatAmount(symbol: string, amount: number): string {
@@ -61,42 +61,34 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
 
   return (
     <ScrollView
-      className='flex-1 bg-background'
-      contentContainerClassName='gap-3.5 px-5 pb-10 pt-2'
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View className='items-center gap-2 py-4'>
+      <View style={styles.hero}>
         <CurrencyIcon
           currency={tx.direction === 'swap' && tx.toCurrency ? tx.toCurrency : tx.currency}
           size={48}
         />
-        <Text className='font-sans-semibold text-[33px] text-foreground'>{headline}</Text>
-        <Text className='font-sans-medium text-base text-muted-foreground'>
+        <Text style={[styles.amount, { color: colors.foreground }]}>{headline}</Text>
+        <Text style={[styles.counterparty, { color: colors.mutedForeground }]}>
           {tx.direction === 'swap'
             ? `${formatAmount(tx.symbol, tx.amount)} → ${tx.toCurrency}`
             : tx.counterparty}
         </Text>
-        <View className='mt-1 flex-row items-center gap-1.5 rounded-full bg-muted px-3 py-1.5'>
-          <View
-            className='h-1.5 w-1.5 rounded-full'
-            style={{ backgroundColor: STATUS_COLOR[tx.status] }}
-          />
-          <Text
-            className='font-sans-semibold text-[13px] capitalize'
-            style={{ color: STATUS_COLOR[tx.status] }}
-          >
-            {tx.status}
-          </Text>
+        <View style={[styles.statusPill, { backgroundColor: colors.muted }]}>
+          <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[tx.status] }]} />
+          <Text style={[styles.statusText, { color: STATUS_COLOR[tx.status] }]}>{tx.status}</Text>
         </View>
       </View>
 
-      <View className='gap-3 rounded-2xl border border-border bg-composer p-4'>
-        <Text className='mb-0.5 font-sans-semibold text-base text-foreground'>Status</Text>
+      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Status</Text>
         <TransactionTimeline steps={tx.timeline ?? []} />
       </View>
 
-      <View className='gap-3 rounded-2xl border border-border bg-composer p-4'>
-        <Text className='mb-0.5 font-sans-semibold text-base text-foreground'>Details</Text>
+      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Details</Text>
         <DetailRow
           label='Rail'
           value={tx.rail ?? tx.method}
@@ -160,8 +152,8 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
       </View>
 
       {toast ? (
-        <View className='mt-2 self-center rounded-full bg-foreground px-3.5 py-2'>
-          <Text className='font-sans-semibold text-sm text-background'>{toast}</Text>
+        <View style={[styles.toast, { backgroundColor: colors.foreground }]}>
+          <Text style={[styles.toastText, { color: colors.background }]}>{toast}</Text>
         </View>
       ) : null}
     </ScrollView>
@@ -182,19 +174,16 @@ function DetailRow({
   onCopy?: () => void;
 }) {
   return (
-    <View className='gap-1 border-t border-border pt-3'>
-      <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
+    <View style={[styles.detailRow, { borderTopColor: colors.border }]}>
+      <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>{label}</Text>
       <Pressable
         disabled={!onCopy}
         onPress={onCopy}
-        className='flex-row items-center gap-2'
+        style={styles.detailValueWrap}
       >
         <Text
           selectable
-          className={cx(
-            'flex-1 font-sans-medium text-base text-foreground',
-            mono && 'tabular-nums',
-          )}
+          style={[styles.detailValue, mono && styles.mono, { color: colors.foreground }]}
           numberOfLines={2}
         >
           {value}
@@ -210,3 +199,99 @@ function DetailRow({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 40,
+    gap: 14,
+  },
+  hero: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
+  amount: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 33,
+    fontWeight: '600',
+    letterSpacing: -0.8,
+  },
+  counterparty: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.pill,
+    marginTop: 4,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.card,
+    padding: 16,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    marginBottom: 2,
+  },
+  detailRow: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 12,
+    gap: 4,
+  },
+  detailLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  detailValueWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailValue: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 16,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+  },
+  mono: {
+    fontVariant: ['tabular-nums'],
+  },
+  toast: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: Radius.pill,
+    marginTop: 8,
+  },
+  toastText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});

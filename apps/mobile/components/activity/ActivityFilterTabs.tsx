@@ -1,7 +1,7 @@
-import { View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { AppText as Text } from '@/components/ui/text';
-import { cx } from '@/lib/cx';
+import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
 import type { ActivityFilter } from './types';
@@ -19,8 +19,10 @@ interface ActivityFilterTabsProps {
 }
 
 export function ActivityFilterTabs({ filter, onSelectFilter }: ActivityFilterTabsProps) {
+  const { colors } = useTheme();
+
   return (
-    <View className='flex-row gap-4 border-b border-white/15 pb-1'>
+    <View style={styles.bar}>
       {TABS.map((t) => {
         const active = filter === t.key;
         return (
@@ -32,15 +34,14 @@ export function ActivityFilterTabs({ filter, onSelectFilter }: ActivityFilterTab
               haptics.selection();
               onSelectFilter(t.key);
             }}
-            className={cx('border-b-2 border-transparent pb-2 pt-2', active && 'border-foreground')}
+            style={[styles.tab, active && { borderBottomColor: colors.foreground }]}
           >
             <Text
-              className={cx(
-                'font-sans text-[15px]',
-                active
-                  ? 'font-sans-semibold text-foreground'
-                  : 'font-sans-medium text-muted-foreground',
-              )}
+              style={[
+                styles.label,
+                { color: active ? colors.foreground : colors.mutedForeground },
+                active && styles.labelActive,
+              ]}
             >
               {t.label}
             </Text>
@@ -50,3 +51,26 @@ export function ActivityFilterTabs({ filter, onSelectFilter }: ActivityFilterTab
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    gap: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(150,150,150,0.15)',
+    paddingBottom: 4,
+  },
+  tab: {
+    paddingVertical: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  label: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  labelActive: {
+    fontWeight: '600',
+  },
+});

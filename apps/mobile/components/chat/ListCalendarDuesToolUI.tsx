@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { CalendarMoneyEvent } from '@/lib/calendar-events-storage';
 
@@ -33,11 +33,13 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
     if (status.type === 'running' && !events) {
       return (
         <View
-          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
-          style={[styles.preparing]}
+          style={[
+            styles.preparing,
+            { borderColor: colors.border, backgroundColor: colors.composer },
+          ]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
+          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
             Checking Google Calendar…
           </Text>
         </View>
@@ -47,10 +49,9 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
     if (connected === false) {
       return (
         <View
-          className='my-2 border p-4 border-border bg-composer'
-          style={[styles.empty]}
+          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
+          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
             Google Calendar isn’t connected. Open Integrations to connect it, then ask again.
           </Text>
         </View>
@@ -60,10 +61,9 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
     if (!events?.length) {
       return (
         <View
-          className='my-2 border p-4 border-border bg-composer'
-          style={[styles.empty]}
+          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
         >
-          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
+          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
             No matching upcoming events were found on your calendars.
           </Text>
         </View>
@@ -71,8 +71,8 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
     }
 
     return (
-      <View className='gap-0.5 my-1'>
-        <Text className='font-sans-semibold text-[13px] ml-1 mb-0.5 text-muted-foreground'>
+      <View style={styles.stack}>
+        <Text style={[styles.stackTitle, { color: colors.mutedForeground }]}>
           {events.length} calendar event{events.length === 1 ? '' : 's'}
         </Text>
         {events.map((event) => (
@@ -86,11 +86,43 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = {
+const styles = StyleSheet.create({
   preparing: {
+    marginVertical: 8,
+    minHeight: 72,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+  },
+  preparingText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
   },
   empty: {
+    marginVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
+    padding: 16,
   },
-};
+  emptyText: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  stack: {
+    gap: 2,
+    marginVertical: 4,
+  },
+  stackTitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 4,
+    marginBottom: 2,
+  },
+});

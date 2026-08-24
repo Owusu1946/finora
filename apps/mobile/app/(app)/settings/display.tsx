@@ -1,4 +1,5 @@
-import { Pressable, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Pressable } from 'react-native';
 
 import type { AppLanguage, ThemePreference } from '@/lib/settings-storage';
 
@@ -10,10 +11,11 @@ import {
 } from '@/components/settings/SettingsPrimitives';
 import { ThemePreview } from '@/components/settings/theme-preview';
 import { AppText as Text } from '@/components/ui/text';
-import { cx } from '@/lib/cx';
+import { useTheme } from '@/hooks/use-theme';
 import { useSettings } from '@/lib/settings-context';
 
 export default function AppearanceSettingsScreen() {
+  const { colors } = useTheme();
   const { settings, loading, update, setTheme, setLanguage, setLargerText, t } = useSettings();
 
   const themeOptions: Array<{
@@ -28,8 +30,8 @@ export default function AppearanceSettingsScreen() {
   return (
     <SettingsScreen loading={loading}>
       <SettingsSection title={t('settings_language')}>
-        <View className='gap-2.5 px-3.5 py-3.5'>
-          <Text className='font-sans-medium text-sm leading-[18px] text-muted-foreground'>
+        <View style={styles.segmentPad}>
+          <Text style={[styles.hint, { color: colors.mutedForeground }]}>
             {t('settings_lang_hint')}
           </Text>
           <SettingsSegmented
@@ -58,7 +60,7 @@ export default function AppearanceSettingsScreen() {
         title={t('settings_theme')}
         footer={t('settings_theme_follows')}
       >
-        <View className='flex-row flex-wrap items-start gap-4 px-3.5 py-3.5'>
+        <View style={styles.previewRow}>
           {themeOptions.map((option) => {
             const selected = settings.theme === option.id;
             return (
@@ -67,10 +69,7 @@ export default function AppearanceSettingsScreen() {
                 accessibilityRole='radio'
                 accessibilityLabel={option.label}
                 accessibilityState={{ selected }}
-                className={cx(
-                  'items-center gap-2 overflow-hidden rounded-[14px] border-2 border-transparent p-1',
-                  selected && 'border-primary',
-                )}
+                style={[styles.previewOption, selected && { borderColor: colors.primary }]}
                 onPress={() => {
                   void setTheme(option.id);
                 }}
@@ -79,12 +78,12 @@ export default function AppearanceSettingsScreen() {
                   mode={option.id}
                   width={88}
                 />
-                <View className='items-center'>
+                <View style={styles.previewLabel}>
                   <Text
-                    className={cx(
-                      'font-sans-medium text-[13px]',
-                      selected ? 'text-foreground' : 'text-muted-foreground',
-                    )}
+                    style={[
+                      styles.previewText,
+                      { color: selected ? colors.foreground : colors.mutedForeground },
+                    ]}
                   >
                     {option.label}
                   </Text>
@@ -108,3 +107,41 @@ export default function AppearanceSettingsScreen() {
     </SettingsScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  previewRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  previewOption: {
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    padding: 4,
+    overflow: 'hidden',
+  },
+  previewLabel: {
+    alignItems: 'center',
+  },
+  previewText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  segmentPad: {
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  hint: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+});

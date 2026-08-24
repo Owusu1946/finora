@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Contact, ContactFilter } from '@/components/contacts/types';
 
@@ -10,7 +10,6 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { listContacts } from '@/lib/contacts-storage';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 const FILTERS: { id: ContactFilter; label: string }[] = [
@@ -62,22 +61,20 @@ export default function ContactsScreen() {
   );
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <CollapsibleList
         title='Contacts'
         data={filtered}
         intro={
           <>
-            <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
-              Contacts
-            </Text>
-            <Text className='mb-0 mt-1.5 pb-3.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+            <Text style={[styles.title, { color: colors.foreground }]}>Contacts</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
               Recipients you’ve paid — save more from chat after sending.
             </Text>
           </>
         }
         controls={
-          <View className='flex-row gap-2 pb-2'>
+          <View style={styles.filters}>
             {FILTERS.map((item) => {
               const active = filter === item.id;
               return (
@@ -87,13 +84,18 @@ export default function ContactsScreen() {
                     haptics.selection();
                     setFilter(item.id);
                   }}
-                  className={cx('rounded-full px-3 py-2', active ? 'bg-foreground' : 'bg-muted')}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: active ? colors.foreground : colors.muted,
+                    },
+                  ]}
                 >
                   <Text
-                    className={cx(
-                      'font-sans-semibold text-sm',
-                      active ? 'text-background' : 'text-foreground',
-                    )}
+                    style={[
+                      styles.chipLabel,
+                      { color: active ? colors.background : colors.foreground },
+                    ]}
                   >
                     {item.label}
                   </Text>
@@ -112,7 +114,7 @@ export default function ContactsScreen() {
               color={colors.mutedForeground}
             />
           ) : (
-            <Text className='pt-8 text-center font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+            <Text style={[styles.empty, { color: colors.mutedForeground }]}>
               No contacts yet. Send money in chat, then tap Save contact.
             </Text>
           )
@@ -122,3 +124,46 @@ export default function ContactsScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 25,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    marginTop: 6,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+    paddingBottom: 14,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  chipLabel: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  empty: {
+    paddingTop: 32,
+    textAlign: 'center',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+});

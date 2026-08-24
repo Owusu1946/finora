@@ -21,7 +21,7 @@ import { Redirect, Stack, useSegments, type Href } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
@@ -113,8 +113,7 @@ function StatusBarBackdrop() {
       pointerEvents='none'
       intensity={40}
       tint='systemChromeMaterial'
-      className='absolute inset-x-0 top-0 z-[80] overflow-hidden'
-      style={{ height: top }}
+      style={[styles.statusBarBackdrop, { height: top }]}
     />
   );
 }
@@ -125,15 +124,14 @@ function RootNavigator() {
   const { tagConfigured } = useAuthGate();
   const { locked: passcodeLocked } = usePasscodeGate();
   const { completed: onboardingCompleted } = useOnboardingGate();
-  const [firstSegment, ...remainingSegments] = useSegments();
-  const [secondSegment] = remainingSegments as string[];
+  const segments = useSegments();
   const { isDark, colors } = useTheme();
   const isAuthSubScreen =
-    firstSegment === 'auth' &&
-    (secondSegment === 'add-phone' ||
-      secondSegment === 'create-passcode' ||
-      secondSegment === 'enter-passcode');
-  const isEnterPasscodeScreen = firstSegment === 'auth' && secondSegment === 'enter-passcode';
+    segments[0] === 'auth' &&
+    (String(segments[1]) === 'add-phone' ||
+      String(segments[1]) === 'create-passcode' ||
+      String(segments[1]) === 'enter-passcode');
+  const isEnterPasscodeScreen = segments[0] === 'auth' && String(segments[1]) === 'enter-passcode';
   const requiresPasscode =
     onboardingCompleted && authLoaded && isSignedIn && tagConfigured && passcodeLocked;
   const concealProtectedContent =
@@ -162,7 +160,7 @@ function RootNavigator() {
         <Stack.Screen name='pay/r/[id]' />
       </Stack>
       {!onboardingCompleted ? <Redirect href={'/onboarding' as Href} /> : null}
-      {onboardingCompleted && authLoaded && !isSignedIn && firstSegment !== 'auth' ? (
+      {onboardingCompleted && authLoaded && !isSignedIn && segments[0] !== 'auth' ? (
         <Redirect href={'/auth' as Href} />
       ) : null}
       {onboardingCompleted &&
@@ -182,15 +180,14 @@ function RootNavigator() {
       {onboardingCompleted &&
       isSignedIn &&
       tagConfigured &&
-      firstSegment === 'auth' &&
+      segments[0] === 'auth' &&
       !isAuthSubScreen ? (
         <Redirect href={'/(app)' as Href} />
       ) : null}
       {concealProtectedContent ? (
         <View
           pointerEvents='auto'
-          className='absolute inset-0 z-[90] bg-background'
-          style={{ elevation: 90 }}
+          style={[styles.securityCover, { backgroundColor: colors.background }]}
         />
       ) : null}
       <StatusBar style='auto' />
@@ -423,6 +420,22 @@ function RootApp() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  statusBarBackdrop: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    left: 0,
+    zIndex: 80,
+    overflow: 'hidden',
+  },
+  securityCover: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 90,
+    elevation: 90,
+  },
+});
 
 function ProfileSyncBridge() {
   useProfileSync();

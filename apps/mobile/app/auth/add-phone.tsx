@@ -2,7 +2,7 @@ import { useClerk, useUser } from '@clerk/expo';
 import { normalizeGhanaPhoneNumber } from '@finora/shared';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthField } from '@/components/auth/AuthField';
@@ -10,6 +10,7 @@ import { AUTH_OTP_LENGTH, AuthOtpInput } from '@/components/auth/AuthOtpInput';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthGate } from '@/lib/auth-gate';
 import { haptics } from '@/lib/haptics';
@@ -164,7 +165,7 @@ export default function AddPhoneScreen() {
     <AuthShell
       showBack={Boolean(returnTo)}
       footer={
-        <View className='w-full items-stretch gap-4'>
+        <View style={styles.footer}>
           <AuthButton
             label={step === 'phone' ? 'Send verification code' : 'Verify phone number'}
             onPress={() => void (step === 'phone' ? sendCode() : verifyCode())}
@@ -174,13 +175,13 @@ export default function AddPhoneScreen() {
             }
           />
           {step === 'code' ? (
-            <View className='gap-1'>
+            <View style={styles.codeActions}>
               <Pressable
                 disabled={cooldown > 0 || resending}
                 onPress={() => void resendCode()}
-                className='active:opacity-60'
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
               >
-                <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
+                <Text style={[styles.link, { color: colors.mutedForeground }]}>
                   {cooldown > 0
                     ? `Resend code in ${cooldown}s`
                     : resending
@@ -197,11 +198,9 @@ export default function AddPhoneScreen() {
                   setError(null);
                   setErrorCode(null);
                 }}
-                className='active:opacity-60'
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
               >
-                <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
-                  Change number
-                </Text>
+                <Text style={[styles.link, { color: colors.mutedForeground }]}>Change number</Text>
               </Pressable>
             </View>
           ) : null}
@@ -209,9 +208,9 @@ export default function AddPhoneScreen() {
             <Pressable
               disabled={loading || resending || leaving}
               onPress={() => void returnToSignIn()}
-              className='active:opacity-60'
+              style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
             >
-              <Text className='py-1 text-center font-sans-semibold text-[15px] text-foreground'>
+              <Text style={[styles.signInLink, { color: colors.foreground }]}>
                 {leaving
                   ? 'Returning to sign in…'
                   : errorCode === 'phone_number_in_use'
@@ -223,31 +222,31 @@ export default function AddPhoneScreen() {
         </View>
       }
     >
-      <View className='mb-1.5 gap-2.5'>
-        <View className='mb-1 h-[52px] w-[52px] items-center justify-center rounded-full bg-muted'>
+      <View style={styles.header}>
+        <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
           <Icon
             name='phone'
             size={23}
             color={colors.foreground}
           />
         </View>
-        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
+        <Text style={[styles.title, { color: colors.foreground }]}>
           {step === 'phone' ? 'Add your phone number' : 'Verify your phone'}
         </Text>
-        <Text className='font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           {step === 'phone' ? (
             'We’ll use it only for account security and passcode recovery.'
           ) : (
             <>
               Enter the {AUTH_OTP_LENGTH}-digit code sent to{' '}
-              <Text className='font-sans-semibold text-foreground'>{normalizedPhone}</Text>
+              <Text style={{ color: colors.foreground, fontWeight: '600' }}>{normalizedPhone}</Text>
             </>
           )}
         </Text>
       </View>
 
       {step === 'phone' ? (
-        <View className='gap-4'>
+        <View style={styles.form}>
           <AuthField
             label='Phone number'
             value={phoneInput}
@@ -262,13 +261,18 @@ export default function AddPhoneScreen() {
             placeholder='024 123 4567 or +233…'
             error={error ?? undefined}
           />
-          <View className='flex-row items-start gap-2.5 rounded-[22px] border border-border bg-composer p-3.5'>
+          <View
+            style={[
+              styles.securityNote,
+              { backgroundColor: colors.composer, borderColor: colors.border },
+            ]}
+          >
             <Icon
               name='shield'
               size={18}
               color={colors.mutedForeground}
             />
-            <Text className='flex-1 font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
+            <Text style={[styles.securityText, { color: colors.mutedForeground }]}>
               We verify your number before it can be used for secure account recovery.
             </Text>
           </View>
@@ -287,3 +291,71 @@ export default function AddPhoneScreen() {
     </AuthShell>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    gap: 10,
+    marginBottom: 6,
+  },
+  iconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 29,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+  },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: -0.2,
+    lineHeight: 23,
+  },
+  form: {
+    gap: 16,
+  },
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 14,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  securityText: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  footer: {
+    gap: 16,
+    width: '100%',
+    alignItems: 'stretch',
+  },
+  codeActions: {
+    gap: 4,
+  },
+  link: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
+  signInLink: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
+});

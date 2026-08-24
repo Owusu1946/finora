@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Pressable, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, View, type TextInputProps } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 type AuthFieldProps = {
@@ -28,15 +28,16 @@ export function AuthField({
   const [visible, setVisible] = useState(false);
 
   return (
-    <View className='gap-2'>
-      <Text className='font-sans-medium text-sm tracking-[-0.1px] text-muted-foreground'>
-        {label}
-      </Text>
+    <View style={styles.wrap}>
+      <Text style={[styles.label, { color: colors.mutedForeground }]}>{label}</Text>
       <View
-        className={cx(
-          'min-h-[54px] flex-row items-center gap-2.5 rounded-full border bg-composer px-4 py-[15px]',
-          focused ? 'border-foreground' : error ? 'border-destructive' : 'border-border',
-        )}
+        style={[
+          styles.field,
+          {
+            backgroundColor: colors.composer,
+            borderColor: focused ? colors.foreground : error ? colors.destructive : colors.border,
+          },
+        ]}
       >
         <TextInput
           value={value}
@@ -47,7 +48,7 @@ export function AuthField({
           placeholderTextColor={colors.mutedForeground}
           autoCapitalize={password ? 'none' : inputProps.autoCapitalize}
           autoCorrect={false}
-          className='flex-1 font-sans py-0 text-[17px] tracking-[-0.2px] text-foreground'
+          style={[styles.input, { color: colors.foreground }]}
           {...inputProps}
         />
         {password ? (
@@ -67,9 +68,41 @@ export function AuthField({
           </Pressable>
         ) : null}
       </View>
-      {error ? (
-        <Text className='font-sans-medium text-[13px] text-destructive'>{error}</Text>
-      ) : null}
+      {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    gap: 8,
+  },
+  label: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+  },
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.composer,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    minHeight: 54,
+  },
+  input: {
+    flex: 1,
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 17,
+    letterSpacing: -0.2,
+    paddingVertical: 0,
+  },
+  error: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+});

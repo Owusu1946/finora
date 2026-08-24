@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/expo';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -22,6 +22,7 @@ import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -89,10 +90,10 @@ export default function PayrollScreen() {
 
   if (!isBusinessAccount()) {
     return (
-      <View className='flex-1 bg-background'>
-        <View className='gap-2.5 px-5 pt-5'>
-          <Text className='font-sans-semibold text-[25px] text-foreground'>Payroll</Text>
-          <Text className='mt-[3px] font-sans text-sm leading-[19px] text-muted-foreground'>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
             Payroll management is available on Business accounts.
           </Text>
         </View>
@@ -102,7 +103,7 @@ export default function PayrollScreen() {
 
   if (!imports) {
     return (
-      <View className='flex-1 bg-background'>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
         <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
@@ -275,21 +276,22 @@ export default function PayrollScreen() {
   };
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <LegendList
         data={imports}
         keyExtractor={(item) => item.id}
         recycleItems
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
-          { padding: 20, paddingBottom: selection ? 116 + insets.bottom : 40 },
+          styles.content,
+          selection ? { paddingBottom: 116 + insets.bottom } : null,
         ]}
         ListHeaderComponent={
-          <View className='gap-2.5 pb-2.5'>
-            <View className='flex-row items-start gap-3'>
-              <View className='min-w-0 flex-1'>
-                <Text className='font-sans-semibold text-[25px] text-foreground'>Payroll</Text>
-                <Text className='mt-[3px] font-sans text-sm leading-[19px] text-muted-foreground'>
+          <View style={styles.header}>
+            <View style={styles.titleRow}>
+              <View style={styles.rowText}>
+                <Text style={[styles.title, { color: colors.foreground }]}>Payroll</Text>
+                <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
                   {selection
                     ? 'Select payrolls or employees to perform batch actions.'
                     : 'Tap an employee to edit details. Swipe left to delete.'}
@@ -301,18 +303,16 @@ export default function PayrollScreen() {
                     haptics.selection();
                     setSelection((current) => (current ? null : { kind: 'imports', ids: [] }));
                   }}
-                  className='min-h-[38px] min-w-[54px] items-center justify-center'
+                  style={styles.selectButton}
                 >
-                  <Text className='font-sans-semibold text-[15px] text-foreground'>
+                  <Text style={[styles.selectLabel, { color: colors.foreground }]}>
                     {selection ? 'Done' : 'Select'}
                   </Text>
                 </Pressable>
               ) : null}
             </View>
             {error ? (
-              <Text className='mt-2.5 font-sans text-[13px] leading-[18px] text-destructive'>
-                {error}
-              </Text>
+              <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
             ) : null}
             {!selection ? (
               <Pressable
@@ -321,9 +321,9 @@ export default function PayrollScreen() {
                   router.push('/');
                   aui.composer.setText('Create a payroll from an attachment');
                 }}
-                className='mt-1 min-h-11 items-center justify-center rounded-[32px] bg-foreground'
+                style={[styles.btn, { backgroundColor: colors.foreground }]}
               >
-                <Text className='font-sans-semibold text-[15px] text-background'>
+                <Text style={[styles.btnLabel, { color: colors.background }]}>
                   Create payroll in chat
                 </Text>
               </Pressable>
@@ -331,13 +331,15 @@ export default function PayrollScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View className='rounded-[26px] border border-border bg-composer p-4'>
-            <Text className='text-muted-foreground'>
+          <View
+            style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          >
+            <Text style={{ color: colors.mutedForeground }}>
               No payroll imports yet. Attach a payroll file in chat to create one.
             </Text>
           </View>
         }
-        ItemSeparatorComponent={() => <View className='h-3' />}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => (
           <Animated.View
             layout={LinearTransition.springify()}
@@ -360,21 +362,16 @@ export default function PayrollScreen() {
 
       {selection && selectionCount ? (
         <View
-          className='absolute left-5 right-5 min-h-[66px] flex-row items-center justify-between rounded-[26px] bg-foreground px-4'
-          style={{
-            bottom: Math.max(insets.bottom, 12),
-            shadowColor: '#000',
-            shadowOpacity: 0.18,
-            shadowRadius: 18,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 8,
-          }}
+          style={[
+            styles.bulkBar,
+            { bottom: Math.max(insets.bottom, 12), backgroundColor: colors.foreground },
+          ]}
         >
           <View>
-            <Text className='font-sans text-base font-bold text-background'>
+            <Text style={[styles.bulkCount, { color: colors.background }]}>
               {selectionCount} selected
             </Text>
-            <Text className='mt-px font-sans text-xs text-background opacity-70'>
+            <Text style={[styles.bulkMeta, { color: colors.background }]}>
               {selection.kind === 'imports' ? 'Payrolls' : 'Employees'}
             </Text>
           </View>
@@ -383,7 +380,7 @@ export default function PayrollScreen() {
             accessibilityLabel='Delete selected'
             disabled={busy === 'bulk'}
             onPress={confirmDeleteBulk}
-            className='min-h-[42px] min-w-[100px] flex-row items-center justify-center gap-[7px] rounded-lg bg-destructive px-3.5'
+            style={[styles.bulkDelete, { backgroundColor: colors.destructive }]}
           >
             {busy === 'bulk' ? (
               <LoadingIcon color='#fff' />
@@ -394,7 +391,7 @@ export default function PayrollScreen() {
                   size={18}
                   color='#fff'
                 />
-                <Text className='font-sans text-sm font-bold text-white'>Delete</Text>
+                <Text style={styles.bulkDeleteText}>Delete</Text>
               </>
             )}
           </Pressable>
@@ -440,16 +437,19 @@ function ImportCard({
 
   return (
     <View
-      className='gap-1 rounded-[26px] border bg-composer p-4'
-      style={{
-        borderColor: importSelected || selectedRows.length ? colors.foreground : colors.border,
-      }}
+      style={[
+        styles.card,
+        {
+          borderColor: importSelected || selectedRows.length ? colors.foreground : colors.border,
+          backgroundColor: colors.composer,
+        },
+      ]}
     >
-      <View className='mb-1 flex-row items-center gap-3'>
+      <View style={styles.cardHeader}>
         <Pressable
           disabled={!selection}
           onPress={onToggleImport}
-          className='min-w-0 flex-1 flex-row items-center gap-2.5'
+          style={styles.cardHeadingPress}
         >
           {selection ? (
             <SelectionMark
@@ -457,20 +457,20 @@ function ImportCard({
               colors={colors}
             />
           ) : null}
-          <View className='min-w-0 flex-1'>
+          <View style={styles.rowText}>
             <Text
-              className='font-sans text-base font-bold text-foreground'
+              style={[styles.cardTitle, { color: colors.foreground }]}
               numberOfLines={1}
             >
               {item.sourceName}
             </Text>
-            <Text className='font-sans text-[13px] text-muted-foreground'>
+            <Text style={[styles.meta, { color: colors.mutedForeground }]}>
               {item.rows.length} employees · {item.status} · {item.period ?? 'Period not set'}
             </Text>
           </View>
         </Pressable>
-        <View className='items-end gap-[3px]'>
-          <Text className='font-sans text-base font-bold text-foreground'>
+        <View style={styles.cardTotal}>
+          <Text style={[styles.total, { color: colors.foreground }]}>
             {formatPaymentAmount(item.total, item.currency)}
           </Text>
           {selection?.kind === 'rows' && selection.importId === item.id ? (
@@ -480,9 +480,9 @@ function ImportCard({
                 allRowsSelected ? 'Clear employee selection' : 'Select all employees'
               }
               onPress={onToggleAllRows}
-              className='min-h-6 min-w-[38px] items-end justify-center'
+              style={styles.selectAll}
             >
-              <Text className='font-sans-semibold text-xs text-muted-foreground'>
+              <Text style={[styles.selectAllText, { color: colors.mutedForeground }]}>
                 {allRowsSelected ? 'Clear' : 'All'}
               </Text>
             </Pressable>
@@ -504,7 +504,7 @@ function ImportCard({
         />
       ))}
       {item.blockingIssues.length ? (
-        <Text className='mt-2.5 font-sans text-[13px] leading-[18px] text-destructive'>
+        <Text style={[styles.error, { color: colors.destructive }]}>
           {item.blockingIssues.length} issue{item.blockingIssues.length === 1 ? '' : 's'} must be
           fixed before preparation.
         </Text>
@@ -600,11 +600,11 @@ function EmployeeRow({
     <Animated.View
       layout={LinearTransition.springify()}
       exiting={FadeOutLeft.duration(160)}
-      className='relative overflow-hidden'
+      style={styles.swipeFrame}
     >
       {/* Background delete action button */}
       {!selecting ? (
-        <View className='absolute inset-0 flex-row items-center justify-end'>
+        <View style={styles.deleteRevealContainer}>
           <Pressable
             accessibilityRole='button'
             accessibilityLabel={`Delete ${row.employeeName ?? 'employee'}`}
@@ -615,18 +615,15 @@ function EmployeeRow({
                 x.value = withSpring(0, { damping: 20, stiffness: 220 });
               });
             }}
-            className='h-full w-[76px] items-center justify-center rounded-r-[26px] bg-destructive'
+            style={[styles.deleteActionButton, { backgroundColor: colors.destructive }]}
           >
-            <Animated.View
-              className='items-center justify-center gap-0.5'
-              style={deleteButtonStyle}
-            >
+            <Animated.View style={[styles.deleteActionInner, deleteButtonStyle]}>
               <Icon
                 name='remove'
                 size={18}
                 color='#ffffff'
               />
-              <Text className='font-sans text-[11px] font-bold text-white'>Delete</Text>
+              <Text style={styles.deleteActionText}>Delete</Text>
             </Animated.View>
           </Pressable>
         </View>
@@ -635,6 +632,7 @@ function EmployeeRow({
       <GestureDetector gesture={pan}>
         <Animated.View
           style={[
+            styles.employeeRow,
             {
               borderTopColor: colors.border,
               backgroundColor: selected ? colors.muted : colors.composer,
@@ -642,14 +640,13 @@ function EmployeeRow({
             },
             animatedStyle,
           ]}
-          className='min-h-16 flex-row items-center gap-2.5 border-t px-1 py-2'
         >
           <Pressable
             disabled={busy || selectionLocked}
             onPress={() => (selecting ? onSelect() : onOpen())}
             onLongPress={onSelect}
             delayLongPress={280}
-            className='flex-1 flex-row items-center gap-3'
+            style={styles.rowPress}
           >
             {selecting ? (
               <SelectionMark
@@ -657,17 +654,17 @@ function EmployeeRow({
                 colors={colors}
               />
             ) : (
-              <View className='size-9 items-center justify-center rounded-full bg-muted'>
-                <Text className='font-sans text-[15px] font-bold text-foreground'>
+              <View style={[styles.avatar, { backgroundColor: colors.muted }]}>
+                <Text style={[styles.avatarText, { color: colors.foreground }]}>
                   {(row.employeeName ?? '?').slice(0, 1).toUpperCase()}
                 </Text>
               </View>
             )}
-            <View className='min-w-0 flex-1'>
-              <Text className='font-sans-semibold text-[15px] text-foreground'>
+            <View style={styles.rowText}>
+              <Text style={[styles.name, { color: colors.foreground }]}>
                 {row.employeeName ?? 'Unnamed employee'}
               </Text>
-              <Text className='font-sans text-[13px] text-muted-foreground'>
+              <Text style={[styles.meta, { color: colors.mutedForeground }]}>
                 {row.role || row.destinationType || 'Payroll employee'} · {row.currency ?? ''}{' '}
                 {row.amount?.toLocaleString() ?? '—'}
               </Text>
@@ -684,7 +681,7 @@ function EmployeeRow({
                   x.value = withSpring(0, { damping: 20, stiffness: 220 });
                 });
               }}
-              className='size-[38px] items-center justify-center'
+              style={styles.deleteButton}
             >
               <Icon
                 name='remove'
@@ -708,13 +705,13 @@ function SelectionMark({ selected, colors }: { selected: boolean; colors: Colors
   return (
     <Animated.View
       style={[
+        styles.selectionMark,
         {
           borderColor: selected ? colors.foreground : colors.border,
           backgroundColor: selected ? colors.foreground : 'transparent',
         },
         style,
       ]}
-      className='size-6 items-center justify-center rounded-[7px] border-[1.5px]'
     >
       {selected ? (
         <Icon
@@ -780,11 +777,12 @@ function Editor({
       visible={Boolean(row)}
       onClose={onClose}
       keyboardAvoiding
+      style={styles.sheet}
     >
-      <View className='flex-row items-center justify-between px-5 pb-3.5'>
+      <View style={styles.sheetHeader}>
         <View>
-          <Text className='font-sans text-xl font-bold text-foreground'>Employee details</Text>
-          <Text className='font-sans text-[13px] text-muted-foreground'>
+          <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Employee details</Text>
+          <Text style={[styles.meta, { color: colors.mutedForeground }]}>
             Edit imported payroll information
           </Text>
         </View>
@@ -797,7 +795,7 @@ function Editor({
         </Pressable>
       </View>
       {row ? (
-        <View className='gap-2.5 px-5 pb-7'>
+        <View style={styles.form}>
           {fields.map(([key, label]) => (
             <TextInput
               key={key}
@@ -806,7 +804,7 @@ function Editor({
               placeholder={label}
               placeholderTextColor={colors.mutedForeground}
               keyboardType={key === 'amount' ? 'decimal-pad' : 'default'}
-              className='min-h-11 rounded-[10px] border border-border px-3 text-[15px] text-foreground'
+              style={[styles.input, { color: colors.foreground, borderColor: colors.border }]}
             />
           ))}
           <Pressable
@@ -818,13 +816,152 @@ function Editor({
                 payDate: values.payDate || null,
               })
             }
-            className='mt-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
-            style={{ opacity: busy ? 0.6 : 1 }}
+            style={[
+              styles.saveButton,
+              { backgroundColor: colors.foreground, opacity: busy ? 0.6 : 1 },
+            ]}
           >
-            <Text className='text-background'>{busy ? 'Saving…' : 'Save changes'}</Text>
+            <Text style={{ color: colors.background }}>{busy ? 'Saving…' : 'Save changes'}</Text>
           </Pressable>
         </View>
       ) : null}
     </SheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  content: { padding: 20, paddingBottom: 40 },
+  header: { gap: 10, paddingBottom: 10 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  title: { fontSize: 25, fontWeight: '600' },
+  subtitle: { fontSize: 14, lineHeight: 19, marginTop: 3 },
+  selectButton: { minWidth: 54, minHeight: 38, alignItems: 'center', justifyContent: 'center' },
+  selectLabel: { fontSize: 15, fontWeight: '600' },
+  separator: { height: 12 },
+  empty: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card },
+  card: { padding: 16, borderWidth: StyleSheet.hairlineWidth, borderRadius: Radius.card, gap: 4 },
+  cardHeader: { flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 4 },
+  cardHeadingPress: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardTotal: { alignItems: 'flex-end', gap: 3 },
+  cardTitle: { fontSize: 16, fontWeight: '700' },
+  rowText: { flex: 1, minWidth: 0 },
+  total: { fontSize: 16, fontWeight: '700' },
+  meta: { fontSize: 13 },
+  name: { fontSize: 15, fontWeight: '600' },
+  error: { fontSize: 13, lineHeight: 18, marginTop: 10 },
+  employeeRow: {
+    minHeight: 64,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  rowPress: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontSize: 15, fontWeight: '700' },
+  selectionMark: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swipeFrame: { position: 'relative', overflow: 'hidden' },
+  deleteRevealContainer: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  deleteActionButton: {
+    width: 76,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopRightRadius: Radius.card,
+    borderBottomRightRadius: Radius.card,
+  },
+  deleteActionInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  deleteActionText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  deleteButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
+  selectAll: { minWidth: 38, minHeight: 24, alignItems: 'flex-end', justifyContent: 'center' },
+  selectAllText: { fontSize: 12, fontWeight: '600' },
+  btn: {
+    minHeight: 44,
+    borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  btnLabel: { fontSize: 15, fontWeight: '600' },
+  bulkBar: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    minHeight: 66,
+    borderRadius: Radius.card,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  bulkCount: { fontSize: 16, fontWeight: '700' },
+  bulkMeta: { fontSize: 12, opacity: 0.7, marginTop: 1 },
+  bulkDelete: {
+    minWidth: 100,
+    minHeight: 42,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bulkDeleteText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  sheet: { paddingHorizontal: 20, paddingBottom: 28 },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 14,
+  },
+  sheetTitle: { fontSize: 20, fontWeight: '700' },
+  form: { gap: 10 },
+  input: {
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 15,
+  },
+  saveButton: {
+    minHeight: 46,
+    borderRadius: Radius.composer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+});
