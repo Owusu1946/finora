@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import {
   Text as NativeText,
   TextInput as NativeTextInput,
+  StyleSheet,
   type TextInputProps,
   type TextProps,
 } from 'react-native';
@@ -25,8 +26,17 @@ function scaledClassName(className: string | undefined, enabled: boolean) {
   return classes;
 }
 
+function scaleNativeStyle(style: TextProps['style'], enabled: boolean) {
+  if (!enabled) return style;
+  const flattened = StyleSheet.flatten(style) ?? {};
+  const fontSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 14;
+  const lineHeight =
+    typeof flattened.lineHeight === 'number' ? flattened.lineHeight + 2 : undefined;
+  return [{ ...flattened, fontSize: fontSize + 2, ...(lineHeight ? { lineHeight } : {}) }];
+}
+
 export const AppText = forwardRef<NativeText, TextProps>(function AppText(
-  { className, ...props },
+  { className, style, ...props },
   ref,
 ) {
   const { settings } = useSettings();
@@ -34,13 +44,14 @@ export const AppText = forwardRef<NativeText, TextProps>(function AppText(
     <NativeText
       ref={ref}
       {...props}
+      style={scaleNativeStyle(style, settings.largerText)}
       className={cx(...scaledClassName(className, settings.largerText))}
     />
   );
 });
 
 export const AppTextInput = forwardRef<NativeTextInput, TextInputProps>(function AppTextInput(
-  { className, ...props },
+  { className, style, ...props },
   ref,
 ) {
   const { settings } = useSettings();
@@ -48,6 +59,7 @@ export const AppTextInput = forwardRef<NativeTextInput, TextInputProps>(function
     <NativeTextInput
       ref={ref}
       {...props}
+      style={scaleNativeStyle(style, settings.largerText)}
       className={cx(...scaledClassName(className, settings.largerText))}
     />
   );

@@ -1,6 +1,6 @@
 import { Navii } from '@usenavii/react-native';
 import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { AccountType } from '@/lib/account';
 
@@ -55,7 +55,7 @@ export function UserAvatar({
       {imageUrl ? (
         <Image
           source={imageUrl}
-          style={StyleSheet.absoluteFill}
+          className='absolute inset-0'
           contentFit='cover'
           transition={150}
         />

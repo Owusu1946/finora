@@ -62,7 +62,7 @@ export function ComposerImageAttachment() {
   return (
     <AttachmentPrimitive.Root style={styles.imageChipContainer}>
       <View
-        className='w-16 h-16 border overflow-hidden bg-muted border-border'
+        className='h-16 w-16 overflow-hidden rounded-[18px] border border-border bg-muted'
         style={[styles.imageChip]}
       >
         {imageUri ? (
@@ -163,7 +163,7 @@ export function MessageImageAttachment() {
         />
       ) : (
         <View
-          className='flex-row items-center gap-2 p-2.5 border bg-muted border-border'
+          className='flex-row items-center gap-2 rounded-[26px] border border-border bg-muted p-2.5'
           style={[styles.messageImagePlaceholder]}
         >
           <Icon
