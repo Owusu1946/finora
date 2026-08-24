@@ -1,6 +1,6 @@
 import type { UserProfile } from '@finora/shared';
 
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, ilike, isNotNull, ne, or, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -61,6 +61,36 @@ export async function getUserProfileByPhoneNumber(db: Database, phoneNumber: str
     .where(eq(userProfiles.phoneNumber, phoneNumber))
     .limit(1);
   return row ?? null;
+}
+
+export async function searchUserProfilesByFinoraTag(
+  db: Database,
+  clerkUserId: string,
+  query: string,
+  limit = 6,
+) {
+  return db
+    .select({
+      id: userProfiles.id,
+      displayName: userProfiles.displayName,
+      finoraTag: userProfiles.finoraTag,
+    })
+    .from(userProfiles)
+    .where(
+      and(
+        ne(userProfiles.clerkUserId, clerkUserId),
+        isNotNull(userProfiles.finoraTag),
+        or(
+          ilike(userProfiles.finoraTag, `${query}%`),
+          ilike(userProfiles.displayName, `%${query}%`),
+        ),
+      ),
+    )
+    .orderBy(
+      sql`case when ${userProfiles.finoraTag} = ${query} then 0 when ${userProfiles.finoraTag} ilike ${`${query}%`} then 1 else 2 end`,
+      asc(userProfiles.displayName),
+    )
+    .limit(Math.min(Math.max(limit, 1), 12));
 }
 
 export async function setVerifiedPhoneNumber(

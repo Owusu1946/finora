@@ -29,6 +29,7 @@ import {
 import {
   getUserProfileByClerkId,
   getUserProfileByPhoneNumber,
+  searchUserProfilesByFinoraTag,
   setVerifiedPhoneNumber,
   upsertUserProfile,
 } from '../db/user-profiles';
@@ -525,24 +526,36 @@ v1.post('/accounts/lookup', async (c) => {
   });
 });
 
-v1.get('/finora-tags/search', (c) => {
-  // Autocomplete must not dump the global directory on short prefixes.
-  // Recent-graph filtering is owned by the client; this endpoint only allows
-  // exact tag lookup once the query is long enough.
+v1.get('/finora-tags/search', async (c) => {
   const query = normalizeFinoraTag(c.req.query('query') ?? '');
   if (query.length < 3) {
-    return c.json({ mode: 'mock', accounts: [], reason: 'query_too_short' });
+    return c.json({ mode: 'live', accounts: [], reason: 'query_too_short' });
   }
-  const exact = mockStore.subcustomers.find(
-    (item) =>
-      item.id !== 'sc_personal_001' &&
-      item.finoraTag === query &&
-      item.status === 'ACTIVE' &&
-      item.onboardingStatus === 'APPROVED',
+
+  const { userId } = c.get('auth');
+  const profiles = await searchUserProfilesByFinoraTag(
+    createDb(c.get('env').DATABASE_URL),
+    userId,
+    query,
   );
+
   return c.json({
-    mode: 'mock',
-    accounts: exact ? [publicFinoraAccount(exact)] : [],
+    mode: 'live',
+    accounts: profiles.flatMap((profile) =>
+      profile.finoraTag
+        ? [
+            {
+              accountId: `profile_${profile.id}`,
+              subCustomerId: profile.id,
+              tag: profile.finoraTag,
+              displayName: profile.displayName,
+              country: 'GH',
+              status: 'active' as const,
+              walletCurrencies: ['GHS'],
+            },
+          ]
+        : [],
+    ),
   });
 });
 
