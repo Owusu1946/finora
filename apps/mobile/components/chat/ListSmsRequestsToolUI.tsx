@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { SmsPaymentRequest } from '@/lib/sms-requests-storage';
 
@@ -32,13 +32,11 @@ export const ListSmsRequestsToolUI = makeAssistantToolUI<
     if (status.type === 'running' && !requests) {
       return (
         <View
-          style={[
-            styles.preparing,
-            { borderColor: colors.border, backgroundColor: colors.composer },
-          ]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.preparing]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
             Scanning SMS inbox…
           </Text>
         </View>
@@ -48,9 +46,10 @@ export const ListSmsRequestsToolUI = makeAssistantToolUI<
     if (connected === false) {
       return (
         <View
-          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 border p-4 border-border bg-composer'
+          style={[styles.empty]}
         >
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
             SMS inbox isn’t connected. Open Integrations to connect SMS, then ask again.
           </Text>
         </View>
@@ -60,9 +59,10 @@ export const ListSmsRequestsToolUI = makeAssistantToolUI<
     if (!requests?.length) {
       return (
         <View
-          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 border p-4 border-border bg-composer'
+          style={[styles.empty]}
         >
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
             No open payment requests in SMS right now.
           </Text>
         </View>
@@ -70,8 +70,8 @@ export const ListSmsRequestsToolUI = makeAssistantToolUI<
     }
 
     return (
-      <View style={styles.stack}>
-        <Text style={[styles.stackTitle, { color: colors.mutedForeground }]}>
+      <View className='gap-0.5 my-1'>
+        <Text className='font-sans-semibold text-[13px] ml-1 mb-0.5 text-muted-foreground'>
           {requests.length} SMS payment request{requests.length === 1 ? '' : 's'}
         </Text>
         {requests.map((request) => (
@@ -85,43 +85,11 @@ export const ListSmsRequestsToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   preparing: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-  },
-  preparingText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
   },
   empty: {
-    marginVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
   },
-  emptyText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  stack: {
-    gap: 2,
-    marginVertical: 4,
-  },
-  stackTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 4,
-    marginBottom: 2,
-  },
-});
+};

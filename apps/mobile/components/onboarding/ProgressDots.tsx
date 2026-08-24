@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -22,13 +22,18 @@ function Dot({ index, progress }: { index: number; progress: SharedValue<number>
     };
   });
 
-  return <Animated.View style={[styles.dot, style]} />;
+  return (
+    <Animated.View
+      className='h-1.5 rounded-full'
+      style={style}
+    />
+  );
 }
 
 export function ProgressDots({ progress }: ProgressDotsProps) {
   return (
     <View
-      style={styles.row}
+      className='flex-row items-center justify-center gap-1.5'
       accessibilityRole='progressbar'
     >
       {Array.from({ length: STEP_COUNT }, (_, i) => (
@@ -41,16 +46,3 @@ export function ProgressDots({ progress }: ProgressDotsProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  dot: {
-    height: 6,
-    borderRadius: 3,
-  },
-});

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import type { CorridorFieldKey, SettlementMethod } from '@/lib/send-corridors';
 
@@ -85,7 +85,7 @@ export function DestinationFieldsStep({
   });
 
   return (
-    <View style={styles.block}>
+    <View className='gap-3'>
       <WizardStepHeader
         step={step}
         total={total}
@@ -99,14 +99,8 @@ export function DestinationFieldsStep({
         placeholder='Recipient name'
         placeholderTextColor={colors.mutedForeground}
         autoCapitalize='words'
-        style={[
-          styles.input,
-          {
-            color: colors.foreground,
-            borderColor: colors.border,
-            backgroundColor: colors.background,
-          },
-        ]}
+        className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
+        style={[styles.input]}
       />
 
       {fields.map((key) => {
@@ -114,10 +108,12 @@ export function DestinationFieldsStep({
           return (
             <View
               key={key}
-              style={styles.fieldBlock}
+              className='gap-2'
             >
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Network</Text>
-              <View style={styles.chips}>
+              <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
+                Network
+              </Text>
+              <View className='flex-row flex-wrap gap-2'>
                 {MOMO_NETWORKS.map((n) => (
                   <WizardChip
                     key={n}
@@ -134,10 +130,12 @@ export function DestinationFieldsStep({
           return (
             <View
               key={key}
-              style={styles.fieldBlock}
+              className='gap-2'
             >
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Chain</Text>
-              <View style={styles.chips}>
+              <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
+                Chain
+              </Text>
+              <View className='flex-row flex-wrap gap-2'>
                 {CHAINS.map((n) => (
                   <WizardChip
                     key={n}
@@ -154,10 +152,12 @@ export function DestinationFieldsStep({
           return (
             <View
               key={key}
-              style={styles.fieldBlock}
+              className='gap-2'
             >
-              <Text style={[styles.label, { color: colors.mutedForeground }]}>Account type</Text>
-              <View style={styles.chips}>
+              <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
+                Account type
+              </Text>
+              <View className='flex-row flex-wrap gap-2'>
                 {(['CHECKING', 'SAVINGS'] as const).map((n) => (
                   <WizardChip
                     key={n}
@@ -176,92 +176,58 @@ export function DestinationFieldsStep({
         return (
           <View
             key={key}
-            style={styles.fieldBlock}
+            className='gap-2'
           >
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>{meta.label}</Text>
+            <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase text-muted-foreground'>
+              {meta.label}
+            </Text>
             <TextInput
               value={value}
               onChangeText={(t) => set(key as keyof DestinationFields, t)}
               placeholder={meta.placeholder}
               placeholderTextColor={colors.mutedForeground}
               autoCapitalize={meta.autoCap === 'none' ? 'none' : (meta.autoCap ?? 'sentences')}
-              style={[
-                styles.input,
-                {
-                  color: colors.foreground,
-                  borderColor: colors.border,
-                  backgroundColor: colors.background,
-                },
-              ]}
+              className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
+              style={[styles.input]}
             />
           </View>
         );
       })}
 
-      <View style={styles.nav}>
+      <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          style={({ pressed }) => [
-            styles.navBtn,
-            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-          ]}
+          className='flex-1 min-h-[46px] border items-center justify-center'
+          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text style={[styles.navLabel, { color: colors.foreground }]}>Back</Text>
+          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
         </Pressable>
         <Pressable
           disabled={!complete || !(values.recipientName ?? '').trim()}
           onPress={onContinue}
+          className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
-            styles.navBtnPrimary,
             {
               backgroundColor: colors.foreground,
               opacity: !complete || !(values.recipientName ?? '').trim() ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>Continue</Text>
+          <Text className='text-[16px] font-semibold text-background'>Continue</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  block: { gap: 12 },
-  fieldBlock: { gap: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  label: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
+const styles = {
   input: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
   },
-  nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
   navBtn: {
-    flex: 1,
-    minHeight: 46,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   navBtnPrimary: {
-    flex: 1.4,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  navLabel: { fontSize: 16, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
-});
+};

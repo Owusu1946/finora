@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { AppText as Text } from '@/components/ui/text';
@@ -24,14 +24,14 @@ export function PurposeCodeStep({
   const { colors } = useTheme();
 
   return (
-    <View style={styles.block}>
+    <View className='gap-3'>
       <WizardStepHeader
         step={step}
         total={total}
         title='Payment purpose'
         subtitle='Required for cross-border compliance'
       />
-      <View style={styles.chips}>
+      <View className='flex-row flex-wrap gap-2'>
         {PURPOSE_CODES.map((code) => (
           <WizardChip
             key={code}
@@ -41,53 +41,37 @@ export function PurposeCodeStep({
           />
         ))}
       </View>
-      <View style={styles.nav}>
+      <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          style={({ pressed }) => [
-            styles.navBtn,
-            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-          ]}
+          className='flex-1 min-h-[46px] border items-center justify-center'
+          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text style={[styles.navLabel, { color: colors.foreground }]}>Back</Text>
+          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
         </Pressable>
         <Pressable
           disabled={!purposeCode}
           onPress={onContinue}
+          className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
-            styles.navBtnPrimary,
             {
               backgroundColor: colors.foreground,
               opacity: !purposeCode ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>Continue</Text>
+          <Text className='text-[16px] font-semibold text-background'>Continue</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  block: { gap: 12 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
+const _styles = {
   navBtn: {
-    flex: 1,
-    minHeight: 46,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   navBtnPrimary: {
-    flex: 1.4,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  navLabel: { fontSize: 16, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
-});
+};

@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/expo';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import {
   SettingsRow,
@@ -11,7 +11,6 @@ import {
 } from '@/components/settings/SettingsPrimitives';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import {
@@ -157,14 +156,16 @@ export default function MemorySettingsScreen() {
         }
       >
         {store.items.length === 0 ? (
-          <View style={styles.empty}>
+          <View className='items-center gap-2 px-6 py-7'>
             <Icon
               name='brain'
               size={22}
               color={colors.mutedForeground}
             />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No memories</Text>
-            <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
+              No memories
+            </Text>
+            <Text className='text-center font-sans-medium text-sm leading-[18px] text-muted-foreground'>
               Ask Finora to remember a preference, or keep chatting — useful details show up here.
             </Text>
           </View>
@@ -173,29 +174,29 @@ export default function MemorySettingsScreen() {
             <Pressable
               key={item.id}
               onPress={() => handleForget(item)}
-              style={({ pressed }) => [
-                styles.memoryRow,
-                index < store.items.length - 1 && {
-                  borderBottomWidth: StyleSheet.hairlineWidth,
-                  borderBottomColor: colors.border,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
+              className={
+                index < store.items.length - 1
+                  ? 'flex-row items-start gap-3 border-b border-border px-3.5 py-3.5'
+                  : 'flex-row items-start gap-3 px-3.5 py-3.5'
+              }
+              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
             >
-              <View style={[styles.kindChip, { backgroundColor: colors.muted }]}>
-                <Text style={[styles.kindText, { color: colors.mutedForeground }]}>
+              <View className='mt-0.5 rounded-[14px] bg-muted px-2 py-1'>
+                <Text className='font-sans text-xs font-bold uppercase tracking-[0.2px] text-muted-foreground'>
                   {memoryKindLabel(item.kind)}
                 </Text>
               </View>
-              <View style={styles.memoryMeta}>
-                <Text style={[styles.memoryTitle, { color: colors.foreground }]}>{item.title}</Text>
+              <View className='min-w-0 flex-1 gap-[3px]'>
+                <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
+                  {item.title}
+                </Text>
                 <Text
-                  style={[styles.memoryDetail, { color: colors.mutedForeground }]}
+                  className='font-sans-medium text-sm leading-[18px] text-muted-foreground'
                   numberOfLines={2}
                 >
                   {item.content}
                 </Text>
-                <Text style={[styles.memoryWhen, { color: colors.mutedForeground }]}>
+                <Text className='mt-0.5 font-sans-medium text-[13px] text-muted-foreground'>
                   Updated {relativeDay(item.updatedAt)}
                 </Text>
               </View>
@@ -225,68 +226,3 @@ export default function MemorySettingsScreen() {
     </SettingsScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  empty: {
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-  },
-  emptyTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  emptyBody: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  memoryRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  kindChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
-    marginTop: 2,
-  },
-  kindText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-  },
-  memoryMeta: {
-    flex: 1,
-    gap: 3,
-    minWidth: 0,
-  },
-  memoryTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  memoryDetail: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-  memoryWhen: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-});

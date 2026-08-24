@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
@@ -7,6 +7,7 @@ import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 const STATUS_COLOR: Record<Invoice['status'], string> = {
@@ -38,89 +39,43 @@ export const InvoiceListItem = memo(function InvoiceListItem({
         haptics.selection();
         onPress?.(invoice);
       }}
-      style={({ pressed }) => [
-        styles.row,
-        !isLast && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        },
-        pressed && { opacity: 0.7 },
-      ]}
+      className={cx(
+        'flex-row items-center gap-3 py-3.5 active:opacity-70',
+        !isLast && 'border-b border-border',
+      )}
     >
-      <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+      <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
         <Icon
           name='file'
           size={16}
           color={colors.foreground}
         />
       </View>
-      <View style={styles.meta}>
+      <View className='min-w-0 flex-1 gap-0.5'>
         <Text
-          style={[styles.title, { color: colors.foreground }]}
+          className='font-sans-semibold text-base text-foreground'
           numberOfLines={1}
         >
           {invoice.vendor}
         </Text>
         <Text
-          style={[styles.detail, { color: colors.mutedForeground }]}
+          className='font-sans text-[13px] text-muted-foreground'
           numberOfLines={1}
         >
           {invoice.invoiceNumber} · due {formatDue(invoice.dueDate)} · {invoice.source}
         </Text>
       </View>
-      <View style={styles.right}>
-        <Text style={[styles.amount, { color: colors.foreground }]}>
+      <View className='items-end gap-0.5'>
+        <Text className='font-sans-semibold text-base text-foreground'>
           {formatPaymentAmount(invoice.amount, invoice.currency)}
         </Text>
-        <Text style={[styles.status, { color: STATUS_COLOR[invoice.status] }]}>
+        <Text
+          className='font-sans-semibold text-xs capitalize'
+          style={{ color: STATUS_COLOR[invoice.status] }}
+        >
           {invoice.status}
         </Text>
       </View>
     </Pressable>
   );
-});
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  meta: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  detail: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-  },
-  right: {
-    alignItems: 'flex-end',
-    gap: 2,
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  status: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
 });

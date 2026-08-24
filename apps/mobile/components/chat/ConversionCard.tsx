@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
 
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
@@ -93,18 +93,13 @@ export function ConversionCard({
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.composer,
-          borderColor: colors.border,
-        },
-      ]}
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
     >
-      <View style={styles.header}>
+      <View className='flex-row items-center gap-3'>
         <Animated.View
+          className='w-9 h-9 rounded-[18px] items-center justify-center'
           style={[
-            styles.iconWrap,
             {
               backgroundColor: failed ? colors.destructiveSurface : colors.muted,
               opacity: converting ? pulse : 1,
@@ -124,8 +119,8 @@ export function ConversionCard({
             />
           )}
         </Animated.View>
-        <View style={styles.headerText}>
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
+        <View className='flex-1 gap-0.5'>
+          <Text className='font-sans-medium text-[14px] tracking-[-0.1px] text-muted-foreground'>
             {converting
               ? 'Converting…'
               : failed
@@ -134,21 +129,24 @@ export function ConversionCard({
                   ? 'Conversion cancelled'
                   : 'Confirm conversion'}
           </Text>
-          <Text style={[styles.title, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[21px] tracking-[-0.4px] text-foreground'>
             {quote.fromCurrency} → {quote.toCurrency}
           </Text>
         </View>
       </View>
 
-      <View style={[styles.pair, { borderColor: colors.border }]}>
-        <View style={styles.leg}>
+      <View
+        className='border p-3 flex-row items-center justify-between gap-2 border-border'
+        style={[styles.pair]}
+      >
+        <View className='flex-row items-center gap-2 flex-1'>
           <CurrencyIcon
             currency={quote.fromCurrency}
             size={28}
           />
           <View>
-            <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>You send</Text>
-            <Text style={[styles.legValue, { color: colors.foreground }]}>
+            <Text className='font-sans-medium text-[12px] text-muted-foreground'>You send</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
               {formatAmt(quote.fromAmount, quote.fromCurrency)}
             </Text>
           </View>
@@ -158,10 +156,10 @@ export function ConversionCard({
           size={18}
           color={colors.mutedForeground}
         />
-        <View style={[styles.leg, styles.legEnd]}>
+        <View className='flex-row items-center gap-2 flex-1 justify-end'>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[styles.legLabel, { color: colors.mutedForeground }]}>You get</Text>
-            <Text style={[styles.legValue, { color: colors.foreground }]}>
+            <Text className='font-sans-medium text-[12px] text-muted-foreground'>You get</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
               {formatAmt(quote.toAmount, quote.toCurrency)}
             </Text>
           </View>
@@ -172,7 +170,7 @@ export function ConversionCard({
         </View>
       </View>
 
-      <View style={styles.meta}>
+      <View className='gap-2'>
         <MetaRow
           label='Rate'
           value={`1 ${quote.fromCurrency} = ${quote.rate.toFixed(4)} ${quote.toCurrency}`}
@@ -188,18 +186,18 @@ export function ConversionCard({
       </View>
 
       {converting ? (
-        <View style={styles.steps}>
+        <View className='gap-2.5'>
           {CONVERT_STEPS.map((label, index) => {
             const done = index < convertingStep;
             const active = index === convertingStep;
             return (
               <View
                 key={label}
-                style={styles.stepRow}
+                className='flex-row items-center gap-2.5'
               >
                 <View
+                  className='w-[22px] h-[22px] rounded-[11px] border items-center justify-center'
                   style={[
-                    styles.stepDot,
                     {
                       borderColor: done || active ? colors.foreground : colors.border,
                       backgroundColor: done ? colors.foreground : 'transparent',
@@ -220,8 +218,8 @@ export function ConversionCard({
                   ) : null}
                 </View>
                 <Text
+                  className='font-sans text-[15px] tracking-[-0.2px]'
                   style={[
-                    styles.stepLabel,
                     {
                       color: done || active ? colors.foreground : colors.mutedForeground,
                       fontWeight: active ? '600' : '500',
@@ -238,23 +236,24 @@ export function ConversionCard({
       ) : null}
 
       {pending ? (
-        <View style={styles.actions}>
+        <View className='flex-row gap-2.5'>
           <Pressable
             disabled={loading}
             onPress={() => {
               haptics.selection();
               onCancel?.();
             }}
+            className='flex-1 min-h-[46px] items-center justify-center border'
             style={({ pressed }) => [
-              styles.btn,
-              styles.btnGhost,
               {
                 borderColor: colors.border,
                 opacity: pressed || loading ? 0.7 : 1,
               },
             ]}
           >
-            <Text style={[styles.btnLabel, { color: colors.foreground }]}>Cancel</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              Cancel
+            </Text>
           </Pressable>
           <Pressable
             disabled={loading}
@@ -262,15 +261,15 @@ export function ConversionCard({
               haptics.impact();
               onConfirm?.();
             }}
+            className='flex-1 min-h-[46px] items-center justify-center'
             style={({ pressed }) => [
-              styles.btn,
               {
                 backgroundColor: colors.foreground,
                 opacity: pressed || loading ? 0.85 : 1,
               },
             ]}
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
               {loading ? 'Confirming…' : 'Confirm & convert'}
             </Text>
           </Pressable>
@@ -278,13 +277,16 @@ export function ConversionCard({
       ) : null}
 
       {cancelled || failed ? (
-        <View style={[styles.statusPill, { backgroundColor: colors.destructiveSurface }]}>
+        <View
+          className='flex-row items-center gap-2 self-start px-3 py-2 bg-destructive-surface'
+          style={[styles.statusPill]}
+        >
           <Icon
             name='remove'
             size={14}
             color={colors.destructive}
           />
-          <Text style={[styles.statusText, { color: colors.destructive }]}>
+          <Text className='font-sans-semibold text-[14px] text-destructive'>
             {failed ? 'Couldn’t complete conversion' : 'Cancelled'}
           </Text>
         </View>
@@ -316,31 +318,29 @@ function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conver
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.composer,
-          borderColor: colors.border,
-        },
-      ]}
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
     >
-      <Animated.View style={[styles.sentHero, { opacity, transform: [{ scale }] }]}>
-        <View style={[styles.sentBadge, { backgroundColor: colors.muted }]}>
+      <Animated.View
+        className='items-center gap-2 pt-2'
+        style={[{ opacity, transform: [{ scale }] }]}
+      >
+        <View className='w-16 h-16 rounded-[32px] items-center justify-center mb-1 bg-muted'>
           <Icon
             name='check'
             size={28}
             color={colors.foreground}
           />
         </View>
-        <Text style={[styles.sentTitle, { color: colors.foreground }]}>Converted</Text>
-        <Text style={[styles.sentAmount, { color: colors.foreground }]}>
+        <Text className='font-sans-semibold text-[16px] text-foreground'>Converted</Text>
+        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
           {formatAmt(quote.toAmount, quote.toCurrency)}
         </Text>
-        <Text style={[styles.sentTo, { color: colors.mutedForeground }]}>
+        <Text className='font-sans-medium text-[15px] mb-2 text-muted-foreground'>
           from {formatAmt(quote.fromAmount, quote.fromCurrency)}
         </Text>
 
-        <View style={[styles.receipt, { borderColor: colors.border }]}>
+        <View className='w-[100%] border-t pt-3.5 gap-2.5 border-border'>
           <MetaRow
             label='Rate'
             value={`1 ${quote.fromCurrency} = ${quote.rate.toFixed(4)} ${quote.toCurrency}`}
@@ -362,18 +362,18 @@ function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conver
 function MetaRow({
   label,
   value,
-  colors,
+  colors: _colors,
 }: {
   label: string;
   value: string;
   colors: { foreground: string; mutedForeground: string };
 }) {
   return (
-    <View style={styles.metaRow}>
-      <Text style={[styles.metaLabel, { color: colors.mutedForeground }]}>{label}</Text>
+    <View className='gap-0.5'>
+      <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
       <Text
         selectable
-        style={[styles.metaValue, { color: colors.foreground }]}
+        className='font-sans-medium text-[15px] tracking-[-0.1px] text-foreground'
       >
         {value}
       </Text>
@@ -381,178 +381,17 @@ function MetaRow({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 21,
-    fontWeight: '600',
-    letterSpacing: -0.4,
   },
   pair: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  leg: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  legEnd: {
-    justifyContent: 'flex-end',
-  },
-  legLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  legValue: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  meta: {
-    gap: 8,
-  },
-  metaRow: {
-    gap: 2,
-  },
-  metaLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  metaValue: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
   },
   btn: {
-    flex: 1,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
   },
   statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
     borderRadius: Radius.pill,
   },
-  statusText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  steps: {
-    gap: 10,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  stepDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    letterSpacing: -0.2,
-  },
-  sentHero: {
-    alignItems: 'center',
-    gap: 8,
-    paddingTop: 8,
-  },
-  sentBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  sentTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sentAmount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-  },
-  sentTo: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  receipt: {
-    width: '100%',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 14,
-    gap: 10,
-  },
-});
+};

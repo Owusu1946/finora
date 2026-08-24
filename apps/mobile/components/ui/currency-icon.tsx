@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { AppText as Text } from '@/components/ui/text';
@@ -129,14 +129,8 @@ function FiatFlagIcon({ iso, size }: { iso: string; size: number }) {
 
   return (
     <View
-      style={[
-        styles.flagAvatar,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-        },
-      ]}
+      className='items-center justify-center overflow-hidden bg-[#e4e4e7]'
+      style={{ width: size, height: size, borderRadius: size / 2 }}
     >
       <Image
         source={{ uri: `https://flagcdn.com/w160/${iso}.png` }}
@@ -174,36 +168,15 @@ export function CurrencyIcon({ currency, size = 36 }: CurrencyIconProps) {
 
   return (
     <View
-      style={[
-        styles.iconContainer,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: FALLBACK.bg,
-        },
-      ]}
+      className='items-center justify-center'
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: FALLBACK.bg }}
     >
-      <Text style={[styles.symbolText, { color: FALLBACK.text, fontSize: size * 0.36 }]}>
+      <Text
+        className='font-bold tracking-[-0.5px]'
+        style={{ color: FALLBACK.text, fontSize: size * 0.36 }}
+      >
         {code.slice(0, 2)}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  flagAvatar: {
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#e4e4e7',
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  symbolText: {
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-});

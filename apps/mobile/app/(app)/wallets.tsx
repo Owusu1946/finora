@@ -2,7 +2,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { SupportedCurrency } from '@/components/ui/currency-icon';
@@ -16,7 +16,6 @@ import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from '@/components/wallets
 import { WalletFilterTabs, FilterCategory } from '@/components/wallets/WalletFilterTabs';
 import { WalletHeader } from '@/components/wallets/WalletHeader';
 import { WalletListItem } from '@/components/wallets/WalletListItem';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, getAccountLabel } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -133,18 +132,19 @@ export default function WalletsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View className='flex-1 bg-background'>
       {/* Sleek Floating Toast */}
       {toastMessage && (
         <View
-          style={[styles.toast, { backgroundColor: colors.foreground, top: headerHeight + 12 }]}
+          className='absolute z-[99] flex-row items-center self-center rounded-full bg-foreground px-3 py-1.5'
+          style={{ top: headerHeight + 12 }}
         >
           <Icon
             name='check'
             size={13}
             color={colors.background}
           />
-          <Text style={[styles.toastText, { color: colors.background }]}>{toastMessage}</Text>
+          <Text className='font-sans-semibold text-[13px] text-background'>{toastMessage}</Text>
         </View>
       )}
 
@@ -152,9 +152,11 @@ export default function WalletsScreen() {
         title='Wallets'
         data={filteredWallets}
         intro={
-          <View style={styles.listHeader}>
-            <View style={styles.walletSummary}>
-              <Text style={[styles.title, { color: colors.foreground }]}>Wallets</Text>
+          <View className='gap-6 pb-6'>
+            <View className='gap-3'>
+              <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+                Wallets
+              </Text>
               <WalletHeader
                 accountLabel={accountLabel}
                 totalNetWorthUSD={totalNetWorthUSD}
@@ -174,27 +176,21 @@ export default function WalletsScreen() {
                   haptics.selection();
                   router.push('/virtual-card' as Href);
                 }}
-                style={({ pressed }) => [
-                  styles.cardEntry,
-                  {
-                    backgroundColor: colors.muted,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.78 : 1,
-                  },
-                ]}
+                className='flex-row items-center gap-3 rounded-[26px] border border-border bg-muted p-3.5'
+                style={({ pressed }) => ({ opacity: pressed ? 0.78 : 1 })}
               >
-                <View style={[styles.cardEntryIcon, { backgroundColor: colors.foreground }]}>
+                <View className='size-9 items-center justify-center rounded-xl bg-foreground'>
                   <Icon
                     name='wallet'
                     size={17}
                     color={colors.background}
                   />
                 </View>
-                <View style={styles.cardEntryCopy}>
-                  <Text style={[styles.cardEntryTitle, { color: colors.foreground }]}>
+                <View className='flex-1 gap-0.5'>
+                  <Text className='font-sans-semibold text-[15px] text-foreground'>
                     Virtual card
                   </Text>
-                  <Text style={[styles.cardEntrySubtitle, { color: colors.mutedForeground }]}>
+                  <Text className='font-sans text-[13px] text-muted-foreground'>
                     Create a card for online spending
                   </Text>
                 </View>
@@ -258,65 +254,3 @@ export default function WalletsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  toast: {
-    position: 'absolute',
-    alignSelf: 'center',
-    zIndex: 99,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Radius.pill,
-  },
-  toastText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  listHeader: {
-    gap: 24,
-    paddingBottom: 24,
-  },
-  walletSummary: {
-    gap: 12,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  cardEntry: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  cardEntryIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardEntryCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  cardEntryTitle: {
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
-  },
-  cardEntrySubtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-  },
-});

@@ -1,7 +1,7 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 
@@ -88,7 +88,8 @@ function PreparingCard() {
   const { colors } = useTheme();
   return (
     <View
-      style={[styles.preparing, { borderColor: colors.border, backgroundColor: colors.composer }]}
+      className='my-2 min-h-[72px] border items-center justify-center border-border bg-composer'
+      style={[styles.preparing]}
     >
       <LoadingIcon color={colors.mutedForeground} />
     </View>
@@ -278,13 +279,8 @@ export const CreateFinancialPlanToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   preparing: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-});
+};

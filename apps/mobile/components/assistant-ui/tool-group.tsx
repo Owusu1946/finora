@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -48,7 +48,7 @@ export function ToolGroupRoot({
         },
       }}
     >
-      <View style={styles.root}>{children}</View>
+      <View className='w-[100%] mb-2'>{children}</View>
     </ToolGroupContext.Provider>
   );
 }
@@ -61,7 +61,8 @@ export function ToolGroupTrigger({ count, active = false }: { count: number; act
   return (
     <Pressable
       onPress={onToggle}
-      style={({ pressed }) => [styles.trigger, pressed && { opacity: 0.7 }]}
+      className='flex-row items-center gap-2 py-1'
+      style={({ pressed }) => [pressed && { opacity: 0.7 }]}
       accessibilityRole='button'
       accessibilityState={{ expanded: open }}
     >
@@ -71,10 +72,8 @@ export function ToolGroupTrigger({ count, active = false }: { count: number; act
         color={active ? colors.foreground : colors.mutedForeground}
       />
       <Text
-        style={[
-          styles.triggerLabel,
-          { color: active ? colors.foreground : colors.mutedForeground },
-        ]}
+        className='font-sans-medium shrink text-[14px] tracking-[-0.1px]'
+        style={[{ color: active ? colors.foreground : colors.mutedForeground }]}
       >
         {active ? 'Running tools…' : label}
       </Text>
@@ -92,7 +91,7 @@ export function ToolGroupTrigger({ count, active = false }: { count: number; act
 export function ToolGroupContent({ children }: { children: ReactNode }) {
   const { open } = useToolGroupContext();
   if (!open) return null;
-  return <View style={styles.content}>{children}</View>;
+  return <View className='mt-1.5 gap-1.5'>{children}</View>;
 }
 
 export function ToolFallback({ toolName, argsText, result, isError }: ToolFallbackProps) {
@@ -101,29 +100,26 @@ export function ToolFallback({ toolName, argsText, result, isError }: ToolFallba
 
   return (
     <View
-      style={[
-        styles.toolCard,
-        {
-          borderColor: colors.border,
-          backgroundColor: colors.muted,
-        },
-      ]}
+      className='border px-2.5 py-2 gap-1 border-border bg-muted'
+      style={[styles.toolCard]}
     >
-      <View style={styles.toolHeader}>
+      <View className='flex-row items-center gap-1.5'>
         <Icon
           name='tool'
           size={14}
           color={colors.mutedForeground}
         />
-        <Text style={[styles.toolName, { color: colors.foreground }]}>{toolName}</Text>
-        <Text style={[styles.toolStatus, { color: colors.mutedForeground }]}>
+        <Text className='font-sans-semibold flex-1 text-[14px] tracking-[-0.1px] text-foreground'>
+          {toolName}
+        </Text>
+        <Text className='font-sans-medium text-[12px] uppercase text-muted-foreground'>
           {isError ? 'failed' : done ? 'done' : 'running'}
         </Text>
       </View>
       {argsText ? (
         <Text
           numberOfLines={3}
-          style={[styles.toolMeta, { color: colors.mutedForeground }]}
+          className='text-[13px] leading-[17px] font-["Menlo"] text-muted-foreground'
         >
           {argsText}
         </Text>
@@ -131,7 +127,7 @@ export function ToolFallback({ toolName, argsText, result, isError }: ToolFallba
       {done ? (
         <Text
           numberOfLines={4}
-          style={[styles.toolMeta, { color: colors.mutedForeground }]}
+          className='text-[13px] leading-[17px] font-["Menlo"] text-muted-foreground'
         >
           {typeof result === 'string' ? result : JSON.stringify(result)}
         </Text>
@@ -140,56 +136,8 @@ export function ToolFallback({ toolName, argsText, result, isError }: ToolFallba
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    width: '100%',
-    marginBottom: 8,
-  },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  triggerLabel: {
-    flexShrink: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  content: {
-    marginTop: 6,
-    gap: 6,
-  },
+const styles = {
   toolCard: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.md,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 4,
   },
-  toolHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  toolName: {
-    flex: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  toolStatus: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-  },
-  toolMeta: {
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: 'Menlo',
-  },
-});
+};

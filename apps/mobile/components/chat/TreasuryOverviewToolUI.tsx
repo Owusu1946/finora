@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { TreasuryOverview } from '@/lib/treasury';
 
@@ -21,10 +21,11 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
     if (status.type === 'running' && !overview) {
       return (
         <View
-          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.box]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
             Building treasury overview…
           </Text>
         </View>
@@ -34,9 +35,10 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
     if (!overview) {
       return (
         <View
-          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.box]}
         >
-          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
             Couldn’t load treasury.
           </Text>
         </View>
@@ -44,23 +46,26 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
     }
 
     return (
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-        <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Treasury</Text>
-        <Text style={[styles.total, { color: colors.foreground }]}>
+      <View
+        className='my-1.5 border p-4 gap-2 border-border bg-composer'
+        style={[styles.card]}
+      >
+        <Text className='font-sans-semibold text-[12px] text-muted-foreground'>Treasury</Text>
+        <Text className='font-sans-semibold text-[28px] tracking-[-0.5px] text-foreground'>
           {formatPaymentAmount(overview.totalUsd, 'USD')}
         </Text>
-        <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+        <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
           Total across wallets (USD equivalent)
         </Text>
 
-        <View style={styles.section}>
+        <View className='mt-1.5 gap-2'>
           {overview.balances.map((b) => (
             <View
               key={b.currency}
-              style={styles.row}
+              className='flex-row items-center justify-between gap-2.5'
             >
-              <Text style={[styles.name, { color: colors.foreground }]}>{b.currency}</Text>
-              <Text style={[styles.amount, { color: colors.foreground }]}>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>{b.currency}</Text>
+              <Text className='font-sans-semibold text-[14px] text-foreground'>
                 {formatPaymentAmount(b.balance, b.currency)}
               </Text>
             </View>
@@ -68,22 +73,23 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
         </View>
 
         {overview.upcomingOutflows.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
+          <View className='mt-1.5 gap-2'>
+            <Text className='font-sans-semibold text-[12px] text-muted-foreground'>
               Upcoming outflows
             </Text>
             {overview.upcomingOutflows.slice(0, 5).map((item, i) => (
               <View
                 key={`${item.label}-${i}`}
-                style={styles.row}
+                className='flex-row items-center justify-between gap-2.5'
               >
                 <Text
-                  style={[styles.name, { color: colors.foreground, flex: 1 }]}
+                  className='font-sans-semibold text-[15px] text-foreground'
+                  style={[{ flex: 1 }]}
                   numberOfLines={1}
                 >
                   {item.label}
                 </Text>
-                <Text style={[styles.amount, { color: colors.foreground }]}>
+                <Text className='font-sans-semibold text-[14px] text-foreground'>
                   {formatPaymentAmount(item.amount, item.currency)}
                 </Text>
               </View>
@@ -94,7 +100,7 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
         {overview.notes.map((note) => (
           <Text
             key={note}
-            style={[styles.muted, { color: colors.mutedForeground }]}
+            className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'
           >
             {note}
           </Text>
@@ -104,34 +110,11 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   box: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
   },
   card: {
-    marginVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 8,
   },
-  eyebrow: { fontFamily: 'DMSans_400Regular', fontSize: 12, fontWeight: '600' },
-  total: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  muted: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  section: { marginTop: 6, gap: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  name: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
-  amount: { fontFamily: 'DMSans_400Regular', fontSize: 14, fontWeight: '600' },
-});
+};

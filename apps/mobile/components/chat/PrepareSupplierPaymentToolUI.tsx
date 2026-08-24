@@ -1,6 +1,6 @@
 import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import type { Supplier } from '@/lib/suppliers-storage';
 
@@ -96,9 +96,12 @@ function SupplierPaymentCard({
 
   return (
     <>
-      <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
-        <View style={styles.header}>
-          <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+      <View
+        className='w-[100%] border p-4 gap-3.5 my-1.5 bg-composer border-border'
+        style={[styles.card]}
+      >
+        <View className='flex-row items-center gap-3'>
+          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
             {phase === 'sending' ? (
               <LoadingIcon
                 size='small'
@@ -112,27 +115,27 @@ function SupplierPaymentCard({
               />
             )}
           </View>
-          <View style={styles.headerText}>
-            <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>
+          <View className='flex-1 gap-0.5 min-w-0'>
+            <Text className='font-sans-semibold text-[12px] text-muted-foreground'>
               {phase === 'sent'
                 ? 'Supplier paid'
                 : phase === 'sending'
                   ? 'Paying supplier…'
                   : 'Supplier payment ready'}
             </Text>
-            <Text style={[styles.title, { color: colors.foreground }]}>{supplier.name}</Text>
+            <Text className='font-sans-semibold text-[16px] text-foreground'>{supplier.name}</Text>
           </View>
-          <Text style={[styles.amount, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[16px] text-foreground'>
             {formatPaymentAmount(amount, currency)}
           </Text>
         </View>
 
-        <View style={styles.meta}>
-          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+        <View className='gap-1'>
+          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
             {supplier.destination.label} · {supplier.destination.value}
           </Text>
           {reference ? (
-            <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[13px] text-muted-foreground'>
               Ref {reference}
             </Text>
           ) : null}
@@ -148,15 +151,15 @@ function SupplierPaymentCard({
               if (!ok) return;
               setPhase('sending');
             }}
+            className='min-h-11 items-center justify-center'
             style={({ pressed }) => [
-              styles.btn,
               {
                 backgroundColor: colors.foreground,
                 opacity: pressed || busy ? 0.85 : 1,
               },
             ]}
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>Approve payment</Text>
+            <Text className='font-sans-semibold text-[15px] text-background'>Approve payment</Text>
           </Pressable>
         ) : null}
       </View>
@@ -180,13 +183,11 @@ export const PrepareSupplierPaymentToolUI = makeAssistantToolUI<
     if (status.type === 'running' && !supplier) {
       return (
         <View
-          style={[
-            styles.preparing,
-            { borderColor: colors.border, backgroundColor: colors.composer },
-          ]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.preparing]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
             Preparing supplier payment…
           </Text>
         </View>
@@ -196,9 +197,10 @@ export const PrepareSupplierPaymentToolUI = makeAssistantToolUI<
     if (!supplier || amount == null || !currency) {
       return (
         <View
-          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 border p-4 border-border bg-composer'
+          style={[styles.empty]}
         >
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
             Couldn’t prepare that supplier payment. Try “Pay TechFlow 780 GBP”.
           </Text>
         </View>
@@ -216,91 +218,17 @@ export const PrepareSupplierPaymentToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   preparing: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-  },
-  preparingText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
   },
   empty: {
-    marginVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-  },
-  emptyText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
   },
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 6,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  meta: {
-    gap: 4,
-  },
-  metaText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
   },
   btn: {
-    minHeight: 44,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
+};

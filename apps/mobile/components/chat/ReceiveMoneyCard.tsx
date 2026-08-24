@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Share, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -107,25 +107,24 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.composer,
-          borderColor: colors.border,
-        },
-      ]}
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
     >
-      <View style={styles.header}>
-        <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+      <View className='flex-row items-center gap-3'>
+        <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
           <Icon
             name='arrow-down-left'
             size={16}
             color={colors.foreground}
           />
         </View>
-        <View style={styles.headerText}>
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Receive money</Text>
-          <Text style={[styles.title, { color: colors.foreground }]}>Share payment details</Text>
+        <View className='flex-1 gap-0.5'>
+          <Text className='font-sans-medium text-[14px] tracking-[-0.1px] text-muted-foreground'>
+            Receive money
+          </Text>
+          <Text className='font-sans-semibold text-[19px] tracking-[-0.3px] text-foreground'>
+            Share payment details
+          </Text>
         </View>
       </View>
 
@@ -133,7 +132,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         horizontal
         showsHorizontalScrollIndicator={false}
       >
-        <View style={styles.tabs}>
+        <View className='flex-row gap-2'>
           {methods.map((method) => {
             const selected = method.id === active.id;
             return (
@@ -144,8 +143,8 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   setActiveId(method.id);
                   setCopiedKey(null);
                 }}
+                className='flex-row items-center gap-1.5 px-2.5 py-1.5'
                 style={({ pressed }) => [
-                  styles.tab,
                   {
                     backgroundColor: selected ? colors.foreground : colors.muted,
                     opacity: pressed ? 0.88 : 1,
@@ -157,10 +156,8 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   size={18}
                 />
                 <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: selected ? colors.background : colors.foreground },
-                  ]}
+                  className='font-sans-semibold text-[13px] tracking-[-0.1px]'
+                  style={[{ color: selected ? colors.background : colors.foreground }]}
                   numberOfLines={1}
                 >
                   {method.currency}
@@ -171,10 +168,12 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         </View>
       </ScrollView>
 
-      <View style={styles.methodHead}>
-        <Text style={[styles.methodTitle, { color: colors.foreground }]}>{active.title}</Text>
+      <View className='gap-1'>
+        <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
+          {active.title}
+        </Text>
         {active.subtitle ? (
-          <Text style={[styles.methodSub, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[14px] tracking-[-0.1px] leading-[18px] text-muted-foreground'>
             {active.subtitle}
           </Text>
         ) : null}
@@ -186,6 +185,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           haptics.selection();
           setQrOpen(true);
         }}
+        className='self-center p-3'
         style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
       >
         <MockQrCode
@@ -195,26 +195,28 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           backgroundColor='#ffffff'
         />
       </Pressable>
-      <Text style={[styles.qrHint, { color: colors.mutedForeground }]}>
+      <Text className='font-sans-medium text-center text-[13px] -mt-1 text-muted-foreground'>
         Tap QR to enlarge · Scan to pay · {active.currency}
       </Text>
 
-      <View style={styles.fields}>
+      <View className='gap-2'>
         {active.fields.map((field) => {
           const key = `${active.id}:${field.label}`;
           const copied = copiedKey === key;
           return (
             <View
               key={key}
-              style={[styles.field, { borderColor: colors.border }]}
+              className='flex-row items-center gap-2.5 border px-3 py-2.5 border-border'
+              style={[styles.field]}
             >
-              <View style={styles.fieldText}>
-                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>
+              <View className='flex-1 gap-0.5'>
+                <Text className='font-sans-medium text-[12px] tracking-[-0.1px] text-muted-foreground'>
                   {field.label}
                 </Text>
                 <Text
                   selectable
-                  style={[styles.fieldValue, { color: colors.foreground }]}
+                  className='font-sans-medium text-[15px] tracking-[-0.2px] text-foreground'
+
                   numberOfLines={2}
                 >
                   {field.value}
@@ -225,8 +227,8 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   accessibilityLabel={`Copy ${field.label}`}
                   hitSlop={8}
                   onPress={() => copyValue(field.value, key)}
+                  className='w-[34px] h-[34px] rounded-[17px] items-center justify-center'
                   style={({ pressed }) => [
-                    styles.copyBtn,
                     {
                       backgroundColor: colors.muted,
                       opacity: pressed ? 0.7 : 1,
@@ -245,11 +247,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         })}
       </View>
 
-      <View style={styles.actions}>
+      <View className='gap-2'>
         <Pressable
           onPress={() => void textDetails()}
+          className='min-h-[46px] flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
-            styles.primaryBtn,
             {
               backgroundColor: colors.foreground,
               opacity: pressed ? 0.85 : 1,
@@ -261,14 +263,16 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             size={16}
             color={colors.background}
           />
-          <Text style={[styles.primaryLabel, { color: colors.background }]}>Text SMS</Text>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
+            Text SMS
+          </Text>
         </Pressable>
 
-        <View style={styles.secondaryRow}>
+        <View className='flex-row gap-2'>
           <Pressable
             onPress={shareDetails}
+            className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              styles.secondaryBtn,
               {
                 borderColor: colors.border,
                 opacity: pressed ? 0.75 : 1,
@@ -280,12 +284,14 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
               size={15}
               color={colors.foreground}
             />
-            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share</Text>
+            <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+              Share
+            </Text>
           </Pressable>
           <Pressable
             onPress={shareQr}
+            className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              styles.secondaryBtn,
               {
                 borderColor: colors.border,
                 opacity: pressed ? 0.75 : 1,
@@ -297,12 +303,14 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
               size={15}
               color={colors.foreground}
             />
-            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share QR</Text>
+            <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+              Share QR
+            </Text>
           </Pressable>
           <Pressable
             onPress={copyAll}
+            className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              styles.secondaryBtn,
               {
                 borderColor: colors.border,
                 opacity: pressed ? 0.75 : 1,
@@ -314,7 +322,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
               size={15}
               color={colors.foreground}
             />
-            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
               {copiedKey === 'all' ? 'Copied' : 'Copy'}
             </Text>
           </Pressable>
@@ -328,21 +336,25 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         onRequestClose={() => setQrOpen(false)}
       >
         <Pressable
-          style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+          className='flex-1 items-center justify-center p-6'
+          style={[{ backgroundColor: 'rgba(0,0,0,0.55)' }]}
           onPress={() => setQrOpen(false)}
         >
           <Pressable
             onPress={(e) => e.stopPropagation()}
-            style={[
-              styles.modalCard,
-              { backgroundColor: colors.background, borderColor: colors.border },
-            ]}
+            className='w-[100%] max-w-[360px] border p-5 gap-3 items-center bg-background border-border'
+            style={[styles.modalCard]}
           >
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>{active.title}</Text>
-            <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-semibold text-[18px] tracking-[-0.3px] text-center text-foreground'>
+              {active.title}
+            </Text>
+            <Text className='font-sans-medium text-[14px] text-center -mt-1 text-muted-foreground'>
               Hold steady — sender scans this code
             </Text>
-            <View style={styles.modalQr}>
+            <View
+              className='p-4 bg-white'
+              style={[styles.modalQr]}
+            >
               <MockQrCode
                 value={active.qrPayload}
                 size={240}
@@ -350,11 +362,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 backgroundColor='#ffffff'
               />
             </View>
-            <View style={styles.modalActions}>
+            <View className='flex-row gap-2 w-[100%] mt-1'>
               <Pressable
                 onPress={shareQr}
+                className='min-h-[46px] flex-row items-center justify-center gap-2'
                 style={({ pressed }) => [
-                  styles.primaryBtn,
                   {
                     backgroundColor: colors.foreground,
                     opacity: pressed ? 0.85 : 1,
@@ -367,15 +379,17 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   size={16}
                   color={colors.background}
                 />
-                <Text style={[styles.primaryLabel, { color: colors.background }]}>Share QR</Text>
+                <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
+                  Share QR
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => {
                   haptics.selection();
                   setQrOpen(false);
                 }}
+                className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
                 style={({ pressed }) => [
-                  styles.secondaryBtn,
                   {
                     borderColor: colors.border,
                     opacity: pressed ? 0.75 : 1,
@@ -384,7 +398,9 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   },
                 ]}
               >
-                <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Done</Text>
+                <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+                  Done
+                </Text>
               </Pressable>
             </View>
           </Pressable>
@@ -394,199 +410,29 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 19,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  tabs: {
-    flexDirection: 'row',
-    gap: 8,
   },
   tab: {
     borderRadius: Radius.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  tabLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  methodHead: {
-    gap: 4,
-  },
-  methodTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  methodSub: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-    lineHeight: 18,
   },
   qrWrap: {
-    alignSelf: 'center',
-    padding: 12,
     borderRadius: Radius.lg,
-  },
-  qrHint: {
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: -4,
-  },
-  fields: {
-    gap: 8,
   },
   field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  fieldText: {
-    flex: 1,
-    gap: 2,
-  },
-  fieldLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  fieldValue: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-  },
-  copyBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actions: {
-    gap: 8,
   },
   primaryBtn: {
-    minHeight: 46,
     borderRadius: Radius.composer,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  primaryLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: 8,
   },
   secondaryBtn: {
-    flex: 1,
-    minHeight: 44,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  secondaryLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  modalBackdrop: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 360,
     borderRadius: Radius.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 20,
-    gap: 12,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-  modalSub: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginTop: -4,
   },
   modalQr: {
-    padding: 16,
     borderRadius: Radius.lg,
-    backgroundColor: '#ffffff',
   },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 8,
-    width: '100%',
-    marginTop: 4,
-  },
-});
+};

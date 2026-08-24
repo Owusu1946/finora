@@ -1,6 +1,6 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { RemoteInvoiceSchema } from '@finora/shared';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { Invoice } from '@/components/invoices/types';
 
@@ -78,13 +78,11 @@ export const ListInvoicesToolUI = makeAssistantToolUI<ListInvoicesArgs, ListInvo
     if (status.type === 'running' && !invoices) {
       return (
         <View
-          style={[
-            styles.preparing,
-            { borderColor: colors.border, backgroundColor: colors.composer },
-          ]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.preparing]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.preparingText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
             Scanning {args?.source === 'gmail' ? 'Gmail' : 'invoices'}…
           </Text>
         </View>
@@ -94,9 +92,10 @@ export const ListInvoicesToolUI = makeAssistantToolUI<ListInvoicesArgs, ListInvo
     if (!invoices?.length) {
       return (
         <View
-          style={[styles.empty, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 border p-4 border-border bg-composer'
+          style={[styles.empty]}
         >
-          <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
             No unpaid supplier invoices found. Connect Gmail in Integrations or add one manually.
           </Text>
         </View>
@@ -104,8 +103,8 @@ export const ListInvoicesToolUI = makeAssistantToolUI<ListInvoicesArgs, ListInvo
     }
 
     return (
-      <View style={styles.stack}>
-        <Text style={[styles.stackTitle, { color: colors.mutedForeground }]}>
+      <View className='gap-1 my-1'>
+        <Text className='font-sans-semibold text-[13px] ml-1 mb-0.5 text-muted-foreground'>
           {invoices.length} supplier invoice{invoices.length === 1 ? '' : 's'}
         </Text>
         {invoices.map((invoice) => (
@@ -119,43 +118,11 @@ export const ListInvoicesToolUI = makeAssistantToolUI<ListInvoicesArgs, ListInvo
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   preparing: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-  },
-  preparingText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
   },
   empty: {
-    marginVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
   },
-  emptyText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  stack: {
-    gap: 4,
-    marginVertical: 4,
-  },
-  stackTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 4,
-    marginBottom: 2,
-  },
-});
+};

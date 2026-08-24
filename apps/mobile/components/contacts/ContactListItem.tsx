@@ -1,9 +1,10 @@
 import { memo } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 import { AVATAR_COLORS, type Contact } from './types';
@@ -41,25 +42,24 @@ export const ContactListItem = memo(function ContactListItem({
         haptics.selection();
         onPress?.(contact);
       }}
-      style={({ pressed }) => [
-        styles.row,
-        !isLast && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        },
-        pressed && { opacity: 0.7 },
-      ]}
+      className={cx(
+        'flex-row items-center gap-3 py-3.5 active:opacity-70',
+        !isLast && 'border-b border-border',
+      )}
     >
       {/* Avatar */}
-      <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
-        <Text style={styles.initials}>{contact.initials}</Text>
+      <View
+        className='h-[38px] w-[38px] items-center justify-center rounded-full'
+        style={{ backgroundColor: avatarBg }}
+      >
+        <Text className='font-sans-semibold text-[15px] text-white'>{contact.initials}</Text>
       </View>
 
       {/* Name + method */}
-      <View style={styles.meta}>
-        <View style={styles.nameRow}>
+      <View className='flex-1 gap-0.5'>
+        <View className='flex-row items-center gap-[5px]'>
           <Text
-            style={[styles.name, { color: colors.foreground }]}
+            className='font-sans-semibold text-base text-foreground'
             numberOfLines={1}
           >
             {contact.name}
@@ -72,19 +72,19 @@ export const ContactListItem = memo(function ContactListItem({
             />
           )}
         </View>
-        <Text style={[styles.detail, { color: colors.mutedForeground }]}>
+        <Text className='font-sans text-[13px] text-muted-foreground'>
           {contact.method} • {contact.identifier}
         </Text>
       </View>
 
       {/* Last tx date */}
-      <View style={styles.right}>
+      <View className='flex-row items-center gap-1.5'>
         {contact.lastTxDate ? (
-          <Text style={[styles.dateText, { color: colors.mutedForeground }]}>
+          <Text className='font-sans text-[13px] text-muted-foreground'>
             {relativeDate(contact.lastTxDate)}
           </Text>
         ) : (
-          <Text style={[styles.dateText, { color: colors.mutedForeground }]}>Never</Text>
+          <Text className='font-sans text-[13px] text-muted-foreground'>Never</Text>
         )}
         <Icon
           name='chevron-right'
@@ -94,56 +94,4 @@ export const ContactListItem = memo(function ContactListItem({
       </View>
     </Pressable>
   );
-});
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    gap: 12,
-  },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    color: '#fff',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  meta: {
-    flex: 1,
-    gap: 2,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  name: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  detail: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '400',
-  },
-  right: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  dateText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '400',
-  },
 });

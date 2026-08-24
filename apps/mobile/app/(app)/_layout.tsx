@@ -28,14 +28,8 @@ function NewChatButton() {
         aui.threads.switchToNewThread();
         router.push('/');
       }}
-      style={({ pressed }) => [
-        styles.headerAction,
-        {
-          backgroundColor: colors.muted,
-          borderColor: colors.border,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
+      className='size-10 items-center justify-center rounded-full border border-border bg-muted'
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
       <Icon
         name='compose'
@@ -58,14 +52,8 @@ function ScanHeaderButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      style={({ pressed }) => [
-        styles.headerAction,
-        {
-          backgroundColor: colors.muted,
-          borderColor: colors.border,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
+      className='size-10 items-center justify-center rounded-full border border-border bg-muted'
+      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
     >
       <Icon
         name='qr'
@@ -91,11 +79,7 @@ function DrawerTrigger() {
         haptics.selection();
         navigation.dispatch(DrawerActions.openDrawer());
       }}
-      style={[
-        styles.headerAction,
-        styles.drawerAction,
-        { backgroundColor: colors.muted, borderColor: colors.border },
-      ]}
+      className='size-10 items-center justify-center overflow-hidden rounded-full border border-border bg-muted'
     >
       <Icon
         name='menu'
@@ -332,17 +316,3 @@ export default function AppLayout() {
     </Drawer>
   );
 }
-
-const styles = StyleSheet.create({
-  headerAction: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  drawerAction: {
-    overflow: 'hidden',
-  },
-});

@@ -55,23 +55,24 @@ function SuggestionChip({ prompt }: { prompt: string }) {
         },
       ]}
     >
-      <Text style={[styles.chipText, { color: colors.foreground }]}>{prompt}</Text>
+      <Text className='font-sans text-[15px] tracking-[-0.2px] text-foreground'>{prompt}</Text>
     </ThreadPrimitive.Suggestion>
   );
 }
 
 function EmptyState() {
-  const { colors } = useTheme();
   const suggestions = isBusinessAccount() ? BUSINESS_SUGGESTIONS : PERSONAL_SUGGESTIONS;
   return (
     <Pressable
       accessible={false}
       onPress={Keyboard.dismiss}
-      style={styles.empty}
+      className='flex-1 justify-center items-center px-6 gap-2.5'
     >
       <FinoraLogo size={48} />
-      <Text style={[styles.welcome, { color: colors.foreground }]}>How can I help you today?</Text>
-      <View style={styles.chips}>
+      <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-center mb-6 text-foreground'>
+        How can I help you today?
+      </Text>
+      <View className='flex-row flex-wrap justify-center gap-2'>
         {suggestions.map((prompt) => (
           <SuggestionChip
             key={prompt}
@@ -93,7 +94,7 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
         <EmptyState />
       </ThreadPrimitive.Empty>
       <ThreadPrimitive.If empty={false}>
-        <View style={styles.flex}>
+        <View className='flex-1'>
           <ThreadPrimitive.MessagesFlatList
             ref={flatListRef}
             style={styles.flex}
@@ -152,7 +153,7 @@ export function Thread() {
   return (
     <View style={[styles.container, { backgroundColor: 'transparent' }]}>
       <KeyboardAvoidingView
-        style={styles.flex}
+        className='flex-1'
         // Android `height` resizes the whole tree when the picker/keyboard
         // dismisses and feels like a full reload — leave avoidance to insets.
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -161,7 +162,7 @@ export function Thread() {
         keyboardVerticalOffset={0}
         enabled={isFocused && Platform.OS === 'ios'}
       >
-        <View style={styles.flex}>
+        <View className='flex-1'>
           <ChatMessages headerHeight={headerHeight} />
         </View>
         <View
@@ -176,13 +177,7 @@ export function Thread() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
+const styles = {
   messageList: {
     width: '100%',
     maxWidth: Spacing.threadMaxWidth,
@@ -191,27 +186,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 18,
   },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    gap: 10,
-  },
-  welcome: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-  },
   chip: {
     ...Rounded,
     paddingHorizontal: 14,
@@ -219,9 +193,4 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  chipText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    letterSpacing: -0.2,
-  },
-});
+} as const;

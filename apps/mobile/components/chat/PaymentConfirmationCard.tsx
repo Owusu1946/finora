@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, View, type TextStyle } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -146,13 +146,8 @@ export function PaymentConfirmationCard({
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.composer,
-          borderColor: colors.border,
-        },
-      ]}
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
     >
       {sent ? (
         <SentHero
@@ -166,10 +161,10 @@ export function PaymentConfirmationCard({
         />
       ) : (
         <>
-          <View style={styles.header}>
+          <View className='flex-row items-center gap-3'>
             <Animated.View
+              className='w-9 h-9 rounded-[18px] items-center justify-center'
               style={[
-                styles.iconWrap,
                 {
                   backgroundColor: failed ? colors.destructiveSurface : colors.muted,
                   opacity: sending ? pulse : 1,
@@ -189,17 +184,19 @@ export function PaymentConfirmationCard({
                 />
               )}
             </Animated.View>
-            <View style={styles.headerText}>
-              <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{eyebrow}</Text>
-              <Text style={[styles.amount, { color: colors.foreground }]}>
+            <View className='flex-1 gap-0.5'>
+              <Text className='font-sans-medium text-[14px] tracking-[-0.1px] text-muted-foreground'>
+                {eyebrow}
+              </Text>
+              <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
                 {formatPaymentAmount(payment.amount, payment.currency)}
               </Text>
             </View>
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View className='h-px w-full bg-border' />
 
-          <View style={styles.rows}>
+          <View className='gap-3'>
             <DetailRow
               label='To'
               value={payment.recipientName}
@@ -286,18 +283,18 @@ export function PaymentConfirmationCard({
       )}
 
       {sending ? (
-        <View style={styles.steps}>
+        <View className='gap-2.5 pt-0.5'>
           {SEND_STEPS.map((label, index) => {
             const done = index < sendingStep;
             const active = index === sendingStep;
             return (
               <View
                 key={label}
-                style={styles.stepRow}
+                className='flex-row items-center gap-2.5'
               >
                 <View
+                  className='w-[22px] h-[22px] rounded-[11px] border items-center justify-center'
                   style={[
-                    styles.stepDot,
                     {
                       borderColor: done || active ? colors.foreground : colors.border,
                       backgroundColor: done ? colors.foreground : 'transparent',
@@ -318,8 +315,8 @@ export function PaymentConfirmationCard({
                   ) : null}
                 </View>
                 <Text
+                  className='font-sans text-[15px] tracking-[-0.2px]'
                   style={[
-                    styles.stepLabel,
                     {
                       color: done || active ? colors.foreground : colors.mutedForeground,
                       fontWeight: active ? '600' : '500',
@@ -336,7 +333,7 @@ export function PaymentConfirmationCard({
       ) : null}
 
       {pending ? (
-        <View style={styles.actions}>
+        <View className='flex-row gap-2.5 mt-0.5'>
           <Pressable
             accessibilityRole='button'
             disabled={loading}
@@ -344,16 +341,17 @@ export function PaymentConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
+            className='flex-1 min-h-[46px] items-center justify-center px-3.5 border'
             style={({ pressed }) => [
-              styles.btn,
-              styles.btnGhost,
               {
                 borderColor: colors.border,
                 opacity: pressed || loading ? 0.7 : 1,
               },
             ]}
           >
-            <Text style={[styles.btnLabel, { color: colors.foreground }]}>Cancel</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              Cancel
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole='button'
@@ -362,16 +360,15 @@ export function PaymentConfirmationCard({
               haptics.impact();
               onConfirm?.();
             }}
+            className='flex-1 min-h-[46px] items-center justify-center px-3.5'
             style={({ pressed }) => [
-              styles.btn,
-              styles.btnPrimary,
               {
                 backgroundColor: colors.foreground,
                 opacity: pressed || loading ? 0.85 : 1,
               },
             ]}
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
               {loading ? 'Confirming…' : 'Confirm & send'}
             </Text>
           </Pressable>
@@ -379,13 +376,16 @@ export function PaymentConfirmationCard({
       ) : null}
 
       {cancelled || failed ? (
-        <View style={[styles.statusPill, { backgroundColor: colors.destructiveSurface }]}>
+        <View
+          className='flex-row items-center gap-2 self-start px-3 py-2 bg-destructive-surface'
+          style={[styles.statusPill]}
+        >
           <Icon
             name='remove'
             size={14}
             color={colors.destructive}
           />
-          <Text style={[styles.statusText, { color: colors.destructive }]}>
+          <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-destructive'>
             {failed ? 'Couldn’t complete transfer' : 'Cancelled'}
           </Text>
         </View>
@@ -437,23 +437,26 @@ function SentHero({
   }, [opacity, scale]);
 
   return (
-    <Animated.View style={[styles.sentHero, { opacity, transform: [{ scale }] }]}>
-      <View style={[styles.sentBadge, { backgroundColor: colors.muted }]}>
+    <Animated.View
+      className='items-center gap-2 pt-2 pb-1'
+      style={[{ opacity, transform: [{ scale }] }]}
+    >
+      <View className='w-16 h-16 rounded-[32px] items-center justify-center mb-1 bg-muted'>
         <Icon
           name='check'
           size={28}
           color={colors.foreground}
         />
       </View>
-      <Text style={[styles.sentTitle, { color: colors.foreground }]}>Sent</Text>
-      <Text style={[styles.sentAmount, { color: colors.foreground }]}>
+      <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>Sent</Text>
+      <Text className='font-sans-semibold text-[31px] tracking-[-0.7px] text-foreground'>
         {formatPaymentAmount(payment.amount, payment.currency)}
       </Text>
-      <Text style={[styles.sentTo, { color: colors.mutedForeground }]}>
+      <Text className='font-sans-medium text-[16px] tracking-[-0.2px] mb-2 text-muted-foreground'>
         to {payment.recipientName}
       </Text>
 
-      <View style={[styles.receipt, { borderColor: colors.border }]}>
+      <View className='w-[100%] border-t pt-3.5 gap-3 border-border'>
         <DetailRow
           label={payment.destination.label}
           value={payment.destination.value}
@@ -477,7 +480,7 @@ function SentHero({
               colors={colors}
             />
             {onViewDetails ? (
-              <Text style={[styles.viewDetailsHint, { color: colors.mutedForeground }]}>
+              <Text className='font-sans-medium mt-1 text-[13px] text-muted-foreground'>
                 Tap to view details
               </Text>
             ) : null}
@@ -498,8 +501,8 @@ function SentHero({
             haptics.selection();
             onViewDetails();
           }}
+          className='mt-1 w-[100%] min-h-11 border flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
-            styles.saveContactBtn,
             {
               borderColor: colors.border,
               backgroundColor: 'transparent',
@@ -512,7 +515,7 @@ function SentHero({
             size={16}
             color={colors.foreground}
           />
-          <Text style={[styles.saveContactLabel, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
             View transaction
           </Text>
         </Pressable>
@@ -525,8 +528,8 @@ function SentHero({
             haptics.selection();
             onSaveContact();
           }}
+          className='mt-1 w-[100%] min-h-11 border flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
-            styles.saveContactBtn,
             {
               borderColor: colors.border,
               backgroundColor: contactSaved ? colors.muted : 'transparent',
@@ -539,7 +542,7 @@ function SentHero({
             size={16}
             color={colors.foreground}
           />
-          <Text style={[styles.saveContactLabel, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
             {contactSaving ? 'Saving…' : contactSaved ? 'Saved to contacts' : 'Save contact'}
           </Text>
         </Pressable>
@@ -565,9 +568,11 @@ function DetailRow({
   };
 }) {
   return (
-    <View style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.mutedForeground }]}>{label}</Text>
-      <View style={styles.rowValueWrap}>
+    <View className='gap-1'>
+      <Text className='font-sans-medium text-[13px] tracking-[-0.1px] text-muted-foreground'>
+        {label}
+      </Text>
+      <View className='flex-row items-center gap-1.5'>
         {icon ? (
           <Icon
             name={icon}
@@ -577,7 +582,8 @@ function DetailRow({
         ) : null}
         <Text
           selectable
-          style={[styles.rowValue, mono && styles.mono, { color: colors.foreground }]}
+          className='font-sans-medium flex-1 text-[16px] tracking-[-0.2px] text-foreground'
+          style={[mono && styles.mono]}
           numberOfLines={2}
         >
           {value}
@@ -587,195 +593,21 @@ function DetailRow({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 27,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    width: '100%',
-  },
-  rows: {
-    gap: 12,
-  },
-  row: {
-    gap: 4,
-  },
-  rowLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-  },
-  rowValueWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  rowValue: {
-    flex: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
-    letterSpacing: -0.2,
   },
   mono: {
-    fontVariant: ['tabular-nums'],
+    fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
     letterSpacing: -0.1,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 2,
   },
   btn: {
-    flex: 1,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
-  btnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnPrimary: {},
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
   },
   statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
     borderRadius: Radius.pill,
   },
-  statusText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  steps: {
-    gap: 10,
-    paddingTop: 2,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  stepDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    letterSpacing: -0.2,
-  },
-  sentHero: {
-    alignItems: 'center',
-    gap: 8,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  sentBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  sentTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  sentAmount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 31,
-    fontWeight: '600',
-    letterSpacing: -0.7,
-  },
-  sentTo: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-    marginBottom: 8,
-  },
-  receipt: {
-    width: '100%',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 14,
-    gap: 12,
-  },
   saveContactBtn: {
-    marginTop: 4,
-    width: '100%',
-    minHeight: 44,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
   },
-  saveContactLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  viewDetailsHint: {
-    marginTop: 4,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-});
+} as const;

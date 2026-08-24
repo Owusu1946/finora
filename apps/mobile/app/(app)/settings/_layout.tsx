@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { DrawerActions } from '@react-navigation/native';
 import { Stack, useNavigation, useRouter } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';

@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -29,10 +29,11 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
     if (status.type === 'running' && !report) {
       return (
         <View
-          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.box]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
             Generating financial report…
           </Text>
         </View>
@@ -42,9 +43,10 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
     if (!report) {
       return (
         <View
-          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.box]}
         >
-          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
             No report available.
           </Text>
         </View>
@@ -52,10 +54,13 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
     }
 
     return (
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-        <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{report.title}</Text>
-        <Text style={[styles.period, { color: colors.mutedForeground }]}>{report.period}</Text>
-        <View style={styles.metrics}>
+      <View
+        className='my-1.5 border p-4 gap-2 border-border bg-composer'
+        style={[styles.card]}
+      >
+        <Text className='font-sans-semibold text-[12px] text-muted-foreground'>{report.title}</Text>
+        <Text className='font-sans-medium text-[14px] text-muted-foreground'>{report.period}</Text>
+        <View className='flex-row gap-3 my-1.5'>
           <Metric
             label='In'
             value={formatPaymentAmount(report.inflow, report.currency)}
@@ -75,7 +80,7 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
         {report.highlights.map((h) => (
           <Text
             key={h}
-            style={[styles.muted, { color: colors.mutedForeground }]}
+            className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'
           >
             · {h}
           </Text>
@@ -88,42 +93,25 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
 function Metric({
   label,
   value,
-  colors,
+  colors: _colors,
 }: {
   label: string;
   value: string;
   colors: { foreground: string; mutedForeground: string };
 }) {
   return (
-    <View style={styles.metric}>
-      <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[styles.metricValue, { color: colors.foreground }]}>{value}</Text>
+    <View className='flex-1 gap-0.5'>
+      <Text className='font-sans-semibold text-[12px] text-muted-foreground'>{label}</Text>
+      <Text className='font-sans-semibold text-[15px] text-foreground'>{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   box: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
   },
   card: {
-    marginVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 8,
   },
-  eyebrow: { fontFamily: 'DMSans_400Regular', fontSize: 12, fontWeight: '600' },
-  period: { fontFamily: 'DMSans_400Regular', fontSize: 14, fontWeight: '500' },
-  metrics: { flexDirection: 'row', gap: 12, marginVertical: 6 },
-  metric: { flex: 1, gap: 2 },
-  metricValue: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '700' },
-  muted: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500', lineHeight: 18 },
-});
+};

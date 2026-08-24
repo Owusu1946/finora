@@ -1,6 +1,6 @@
 import { Navii } from '@usenavii/react-native';
 import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { AccountType } from '@/lib/account';
 
@@ -34,7 +34,10 @@ export function UserAvatar({
 
   if (accountType === 'personal') {
     return (
-      <View style={[styles.frame, frameStyle]}>
+      <View
+        className='overflow-hidden'
+        style={frameStyle}
+      >
         <Navii
           seed={seed}
           size={size}
@@ -45,33 +48,25 @@ export function UserAvatar({
   }
 
   return (
-    <View style={[styles.frame, styles.fallback, frameStyle]}>
+    <View
+      className='items-center justify-center overflow-hidden'
+      style={frameStyle}
+    >
       {imageUrl ? (
         <Image
           source={imageUrl}
-          style={StyleSheet.absoluteFill}
+          className='absolute inset-0'
           contentFit='cover'
           transition={150}
         />
       ) : (
-        <Text style={[styles.letter, { color: foregroundColor, fontSize: size * 0.44 }]}>
+        <Text
+          className='font-sans-semibold'
+          style={{ color: foregroundColor, fontSize: size * 0.44 }}
+        >
           {displayName.trim().charAt(0).toUpperCase() || 'F'}
         </Text>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  frame: {
-    overflow: 'hidden',
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  letter: {
-    fontFamily: 'DMSans_400Regular',
-    fontWeight: '600',
-  },
-});

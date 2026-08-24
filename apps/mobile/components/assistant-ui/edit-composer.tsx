@@ -29,7 +29,10 @@ export function EditComposer() {
   }, [storeText]);
 
   return (
-    <View style={[styles.shell, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+    <View
+      className='flex-col gap-1.5 border p-2 bg-composer border-border'
+      style={[styles.shell]}
+    >
       <TextInput
         style={inputStyle}
         value={localText}
@@ -49,7 +52,7 @@ export function EditComposer() {
           default: {},
         })}
       />
-      <View style={styles.actionRow}>
+      <View className='flex-row items-center justify-end gap-2'>
         <ComposerPrimitive.Cancel
           accessibilityLabel='Cancel edit'
           onPressIn={haptics.light}
@@ -84,13 +87,9 @@ export function EditComposer() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   shell: {
-    flexDirection: 'column',
-    gap: 6,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 8,
   },
   input: {
     fontFamily: 'DMSans_400Regular',
@@ -105,12 +104,6 @@ const styles = StyleSheet.create({
       web: { outlineStyle: 'none' } as object,
       default: {},
     }),
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
   },
   cancelButton: {
     width: 32,
@@ -127,4 +120,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+} as const;

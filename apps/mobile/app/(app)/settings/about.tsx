@@ -1,19 +1,10 @@
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import {
-  Linking,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  StyleSheet,
-  UIManager,
-  View,
-} from 'react-native';
+import { Linking, LayoutAnimation, Platform, Pressable, UIManager, View } from 'react-native';
 
 import { SettingsScreen } from '@/components/settings/SettingsPrimitives';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -56,51 +47,53 @@ function FaqItem({
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.faqItem, { borderBottomColor: colors.border }]}>
+    <View className='px-3.5'>
       <Pressable
         onPress={() => {
           haptics.selection();
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           onToggle();
         }}
-        style={({ pressed }) => [styles.faqHeader, pressed && { opacity: 0.7 }]}
+        className='flex-row items-center gap-3 py-3.5'
+        style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
       >
-        <Text style={[styles.faqQ, { color: colors.foreground }]}>{q}</Text>
+        <Text className='flex-1 font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
+          {q}
+        </Text>
         <Icon
           name={open ? 'chevron-down' : 'chevron-right'}
           size={18}
           color={colors.mutedForeground}
         />
       </Pressable>
-      {open ? <Text style={[styles.faqA, { color: colors.mutedForeground }]}>{a}</Text> : null}
+      {open ? (
+        <Text className='pb-3.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
+          {a}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 export default function AboutFinoraScreen() {
-  const { colors } = useTheme();
   const [openId, setOpenId] = useState<number | null>(0);
 
   return (
     <SettingsScreen>
-      <View style={styles.intro}>
-        <Text style={[styles.title, { color: colors.foreground }]}>About Finora</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+      <View className='mb-1 gap-1.5'>
+        <Text className='font-sans text-[29px] font-bold tracking-[-0.6px] text-foreground'>
+          About Finora
+        </Text>
+        <Text className='font-sans-medium text-[15px] text-muted-foreground'>
           ChatGPT for money · v{APP_VERSION}
         </Text>
       </View>
 
-      <View
-        style={[styles.faqCard, { backgroundColor: colors.composer, borderColor: colors.border }]}
-      >
+      <View className='overflow-hidden rounded-[26px] border border-border bg-composer'>
         {FAQS.map((item, index) => (
           <View
             key={item.q}
-            style={
-              index < FAQS.length - 1
-                ? { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }
-                : undefined
-            }
+            className={index < FAQS.length - 1 ? 'border-b border-border' : undefined}
           >
             <FaqItem
               q={item.q}
@@ -112,7 +105,7 @@ export default function AboutFinoraScreen() {
         ))}
       </View>
 
-      <View style={styles.links}>
+      <View className='mt-2 flex-row items-center justify-center gap-2.5'>
         <Pressable
           onPress={() => {
             haptics.selection();
@@ -120,9 +113,9 @@ export default function AboutFinoraScreen() {
           }}
           style={({ pressed }) => pressed && { opacity: 0.6 }}
         >
-          <Text style={[styles.link, { color: colors.mutedForeground }]}>Privacy</Text>
+          <Text className='font-sans-medium text-[15px] text-muted-foreground'>Privacy</Text>
         </Pressable>
-        <Text style={[styles.dot, { color: colors.border }]}>·</Text>
+        <Text className='font-sans text-[15px] text-border'>·</Text>
         <Pressable
           onPress={() => {
             haptics.selection();
@@ -130,71 +123,9 @@ export default function AboutFinoraScreen() {
           }}
           style={({ pressed }) => pressed && { opacity: 0.6 }}
         >
-          <Text style={[styles.link, { color: colors.mutedForeground }]}>Terms</Text>
+          <Text className='font-sans-medium text-[15px] text-muted-foreground'>Terms</Text>
         </Pressable>
       </View>
     </SettingsScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  intro: {
-    gap: 6,
-    marginBottom: 4,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '700',
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  faqCard: {
-    borderRadius: Radius.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-  },
-  faqItem: {
-    paddingHorizontal: 14,
-  },
-  faqHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-  },
-  faqQ: {
-    flex: 1,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  faqA: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-    paddingBottom: 14,
-  },
-  links: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 8,
-  },
-  link: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  dot: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-  },
-});

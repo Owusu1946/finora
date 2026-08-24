@@ -1,9 +1,8 @@
 import { useRef, type ElementRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 
 const OTP_LENGTH = 6;
 
@@ -15,16 +14,15 @@ type AuthOtpInputProps = {
 };
 
 export function AuthOtpInput({ value, onChange, error, autoFocus = true }: AuthOtpInputProps) {
-  const { colors } = useTheme();
   const inputRef = useRef<ElementRef<typeof TextInput>>(null);
   const digits = value.padEnd(OTP_LENGTH).slice(0, OTP_LENGTH).split('');
 
   return (
-    <View style={styles.wrap}>
+    <View className='gap-2.5'>
       <Pressable
         accessibilityRole='none'
         onPress={() => inputRef.current?.focus()}
-        style={styles.cells}
+        className='flex-row justify-between gap-2'
       >
         {digits.map((digit, index) => {
           const filled = digit.trim().length > 0;
@@ -32,19 +30,12 @@ export function AuthOtpInput({ value, onChange, error, autoFocus = true }: AuthO
           return (
             <View
               key={index}
-              style={[
-                styles.cell,
-                {
-                  backgroundColor: colors.composer,
-                  borderColor: error
-                    ? colors.destructive
-                    : active
-                      ? colors.foreground
-                      : colors.border,
-                },
-              ]}
+              className={cx(
+                'max-h-14 flex-1 items-center justify-center rounded-[22px] border bg-composer',
+                error ? 'border-destructive' : active ? 'border-foreground' : 'border-border',
+              )}
             >
-              <Text style={[styles.digit, { color: colors.foreground }]}>
+              <Text className='font-sans-semibold text-[23px] tracking-[-0.4px] text-foreground'>
                 {filled ? digit : ''}
               </Text>
             </View>
@@ -62,50 +53,15 @@ export function AuthOtpInput({ value, onChange, error, autoFocus = true }: AuthO
         autoFocus={autoFocus}
         maxLength={OTP_LENGTH}
         caretHidden
-        style={styles.hiddenInput}
+        className='absolute inset-0 text-transparent opacity-[0.02]'
         accessibilityLabel='One-time passcode'
       />
 
-      {error ? <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text> : null}
+      {error ? (
+        <Text className='text-center font-sans-medium text-[13px] text-destructive'>{error}</Text>
+      ) : null}
     </View>
   );
 }
 
 export const AUTH_OTP_LENGTH = OTP_LENGTH;
-
-const styles = StyleSheet.create({
-  wrap: {
-    gap: 10,
-  },
-  cells: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  cell: {
-    flex: 1,
-    aspectRatio: 0.85,
-    maxHeight: 56,
-    borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  digit: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 23,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  hiddenInput: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.02,
-    color: 'transparent',
-  },
-  error: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-});
