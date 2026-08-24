@@ -56,7 +56,7 @@ export function SettingsSection({
   return (
     <View className='gap-2'>
       {title ? (
-        <Text className='ml-1 font-sans-semibold text-sm uppercase text-muted-foreground'>
+        <Text className='ml-1 font-sans-semibold text-sm uppercase tracking-[0.2px] text-muted-foreground'>
           {title}
         </Text>
       ) : null}
@@ -113,14 +113,14 @@ export function SettingsRow({
       ) : null}
       <View className='min-w-0 flex-1 gap-0.5'>
         <Text
-          className='font-sans-medium text-[17px]'
+          className='font-sans-medium text-[17px] tracking-[-0.2px]'
           style={{ color: labelColor }}
         >
           {label}
         </Text>
         {detail ? (
           <Text
-            className='font-sans-medium text-sm text-muted-foreground'
+            className='font-sans-medium text-sm tracking-[-0.1px] text-muted-foreground'
             numberOfLines={2}
           >
             {detail}
@@ -238,7 +238,7 @@ export function SettingsSegmented({
             )}
           >
             <Text
-              className='font-sans-semibold text-sm'
+              className='font-sans-semibold text-sm tracking-[-0.1px]'
               style={{ color: active ? colors.foreground : colors.mutedForeground }}
             >
               {opt.label}
