@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -40,14 +40,14 @@ export function AmountFundingStep({
     amount ?? (Number.isFinite(parsedCustom) && parsedCustom > 0 ? parsedCustom : null);
 
   return (
-    <View style={styles.block}>
+    <View className='gap-3'>
       <WizardStepHeader
         step={step}
         total={total}
         title='Amount'
         subtitle={`Payout currency ${payoutCurrency} · choose funding wallet`}
       />
-      <View style={styles.chips}>
+      <View className='flex-row flex-wrap gap-2'>
         {AMOUNTS.map((n) => (
           <WizardChip
             key={n}
@@ -69,17 +69,13 @@ export function AmountFundingStep({
         placeholder={`Custom amount (${payoutCurrency})`}
         placeholderTextColor={colors.mutedForeground}
         keyboardType='decimal-pad'
-        style={[
-          styles.input,
-          {
-            color: colors.foreground,
-            borderColor: colors.border,
-            backgroundColor: colors.background,
-          },
-        ]}
+        className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
+        style={[styles.input]}
       />
-      <Text style={[styles.section, { color: colors.mutedForeground }]}>Fund from</Text>
-      <View style={styles.chips}>
+      <Text className='font-sans-semibold text-[12px] tracking-[0.3px] uppercase mt-1 text-muted-foreground'>
+        Fund from
+      </Text>
+      <View className='flex-row flex-wrap gap-2'>
         {FUNDING_CURRENCIES.map((c) => (
           <WizardChip
             key={c}
@@ -95,15 +91,13 @@ export function AmountFundingStep({
           />
         ))}
       </View>
-      <View style={styles.nav}>
+      <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          style={({ pressed }) => [
-            styles.navBtn,
-            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-          ]}
+          className='flex-1 min-h-[46px] border items-center justify-center'
+          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text style={[styles.navLabel, { color: colors.foreground }]}>Back</Text>
+          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
         </Pressable>
         <Pressable
           disabled={effective == null}
@@ -112,57 +106,29 @@ export function AmountFundingStep({
             if (amount == null) onAmount(effective);
             onContinue();
           }}
+          className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
-            styles.navBtnPrimary,
             {
               backgroundColor: colors.foreground,
               opacity: effective == null ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>Continue</Text>
+          <Text className='text-[16px] font-semibold text-background'>Continue</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  block: { gap: 12 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  section: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-    marginTop: 4,
-  },
+const styles = {
   input: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
   },
-  nav: { flexDirection: 'row', gap: 10, marginTop: 4 },
   navBtn: {
-    flex: 1,
-    minHeight: 46,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   navBtnPrimary: {
-    flex: 1.4,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  navLabel: { fontSize: 16, fontWeight: '600' },
-  navLabelPrimary: { fontSize: 16, fontWeight: '600' },
-});
+};

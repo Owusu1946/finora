@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Pressable, View } from 'react-native';
 
 import type {
   FinancialPlanItem,
@@ -14,8 +14,8 @@ import {
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 type FinancialPlanConfirmationCardProps = {
@@ -102,24 +102,14 @@ export function FinancialPlanConfirmationCard({
           : 'Confirm financial plan';
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.composer,
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      <View style={styles.header}>
+    <View className='gap-3.5 rounded-3xl border border-border bg-composer p-4'>
+      <View className='flex-row items-start gap-3'>
         <Animated.View
-          style={[
-            styles.iconWrap,
-            {
-              backgroundColor: failed ? colors.destructiveSurface : colors.muted,
-              opacity: sending ? pulse : 1,
-            },
-          ]}
+          className={cx(
+            'mt-0.5 h-9 w-9 items-center justify-center rounded-full',
+            failed ? 'bg-destructive-surface' : 'bg-muted',
+          )}
+          style={{ opacity: sending ? pulse : 1 }}
         >
           {sending ? (
             <LoadingIcon
@@ -134,21 +124,21 @@ export function FinancialPlanConfirmationCard({
             />
           )}
         </Animated.View>
-        <View style={styles.headerText}>
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>{eyebrow}</Text>
-          <Text style={[styles.intent, { color: colors.foreground }]}>{plan.intent}</Text>
-          <Text style={[styles.amount, { color: colors.foreground }]}>
+        <View className='min-w-0 flex-1 gap-0.5'>
+          <Text className='font-sans-semibold text-[13px] text-muted-foreground'>{eyebrow}</Text>
+          <Text className='font-sans-semibold text-[17px] text-foreground'>{plan.intent}</Text>
+          <Text className='mt-1 font-sans-semibold text-[29px] text-foreground'>
             {formatPaymentAmount(plan.total, plan.currency)}
           </Text>
-          <Text style={[styles.meta, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-sm text-muted-foreground'>
             {plan.items.length} item{plan.items.length === 1 ? '' : 's'} · approve once
           </Text>
         </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      <View className='border-t border-border' />
 
-      <View style={styles.items}>
+      <View>
         {plan.items.map((item, index) => (
           <PlanItemRow
             key={`${item.kind}-${item.label}-${index}`}
@@ -160,23 +150,21 @@ export function FinancialPlanConfirmationCard({
       </View>
 
       {sending ? (
-        <View style={styles.steps}>
+        <View className='gap-2.5'>
           {SEND_STEPS.map((label, index) => {
             const done = index < sendingStep;
             const active = index === sendingStep;
             return (
               <View
                 key={label}
-                style={styles.stepRow}
+                className='flex-row items-center gap-2.5'
               >
                 <View
-                  style={[
-                    styles.stepDot,
-                    {
-                      borderColor: done || active ? colors.foreground : colors.border,
-                      backgroundColor: done ? colors.foreground : 'transparent',
-                    },
-                  ]}
+                  className='h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px]'
+                  style={{
+                    borderColor: done || active ? colors.foreground : colors.border,
+                    backgroundColor: done ? colors.foreground : 'transparent',
+                  }}
                 >
                   {done ? (
                     <Icon
@@ -192,13 +180,8 @@ export function FinancialPlanConfirmationCard({
                   ) : null}
                 </View>
                 <Text
-                  style={[
-                    styles.stepLabel,
-                    {
-                      color: done || active ? colors.foreground : colors.mutedForeground,
-                      fontWeight: active ? '600' : '500',
-                    },
-                  ]}
+                  className={cx('text-sm', active ? 'font-sans-semibold' : 'font-sans-medium')}
+                  style={{ color: done || active ? colors.foreground : colors.mutedForeground }}
                 >
                   {label}
                   {active ? '…' : ''}
@@ -210,9 +193,9 @@ export function FinancialPlanConfirmationCard({
       ) : null}
 
       {sent ? (
-        <View style={styles.sentBlock}>
+        <View className='gap-2.5'>
           {transactionId ? (
-            <Text style={[styles.txId, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[13px] tabular-nums text-muted-foreground'>
               Batch id · {transactionId}
             </Text>
           ) : null}
@@ -222,19 +205,18 @@ export function FinancialPlanConfirmationCard({
                 haptics.selection();
                 onViewDetails();
               }}
-              style={({ pressed }) => [
-                styles.linkBtn,
-                { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-              ]}
+              className='min-h-[42px] items-center justify-center rounded-xl border border-border active:opacity-75'
             >
-              <Text style={[styles.linkLabel, { color: colors.foreground }]}>View in activity</Text>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>
+                View in activity
+              </Text>
             </Pressable>
           ) : null}
         </View>
       ) : null}
 
       {pending ? (
-        <View style={styles.actions}>
+        <View className='flex-row gap-2.5'>
           <Pressable
             accessibilityRole='button'
             disabled={loading}
@@ -242,16 +224,9 @@ export function FinancialPlanConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
-            style={({ pressed }) => [
-              styles.btn,
-              styles.btnGhost,
-              {
-                borderColor: colors.border,
-                opacity: pressed || loading ? 0.7 : 1,
-              },
-            ]}
+            className='min-h-[46px] flex-1 items-center justify-center rounded-[14px] border border-border active:opacity-70 disabled:opacity-70'
           >
-            <Text style={[styles.btnLabel, { color: colors.foreground }]}>Reject</Text>
+            <Text className='font-sans-semibold text-base text-foreground'>Reject</Text>
           </Pressable>
           <Pressable
             accessibilityRole='button'
@@ -260,16 +235,9 @@ export function FinancialPlanConfirmationCard({
               haptics.impact();
               onConfirm?.();
             }}
-            style={({ pressed }) => [
-              styles.btn,
-              styles.btnPrimary,
-              {
-                backgroundColor: colors.foreground,
-                opacity: pressed || loading ? 0.85 : 1,
-              },
-            ]}
+            className='min-h-[46px] flex-1 items-center justify-center rounded-[14px] bg-foreground active:opacity-85 disabled:opacity-85'
           >
-            <Text style={[styles.btnLabel, { color: colors.background }]}>
+            <Text className='font-sans-semibold text-base text-background'>
               {loading ? 'Confirming…' : 'Approve all'}
             </Text>
           </Pressable>
@@ -277,13 +245,13 @@ export function FinancialPlanConfirmationCard({
       ) : null}
 
       {cancelled || failed ? (
-        <View style={[styles.statusPill, { backgroundColor: colors.destructiveSurface }]}>
+        <View className='flex-row items-center gap-2 rounded-xl bg-destructive-surface px-3 py-2.5'>
           <Icon
             name='remove'
             size={14}
             color={colors.destructive}
           />
-          <Text style={[styles.statusText, { color: colors.destructive }]}>
+          <Text className='font-sans-semibold text-[15px] text-destructive'>
             {failed ? 'Couldn’t execute plan' : 'Rejected'}
           </Text>
         </View>
@@ -294,7 +262,7 @@ export function FinancialPlanConfirmationCard({
 
 function PlanItemRow({
   item,
-  colors,
+  colors: _colors,
   isLast,
 }: {
   item: FinancialPlanItem;
@@ -308,197 +276,24 @@ function PlanItemRow({
 }) {
   return (
     <View
-      style={[
-        styles.itemRow,
-        !isLast && {
-          borderBottomWidth: StyleSheet.hairlineWidth,
-          borderBottomColor: colors.border,
-        },
-      ]}
+      className={cx('flex-row items-center gap-2.5 py-2.5', !isLast && 'border-b border-border')}
     >
-      <View style={[styles.kindPill, { backgroundColor: colors.muted }]}>
-        <Text style={[styles.kindText, { color: colors.mutedForeground }]}>
+      <View className='rounded-lg bg-muted px-2 py-1'>
+        <Text className='font-sans-semibold text-xs text-muted-foreground'>
           {kindLabel(item.kind)}
         </Text>
       </View>
-      <View style={styles.itemMeta}>
+      <View className='min-w-0 flex-1'>
         <Text
-          style={[styles.itemLabel, { color: colors.foreground }]}
+          className='font-sans-medium text-[15px] text-foreground'
           numberOfLines={2}
         >
           {item.label}
         </Text>
       </View>
-      <Text style={[styles.itemAmount, { color: colors.foreground }]}>
+      <Text className='font-sans-semibold text-[15px] text-foreground'>
         {formatPaymentAmount(item.amount, item.currency)}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: Radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 16,
-    gap: 14,
-  },
-  header: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'flex-start',
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  intent: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  amount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '700',
-    letterSpacing: -0.8,
-    marginTop: 4,
-  },
-  meta: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  items: {
-    gap: 0,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-  },
-  kindPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  kindText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  itemMeta: {
-    flex: 1,
-    minWidth: 0,
-  },
-  itemLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-  },
-  itemAmount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  steps: {
-    gap: 10,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  stepDot: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    letterSpacing: -0.1,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  btn: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnGhost: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  btnPrimary: {},
-  btnLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  sentBlock: {
-    gap: 10,
-  },
-  txId: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    fontVariant: ['tabular-nums'],
-  },
-  linkBtn: {
-    minHeight: 42,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  linkLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-  },
-});

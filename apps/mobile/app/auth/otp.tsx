@@ -1,13 +1,12 @@
 import { useSignIn, useSignUp } from '@clerk/expo';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AUTH_OTP_LENGTH, AuthOtpInput } from '@/components/auth/AuthOtpInput';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
 import { usePostAuthNavigate } from '@/lib/use-post-auth-navigate';
@@ -16,7 +15,6 @@ const RESEND_SECONDS = 30;
 
 export default function AuthOtpScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const postAuthNavigate = usePostAuthNavigate();
   const { signIn, errors: signInErrors, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, errors: signUpErrors, fetchStatus: signUpFetchStatus } = useSignUp();
@@ -112,7 +110,7 @@ export default function AuthOtpScreen() {
     <AuthShell
       showBack
       footer={
-        <View style={styles.footer}>
+        <View className='w-full items-stretch gap-4'>
           <AuthButton
             label={isReset ? 'Continue' : 'Verify email'}
             onPress={handleVerify}
@@ -122,9 +120,9 @@ export default function AuthOtpScreen() {
           <Pressable
             disabled={cooldown > 0 || resending}
             onPress={handleResend}
-            style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+            className='active:opacity-60'
           >
-            <Text style={[styles.resend, { color: colors.mutedForeground }]}>
+            <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
               {cooldown > 0
                 ? `Resend code in ${cooldown}s`
                 : resending
@@ -135,13 +133,13 @@ export default function AuthOtpScreen() {
         </View>
       }
     >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.foreground }]}>
+      <View className='mb-2 gap-2.5'>
+        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
           {isReset ? 'Enter reset code' : 'Check your email'}
         </Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+        <Text className='font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
           Enter the {AUTH_OTP_LENGTH}-digit code we sent to{' '}
-          <Text style={{ color: colors.foreground, fontWeight: '600' }}>{email}</Text>
+          <Text className='font-sans-semibold text-foreground'>{email}</Text>
         </Text>
       </View>
 
@@ -159,35 +157,3 @@ export default function AuthOtpScreen() {
     </AuthShell>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: 10,
-    marginBottom: 8,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-    lineHeight: 23,
-  },
-  footer: {
-    gap: 16,
-    width: '100%',
-    alignItems: 'stretch',
-  },
-  resend: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    paddingVertical: 4,
-  },
-});

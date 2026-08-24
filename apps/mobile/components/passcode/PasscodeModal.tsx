@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -206,16 +206,10 @@ export function PasscodeModal({
       onRequestClose={onClose}
     >
       <View
-        style={[
-          styles.root,
-          {
-            backgroundColor: colors.background,
-            paddingTop: insets.top + 12,
-            paddingBottom: Math.max(insets.bottom, 16) + 12,
-          },
-        ]}
+        className='flex-1 bg-background px-6'
+        style={{ paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 16) + 12 }}
       >
-        <View style={styles.topBar}>
+        <View className='h-9 items-start justify-center'>
           <Pressable
             accessibilityLabel='Close'
             hitSlop={12}
@@ -232,40 +226,43 @@ export function PasscodeModal({
           </Pressable>
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.prompt}>
-            <View style={styles.hero}>
-              <View style={[styles.shield, { backgroundColor: colors.muted }]}>
+        <View className='flex-1 items-center justify-center gap-6 py-3'>
+          <View className='items-center'>
+            <View className='mb-6 items-center gap-2.5'>
+              <View className='mb-1 h-[52px] w-[52px] items-center justify-center rounded-full bg-muted'>
                 <Icon
                   name='shield'
                   size={22}
                   color={colors.foreground}
                 />
               </View>
-              <Text style={[styles.title, { color: colors.foreground }]}>{copy.title}</Text>
-              <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+              <Text className='text-center font-sans-semibold text-[25px] text-foreground'>
+                {copy.title}
+              </Text>
+              <Text className='max-w-[300px] text-center font-sans-medium text-base leading-[22px] text-muted-foreground'>
                 {copy.subtitle}
               </Text>
             </View>
 
             {!phoneRequired ? (
-              <Animated.View style={[styles.dots, shakeStyle]}>
+              <Animated.View
+                className='mb-2.5 flex-row justify-center gap-3.5'
+                style={shakeStyle}
+              >
                 {Array.from({ length: PASSCODE_LENGTH }).map((_, i) => {
                   const filled = i < value.length;
                   return (
                     <View
                       key={i}
-                      style={[
-                        styles.dot,
-                        {
-                          borderColor: error || locked ? colors.destructive : colors.border,
-                          backgroundColor: filled
-                            ? error || locked
-                              ? colors.destructive
-                              : colors.foreground
-                            : 'transparent',
-                        },
-                      ]}
+                      className='h-3.5 w-3.5 rounded-full border'
+                      style={{
+                        borderColor: error || locked ? colors.destructive : colors.border,
+                        backgroundColor: filled
+                          ? error || locked
+                            ? colors.destructive
+                            : colors.foreground
+                          : 'transparent',
+                      }}
                     />
                   );
                 })}
@@ -273,40 +270,39 @@ export function PasscodeModal({
             ) : null}
 
             {phoneRequired ? (
-              <View style={styles.phoneActions}>
+              <View className='mt-2 w-[280px] gap-2.5'>
                 <Pressable
                   accessibilityRole='button'
                   onPress={() => {
                     haptics.selection();
                     onAddPhone?.();
                   }}
-                  style={({ pressed }) => [
-                    styles.phonePrimary,
-                    { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-                  ]}
+                  className='min-h-[52px] items-center justify-center rounded-[18px] bg-foreground px-[18px] active:opacity-85'
                 >
-                  <Text style={[styles.phonePrimaryText, { color: colors.background }]}>
+                  <Text className='font-sans-medium text-base text-background'>
                     Add phone number
                   </Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole='button'
                   onPress={onClose}
-                  style={({ pressed }) => [styles.phoneSecondary, { opacity: pressed ? 0.55 : 1 }]}
+                  className='min-h-[42px] items-center justify-center active:opacity-55'
                 >
-                  <Text style={[styles.phoneSecondaryText, { color: colors.mutedForeground }]}>
+                  <Text className='font-sans-medium text-[15px] text-muted-foreground'>
                     Not now
                   </Text>
                 </Pressable>
               </View>
             ) : error ? (
-              <Text style={[styles.error, { color: colors.destructive }]}>{error}</Text>
+              <Text className='min-h-5 text-center font-sans-medium text-sm text-destructive'>
+                {error}
+              </Text>
             ) : attemptsLeft != null && mode === 'unlock' && attemptsLeft < MAX_ATTEMPTS ? (
-              <Text style={[styles.error, { color: colors.mutedForeground }]}>
+              <Text className='min-h-5 text-center font-sans-medium text-sm text-muted-foreground'>
                 {attemptsLeft} {attemptsLeft === 1 ? 'try' : 'tries'} left
               </Text>
             ) : (
-              <View style={styles.errorSpacer} />
+              <View className='h-5' />
             )}
 
             {showForgot ? (
@@ -318,19 +314,22 @@ export function PasscodeModal({
                   haptics.selection();
                   onForgot();
                 }}
-                style={styles.forgotBtn}
+                className='mt-2.5 px-2.5 py-1.5'
               >
-                <Text style={[styles.forgotText, { color: colors.foreground }]}>
+                <Text className='font-sans-medium text-[15px] text-foreground underline'>
                   {mode === 'forgot-otp' ? t('action_resend') : t('passcode_forgot_btn')}
                 </Text>
               </Pressable>
             ) : (
-              <View style={styles.forgotSpacer} />
+              <View className='h-8' />
             )}
           </View>
 
           {!phoneRequired ? (
-            <View style={[styles.pad, { width: keypadWidth, opacity: locked ? 0.45 : 1 }]}>
+            <View
+              className='flex-row flex-wrap justify-between gap-y-3'
+              style={{ width: keypadWidth, opacity: locked ? 0.45 : 1 }}
+            >
               {KEYS.map((key) => {
                 if (key === 'bio') {
                   if (mode !== 'unlock' || locked || !biometricAvailable) {
@@ -354,11 +353,8 @@ export function PasscodeModal({
                           if (result === 'success') onBiometricUnlock?.();
                         });
                       }}
-                      style={({ pressed }) => [
-                        styles.key,
-                        { width: keySize, height: keySize },
-                        pressed && { opacity: 0.55 },
-                      ]}
+                      className='items-center justify-center rounded-full active:opacity-55'
+                      style={{ width: keySize, height: keySize }}
                     >
                       <Icon
                         name={method === 'face' ? 'face-id' : 'biometric'}
@@ -375,11 +371,8 @@ export function PasscodeModal({
                       accessibilityLabel='Delete'
                       disabled={locked}
                       onPress={backspace}
-                      style={({ pressed }) => [
-                        styles.key,
-                        { width: keySize, height: keySize },
-                        pressed && { opacity: 0.55 },
-                      ]}
+                      className='items-center justify-center rounded-full active:opacity-55'
+                      style={{ width: keySize, height: keySize }}
                     >
                       <View style={{ transform: [{ rotate: '180deg' }] }}>
                         <Icon
@@ -397,18 +390,15 @@ export function PasscodeModal({
                     accessibilityLabel={`Digit ${key}`}
                     disabled={locked}
                     onPress={() => pushDigit(key)}
-                    style={({ pressed }) => [
-                      styles.key,
-                      styles.keyDigit,
-                      {
-                        width: keySize,
-                        height: keySize,
-                        backgroundColor: pressed ? colors.muted : colors.composer,
-                        borderColor: colors.border,
-                      },
-                    ]}
+                    className='items-center justify-center rounded-full border active:bg-muted'
+                    style={{
+                      width: keySize,
+                      height: keySize,
+                      backgroundColor: colors.composer,
+                      borderColor: colors.border,
+                    }}
                   >
-                    <Text style={[styles.keyLabel, { color: colors.foreground }]}>{key}</Text>
+                    <Text className='font-sans-medium text-[29px] text-foreground'>{key}</Text>
                   </Pressable>
                 );
               })}
@@ -419,137 +409,3 @@ export function PasscodeModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  topBar: {
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-    paddingVertical: 12,
-  },
-  prompt: {
-    alignItems: 'center',
-  },
-  hero: {
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 24,
-  },
-  shield: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 25,
-    fontWeight: '600',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-    lineHeight: 22,
-    textAlign: 'center',
-    maxWidth: 300,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 14,
-    marginBottom: 10,
-  },
-  dot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  error: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    minHeight: 20,
-  },
-  errorSpacer: {
-    height: 20,
-  },
-  forgotBtn: {
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  forgotText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 15,
-    letterSpacing: -0.2,
-    textDecorationLine: 'underline',
-  },
-  forgotSpacer: {
-    height: 32,
-  },
-  phoneActions: {
-    width: 280,
-    gap: 10,
-    marginTop: 8,
-  },
-  phonePrimary: {
-    minHeight: 52,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-  },
-  phonePrimaryText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 16,
-    letterSpacing: -0.2,
-  },
-  phoneSecondary: {
-    minHeight: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  phoneSecondaryText: {
-    fontFamily: 'DMSans_500Medium',
-    fontSize: 15,
-    letterSpacing: -0.2,
-  },
-  pad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
-  },
-  key: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-  },
-  keyDigit: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  keyLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '500',
-    letterSpacing: -0.4,
-  },
-});

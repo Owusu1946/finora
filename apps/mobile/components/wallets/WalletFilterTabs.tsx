@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 
 export type FilterCategory = 'all' | 'fiat' | 'crypto' | 'momo';
@@ -30,8 +31,8 @@ export function WalletFilterTabs({
   };
 
   return (
-    <View style={styles.filterSection}>
-      <View style={styles.filterBar}>
+    <View className='flex-row items-center justify-between border-b border-[rgba(150,150,150,0.15)] pb-1'>
+      <View className='flex-row gap-4'>
         {categories.map((t) => {
           const isActive = filter === t;
           return (
@@ -41,16 +42,12 @@ export function WalletFilterTabs({
                 haptics.selection();
                 onSelectFilter(t);
               }}
-              style={[styles.filterTab, isActive && { borderBottomColor: colors.foreground }]}
+              className='border-b-2 border-transparent py-1.5'
+              style={isActive ? { borderBottomColor: colors.foreground } : undefined}
             >
               <Text
-                style={[
-                  styles.filterTabText,
-                  {
-                    color: isActive ? colors.foreground : colors.mutedForeground,
-                  },
-                  isActive && styles.filterTabActiveText,
-                ]}
+                className={cx('text-sm', isActive ? 'font-sans-semibold' : 'font-sans-medium')}
+                style={{ color: isActive ? colors.foreground : colors.mutedForeground }}
               >
                 {categoryTitles[t]}
               </Text>
@@ -65,7 +62,7 @@ export function WalletFilterTabs({
           onOpenAddWallet();
         }}
         hitSlop={6}
-        style={styles.addInlineBtn}
+        className='p-1'
       >
         <Icon
           name='add'
@@ -76,34 +73,3 @@ export function WalletFilterTabs({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  filterSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(150,150,150,0.15)',
-    paddingBottom: 4,
-  },
-  filterBar: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  filterTab: {
-    paddingVertical: 6,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  filterTabText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  filterTabActiveText: {
-    fontWeight: '600',
-  },
-  addInlineBtn: {
-    padding: 4,
-  },
-});

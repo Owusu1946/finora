@@ -3,7 +3,7 @@ import type { TextMessagePartComponent } from '@assistant-ui/react-native';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
 import type { Palette } from '@/constants/theme';
@@ -43,7 +43,7 @@ function markdownStyles(colors: Palette, largerText: boolean) {
     letterSpacing: -0.2,
   } as const;
 
-  return StyleSheet.create({
+  return {
     body,
     text: body,
     paragraph: {
@@ -174,7 +174,7 @@ function markdownStyles(colors: Palette, largerText: boolean) {
       padding: 8,
       borderColor: colors.border,
     },
-  });
+  } satisfies Record<string, TextStyle | ViewStyle>;
 }
 
 export const AssistantMarkdownText: TextMessagePartComponent = ({ text }) => {

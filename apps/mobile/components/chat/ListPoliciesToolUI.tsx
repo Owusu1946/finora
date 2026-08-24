@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { ApprovalPolicy } from '@/lib/policies-storage';
 
@@ -27,10 +27,11 @@ export const ListPoliciesToolUI = makeAssistantToolUI<
     if (status.type === 'running' && !policies) {
       return (
         <View
-          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.box]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
             Loading approval policies…
           </Text>
         </View>
@@ -40,9 +41,10 @@ export const ListPoliciesToolUI = makeAssistantToolUI<
     if (!policies?.length) {
       return (
         <View
-          style={[styles.box, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
+          style={[styles.box]}
         >
-          <Text style={[styles.muted, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
             No approval policies configured.
           </Text>
         </View>
@@ -50,29 +52,37 @@ export const ListPoliciesToolUI = makeAssistantToolUI<
     }
 
     return (
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-        <Text style={[styles.title, { color: colors.mutedForeground }]}>Approval policies</Text>
+      <View
+        className='my-1.5 border p-4 gap-3 border-border bg-composer'
+        style={[styles.card]}
+      >
+        <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
+          Approval policies
+        </Text>
         {policies.map((p) => (
           <View
             key={p.id}
-            style={styles.row}
+            className='flex-row items-start gap-2.5'
           >
-            <View style={styles.flex}>
-              <Text style={[styles.name, { color: colors.foreground }]}>{p.name}</Text>
-              <Text style={[styles.muted, { color: colors.mutedForeground }]}>{p.rule}</Text>
+            <View className='flex-1 gap-0.5 min-w-0'>
+              <Text className='font-sans-semibold text-[15px] text-foreground'>{p.name}</Text>
+              <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
+                {p.rule}
+              </Text>
             </View>
             <Text
-              style={[
-                styles.badge,
-                { color: p.enabled ? colors.foreground : colors.mutedForeground },
-              ]}
+              className='font-sans-semibold text-[13px]'
+              style={[{ color: p.enabled ? colors.foreground : colors.mutedForeground }]}
             >
               {p.enabled ? 'On' : 'Off'}
             </Text>
           </View>
         ))}
         {simulation ? (
-          <Text style={[styles.muted, { color: colors.mutedForeground, marginTop: 4 }]}>
+          <Text
+            className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'
+            style={[{ marginTop: 4 }]}
+          >
             {simulation.requiresApproval
               ? `This action would require approval${
                   simulation.matched.length ? ` (${simulation.matched.join(', ')})` : ''
@@ -85,28 +95,11 @@ export const ListPoliciesToolUI = makeAssistantToolUI<
   },
 });
 
-const styles = StyleSheet.create({
+const styles = {
   box: {
-    marginVertical: 8,
-    minHeight: 72,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
   },
   card: {
-    marginVertical: 6,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 12,
   },
-  title: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '600' },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  flex: { flex: 1, gap: 2, minWidth: 0 },
-  name: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
-  muted: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  badge: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '700' },
-});
+};

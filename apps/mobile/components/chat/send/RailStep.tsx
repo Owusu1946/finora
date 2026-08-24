@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { SETTLEMENT_METHOD_LABELS, type SettlementMethod } from '@/lib/send-corridors';
@@ -19,7 +19,7 @@ export function RailStep({
   countryName?: string;
 }) {
   return (
-    <View style={styles.block}>
+    <View className='gap-3'>
       <WizardStepHeader
         step={step}
         total={total}
@@ -28,7 +28,7 @@ export function RailStep({
           countryName ? `Payment rails available for ${countryName}` : 'Choose the settlement rail'
         }
       />
-      <View style={styles.chips}>
+      <View className='flex-row flex-wrap gap-2'>
         {rails.map((rail) => (
           <WizardChip
             key={rail}
@@ -41,8 +41,3 @@ export function RailStep({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  block: { gap: 12 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-});

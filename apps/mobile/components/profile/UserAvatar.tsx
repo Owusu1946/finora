@@ -34,7 +34,10 @@ export function UserAvatar({
 
   if (accountType === 'personal') {
     return (
-      <View style={[styles.frame, frameStyle]}>
+      <View
+        className='overflow-hidden'
+        style={frameStyle}
+      >
         <Navii
           seed={seed}
           size={size}
@@ -45,7 +48,10 @@ export function UserAvatar({
   }
 
   return (
-    <View style={[styles.frame, styles.fallback, frameStyle]}>
+    <View
+      className='items-center justify-center overflow-hidden'
+      style={frameStyle}
+    >
       {imageUrl ? (
         <Image
           source={imageUrl}
@@ -54,24 +60,13 @@ export function UserAvatar({
           transition={150}
         />
       ) : (
-        <Text style={[styles.letter, { color: foregroundColor, fontSize: size * 0.44 }]}>
+        <Text
+          className='font-sans-semibold'
+          style={{ color: foregroundColor, fontSize: size * 0.44 }}
+        >
           {displayName.trim().charAt(0).toUpperCase() || 'F'}
         </Text>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  frame: {
-    overflow: 'hidden',
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  letter: {
-    fontFamily: 'DMSans_400Regular',
-    fontWeight: '600',
-  },
-});

@@ -29,7 +29,6 @@ const USER_MESSAGE_COLLAPSED_LINES = 6;
 const USER_MESSAGE_COLLAPSED_CHARACTERS = 240;
 
 const UserText: TextMessagePartComponent = ({ text }) => {
-  const { colors } = useTheme();
   const likelyLong =
     text.length > USER_MESSAGE_COLLAPSED_CHARACTERS ||
     text.split('\n').length > USER_MESSAGE_COLLAPSED_LINES;
@@ -42,7 +41,7 @@ const UserText: TextMessagePartComponent = ({ text }) => {
   }, [likelyLong, text]);
 
   return (
-    <View style={styles.userTextContent}>
+    <View className='max-w-[100%] items-start gap-[7px]'>
       <Text
         selectable
         numberOfLines={isCollapsible && !expanded ? USER_MESSAGE_COLLAPSED_LINES : undefined}
@@ -51,7 +50,7 @@ const UserText: TextMessagePartComponent = ({ text }) => {
             setIsCollapsible(true);
           }
         }}
-        style={[styles.userText, { color: colors.foreground }]}
+        className='font-sans text-[17px] leading-[22px] tracking-[0px] text-foreground'
       >
         {text}
       </Text>
@@ -60,9 +59,10 @@ const UserText: TextMessagePartComponent = ({ text }) => {
           accessibilityLabel={expanded ? 'Show less of this message' : 'Show all of this message'}
           hitSlop={8}
           onPress={() => setExpanded((current) => !current)}
-          style={({ pressed }) => [styles.expandButton, pressed && styles.expandButtonPressed]}
+          className='min-h-6 justify-center px-0.5'
+          style={({ pressed }) => [pressed && styles.expandButtonPressed]}
         >
-          <Text style={[styles.expandLabel, { color: colors.mutedForeground }]}>
+          <Text className='font-sans-semibold text-[13px] leading-[18px] tracking-[0px] text-muted-foreground'>
             {expanded ? 'Show less' : 'Show more'}
           </Text>
         </Pressable>
@@ -74,7 +74,7 @@ const UserText: TextMessagePartComponent = ({ text }) => {
 function TypingIndicator() {
   const isRunning = useAuiState((s) => s.message.status?.type === 'running');
   const parts = useAuiState((s) => s.message.parts);
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
   if (!isRunning) return null;
   const activity = resolveChatActivity(parts);
 
@@ -82,7 +82,7 @@ function TypingIndicator() {
 
   return (
     <View
-      style={styles.typing}
+      className='flex-row items-center gap-2 py-2'
       accessibilityLabel={label}
       accessibilityLiveRegion='polite'
     >
@@ -93,19 +93,19 @@ function TypingIndicator() {
         theme={isDark ? 'dark' : 'light'}
         accessibilityLabel={label}
       />
-      <Text style={[styles.typingLabel, { color: colors.mutedForeground }]}>{label}</Text>
+      <Text className='font-sans text-[15px] leading-[20px] text-muted-foreground'>{label}</Text>
     </View>
   );
 }
 
 function UserMessage() {
-  const { colors } = useTheme();
   return (
     <MessagePrimitive.Root style={styles.userContainer}>
       {/* Normal view (not editing) */}
       <AuiIf condition={(s) => !s.message.composer.isEditing}>
         <View
-          style={[styles.userBubble, { backgroundColor: colors.muted, borderColor: colors.border }]}
+          className='max-w-[82%] border px-4 py-3 overflow-hidden bg-muted border-border'
+          style={[styles.userBubble]}
         >
           <MessagePrimitive.Parts components={{ Text: UserText }} />
         </View>
@@ -118,7 +118,7 @@ function UserMessage() {
             Attachment: MessageAttachmentPill,
           }}
         />
-        <View style={styles.actionsRow}>
+        <View className='flex-row items-center gap-1 mt-1.5 -ml-1'>
           <MessageBranchPicker align='flex-end' />
           <MessageActionBar />
         </View>
@@ -126,7 +126,7 @@ function UserMessage() {
 
       {/* Edit mode */}
       <AuiIf condition={(s) => s.message.composer.isEditing}>
-        <View style={styles.editContainer}>
+        <View className='w-[100%]'>
           <EditComposer />
         </View>
       </AuiIf>
@@ -138,7 +138,7 @@ function AssistantMessage() {
   const { colors } = useTheme();
   return (
     <MessagePrimitive.Root style={styles.assistantContainer}>
-      <View style={styles.assistantContent}>
+      <View className='w-[100%] px-0.5'>
         <MessagePrimitive.GroupedParts
           indicator='always'
           groupBy={groupPartByType({
@@ -150,7 +150,7 @@ function AssistantMessage() {
           {({ part, children }) => {
             switch (part.type) {
               case 'group-chainOfThought':
-                return <View style={styles.chain}>{children}</View>;
+                return <View className='w-[100%] mb-1'>{children}</View>;
               case 'group-reasoning':
                 return null;
               case 'group-tool':
@@ -182,7 +182,7 @@ function AssistantMessage() {
         </ErrorPrimitive.Root>
       </View>
       <MessagePrimitive.If running={false}>
-        <View style={styles.actionsRow}>
+        <View className='flex-row items-center gap-1 mt-1.5 -ml-1'>
           <MessageBranchPicker align='flex-start' />
           <MessageActionBar />
         </View>
@@ -197,76 +197,19 @@ export const MessageBubble = memo(function MessageBubble() {
   return <AssistantMessage />;
 });
 
-const styles = StyleSheet.create({
+const styles = {
   userContainer: {
     alignItems: 'flex-end',
   },
   userBubble: {
     ...Rounded,
-    maxWidth: '82%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.lg,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    overflow: 'hidden',
-  },
-  editContainer: {
-    width: '100%',
   },
   assistantContainer: {
     alignItems: 'flex-start',
   },
-  assistantContent: {
-    width: '100%',
-    paddingHorizontal: 2,
-  },
-  chain: {
-    width: '100%',
-    marginBottom: 4,
-  },
-  userText: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    lineHeight: 22,
-    letterSpacing: 0,
-  },
-  userTextContent: {
-    maxWidth: '100%',
-    alignItems: 'flex-start',
-    gap: 7,
-  },
-  expandButton: {
-    minHeight: 24,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
   expandButtonPressed: {
     opacity: 0.55,
-  },
-  expandLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
-    letterSpacing: 0,
-  },
-  typing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-  },
-  typingLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 6,
-    marginLeft: -4,
   },
   error: {
     ...Rounded,
@@ -281,4 +224,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
   },
-});
+} as const;

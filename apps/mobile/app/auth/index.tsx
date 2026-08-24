@@ -1,25 +1,23 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AppleButton } from '@/components/auth/AppleButton';
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { useAppleAuth } from '@/lib/use-apple-auth';
 import { useGoogleAuth } from '@/lib/use-google-auth';
 
 export default function AuthWelcomeScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const google = useGoogleAuth();
   const apple = useAppleAuth();
 
   return (
     <AuthShell
       footer={
-        <View style={styles.footer}>
+        <View className='w-full items-stretch gap-3'>
           <AuthButton
             label='Create account'
             onPress={() => router.push('/auth/signup')}
@@ -42,16 +40,20 @@ export default function AuthWelcomeScreen() {
         </View>
       }
     >
-      <View style={styles.hero}>
-        <Text style={[styles.brand, { color: colors.mutedForeground }]}>Finora</Text>
-        <Text style={[styles.title, { color: colors.foreground }]}>Money, in conversation.</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+      <View className='items-center gap-3 px-2'>
+        <Text className='font-sans-semibold text-sm uppercase tracking-[0.6px] text-muted-foreground'>
+          Finora
+        </Text>
+        <Text className='text-center font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
+          Money, in conversation.
+        </Text>
+        <Text className='max-w-[300px] text-center font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
           Create an account or sign in to continue.
         </Text>
         {google.error || apple.error ? (
           <Text
             accessibilityRole='alert'
-            style={[styles.error, { color: colors.destructive }]}
+            className='max-w-[300px] text-center font-sans-medium text-sm leading-5 text-destructive'
           >
             {google.error ?? apple.error}
           </Text>
@@ -60,47 +62,3 @@ export default function AuthWelcomeScreen() {
     </AuthShell>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 8,
-  },
-  brand: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-    lineHeight: 23,
-    textAlign: 'center',
-    maxWidth: 300,
-  },
-  error: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 20,
-    textAlign: 'center',
-    maxWidth: 300,
-  },
-  footer: {
-    gap: 12,
-    width: '100%',
-    alignItems: 'stretch',
-  },
-});

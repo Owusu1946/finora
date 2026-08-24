@@ -1,19 +1,17 @@
 import { useSignIn } from '@clerk/expo';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
 import { AuthField } from '@/components/auth/AuthField';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AppText as Text } from '@/components/ui/text';
-import { useTheme } from '@/hooks/use-theme';
 import { clerkErrorMessage, clerkFieldErrorMessage } from '@/lib/clerk-auth';
 import { haptics } from '@/lib/haptics';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const params = useLocalSearchParams<{ email?: string }>();
   const { signIn, errors, fetchStatus } = useSignIn();
   const initialEmail = typeof params.email === 'string' ? params.email : '';
@@ -51,7 +49,7 @@ export default function ForgotPasswordScreen() {
     <AuthShell
       showBack
       footer={
-        <View style={styles.footer}>
+        <View className='w-full items-stretch gap-4'>
           <AuthButton
             label='Send reset code'
             onPress={handleContinue}
@@ -64,22 +62,24 @@ export default function ForgotPasswordScreen() {
               router.replace('/auth/login');
             }}
           >
-            <Text style={[styles.linkRow, { color: colors.mutedForeground }]}>
+            <Text className='py-1 text-center font-sans-medium text-[15px] text-muted-foreground'>
               Remember your password?{' '}
-              <Text style={{ color: colors.foreground, fontWeight: '600' }}>Sign in</Text>
+              <Text className='font-sans-semibold text-foreground'>Sign in</Text>
             </Text>
           </Pressable>
         </View>
       }
     >
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Forgot password?</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+      <View className='mb-2 gap-2.5'>
+        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
+          Forgot password?
+        </Text>
+        <Text className='font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
           Enter your email and we’ll send a 6-digit code to reset it.
         </Text>
       </View>
 
-      <View style={styles.form}>
+      <View className='gap-4'>
         <AuthField
           label='Email'
           value={email}
@@ -98,38 +98,3 @@ export default function ForgotPasswordScreen() {
     </AuthShell>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    gap: 10,
-    marginBottom: 8,
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-    lineHeight: 23,
-  },
-  form: {
-    gap: 16,
-  },
-  footer: {
-    gap: 16,
-    width: '100%',
-    alignItems: 'stretch',
-  },
-  linkRow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    paddingVertical: 4,
-  },
-});

@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, Share, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, Share, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -117,7 +117,10 @@ export function PaymentRequestWizard({
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
+    <View
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
+    >
       <WizardStepHeader
         step={stepIndex}
         total={STEPS.length}
@@ -138,8 +141,8 @@ export function PaymentRequestWizard({
       />
 
       {step === 'amount' ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
+        <View className='gap-2.5'>
+          <View className='flex-row flex-wrap gap-2'>
             {CURRENCIES.map((c) => (
               <WizardChip
                 key={c}
@@ -155,7 +158,7 @@ export function PaymentRequestWizard({
               />
             ))}
           </View>
-          <View style={styles.chips}>
+          <View className='flex-row flex-wrap gap-2'>
             {AMOUNTS.map((n) => (
               <WizardChip
                 key={n}
@@ -178,21 +181,15 @@ export function PaymentRequestWizard({
             keyboardType='decimal-pad'
             placeholder='Custom amount'
             placeholderTextColor={colors.mutedForeground}
-            style={[
-              styles.input,
-              {
-                color: colors.foreground,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
-            ]}
+            className='font-sans-medium min-h-[46px] border px-3.5 text-[17px] text-foreground border-border bg-background'
+            style={[styles.input]}
           />
         </View>
       ) : null}
 
       {step === 'memo' ? (
-        <View style={styles.block}>
-          <View style={styles.chips}>
+        <View className='gap-2.5'>
+          <View className='flex-row flex-wrap gap-2'>
             {MEMOS.map((m) => (
               <WizardChip
                 key={m}
@@ -217,14 +214,8 @@ export function PaymentRequestWizard({
             }}
             placeholder='Custom note (optional)'
             placeholderTextColor={colors.mutedForeground}
-            style={[
-              styles.input,
-              {
-                color: colors.foreground,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
-            ]}
+            className='font-sans-medium min-h-[46px] border px-3.5 text-[17px] text-foreground border-border bg-background'
+            style={[styles.input]}
           />
           <Pressable
             onPress={() => {
@@ -234,55 +225,58 @@ export function PaymentRequestWizard({
               setStep('review');
             }}
           >
-            <Text style={[styles.skip, { color: colors.mutedForeground }]}>Skip note</Text>
+            <Text className='font-sans-semibold text-[15px] text-center py-1 text-muted-foreground'>
+              Skip note
+            </Text>
           </Pressable>
         </View>
       ) : null}
 
       {step === 'review' && amount != null ? (
-        <View style={[styles.review, { borderColor: colors.border }]}>
-          <Text style={[styles.reviewAmount, { color: colors.foreground }]}>
+        <View
+          className='border p-4 gap-1.5 items-center border-border'
+          style={[styles.review]}
+        >
+          <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
             {formatPaymentAmount(amount, currency)}
           </Text>
           {memo.trim() ? (
-            <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[15px] text-muted-foreground'>
               “{memo.trim()}”
             </Text>
           ) : (
-            <Text style={[styles.reviewMemo, { color: colors.mutedForeground }]}>No note</Text>
+            <Text className='font-sans-medium text-[15px] text-muted-foreground'>No note</Text>
           )}
           {seed.payerHint ? (
-            <Text style={[styles.reviewHint, { color: colors.mutedForeground }]}>
+            <Text className='font-sans-medium text-[14px] text-muted-foreground'>
               For {seed.payerHint}
             </Text>
           ) : null}
         </View>
       ) : null}
 
-      <View style={styles.nav}>
+      <View className='flex-row gap-2'>
         <Pressable
           onPress={goBack}
-          style={({ pressed }) => [
-            styles.navBtn,
-            { borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-          ]}
+          className='flex-1 min-h-[46px] border items-center justify-center'
+          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text style={[styles.navLabel, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[16px] text-foreground'>
             {stepIndex === 1 ? 'Cancel' : 'Back'}
           </Text>
         </Pressable>
         <Pressable
           disabled={!canContinue}
           onPress={goNext}
+          className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
-            styles.navBtnPrimary,
             {
               backgroundColor: colors.foreground,
               opacity: !canContinue ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text style={[styles.navLabelPrimary, { color: colors.background }]}>
+          <Text className='font-sans-semibold text-[16px] text-background'>
             {step === 'review' ? 'Create link' : 'Continue'}
           </Text>
         </Pressable>
@@ -353,25 +347,32 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.composer, borderColor: colors.border }]}>
-      <View style={styles.header}>
-        <View style={[styles.iconWrap, { backgroundColor: colors.muted }]}>
+    <View
+      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      style={[styles.card]}
+    >
+      <View className='flex-row items-center gap-3'>
+        <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
           <Icon
             name='qr'
             size={16}
             color={colors.foreground}
           />
         </View>
-        <View style={styles.headerText}>
-          <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>Payment request</Text>
-          <Text style={[styles.title, { color: colors.foreground }]}>
+        <View className='flex-1 gap-0.5'>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>
+            Payment request
+          </Text>
+          <Text className='font-sans-semibold text-[21px] tracking-[-0.4px] text-foreground'>
             {formatPaymentAmount(request.amount, request.currency)}
           </Text>
         </View>
       </View>
 
       {request.memo ? (
-        <Text style={[styles.memo, { color: colors.mutedForeground }]}>“{request.memo}”</Text>
+        <Text className='font-sans-medium text-[15px] italic -mt-1 text-muted-foreground'>
+          “{request.memo}”
+        </Text>
       ) : null}
 
       <Pressable
@@ -380,6 +381,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           haptics.selection();
           setQrOpen(true);
         }}
+        className='self-center p-3'
         style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
       >
         <MockQrCode
@@ -389,17 +391,20 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           backgroundColor='#ffffff'
         />
       </Pressable>
-      <Text style={[styles.qrHint, { color: colors.mutedForeground }]}>
+      <Text className='font-sans-medium text-center text-[13px] -mt-1 text-muted-foreground'>
         Tap to enlarge · Link expires {expiresLabel ?? 'in 7 days'}
       </Text>
 
-      <View style={[styles.linkRow, { borderColor: colors.border }]}>
-        <View style={styles.fieldText}>
-          <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Payment link</Text>
+      <View
+        className='flex-row items-center gap-2.5 border px-3 py-2.5 border-border'
+        style={[styles.linkRow]}
+      >
+        <View className='flex-1 gap-0.5'>
+          <Text className='font-sans-medium text-[12px] text-muted-foreground'>Payment link</Text>
           <Text
             selectable
             numberOfLines={2}
-            style={[styles.fieldValue, { color: colors.foreground }]}
+            className='font-sans-medium text-[14px] tracking-[-0.2px] text-foreground'
           >
             {request.link}
           </Text>
@@ -407,10 +412,8 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         <Pressable
           accessibilityLabel='Copy payment link'
           onPress={() => void copy(request.link, 'link')}
-          style={({ pressed }) => [
-            styles.copyBtn,
-            { backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 },
-          ]}
+          className='w-[34px] h-[34px] rounded-[17px] items-center justify-center'
+          style={({ pressed }) => [{ backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
         >
           <Icon
             name={copied === 'link' ? 'check' : 'copy'}
@@ -420,11 +423,11 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         </Pressable>
       </View>
 
-      <View style={styles.actions}>
+      <View className='gap-2'>
         <Pressable
           onPress={() => void textSms()}
+          className='min-h-[46px] flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
-            styles.primaryBtn,
             { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
           ]}
         >
@@ -433,13 +436,13 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
             size={16}
             color={colors.background}
           />
-          <Text style={[styles.primaryLabel, { color: colors.background }]}>Text SMS</Text>
+          <Text className='font-sans-semibold text-[16px] text-background'>Text SMS</Text>
         </Pressable>
-        <View style={styles.secondaryRow}>
+        <View className='flex-row gap-2'>
           <Pressable
             onPress={share}
+            className='min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              styles.secondaryBtnFull,
               { borderColor: colors.border, opacity: pressed ? 0.75 : 1, flex: 1 },
             ]}
           >
@@ -448,12 +451,12 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
               size={15}
               color={colors.foreground}
             />
-            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>Share</Text>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>Share</Text>
           </Pressable>
           <Pressable
             onPress={() => void copy(shareMessage, 'all')}
+            className='min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              styles.secondaryBtnFull,
               { borderColor: colors.border, opacity: pressed ? 0.75 : 1, flex: 1 },
             ]}
           >
@@ -462,7 +465,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
               size={15}
               color={colors.foreground}
             />
-            <Text style={[styles.secondaryLabel, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
               {copied === 'all' ? 'Copied' : 'Copy'}
             </Text>
           </Pressable>
@@ -476,20 +479,22 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         onRequestClose={() => setQrOpen(false)}
       >
         <Pressable
-          style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.55)' }]}
+          className='flex-1 items-center justify-center p-6'
+          style={[{ backgroundColor: 'rgba(0,0,0,0.55)' }]}
           onPress={() => setQrOpen(false)}
         >
           <Pressable
             onPress={(e) => e.stopPropagation()}
-            style={[
-              styles.modalCard,
-              { backgroundColor: colors.background, borderColor: colors.border },
-            ]}
+            className='w-[100%] max-w-[360px] border p-5 gap-3.5 items-center bg-background border-border'
+            style={[styles.modalCard]}
           >
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+            <Text className='font-sans-semibold text-[19px] text-foreground'>
               {formatPaymentAmount(request.amount, request.currency)}
             </Text>
-            <View style={styles.modalQr}>
+            <View
+              className='p-4 bg-white'
+              style={[styles.modalQr]}
+            >
               <MockQrCode
                 value={request.qrPayload}
                 size={240}
@@ -499,8 +504,8 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
             </View>
             <Pressable
               onPress={share}
+              className='min-h-[46px] flex-row items-center justify-center gap-2'
               style={({ pressed }) => [
-                styles.primaryBtn,
                 {
                   backgroundColor: colors.foreground,
                   opacity: pressed ? 0.85 : 1,
@@ -513,7 +518,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
                 size={16}
                 color={colors.background}
               />
-              <Text style={[styles.primaryLabel, { color: colors.background }]}>Share link</Text>
+              <Text className='font-sans-semibold text-[16px] text-background'>Share link</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -522,225 +527,38 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   card: {
-    width: '100%',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.card,
-    padding: 16,
-    gap: 14,
-    marginVertical: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    flex: 1,
-    gap: 2,
-  },
-  eyebrow: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  title: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 21,
-    fontWeight: '600',
-    letterSpacing: -0.4,
-  },
-  memo: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    fontStyle: 'italic',
-    marginTop: -4,
-  },
-  block: {
-    gap: 10,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
   },
   input: {
-    minHeight: 46,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    paddingHorizontal: 14,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 17,
-    fontWeight: '500',
-  },
-  skip: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingVertical: 4,
   },
   review: {
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    padding: 16,
-    gap: 6,
-    alignItems: 'center',
-  },
-  reviewAmount: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 29,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-  },
-  reviewMemo: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  reviewHint: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  nav: {
-    flexDirection: 'row',
-    gap: 8,
   },
   navBtn: {
-    flex: 1,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   navBtnPrimary: {
-    flex: 1.4,
-    minHeight: 46,
     borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  navLabelPrimary: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
   },
   qrWrap: {
-    alignSelf: 'center',
-    padding: 12,
     borderRadius: Radius.lg,
-  },
-  qrHint: {
-    textAlign: 'center',
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: -4,
   },
   linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: Radius.composer,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  fieldText: {
-    flex: 1,
-    gap: 2,
-  },
-  fieldLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  fieldValue: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-  },
-  copyBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actions: {
-    gap: 8,
-  },
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: 8,
   },
   primaryBtn: {
-    minHeight: 46,
     borderRadius: Radius.composer,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  primaryLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 16,
-    fontWeight: '600',
   },
   secondaryBtnFull: {
-    minHeight: 44,
     borderRadius: Radius.composer,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  secondaryLabel: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  modalBackdrop: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 360,
     borderRadius: Radius.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 20,
-    gap: 14,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 19,
-    fontWeight: '600',
   },
   modalQr: {
-    padding: 16,
     borderRadius: Radius.lg,
-    backgroundColor: '#ffffff',
   },
-});
+};

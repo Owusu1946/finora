@@ -1,12 +1,11 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
@@ -26,9 +25,11 @@ export default function TreasuryScreen() {
 
   if (!isBusinessAccount()) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Treasury</Text>
-        <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+      <View className='flex-1 bg-background px-5 pt-4'>
+        <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+          Treasury
+        </Text>
+        <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
           Treasury is available on Business accounts. Switch in Settings.
         </Text>
       </View>
@@ -37,7 +38,7 @@ export default function TreasuryScreen() {
 
   if (!overview) {
     return (
-      <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View className='flex-1 bg-background'>
         <LoadingIcon
           style={{ marginTop: 40 }}
           color={colors.mutedForeground}
@@ -49,18 +50,22 @@ export default function TreasuryScreen() {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      style={[styles.root, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
+      className='flex-1 bg-background'
+      contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 40, paddingTop: 16 }}
       contentInsetAdjustmentBehavior='automatic'
     >
-      <Text style={[styles.title, { color: colors.foreground }]}>Treasury</Text>
-      <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+      <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-foreground'>
+        Treasury
+      </Text>
+      <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
         Cash position and upcoming business outflows. Settlement still goes through approval.
       </Text>
 
-      <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.composer }]}>
-        <Text style={[styles.label, { color: colors.mutedForeground }]}>Total (USD eq.)</Text>
-        <Text style={[styles.big, { color: colors.foreground }]}>
+      <View className='gap-2 rounded-[26px] border border-border bg-composer p-4'>
+        <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
+          Total (USD eq.)
+        </Text>
+        <Text className='font-sans text-[28px] font-bold tracking-[-0.5px] text-foreground'>
           {formatPaymentAmount(overview.totalUsd, 'USD')}
         </Text>
         <Pressable
@@ -70,40 +75,38 @@ export default function TreasuryScreen() {
             aui.composer.setText('Show treasury overview');
             aui.composer.send();
           }}
-          style={({ pressed }) => [
-            styles.btn,
-            { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-          ]}
+          className='mt-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+          style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
         >
-          <Text style={[styles.btnLabel, { color: colors.background }]}>Ask in chat</Text>
+          <Text className='font-sans-semibold text-[15px] text-background'>Ask in chat</Text>
         </Pressable>
       </View>
 
       {overview.balances.map((b) => (
         <View
           key={b.currency}
-          style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='flex-row items-center gap-2.5 rounded-[26px] border border-border bg-composer p-3.5'
         >
-          <Text style={[styles.name, { color: colors.foreground }]}>{b.currency}</Text>
-          <Text style={[styles.amount, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-base text-foreground'>{b.currency}</Text>
+          <Text className='font-sans-semibold text-[15px] text-foreground'>
             {formatPaymentAmount(b.balance, b.currency)}
           </Text>
         </View>
       ))}
 
-      <Text style={[styles.section, { color: colors.mutedForeground }]}>Upcoming</Text>
+      <Text className='mt-2 font-sans-semibold text-[13px] text-muted-foreground'>Upcoming</Text>
       {overview.upcomingOutflows.slice(0, 6).map((item, i) => (
         <View
           key={`${item.label}-${i}`}
-          style={[styles.row, { borderColor: colors.border, backgroundColor: colors.composer }]}
+          className='flex-row items-center gap-2.5 rounded-[26px] border border-border bg-composer p-3.5'
         >
           <Text
-            style={[styles.name, { color: colors.foreground, flex: 1 }]}
+            className='flex-1 font-sans-semibold text-base text-foreground'
             numberOfLines={1}
           >
             {item.label}
           </Text>
-          <Text style={[styles.amount, { color: colors.foreground }]}>
+          <Text className='font-sans-semibold text-[15px] text-foreground'>
             {formatPaymentAmount(item.amount, item.currency)}
           </Text>
         </View>
@@ -111,44 +114,3 @@ export default function TreasuryScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40, gap: 10 },
-  title: { fontFamily: 'DMSans_400Regular', fontSize: 25, fontWeight: '600', letterSpacing: -0.4 },
-  sub: {
-    marginTop: -4,
-    marginBottom: 6,
-    fontFamily: 'DMSans_400Regular',
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  card: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 16,
-    gap: 8,
-  },
-  label: { fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '600' },
-  big: { fontFamily: 'DMSans_400Regular', fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
-  btn: {
-    minHeight: 46,
-    borderRadius: Radius.composer,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  btnLabel: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
-  section: { marginTop: 8, fontFamily: 'DMSans_400Regular', fontSize: 13, fontWeight: '600' },
-  row: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radius.card,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  name: { fontFamily: 'DMSans_400Regular', fontSize: 16, fontWeight: '600' },
-  amount: { fontFamily: 'DMSans_400Regular', fontSize: 15, fontWeight: '600' },
-});

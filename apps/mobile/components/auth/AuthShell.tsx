@@ -1,14 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { useRouter, type Href } from 'expo-router';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/ui/icon';
@@ -29,24 +22,22 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View className='flex-1 bg-background'>
       <AuthCanvas colors={colors} />
       <KeyboardAvoidingView
-        style={styles.flex}
+        className='flex-1'
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            {
-              paddingTop: insets.top + 8,
-              paddingBottom: Math.max(insets.bottom, 16) + 24,
-            },
-          ]}
+          contentContainerClassName='grow px-6'
+          contentContainerStyle={{
+            paddingTop: insets.top + 8,
+            paddingBottom: Math.max(insets.bottom, 16) + 24,
+          }}
           keyboardShouldPersistTaps='handled'
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.topBar}>
+          <View className='h-7 justify-center'>
             {showBack ? (
               <Pressable
                 accessibilityLabel='Go back'
@@ -56,7 +47,7 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
                   if (router.canGoBack()) router.back();
                   else router.replace('/auth' as Href);
                 }}
-                style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
+                className='active:opacity-50'
               >
                 <Icon
                   name='chevron-left'
@@ -65,45 +56,14 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
                 />
               </Pressable>
             ) : (
-              <View style={styles.topSpacer} />
+              <View className='h-6' />
             )}
           </View>
 
-          <View style={styles.body}>{children}</View>
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
+          <View className='grow justify-center gap-[22px] py-3'>{children}</View>
+          {footer ? <View className='w-full gap-3 pt-4'>{footer}</View> : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  flex: {
-    flex: 1,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-  },
-  topBar: {
-    height: 28,
-    justifyContent: 'center',
-  },
-  topSpacer: {
-    height: 24,
-  },
-  body: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    gap: 22,
-    paddingVertical: 12,
-  },
-  footer: {
-    gap: 12,
-    paddingTop: 16,
-    width: '100%',
-  },
-});

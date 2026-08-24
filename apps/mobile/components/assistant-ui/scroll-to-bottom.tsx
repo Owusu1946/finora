@@ -2,14 +2,12 @@ import { useRef, useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
   Animated,
-  StyleSheet,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
@@ -68,7 +66,8 @@ export function ScrollToBottomButton({
 
   return (
     <Animated.View
-      style={[styles.wrapper, { opacity }]}
+      className='absolute bottom-2 self-center z-[10]'
+      style={[{ opacity }]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
       <Pressable
@@ -77,8 +76,8 @@ export function ScrollToBottomButton({
           onPress();
         }}
         accessibilityLabel='Scroll to bottom'
+        className='w-9 h-9 border items-center justify-center'
         style={({ pressed }) => [
-          styles.button,
           {
             backgroundColor: colors.card,
             borderColor: colors.border,
@@ -95,26 +94,3 @@ export function ScrollToBottomButton({
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    position: 'absolute',
-    bottom: 8,
-    alignSelf: 'center',
-    zIndex: 10,
-  },
-  button: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Subtle shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-});

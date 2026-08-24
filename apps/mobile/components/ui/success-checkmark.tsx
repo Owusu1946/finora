@@ -1,6 +1,6 @@
 import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, View } from 'react-native';
 import {
   Easing,
   Extrapolation,
@@ -100,15 +100,13 @@ export function SuccessCheckmark({ size = 72, color, backgroundColor }: SuccessC
   if (reducedMotion) {
     return (
       <View
-        style={[
-          styles.fallback,
-          {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: discColor,
-          },
-        ]}
+        className='items-center justify-center rounded-full'
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: discColor,
+        }}
         accessibilityRole='image'
         accessibilityLabel='Success'
       >
@@ -152,10 +150,3 @@ export function SuccessCheckmark({ size = 72, color, backgroundColor }: SuccessC
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
