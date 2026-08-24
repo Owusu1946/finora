@@ -66,8 +66,8 @@ export function ScrollToBottomButton({
 
   return (
     <Animated.View
-      className='absolute bottom-2 self-center z-[10]'
-      style={[{ opacity }]}
+      className='absolute bottom-3 self-center z-[10]'
+      style={[styles.wrapper, { opacity }]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
       <Pressable
@@ -76,21 +76,43 @@ export function ScrollToBottomButton({
           onPress();
         }}
         accessibilityLabel='Scroll to bottom'
-        className='w-9 h-9 border items-center justify-center'
+        className='h-14 w-14 items-center justify-center rounded-full shadow-md'
         style={({ pressed }) => [
+          styles.button,
           {
             backgroundColor: colors.card,
-            borderColor: colors.border,
             transform: [{ scale: pressed ? 0.92 : 1 }],
           },
         ]}
       >
         <Icon
           name='arrow-down'
-          size={18}
+          size={22}
           color={colors.foreground}
         />
       </Pressable>
     </Animated.View>
   );
 }
+
+const styles = {
+  wrapper: {
+    position: 'absolute' as const,
+    bottom: 12,
+    alignSelf: 'center' as const,
+    zIndex: 10,
+  },
+  button: {
+    width: 56,
+    height: 56,
+    borderRadius: 999,
+    borderWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+} as const;
