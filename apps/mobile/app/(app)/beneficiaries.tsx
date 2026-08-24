@@ -50,6 +50,7 @@ export default function BeneficiariesScreen() {
   return (
     <LegendList
       data={items}
+      estimatedItemSize={72}
       keyExtractor={(item) => item.id}
       recycleItems
       showsVerticalScrollIndicator={false}

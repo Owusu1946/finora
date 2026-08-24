@@ -278,6 +278,7 @@ export default function PayrollScreen() {
     <View className='flex-1 bg-background'>
       <LegendList
         data={imports}
+        estimatedItemSize={120}
         keyExtractor={(item) => item.id}
         recycleItems
         showsVerticalScrollIndicator={false}

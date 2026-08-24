@@ -54,6 +54,7 @@ export default function AutomationsScreen() {
   return (
     <LegendList
       data={items}
+      estimatedItemSize={96}
       keyExtractor={(item) => item.id}
       recycleItems
       showsVerticalScrollIndicator={false}
