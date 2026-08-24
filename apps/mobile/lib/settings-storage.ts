@@ -96,6 +96,7 @@ export const DEFAULT_SETTINGS: FinoraSettings = {
 };
 
 let cached: FinoraSettings | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -138,20 +139,28 @@ export async function getSettings(): Promise<FinoraSettings> {
 }
 
 export async function saveSettings(patch: Partial<FinoraSettings>): Promise<FinoraSettings> {
-  const current = cached ?? (await getSettings());
-  const next: FinoraSettings = {
-    ...current,
-    ...patch,
-    notifications: {
-      ...current.notifications,
-      ...patch.notifications,
-    },
-    trustedDevices: patch.trustedDevices ?? current.trustedDevices,
-  };
-  cached = next;
-  await setItem(KEY, JSON.stringify(next));
-  notify();
-  return next;
+  const operation = writeQueue.then(async () => {
+    const current = cached ?? (await getSettings());
+    const next: FinoraSettings = {
+      ...current,
+      ...patch,
+      notifications: {
+        ...current.notifications,
+        ...patch.notifications,
+      },
+      trustedDevices: patch.trustedDevices ?? current.trustedDevices,
+    };
+    cached = next;
+    await setItem(KEY, JSON.stringify(next));
+    notify();
+    return next;
+  });
+  writeQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+
+  return operation;
 }
 
 export async function revokeTrustedDevice(id: string): Promise<FinoraSettings> {

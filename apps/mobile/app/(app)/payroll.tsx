@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/expo';
 import { LegendList } from '@legendapp/list/react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -798,7 +798,12 @@ function Editor({
         </Pressable>
       </View>
       {row ? (
-        <View className='gap-2.5 px-5 pb-7'>
+        <ScrollView
+          className='shrink'
+          contentContainerStyle={{ gap: 10, paddingHorizontal: 20, paddingBottom: 28 }}
+          keyboardShouldPersistTaps='handled'
+          showsVerticalScrollIndicator={false}
+        >
           {fields.map(([key, label]) => (
             <TextInput
               key={key}
@@ -824,7 +829,7 @@ function Editor({
           >
             <Text className='text-background'>{busy ? 'Saving…' : 'Save changes'}</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       ) : null}
     </SheetModal>
   );

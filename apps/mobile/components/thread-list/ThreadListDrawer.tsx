@@ -140,12 +140,16 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   );
 
   const payHasPending = pendingApprovals > 0;
-  const selectThread = useCallback(() => {
-    navigateOnce(() => {
-      router.push('/');
-      navigation.closeDrawer();
-    });
-  }, [navigation, navigateOnce, router]);
+  const selectThread = useCallback(
+    (switchTo: () => void) => {
+      navigateOnce(() => {
+        switchTo();
+        router.push('/');
+        navigation.closeDrawer();
+      });
+    },
+    [navigation, navigateOnce, router],
+  );
   const renderThread = useCallback(
     ({ index }: { index: number }) => (
       <ThreadListItemByIndexProvider
@@ -189,8 +193,8 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         <Pressable
           onPressIn={haptics.selection}
           onPress={() => {
-            aui.threads.switchToNewThread();
             navigateOnce(() => {
+              aui.threads.switchToNewThread();
               router.push('/');
               navigation.closeDrawer();
             });
@@ -263,8 +267,10 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               key={href}
               onPressIn={haptics.selection}
               onPress={() => {
-                navigateOnce(() => router.push(item.href));
-                navigation.closeDrawer();
+                navigateOnce(() => {
+                  router.push(item.href);
+                  navigation.closeDrawer();
+                });
               }}
               className={cx(
                 'h-10 flex-row items-center gap-2.5 rounded-[18px] px-3 active:bg-muted',

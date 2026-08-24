@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
@@ -196,8 +196,11 @@ export function SettingsSwitchRow({
 }) {
   const { colors } = useTheme();
   const [optimisticValue, setOptimisticValue] = useState(value);
+  const controlledValueRef = useRef(value);
+  const requestRef = useRef(0);
 
   useEffect(() => {
+    controlledValueRef.current = value;
     setOptimisticValue(value);
   }, [value]);
 
@@ -213,14 +216,18 @@ export function SettingsSwitchRow({
           value={optimisticValue}
           disabled={disabled}
           onValueChange={async (next) => {
-            const previous = optimisticValue;
+            const request = ++requestRef.current;
             setOptimisticValue(next);
             haptics.selection();
             try {
               const accepted = await onValueChange(next);
-              if (accepted === false) setOptimisticValue(previous);
+              if (request !== requestRef.current) return;
+              if (accepted === false) {
+                setOptimisticValue(controlledValueRef.current);
+              }
             } catch {
-              setOptimisticValue(previous);
+              if (request !== requestRef.current) return;
+              setOptimisticValue(controlledValueRef.current);
             }
           }}
           trackColor={{ false: colors.muted, true: colors.foreground }}

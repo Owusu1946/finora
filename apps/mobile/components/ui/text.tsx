@@ -14,11 +14,24 @@ function scaledClassName(className: string | undefined, enabled: boolean) {
   const classes = className?.split(' ') ?? [];
   if (!enabled) return classes;
 
-  const sizeIndex = classes.findIndex((value) => /^text-\[\d+(?:\.\d+)?px\]$/.test(value));
+  const namedSizes: Record<string, number> = {
+    'text-xs': 12,
+    'text-sm': 14,
+    'text-base': 16,
+    'text-lg': 18,
+    'text-xl': 20,
+    'text-2xl': 24,
+    'text-3xl': 30,
+    'text-4xl': 36,
+  };
+  const sizeIndex = classes.findIndex(
+    (value) => namedSizes[value] != null || /^text-\[\d+(?:\.\d+)?px\]$/.test(value),
+  );
 
   if (sizeIndex >= 0) {
-    const [match] = classes[sizeIndex].match(/\d+(?:\.\d+)?/) ?? ['14'];
-    classes[sizeIndex] = `text-[${Number(match) + 2}px]`;
+    const current = classes[sizeIndex];
+    const [match] = current.match(/\d+(?:\.\d+)?/) ?? ['14'];
+    classes[sizeIndex] = `text-[${(namedSizes[current] ?? Number(match)) + 2}px]`;
   } else {
     classes.push('text-[16px]');
   }
@@ -29,10 +42,12 @@ function scaledClassName(className: string | undefined, enabled: boolean) {
 function scaleNativeStyle(style: TextProps['style'], enabled: boolean) {
   if (!enabled) return style;
   const flattened = StyleSheet.flatten(style) ?? {};
-  const fontSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 14;
+  if (typeof flattened.fontSize !== 'number') return style;
+
+  const fontSize = flattened.fontSize;
   const lineHeight =
     typeof flattened.lineHeight === 'number' ? flattened.lineHeight + 2 : undefined;
-  return [{ ...flattened, fontSize: fontSize + 2, ...(lineHeight ? { lineHeight } : {}) }];
+  return [{ ...flattened, fontSize: fontSize + 2, ...(lineHeight != null ? { lineHeight } : {}) }];
 }
 
 export const AppText = forwardRef<NativeText, TextProps>(function AppText(

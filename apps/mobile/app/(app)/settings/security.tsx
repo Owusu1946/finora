@@ -118,7 +118,7 @@ export default function SecuritySettingsScreen() {
             detail={t('sec_biometrics_detail')}
             icon={biometricMethod === 'face' ? 'face-id' : 'biometric'}
             value={settings.biometricsEnabled}
-            onValueChange={(v) => void handleBiometrics(v)}
+            onValueChange={handleBiometrics}
             isLast
           />
         </SettingsSection>

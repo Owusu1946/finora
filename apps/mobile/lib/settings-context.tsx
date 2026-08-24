@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -61,6 +62,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const systemScheme = useSystemColorScheme();
   const [settings, setSettings] = useState<FinoraSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
+  const pendingUpdatesRef = useRef(0);
+  const updateSequenceRef = useRef(0);
 
   const refresh = useCallback(async () => {
     const next = await getSettings();
@@ -71,33 +74,36 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refresh();
     return subscribeSettings(() => {
-      void refresh();
+      if (pendingUpdatesRef.current === 0) void refresh();
     });
   }, [refresh]);
 
   const update = useCallback(
     async (patch: Partial<FinoraSettings>) => {
-      const optimistic: FinoraSettings = {
-        ...settings,
+      const updateSequence = ++updateSequenceRef.current;
+      pendingUpdatesRef.current += 1;
+      setSettings((current) => ({
+        ...current,
         ...patch,
         notifications: {
-          ...settings.notifications,
+          ...current.notifications,
           ...patch.notifications,
         },
-        trustedDevices: patch.trustedDevices ?? settings.trustedDevices,
-      };
-      setSettings(optimistic);
+        trustedDevices: patch.trustedDevices ?? current.trustedDevices,
+      }));
 
       try {
         const next = await saveSettings(patch);
-        setSettings(next);
+        if (updateSequence === updateSequenceRef.current) setSettings(next);
         return next;
       } catch (error) {
-        await refresh();
+        if (updateSequence === updateSequenceRef.current) await refresh();
         throw error;
+      } finally {
+        pendingUpdatesRef.current -= 1;
       }
     },
-    [refresh, settings],
+    [refresh],
   );
 
   const setTheme = useCallback(
