@@ -161,7 +161,9 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     >
       <View className='mb-3 flex-row items-center justify-between gap-2.5 px-5'>
         <View className='gap-px'>
-          <Text className='font-bold text-[21px] tracking-[-0.4px] text-foreground'>Finora</Text>
+          <Text className='font-sans text-[21px] font-bold tracking-[-0.4px] text-foreground'>
+            Finora
+          </Text>
           <AccountBadge variant='text' />
         </View>
         <Pressable
@@ -278,7 +280,9 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               </Text>
               {showApprovalBadge ? (
                 <View className='min-w-5 h-5 items-center justify-center rounded-full bg-foreground px-1.5'>
-                  <Text className='font-sans-bold text-xs text-background'>{pendingApprovals}</Text>
+                  <Text className='font-sans text-xs font-bold text-background'>
+                    {pendingApprovals}
+                  </Text>
                 </View>
               ) : showCardBadge ? (
                 <View className='mr-2 h-2 w-2 rounded-full bg-foreground' />
