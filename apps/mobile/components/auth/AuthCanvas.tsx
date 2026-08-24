@@ -8,7 +8,7 @@ import {
   useClock,
   vec,
 } from '@shopify/react-native-skia';
-import { useWindowDimensions } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import { useDerivedValue } from 'react-native-reanimated';
 
 import type { Palette } from '@/constants/theme';
@@ -42,7 +42,7 @@ export function AuthCanvas({ colors }: AuthCanvasProps) {
 
   return (
     <Canvas
-      className='absolute inset-0'
+      style={StyleSheet.absoluteFill}
       pointerEvents='none'
     >
       <Fill>

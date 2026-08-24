@@ -101,6 +101,7 @@ export function CollapsibleList<Item>({
         row.kind === 'item' ? keyExtractor(row.item) : `${row.kind}-${index}`
       }
       getItemType={(row) => (row.kind === 'item' ? (getItemType?.(row.item) ?? 'item') : row.kind)}
+      estimatedItemSize={72}
       recycleItems
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{

@@ -54,6 +54,7 @@ export default function PoliciesScreen() {
   return (
     <LegendList
       data={policies}
+      estimatedItemSize={72}
       keyExtractor={(policy) => policy.id}
       recycleItems
       showsVerticalScrollIndicator={false}

@@ -17,11 +17,13 @@ import type { TranslationKey } from '@/lib/i18n';
 import { AccountBadge } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import { countPendingApprovals } from '@/lib/approvals-storage';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
+import { usePressGuard } from '@/lib/use-press-guard';
 import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
 
 import { ThreadListItem } from './ThreadListItem';
@@ -95,6 +97,7 @@ function tabForPathname(pathname: string, tabs: ReturnType<typeof buildNavTabs>)
 
 export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const { t } = useSettings();
+  const { colors } = useTheme();
   const aui = useAui();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
@@ -108,6 +111,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const [activeTab, setActiveTab] = useState<NavTab>(() =>
     tabForPathname(pathname, buildNavTabs(isBusinessAccount())),
   );
+  const navigateOnce = usePressGuard();
 
   useEffect(() => {
     if (drawerStatus === 'closed') {
@@ -136,10 +140,16 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   );
 
   const payHasPending = pendingApprovals > 0;
-  const selectThread = useCallback(() => {
-    router.push('/');
-    navigation.closeDrawer();
-  }, [navigation, router]);
+  const selectThread = useCallback(
+    (switchTo: () => void) => {
+      navigateOnce(() => {
+        switchTo();
+        router.push('/');
+        navigation.closeDrawer();
+      });
+    },
+    [navigation, navigateOnce, router],
+  );
   const renderThread = useCallback(
     ({ index }: { index: number }) => (
       <ThreadListItemByIndexProvider
@@ -159,7 +169,9 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     >
       <View className='mb-3 flex-row items-center justify-between gap-2.5 px-5'>
         <View className='gap-px'>
-          <Text className='font-bold text-[21px] tracking-[-0.4px] text-foreground'>Finora</Text>
+          <Text className='font-sans text-[21px] font-bold tracking-[-0.4px] text-foreground'>
+            Finora
+          </Text>
           <AccountBadge variant='text' />
         </View>
         <Pressable
@@ -172,7 +184,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           <Icon
             name='remove'
             size={20}
-            color='#18181B'
+            color={colors.foreground}
           />
         </Pressable>
       </View>
@@ -181,16 +193,18 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         <Pressable
           onPressIn={haptics.selection}
           onPress={() => {
-            aui.threads.switchToNewThread();
-            router.push('/');
-            navigation.closeDrawer();
+            navigateOnce(() => {
+              aui.threads.switchToNewThread();
+              router.push('/');
+              navigation.closeDrawer();
+            });
           }}
           className='mx-2 mb-1 h-10 flex-row items-center gap-2.5 rounded-[18px] px-3 active:bg-muted'
         >
           <Icon
             name='compose'
             size={18}
-            color='#18181B'
+            color={colors.foreground}
           />
           <Text className='font-sans-medium text-base tracking-[-0.2px] text-foreground'>
             New chat
@@ -253,8 +267,10 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               key={href}
               onPressIn={haptics.selection}
               onPress={() => {
-                router.push(item.href);
-                navigation.closeDrawer();
+                navigateOnce(() => {
+                  router.push(item.href);
+                  navigation.closeDrawer();
+                });
               }}
               className={cx(
                 'h-10 flex-row items-center gap-2.5 rounded-[18px] px-3 active:bg-muted',
@@ -264,7 +280,7 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               <Icon
                 name={item.icon}
                 size={18}
-                color={active ? '#18181B' : '#71717A'}
+                color={active ? colors.foreground : colors.mutedForeground}
               />
               <Text
                 className={cx(
@@ -276,7 +292,9 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
               </Text>
               {showApprovalBadge ? (
                 <View className='min-w-5 h-5 items-center justify-center rounded-full bg-foreground px-1.5'>
-                  <Text className='font-sans-bold text-xs text-background'>{pendingApprovals}</Text>
+                  <Text className='font-sans text-xs font-bold text-background'>
+                    {pendingApprovals}
+                  </Text>
                 </View>
               ) : showCardBadge ? (
                 <View className='mr-2 h-2 w-2 rounded-full bg-foreground' />

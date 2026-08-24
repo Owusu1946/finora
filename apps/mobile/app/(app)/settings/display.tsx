@@ -69,7 +69,7 @@ export default function AppearanceSettingsScreen() {
                 accessibilityState={{ selected }}
                 className={cx(
                   'items-center gap-2 overflow-hidden rounded-[14px] border-2 border-transparent p-1',
-                  selected && 'border-primary',
+                  selected && 'border-primary bg-muted',
                 )}
                 onPress={() => {
                   void setTheme(option.id);

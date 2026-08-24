@@ -13,11 +13,13 @@ import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
+import { usePressGuard } from '@/lib/use-press-guard';
 
 function NewChatButton() {
   const aui = useAui();
   const router = useRouter();
   const { colors } = useTheme();
+  const navigateOnce = usePressGuard();
 
   return (
     <Pressable
@@ -26,7 +28,7 @@ function NewChatButton() {
       onPress={() => {
         haptics.selection();
         aui.threads.switchToNewThread();
-        router.push('/');
+        navigateOnce(() => router.push('/'));
       }}
       className='size-10 items-center justify-center rounded-full border border-border bg-muted'
       style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
@@ -43,6 +45,7 @@ function NewChatButton() {
 function ScanHeaderButton() {
   const router = useRouter();
   const { colors } = useTheme();
+  const navigateOnce = usePressGuard();
 
   return (
     <Pressable
@@ -50,7 +53,7 @@ function ScanHeaderButton() {
       hitSlop={8}
       onPress={() => {
         haptics.selection();
-        router.push('/scan');
+        navigateOnce(() => router.push('/scan'));
       }}
       className='size-10 items-center justify-center rounded-full border border-border bg-muted'
       style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
@@ -68,6 +71,7 @@ function DrawerTrigger() {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const drawerStatus = useDrawerStatus();
+  const navigateOnce = usePressGuard();
 
   if (drawerStatus === 'open') return null;
 
@@ -77,7 +81,7 @@ function DrawerTrigger() {
       hitSlop={8}
       onPress={() => {
         haptics.selection();
-        navigation.dispatch(DrawerActions.openDrawer());
+        navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
       }}
       className='size-10 items-center justify-center overflow-hidden rounded-full border border-border bg-muted'
     >
@@ -103,6 +107,7 @@ function BackHeaderButton({ fallback = 'approvals' }: { fallback?: string }) {
   const navigation = useNavigation();
   const router = useRouter();
   const { colors } = useTheme();
+  const navigateOnce = usePressGuard();
 
   return (
     <Pressable
@@ -111,10 +116,10 @@ function BackHeaderButton({ fallback = 'approvals' }: { fallback?: string }) {
       onPress={() => {
         haptics.selection();
         if (router.canGoBack()) {
-          router.back();
+          navigateOnce(() => router.back());
           return;
         }
-        navigation.dispatch(DrawerActions.jumpTo(fallback));
+        navigateOnce(() => navigation.dispatch(DrawerActions.jumpTo(fallback)));
       }}
       style={{ marginLeft: 4, padding: 4 }}
     >

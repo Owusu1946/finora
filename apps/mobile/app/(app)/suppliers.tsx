@@ -55,6 +55,7 @@ export default function SuppliersScreen() {
   return (
     <LegendList
       data={suppliers}
+      estimatedItemSize={96}
       keyExtractor={(supplier) => supplier.id}
       recycleItems
       showsVerticalScrollIndicator={false}

@@ -174,7 +174,7 @@ export function SheetModal({
   const panel = (
     <GestureDetector gesture={pan}>
       <Animated.View
-        className='overflow-hidden rounded-t-[22px] border border-border bg-card'
+        className='max-h-[92%] overflow-hidden rounded-t-[22px] border border-border bg-card'
         style={[{ paddingBottom: Math.max(insets.bottom, 16) }, style, sheetStyle]}
       >
         {showHandle ? (

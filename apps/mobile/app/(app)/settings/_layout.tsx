@@ -8,10 +8,33 @@ import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
+import { usePressGuard } from '@/lib/use-press-guard';
+
+function BackHeaderButton() {
+  const navigation = useNavigation();
+  const { colors } = useTheme();
+  const guard = usePressGuard();
+
+  return (
+    <Pressable
+      accessibilityLabel='Go back'
+      hitSlop={8}
+      onPress={() => guard(() => navigation.goBack())}
+      className='ml-3 size-10 items-center justify-center rounded-full active:opacity-70'
+    >
+      <Icon
+        name='chevron-left'
+        size={24}
+        color={colors.foreground}
+      />
+    </Pressable>
+  );
+}
 
 function MenuHeaderButton() {
   const navigation = useNavigation();
   const { colors } = useTheme();
+  const navigateOnce = usePressGuard();
 
   return (
     <Pressable
@@ -19,9 +42,9 @@ function MenuHeaderButton() {
       hitSlop={8}
       onPress={() => {
         haptics.selection();
-        navigation.dispatch(DrawerActions.openDrawer());
+        navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
       }}
-      style={styles.headerAction}
+      className='ml-3 size-10 items-center justify-center rounded-full'
     >
       <Icon
         name='menu'
@@ -36,6 +59,7 @@ function NewChatHeaderButton() {
   const aui = useAui();
   const router = useRouter();
   const { colors } = useTheme();
+  const navigateOnce = usePressGuard();
 
   return (
     <Pressable
@@ -44,9 +68,9 @@ function NewChatHeaderButton() {
       onPress={() => {
         haptics.selection();
         aui.threads.switchToNewThread();
-        router.push('/');
+        navigateOnce(() => router.push('/'));
       }}
-      style={styles.headerAction}
+      className='mr-3 size-10 items-center justify-center rounded-full'
     >
       <Icon
         name='compose'
@@ -67,11 +91,13 @@ export default function SettingsLayout() {
         fullScreenGestureEnabled: true,
         gestureEnabled: true,
         headerShadowVisible: false,
+        headerBackVisible: false,
         headerTintColor: colors.foreground,
         headerStyle: { backgroundColor: colors.background },
         headerTitleAlign: 'center',
         contentStyle: { backgroundColor: colors.background },
         headerBackTitle: t('nav_settings'),
+        headerLeft: () => <BackHeaderButton />,
       }}
     >
       <Stack.Screen
@@ -110,13 +136,3 @@ export default function SettingsLayout() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  headerAction: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-  },
-});

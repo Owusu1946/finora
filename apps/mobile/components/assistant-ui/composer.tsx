@@ -179,7 +179,7 @@ function AttachButton() {
       accessibilityLabel='Attach file or photo'
       hitSlop={8}
       onPress={handlePress}
-      className='w-[38px] h-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center'
       style={({ pressed }) => [
         {
           backgroundColor: pressed ? colors.muted : 'transparent',
@@ -207,7 +207,7 @@ function ScanButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      className='w-[38px] h-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center'
       style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
     >
       <Icon
@@ -442,7 +442,7 @@ function MicButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel='Dictate message'
       hitSlop={8}
       onPress={onPress}
-      className='w-[38px] h-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center'
       style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
     >
       <Icon
@@ -468,7 +468,7 @@ function VoiceComposer({
   speechActive: boolean;
   onPress: () => void;
 }) {
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
   const label =
     state === 'recording'
       ? 'Listening. Tap to stop and transcribe.'
@@ -481,11 +481,9 @@ function VoiceComposer({
       accessibilityLabel={label}
       accessibilityRole='button'
       onPress={onPress}
-      className='w-[38%] min-w-[104px] max-w-36 h-20 border items-center justify-center self-center p-2'
+      className='h-20 w-[38%] min-w-[104px] max-w-36 items-center justify-center self-center rounded-[22px] border border-border bg-composer p-2'
       style={({ pressed }) => [
         {
-          backgroundColor: colors.composer,
-          borderColor: colors.border,
           opacity: pressed ? 0.72 : 1,
         },
       ]}
@@ -622,7 +620,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
         : 'No recent match. Type the exact Finora Tag to send.';
 
     return (
-      <View className='w-[100%]'>
+      <View className='w-full'>
         {mentionQuery !== null && directoryLoaded && (
           <View
             className='border mb-2 p-1.5 bg-background border-border'
@@ -709,7 +707,7 @@ export function Composer() {
 
   return (
     <View
-      className='w-[100%] self-center px-3 pt-2'
+      className='w-full self-center px-3 pt-2'
       style={[styles.container]}
     >
       {voiceState !== 'idle' ? (
@@ -720,7 +718,7 @@ export function Composer() {
         />
       ) : (
         <View
-          className='flex-col gap-2.5 border px-3 pt-3 pb-2.5 bg-composer border-border'
+          className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
           style={[styles.shell]}
         >
           {hasAttachments ? (
@@ -758,7 +756,7 @@ export function Composer() {
                   inputRef.current?.blur();
                   Keyboard.dismiss();
                 }}
-                className='min-w-12 h-[38px] items-center justify-center px-2'
+                className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
                 style={({ pressed }) => [
                   { backgroundColor: pressed ? colors.muted : 'transparent' },
                 ]}
@@ -822,6 +820,10 @@ const styles = {
     paddingBottom: 4,
   },
   actionButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: Radius.pill,
   },
   doneButton: {

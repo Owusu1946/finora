@@ -6,6 +6,14 @@
 
 @theme {
   --default-font-family: 'DMSans_400Regular';
+  /* Match the pre-migration radius scale used by the native components. */
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-xl: 22px;
+  --radius-xxl: 26px;
+  --radius-2xl: 26px;
+  --radius-3xl: 32px;
   --color-background: var(--color-theme-background);
   --color-foreground: var(--color-theme-foreground);
   --color-card: var(--color-theme-card);
@@ -25,4 +33,35 @@
   --font-sans-medium: 'DMSans_500Medium';
   --font-sans-semibold: 'DMSans_600SemiBold';
   --font-display: 'Fraunces_600SemiBold';
+}
+
+/* `border` represented StyleSheet.hairlineWidth before the migration. */
+@utility border {
+  border-width: 0.5px;
+}
+
+@utility border-x {
+  border-left-width: 0.5px;
+  border-right-width: 0.5px;
+}
+
+@utility border-y {
+  border-top-width: 0.5px;
+  border-bottom-width: 0.5px;
+}
+
+@utility border-t {
+  border-top-width: 0.5px;
+}
+
+@utility border-r {
+  border-right-width: 0.5px;
+}
+
+@utility border-b {
+  border-bottom-width: 0.5px;
+}
+
+@utility border-l {
+  border-left-width: 0.5px;
 }

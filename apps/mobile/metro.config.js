@@ -19,4 +19,8 @@ config.resolver.extraNodeModules = {
   'react-native': path.resolve(rootNodeModules, 'react-native'),
 };
 
-module.exports = withNativewind(config);
+module.exports = withNativewind(config, {
+  // Theme colors come from SettingsProvider at runtime. Keep them as CSS
+  // variables so switching light/dark mode updates every NativeWind class.
+  inlineVariables: false,
+});

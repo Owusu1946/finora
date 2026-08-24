@@ -51,9 +51,11 @@ export function AccountPicker({ value, onChange }: AccountPickerProps) {
                 className='h-1.5 w-1.5 rounded-full'
                 style={{ backgroundColor: selected ? colors.foreground : colors.mutedForeground }}
               />
-              <Text className='font-sans-semibold text-[17px] text-foreground'>{option.label}</Text>
+              <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
+                {option.label}
+              </Text>
             </View>
-            <Text className='pl-3.5 font-sans text-[15px] leading-5 text-muted-foreground'>
+            <Text className='pl-3.5 font-sans text-[15px] leading-5 tracking-[-0.1px] text-muted-foreground'>
               {option.description}
             </Text>
           </Pressable>

@@ -1,6 +1,6 @@
 import { Navii } from '@usenavii/react-native';
 import { Image } from 'expo-image';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { AccountType } from '@/lib/account';
 
@@ -32,7 +32,7 @@ export function UserAvatar({
     width: size,
   };
 
-  if (accountType === 'personal') {
+  if (!imageUrl && accountType === 'personal') {
     return (
       <View
         className='overflow-hidden'
@@ -56,6 +56,7 @@ export function UserAvatar({
         <Image
           source={imageUrl}
           className='absolute inset-0'
+          style={StyleSheet.absoluteFill}
           contentFit='cover'
           transition={150}
         />

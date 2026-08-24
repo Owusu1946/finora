@@ -1,7 +1,7 @@
 import { ActionBarPrimitive, AuiIf, useAui } from '@assistant-ui/react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, type ViewStyle } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { Radius } from '@/constants/theme';
@@ -108,8 +108,13 @@ export function MessageActionBar() {
   );
 }
 
-const styles = {
+const styles: { button: ViewStyle } = {
   button: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
     borderRadius: Radius.sm,
   },
 };

@@ -174,7 +174,9 @@ export function OnboardingScreen() {
                 onPress={handleSkip}
                 style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
               >
-                <Text className='font-sans-medium text-base text-muted-foreground'>Skip</Text>
+                <Text className='font-sans-medium text-base tracking-[-0.1px] text-muted-foreground'>
+                  Skip
+                </Text>
               </Pressable>
             ) : (
               <View />
@@ -196,16 +198,16 @@ export function OnboardingScreen() {
             >
               {step.brand ? (
                 <>
-                  <Text className='font-sans-semibold text-sm uppercase text-muted-foreground'>
+                  <Text className='font-sans-semibold text-sm uppercase tracking-[0.6px] text-muted-foreground'>
                     {step.title}
                   </Text>
-                  <Text className='text-center font-sans-semibold text-[29px] text-foreground'>
+                  <Text className='text-center font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
                     {step.subtitle}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text className='text-center font-sans-semibold text-[29px] text-foreground'>
+                  <Text className='text-center font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
                     {step.title}
                   </Text>
                   <Text className='max-w-[320px] text-center font-sans-medium text-[17px] leading-[23px] text-muted-foreground'>
@@ -235,7 +237,7 @@ export function OnboardingScreen() {
             >
               <Text
                 style={[{ color: canContinue ? colors.background : colors.mutedForeground }]}
-                className='font-sans-semibold text-[17px]'
+                className='font-sans-semibold text-[17px] tracking-[-0.2px]'
               >
                 {isLast ? (finishing ? 'Continuing…' : 'Get Started') : 'Continue'}
               </Text>
