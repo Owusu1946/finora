@@ -1,3 +1,4 @@
+import { useTrustedDevices, type TrustedDevice } from '@clerk/expo';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
@@ -14,7 +15,6 @@ import { confirmBiometricEnable, getBiometricAvailability } from '@/lib/biometri
 import { haptics } from '@/lib/haptics';
 import { hasPasscode } from '@/lib/passcode-storage';
 import { useSettings } from '@/lib/settings-context';
-import { revokeTrustedDevice } from '@/lib/settings-storage';
 
 function relativeTime(iso: string): string {
   const d = new Date(iso);
@@ -31,6 +31,11 @@ function relativeTime(iso: string): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function trustedDeviceName(device: TrustedDevice, currentDeviceId: string | null) {
+  if (device.id === currentDeviceId) return 'This device';
+  return device.name || `${device.platform === 'unknown' ? 'Other' : device.platform} device`;
+}
+
 export default function SecuritySettingsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ changePasscode?: string }>();
@@ -38,6 +43,13 @@ export default function SecuritySettingsScreen() {
   const { requestChange, modal: passcodeModal } = useChangePasscode();
   const [hasPin, setHasPin] = useState(false);
   const [biometricMethod, setBiometricMethod] = useState<'face' | 'fingerprint'>('fingerprint');
+  const trustedDevicesApi = useTrustedDevices();
+  const [trustedDevices, setTrustedDevices] = useState<TrustedDevice[]>([]);
+  const [trustedDevicesLoading, setTrustedDevicesLoading] = useState(true);
+  const [trustedDevicesError, setTrustedDevicesError] = useState<string | null>(null);
+  const [trustedDeviceAvailable, setTrustedDeviceAvailable] = useState<boolean | null>(null);
+  const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
+  const [enrolling, setEnrolling] = useState(false);
   const resumedChangeRef = useRef(false);
 
   useFocusEffect(
@@ -49,7 +61,28 @@ export default function SecuritySettingsScreen() {
           setBiometricMethod(biometrics.method);
         },
       );
-    }, [refresh]),
+      let active = true;
+      setTrustedDevicesLoading(true);
+      setTrustedDevicesError(null);
+      void Promise.all([trustedDevicesApi.getAvailability(), trustedDevicesApi.list()])
+        .then(([availability, devices]) => {
+          if (!active) return;
+          setTrustedDeviceAvailable(availability.isAvailable);
+          setTrustedDevices(devices.filter((device) => device.status === 'active'));
+          setCurrentDeviceId(devices.find((device) => device.name === 'This device')?.id ?? null);
+        })
+        .catch((error: unknown) => {
+          if (!active) return;
+          setTrustedDeviceAvailable(null);
+          setTrustedDevicesError(error instanceof Error ? error.message : 'Could not load trusted devices.');
+        })
+        .finally(() => {
+          if (active) setTrustedDevicesLoading(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, [refresh, trustedDevicesApi]),
   );
 
   const handleChangePasscode = useCallback(async () => {
@@ -84,6 +117,26 @@ export default function SecuritySettingsScreen() {
     return true;
   };
 
+  const handleEnrollDevice = async () => {
+    if (enrolling) return;
+    setEnrolling(true);
+    try {
+      await trustedDevicesApi.enroll({
+        deviceName: 'This device',
+        reason: 'Enable trusted device sign-in for Finora',
+        policy: 'biometry_or_device_passcode',
+      });
+      const devices = await trustedDevicesApi.list();
+      setTrustedDevices(devices.filter((device) => device.status === 'active'));
+      setTrustedDeviceAvailable(true);
+      haptics.success();
+    } catch (error: unknown) {
+      Alert.alert('Trusted device', error instanceof Error ? error.message : 'Could not trust this device.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
   const handleRevokeDevice = (id: string, name: string) => {
     Alert.alert(t('sec_revoke_title'), `${t('sec_revoke_confirm')} (${name})`, [
       { text: t('action_cancel'), style: 'cancel' },
@@ -91,9 +144,13 @@ export default function SecuritySettingsScreen() {
         text: t('action_done'),
         style: 'destructive',
         onPress: async () => {
-          await revokeTrustedDevice(id);
-          await refresh();
-          haptics.success();
+          try {
+            await trustedDevicesApi.revoke(id);
+            setTrustedDevices((current) => current.filter((device) => device.id !== id));
+            haptics.success();
+          } catch (error: unknown) {
+            Alert.alert(t('sec_revoke_title'), error instanceof Error ? error.message : 'Could not revoke device.');
+          }
         },
       },
     ]);
@@ -127,30 +184,64 @@ export default function SecuritySettingsScreen() {
           title={t('sec_trusted_devices')}
           footer={t('sec_trusted_footer')}
         >
-          {settings.trustedDevices.map((device, index) => (
+          {trustedDevicesLoading ? (
             <SettingsRow
-              key={device.id}
-              label={device.name}
-              detail={
-                device.current
-                  ? `${t('sec_this_device')} \u00b7 Active ${relativeTime(device.lastActiveAt)}`
-                  : `${device.platform} \u00b7 Last active ${relativeTime(device.lastActiveAt)}`
-              }
-              icon={device.platform === 'web' ? 'integrations' : 'phone'}
-              isLast={index === settings.trustedDevices.length - 1}
-              showChevron={!device.current}
-              onPress={
-                device.current ? undefined : () => handleRevokeDevice(device.id, device.name)
-              }
-              right={
-                device.current ? (
-                  <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
-                    {t('sec_current')}
-                  </Text>
-                ) : undefined
-              }
+              label='Loading trusted devices'
+              detail='Checking your secure devices…'
+              icon='shield'
+              isLast
             />
-          ))}
+          ) : trustedDeviceAvailable === false ? (
+            <SettingsRow
+              label='Trusted devices unavailable'
+              detail='Use a native development build with supported biometrics and Clerk trusted devices enabled.'
+              icon='shield'
+              isLast
+            />
+          ) : trustedDevicesError ? (
+            <SettingsRow
+              label='Could not load trusted devices'
+              detail={trustedDevicesError}
+              icon='shield'
+              isLast
+              showChevron
+              onPress={() => {
+                setTrustedDevicesLoading(true);
+                setTrustedDevicesError(null);
+                void trustedDevicesApi.list()
+                  .then((devices) => setTrustedDevices(devices.filter((device) => device.status === 'active')))
+                  .catch((error: unknown) => setTrustedDevicesError(error instanceof Error ? error.message : 'Could not load trusted devices.'))
+                  .finally(() => setTrustedDevicesLoading(false));
+              }}
+            />
+          ) : (
+            <>
+              {trustedDevices.map((device, index) => {
+                const isCurrent = device.id === currentDeviceId;
+                return (
+                  <SettingsRow
+                    key={device.id}
+                    label={trustedDeviceName(device, currentDeviceId)}
+                    detail={`${device.platform} · Last active ${relativeTime((device.lastUsedAt ?? device.updatedAt).toISOString())}`}
+                    icon='phone'
+                    isLast={index === trustedDevices.length - 1}
+                    showChevron={!isCurrent}
+                    onPress={isCurrent ? undefined : () => handleRevokeDevice(device.id, trustedDeviceName(device, currentDeviceId))}
+                    right={isCurrent ? <Text className='font-sans-semibold text-[13px] text-muted-foreground'>{t('sec_current')}</Text> : undefined}
+                  />
+                );
+              })}
+              <SettingsRow
+                label={enrolling ? 'Trusting this device…' : 'Trust this device'}
+                detail='Use Face ID, Touch ID, or your device passcode.'
+                icon='shield'
+                isLast
+                disabled={enrolling}
+                showChevron={!enrolling}
+                onPress={enrolling ? undefined : () => void handleEnrollDevice()}
+              />
+            </>
+          )}
         </SettingsSection>
       </SettingsScreen>
       {passcodeModal}

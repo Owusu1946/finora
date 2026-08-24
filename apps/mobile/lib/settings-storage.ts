@@ -78,7 +78,9 @@ export const DEFAULT_SETTINGS: FinoraSettings = {
     invoices: true,
     marketing: false,
   },
-  trustedDevices: [
+  trustedDevices: [],
+  /* Legacy local trusted-device data is intentionally unused. */
+  /*
     {
       id: 'dev-this',
       name: 'This device',
@@ -92,7 +94,7 @@ export const DEFAULT_SETTINGS: FinoraSettings = {
       platform: 'web',
       lastActiveAt: '2026-08-02T18:20:00Z',
     },
-  ],
+  ], */
 };
 
 let cached: FinoraSettings | null = null;
@@ -127,9 +129,7 @@ export async function getSettings(): Promise<FinoraSettings> {
         ...DEFAULT_SETTINGS.notifications,
         ...parsed.notifications,
       },
-      trustedDevices: parsed.trustedDevices?.length
-        ? parsed.trustedDevices
-        : DEFAULT_SETTINGS.trustedDevices,
+      trustedDevices: parsed.trustedDevices ?? DEFAULT_SETTINGS.trustedDevices,
     };
     return cached;
   } catch {
