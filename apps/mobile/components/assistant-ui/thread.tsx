@@ -85,6 +85,7 @@ function EmptyState() {
 
 function ChatMessages({ headerHeight }: { headerHeight: number }) {
   const { flatListRef, isAtBottom, scrollToBottom, onScroll } = useScrollToBottom();
+  const { colors } = useTheme();
 
   return (
     <>
@@ -96,7 +97,10 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
           <ThreadPrimitive.MessagesFlatList
             ref={flatListRef}
             style={styles.flex}
-            contentContainerStyle={[styles.messageList, { paddingTop: headerHeight + 20 }]}
+            contentContainerStyle={[
+              styles.messageList,
+              { paddingTop: headerHeight + 20, backgroundColor: colors.background },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps='handled'
             keyboardDismissMode='interactive'
@@ -124,7 +128,6 @@ export function Thread() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const isFocused = useIsFocused();
-  const { colors } = useTheme();
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
 
   useEffect(() => {
@@ -147,7 +150,7 @@ export function Thread() {
   }, [isFocused]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
       <KeyboardAvoidingView
         style={styles.flex}
         // Android `height` resizes the whole tree when the picker/keyboard
