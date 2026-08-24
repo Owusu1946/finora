@@ -37,6 +37,7 @@ import {
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
+import { ensureMediaLibraryPermission } from '@/lib/permissions';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
 
 import {
@@ -101,11 +102,10 @@ function AttachButton() {
   };
 
   const handleNativePickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow photo library access to attach images.');
-      return;
-    }
+    const hasPermission = await ensureMediaLibraryPermission(
+      'Allow photo access in Settings to attach images.',
+    );
+    if (!hasPermission) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],

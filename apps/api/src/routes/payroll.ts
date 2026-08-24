@@ -64,18 +64,16 @@ payroll.post('/attachments', async (c) => {
     customMetadata: { userId, fileName: file.name },
   });
   const db = createDb(c.get('env').DATABASE_URL);
-  await db
-    .insert(payrollAttachments)
-    .values({
-      id,
-      clerkUserId: userId,
-      objectKey,
-      fileName: file.name.slice(0, 255),
-      contentType: file.type || 'application/octet-stream',
-      byteSize: file.size,
-      checksum,
-      expiresAt: new Date(Date.now() + TTL_MS),
-    });
+  await db.insert(payrollAttachments).values({
+    id,
+    clerkUserId: userId,
+    objectKey,
+    fileName: file.name.slice(0, 255),
+    contentType: file.type || 'application/octet-stream',
+    byteSize: file.size,
+    checksum,
+    expiresAt: new Date(Date.now() + TTL_MS),
+  });
   console.log('[payroll:attachment] uploaded', {
     requestId,
     attachmentId: id,
@@ -403,16 +401,14 @@ payroll.patch('/imports/:id/rows/:rowId', async (c) => {
       })
       .where(and(eq(payrollImports.id, item.id), eq(payrollImports.version, item.version)))
       .returning(),
-    db
-      .insert(payrollAuditEvents)
-      .values({
-        clerkUserId: c.get('auth').userId,
-        importId: item.id,
-        action: 'payroll_row_updated',
-        beforeState: existing.payload,
-        afterState: validated,
-        metadata: { source: 'payroll_screen', rowId: existing.rowId },
-      }),
+    db.insert(payrollAuditEvents).values({
+      clerkUserId: c.get('auth').userId,
+      importId: item.id,
+      action: 'payroll_row_updated',
+      beforeState: existing.payload,
+      afterState: validated,
+      metadata: { source: 'payroll_screen', rowId: existing.rowId },
+    }),
   ]);
   const [updated] = batch[1];
   const updatedRows = currentRows.map((row) => ({
@@ -469,16 +465,14 @@ payroll.delete('/imports/:id/rows/:rowId', async (c) => {
       })
       .where(and(eq(payrollImports.id, item.id), eq(payrollImports.version, item.version)))
       .returning(),
-    db
-      .insert(payrollAuditEvents)
-      .values({
-        clerkUserId: c.get('auth').userId,
-        importId: item.id,
-        action: 'payroll_row_deleted',
-        beforeState: existing.payload,
-        afterState: null,
-        metadata: { source: 'payroll_screen', rowId: existing.rowId },
-      }),
+    db.insert(payrollAuditEvents).values({
+      clerkUserId: c.get('auth').userId,
+      importId: item.id,
+      action: 'payroll_row_deleted',
+      beforeState: existing.payload,
+      afterState: null,
+      metadata: { source: 'payroll_screen', rowId: existing.rowId },
+    }),
   ]);
   const [updated] = batch[1];
   return c.json({ import: updated ? importPayload(updated, remainingRows) : null });

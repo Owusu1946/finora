@@ -123,7 +123,7 @@ export async function setGeneratedChatTitle(
   clerkUserId: string,
   title: string,
 ) {
-  await db
+  const rows = await db
     .update(aiChats)
     .set({ title, titleStatus: 'generated' })
     .where(
@@ -132,7 +132,9 @@ export async function setGeneratedChatTitle(
         eq(aiChats.clerkUserId, clerkUserId),
         eq(aiChats.titleStatus, 'fallback'),
       ),
-    );
+    )
+    .returning({ id: aiChats.id });
+  return rows.length > 0;
 }
 
 export async function loadChat(db: Database, chatId: string, clerkUserId: string) {
