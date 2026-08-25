@@ -32,7 +32,7 @@ import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
   FINORA_TAG_GLOBAL_MIN_CHARS,
-  searchFinoraTags,
+  searchFinoraTagsRemote,
   type FinoraTagSuggestion,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
@@ -563,6 +563,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
   function ComposerInput(props, ref) {
     const { colors, isDark } = useTheme();
     const aui = useAui();
+    const { getToken } = useAuth();
     const storeText = useAuiState((s) => s.thread.composer.text);
     const [localText, setLocalText] = useState(storeText);
     const nativeTextRef = useRef(storeText);
@@ -592,15 +593,26 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
         return;
       }
       let active = true;
-      void searchFinoraTags(mentionQuery).then((next) => {
-        if (!active) return;
-        setTagProfiles(next);
-        setDirectoryLoaded(true);
-      });
+      const controller = new AbortController();
+      const timer = setTimeout(() => {
+        void searchFinoraTagsRemote(mentionQuery, getToken, controller.signal)
+          .then((next) => {
+            if (!active) return;
+            setTagProfiles(next);
+            setDirectoryLoaded(true);
+          })
+          .catch((error: unknown) => {
+            if (!active || (error instanceof Error && error.name === 'AbortError')) return;
+            setTagProfiles([]);
+            setDirectoryLoaded(true);
+          });
+      }, 120);
       return () => {
         active = false;
+        clearTimeout(timer);
+        controller.abort();
       };
-    }, [mentionQuery]);
+    }, [getToken, mentionQuery]);
 
     const selectTag = (profile: FinoraTagSuggestion) => {
       if (!mentionMatch || mentionQuery === null) return;

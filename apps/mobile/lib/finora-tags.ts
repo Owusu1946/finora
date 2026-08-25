@@ -1,6 +1,7 @@
 import { FinoraTagSchema, normalizeFinoraTag, type FinoraTagAccount } from '@finora/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { getApiUrl } from '@/lib/api-url';
 import { getCachedSettings } from '@/lib/settings-storage';
 
 export type FinoraTagProfile = FinoraTagAccount & {
@@ -47,6 +48,38 @@ export const FINORA_TAG_GLOBAL_MIN_CHARS = 3;
 const RECENT_KEY = 'finora.finora-tags.recent.v1';
 const RECENT_LIMIT = 12;
 const SUGGESTION_LIMIT = 6;
+type GetToken = () => Promise<string | null>;
+
+function profileFromAccount(account: FinoraTagAccount): FinoraTagProfile {
+  return { ...account, initials: initialsFromName(account.displayName || account.tag) };
+}
+
+/** Authenticated production directory search used by the composer. */
+export async function searchFinoraTagsRemote(
+  query: string,
+  getToken: GetToken,
+  signal?: AbortSignal,
+): Promise<FinoraTagSuggestion[]> {
+  const needle = normalizeFinoraTag(query);
+  if (needle.length < FINORA_TAG_GLOBAL_MIN_CHARS) return [];
+  const apiUrl = getApiUrl();
+  const token = await getToken();
+  if (!apiUrl || !token) return [];
+
+  const response = await fetch(
+    `${apiUrl}/v1/finora-tags/search?query=${encodeURIComponent(needle)}`,
+    {
+      signal,
+      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!response.ok) return [];
+  const payload = (await response.json()) as { accounts?: FinoraTagAccount[] };
+  return (Array.isArray(payload.accounts) ? payload.accounts : [])
+    .filter((account) => account.status === 'active' && account.tag !== getCurrentFinoraTag())
+    .slice(0, SUGGESTION_LIMIT)
+    .map((account) => ({ ...profileFromAccount(account), source: 'exact' as const }));
+}
 
 const memory = new Map<string, string>();
 
