@@ -1,6 +1,7 @@
 import { ThreadPrimitive } from '@assistant-ui/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useIsFocused } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import {
   View,
@@ -24,6 +25,17 @@ import { MessageBubble } from './message';
 import { ScrollToBottomButton, useScrollToBottom } from './scroll-to-bottom';
 
 const renderMessage = () => <MessageBubble />;
+
+function hexToRgba(hex: string, alpha: number) {
+  const clean = hex.replace('#', '');
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return hex;
+}
 
 const PERSONAL_SUGGESTIONS = [
   'Check my balance',
@@ -129,6 +141,7 @@ export function Thread() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const isFocused = useIsFocused();
+  const { colors } = useTheme();
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
 
   useEffect(() => {
@@ -164,6 +177,19 @@ export function Thread() {
       >
         <View className='flex-1'>
           <ChatMessages headerHeight={headerHeight} />
+          {/* Top subtle gradient mask for status bar & header scroll-through */}
+          <LinearGradient
+            pointerEvents='none'
+            colors={[
+              hexToRgba(colors.background, 1),
+              hexToRgba(colors.background, 0.96),
+              hexToRgba(colors.background, 0.72),
+              hexToRgba(colors.background, 0.25),
+              hexToRgba(colors.background, 0),
+            ]}
+            locations={[0, 0.42, 0.68, 0.88, 1]}
+            style={[styles.topGradient, { height: headerHeight + 36 }]}
+          />
         </View>
         <View
           style={{
@@ -192,5 +218,12 @@ const styles = {
     paddingVertical: 8,
     borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  topGradient: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
 } as const;
