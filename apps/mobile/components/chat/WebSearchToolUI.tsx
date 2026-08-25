@@ -1,13 +1,16 @@
-import { makeAssistantToolUI } from '@assistant-ui/react-native';
+import { makeAssistantToolUI, useAui } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Image, Linking, Modal, Pressable, ScrollView, View } from 'react-native';
+import { Image, Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { CurrencyIcon, type SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+import { sendChatPrompt } from '@/lib/send-chat-prompt';
+import { previewFxQuote } from '@/lib/send-corridors';
 
 type WebSource = {
   id: string;
@@ -58,6 +61,169 @@ type ProductSearchResult = {
   currency?: string | null;
   products?: ProductResult[];
 };
+
+function parsePriceValue(priceStr?: string | null, amountNum?: number | null): number | null {
+  if (amountNum != null && amountNum > 0) return amountNum;
+  if (!priceStr) return null;
+  const match = priceStr.replace(/,/g, '').match(/\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const val = parseFloat(match[0]);
+  return isNaN(val) || val <= 0 ? null : val;
+}
+
+function currencySymbol(currency: string): string {
+  switch (currency.toUpperCase()) {
+    case 'USD':
+    case 'USDC':
+      return '$';
+    case 'USDT':
+      return '₮';
+    case 'EUR':
+      return '€';
+    case 'GBP':
+      return '£';
+    case 'GHS':
+      return 'GH₵';
+    case 'NGN':
+      return '₦';
+    case 'KES':
+      return 'KSh';
+    default:
+      return `${currency} `;
+  }
+}
+
+function calculateConversionNeeded(
+  targetAmount: number,
+  targetCurrency: string,
+  sourceCurrency: string,
+) {
+  if (targetCurrency.toUpperCase() === sourceCurrency.toUpperCase()) return null;
+  const quote = previewFxQuote({ from: sourceCurrency, to: targetCurrency, amount: 100 });
+  if (!quote.rate || quote.rate <= 0) return null;
+
+  // Rate represents target units per 1 source unit after corridor fee
+  // sourceAmount = ceil(targetAmount / (rate * (1 - feeRatio)))
+  const sourceAmount = Math.ceil(targetAmount / (quote.rate * 0.996));
+  const rateDisplay =
+    quote.rate >= 1
+      ? `1 ${sourceCurrency} ≈ ${quote.rate.toFixed(2)} ${targetCurrency}`
+      : `1 ${targetCurrency} ≈ ${(1 / quote.rate).toFixed(2)} ${sourceCurrency}`;
+
+  return {
+    sourceCurrency,
+    targetCurrency,
+    sourceAmount,
+    rate: quote.rate,
+    displayRate: rateDisplay,
+  };
+}
+
+function ProductFxConversion({
+  product,
+  aui,
+}: {
+  product: ProductResult;
+  aui: ReturnType<typeof useAui>;
+}) {
+  const { colors } = useTheme();
+  const prodCurrency = (product.currency ?? 'USD').toUpperCase();
+  const prodAmount = parsePriceValue(product.price, product.priceAmount);
+
+  const availableCurrencies: SupportedCurrency[] = (
+    prodCurrency === 'USD'
+      ? ['GHS', 'EUR', 'GBP', 'USDT']
+      : ['USD', 'GHS', 'EUR', 'GBP', 'USDT']
+  ).filter((c) => c !== prodCurrency) as SupportedCurrency[];
+
+  const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>(
+    prodCurrency === 'GHS' ? 'USD' : 'GHS',
+  );
+
+  if (!prodAmount) return null;
+
+  const conversion = calculateConversionNeeded(prodAmount, prodCurrency, selectedCurrency);
+  if (!conversion) return null;
+
+  const handleConvert = () => {
+    haptics.selection();
+    sendChatPrompt(
+      aui,
+      `Convert ${conversion.sourceAmount} ${conversion.sourceCurrency} to ${conversion.targetCurrency}`,
+    );
+  };
+
+  const cycleCurrency = () => {
+    haptics.selection();
+    const currIdx = availableCurrencies.indexOf(selectedCurrency);
+    const nextIdx = (currIdx + 1) % availableCurrencies.length;
+    setSelectedCurrency(availableCurrencies[nextIdx]);
+  };
+
+  return (
+    <View
+      className='mt-2.5 gap-2 rounded-2xl border border-border/70 p-3'
+      style={{ backgroundColor: colors.muted }}
+    >
+      <View className='flex-row items-center justify-between'>
+        <Pressable
+          accessibilityRole='button'
+          accessibilityLabel={`Change currency from ${selectedCurrency}`}
+          onPress={cycleCurrency}
+          className='flex-row items-center gap-1.5 rounded-full bg-background/90 px-2.5 py-1 active:opacity-75'
+          style={{ borderColor: colors.border, borderWidth: StyleSheet.hairlineWidth }}
+        >
+          <CurrencyIcon
+            currency={selectedCurrency}
+            size={16}
+          />
+          <Text className='font-sans-semibold text-[11px] text-foreground'>{selectedCurrency}</Text>
+          <Icon
+            name='swap'
+            size={12}
+            color={colors.mutedForeground}
+          />
+        </Pressable>
+        <Text className='font-sans text-[11px] text-muted-foreground'>
+          {conversion.displayRate}
+        </Text>
+      </View>
+      <View className='flex-row items-center justify-between pt-0.5'>
+        <View className='flex-1 pr-2'>
+          <Text className='font-sans-bold text-[15px] text-foreground'>
+            ≈ {currencySymbol(selectedCurrency)}
+            {conversion.sourceAmount.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+          <Text className='font-sans text-[10px] text-muted-foreground'>
+            Cross-border FX quote
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole='button'
+          accessibilityLabel={`Convert ${conversion.sourceAmount} ${selectedCurrency} to ${conversion.targetCurrency}`}
+          onPress={handleConvert}
+          className='h-8 flex-row items-center justify-center gap-1.5 rounded-full px-3.5 active:opacity-85'
+          style={{ backgroundColor: colors.primary }}
+        >
+          <Icon
+            name='swap'
+            size={13}
+            color={colors.primaryForeground}
+          />
+          <Text
+            className='font-sans-semibold text-[12px]'
+            style={{ color: colors.primaryForeground }}
+          >
+            Convert & Fund
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 function SourceSheet({ sources, onClose }: { sources: WebSource[]; onClose: () => void }) {
   const { colors } = useTheme();
@@ -232,6 +398,7 @@ function ProductSearchCard({
   running: boolean;
 }) {
   const { colors } = useTheme();
+  const aui = useAui();
   const products = result?.products ?? [];
 
   if (running && !result) {
@@ -289,47 +456,58 @@ function ProductSearchCard({
         horizontal
         nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
-        snapToInterval={312}
+        snapToInterval={322}
         decelerationRate='fast'
         contentContainerStyle={styles.productCarousel}
         style={styles.productCarouselViewport}
       >
         {products.slice(0, 5).map((product, index) => (
-          <Pressable
+          <View
             key={`${product.id}:${product.source.url}`}
-            accessibilityRole='link'
-            accessibilityLabel={`Open ${product.productName}`}
-            onPress={() => void Linking.openURL(product.source.url)}
             className='overflow-hidden border border-border bg-composer'
-            style={({ pressed }) => [styles.product, pressed && { opacity: 0.72 }]}
+            style={styles.product}
           >
-            <ProductImage
-              uri={product.source.image}
-              label={`${product.productName} product image`}
-              fallbackColor={colors.mutedForeground}
-            />
-            <View className='absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1'>
-              <Text className='font-sans-semibold text-[11px] text-foreground'>#{index + 1}</Text>
-            </View>
-            <View className='flex-1 gap-1.5 p-4'>
-              <View className='flex-1 gap-1.5'>
+            <Pressable
+              accessibilityRole='link'
+              accessibilityLabel={`Open ${product.productName}`}
+              onPress={() => void Linking.openURL(product.source.url)}
+              style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
+            >
+              <ProductImage
+                uri={product.source.image}
+                label={`${product.productName} product image`}
+                fallbackColor={colors.mutedForeground}
+              />
+              <View className='absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1'>
+                <Text className='font-sans-semibold text-[11px] text-foreground'>#{index + 1}</Text>
+              </View>
+            </Pressable>
+
+            <View className='flex-1 gap-1.5 p-3.5'>
+              <Pressable
+                accessibilityRole='link'
+                accessibilityLabel={`Open ${product.productName}`}
+                onPress={() => void Linking.openURL(product.source.url)}
+                style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
+                className='gap-1'
+              >
                 <Text
                   numberOfLines={2}
-                  className='font-sans-semibold text-[15px] leading-[20px] text-foreground'
+                  className='font-sans-semibold text-[14px] leading-[19px] text-foreground'
                 >
                   {product.productName}
                 </Text>
-                <Text className='font-sans-bold text-[18px] text-foreground'>
+                <Text className='font-sans-bold text-[17px] text-foreground'>
                   {product.price ?? 'Price unavailable'}
                 </Text>
-                <Text className='font-sans text-[12px] text-muted-foreground'>
+                <Text className='font-sans text-[11px] text-muted-foreground'>
                   {product.seller}
                   {product.condition && product.condition !== 'unknown'
                     ? ` · ${product.condition.replace('_', ' ')}`
                     : ''}
                 </Text>
                 <Text
-                  className={`font-sans-medium text-[12px] ${
+                  className={`font-sans-medium text-[11px] ${
                     product.withinBudget === true
                       ? 'text-success'
                       : product.withinBudget === false
@@ -343,29 +521,33 @@ function ProductSearchCard({
                       ? 'Over budget'
                       : 'Delivered total not confirmed'}
                 </Text>
-                <Text className='font-sans text-[11px] text-muted-foreground'>
-                  {product.verified ? 'Listing page checked' : 'Search result only'}
-                  {product.availability === 'unavailable' ? ' · Unavailable' : ''}
+              </Pressable>
+
+              {/* Cross-border FX & Landed conversion */}
+              <ProductFxConversion
+                product={product}
+                aui={aui}
+              />
+
+              <View className='mt-auto flex-row items-center justify-between border-t border-border/80 pt-2'>
+                <Pressable
+                  accessibilityRole='link'
+                  onPress={() => void Linking.openURL(product.source.url)}
+                  className='flex-row items-center gap-1 active:opacity-70'
+                >
+                  <Text className='font-sans-medium text-[11px] text-foreground'>View listing</Text>
+                  <Icon
+                    name='arrow-up'
+                    size={13}
+                    color={colors.mutedForeground}
+                  />
+                </Pressable>
+                <Text className='font-sans text-[10px] text-muted-foreground'>
+                  {product.verified ? 'Verified' : 'Web match'}
                 </Text>
-                {product.warnings?.[0] ? (
-                  <Text
-                    numberOfLines={2}
-                    className='font-sans text-[11px] leading-[16px] text-muted-foreground'
-                  >
-                    {product.warnings[0]}
-                  </Text>
-                ) : null}
-              </View>
-              <View className='mt-auto flex-row items-center justify-between border-t border-border pt-2'>
-                <Text className='font-sans-medium text-[11px] text-foreground'>View listing</Text>
-                <Icon
-                  name='arrow-up'
-                  size={16}
-                  color={colors.mutedForeground}
-                />
               </View>
             </View>
-          </Pressable>
+          </View>
         ))}
       </ScrollView>
       {products.length > 1 ? (
@@ -388,7 +570,7 @@ function ProductImage({
 }) {
   const [failed, setFailed] = useState(false);
   return (
-    <View className='relative h-[154px] items-center justify-center bg-muted'>
+    <View className='relative h-[140px] items-center justify-center bg-muted'>
       {uri && !failed ? (
         <Image
           source={{ uri }}
@@ -398,10 +580,10 @@ function ProductImage({
           style={styles.productImage}
         />
       ) : (
-        <View className='h-16 w-16 items-center justify-center rounded-full bg-background'>
+        <View className='h-14 w-14 items-center justify-center rounded-full bg-background'>
           <Icon
             name='card'
-            size={30}
+            size={26}
             color={fallbackColor}
           />
         </View>
@@ -451,8 +633,8 @@ export const SearchProductsToolUI = makeAssistantToolUI<
 const styles = {
   card: { borderRadius: Radius.card },
   source: { borderRadius: Radius.card },
-  product: { borderRadius: Radius.card, height: 344, width: 300, marginRight: 12 },
-  productCarousel: { paddingBottom: 2, paddingRight: 4 },
-  productCarouselViewport: { height: 350 },
+  product: { borderRadius: Radius.card, width: 308, marginRight: 14 },
+  productCarousel: { paddingBottom: 4, paddingRight: 8 },
+  productCarouselViewport: { minHeight: 460 },
   productImage: { width: '100%' as const, height: '100%' as const },
 };
