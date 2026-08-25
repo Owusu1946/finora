@@ -564,6 +564,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const { colors, isDark } = useTheme();
     const aui = useAui();
     const { getToken } = useAuth();
+    const getTokenRef = useRef(getToken);
     const storeText = useAuiState((s) => s.thread.composer.text);
     const [localText, setLocalText] = useState(storeText);
     const nativeTextRef = useRef(storeText);
@@ -572,6 +573,8 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const [directoryLoaded, setDirectoryLoaded] = useState(false);
     const inputRef = useRef<TextInput>(null);
     const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
+
+    getTokenRef.current = getToken;
 
     useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
 
@@ -604,13 +607,13 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     useEffect(() => {
       if (mentionQuery === null) {
         setDirectoryLoaded(false);
-        setTagProfiles([]);
+        setTagProfiles((current) => (current.length ? [] : current));
         return;
       }
       let active = true;
       const controller = new AbortController();
       const timer = setTimeout(() => {
-        void searchFinoraTagsRemote(mentionQuery, getToken, controller.signal)
+        void searchFinoraTagsRemote(mentionQuery, getTokenRef.current, controller.signal)
           .then((next) => {
             if (!active) return;
             setTagProfiles(next);
@@ -627,7 +630,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
         clearTimeout(timer);
         controller.abort();
       };
-    }, [getToken, mentionQuery]);
+    }, [mentionQuery]);
 
     const selectTag = (profile: FinoraTagSuggestion) => {
       if (!mentionMatch || mentionQuery === null) return;
