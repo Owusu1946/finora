@@ -60,11 +60,11 @@ function NewChatButton() {
         aui.threads.switchToNewThread();
         navigateOnce(() => router.push('/'));
       }}
-      className='size-8 items-center justify-center rounded-full active:opacity-70'
+      className='size-9 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='compose'
-        size={20}
+        size={22}
         color={colors.foreground}
       />
     </Pressable>
@@ -84,11 +84,11 @@ function ScanHeaderButton() {
         haptics.selection();
         navigateOnce(() => router.push('/scan'));
       }}
-      className='size-8 items-center justify-center rounded-full active:opacity-70'
+      className='size-9 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='qr'
-        size={20}
+        size={22}
         color={colors.foreground}
       />
     </Pressable>
@@ -111,7 +111,7 @@ function DrawerTrigger() {
         haptics.selection();
         navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
       }}
-      className='size-10 items-center justify-center rounded-full active:opacity-75'
+      className='size-11 items-center justify-center rounded-full active:opacity-75'
       style={{
         backgroundColor: colors.card,
         borderColor: colors.border,
@@ -121,7 +121,7 @@ function DrawerTrigger() {
     >
       <Icon
         name='menu'
-        size={22}
+        size={24}
         color={colors.foreground}
       />
     </Pressable>
@@ -132,7 +132,7 @@ function ChatHeaderRight() {
   const { colors } = useTheme();
   return (
     <View
-      className='h-10 flex-row items-center rounded-full px-1'
+      className='h-11 flex-row items-center rounded-full px-1.5'
       style={{
         backgroundColor: colors.card,
         borderColor: colors.border,
@@ -144,7 +144,7 @@ function ChatHeaderRight() {
       <View
         style={{
           width: StyleSheet.hairlineWidth,
-          height: 16,
+          height: 18,
           backgroundColor: colors.border,
           marginHorizontal: 1,
         }}
@@ -172,7 +172,7 @@ function BackHeaderButton({ fallback = 'approvals' }: { fallback?: string }) {
         }
         navigateOnce(() => navigation.dispatch(DrawerActions.jumpTo(fallback)));
       }}
-      className='size-10 items-center justify-center rounded-full active:opacity-75'
+      className='size-11 items-center justify-center rounded-full active:opacity-75'
       style={{
         backgroundColor: colors.card,
         borderColor: colors.border,
@@ -182,7 +182,7 @@ function BackHeaderButton({ fallback = 'approvals' }: { fallback?: string }) {
     >
       <Icon
         name='chevron-left'
-        size={22}
+        size={24}
         color={colors.foreground}
       />
     </Pressable>
