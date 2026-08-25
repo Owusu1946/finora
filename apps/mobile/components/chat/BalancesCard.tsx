@@ -133,18 +133,18 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
                 onPress={() => prompt(`Send money from my ${wallet.currency} wallet`)}
                 className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full'
                 style={({ pressed }) => ({
-                  backgroundColor: colors.foreground,
+                  backgroundColor: colors.primary,
                   opacity: pressed ? 0.85 : 1,
                 })}
               >
                 <Icon
                   name='send'
                   size={14}
-                  color={colors.background}
+                  color={colors.primaryForeground}
                 />
                 <Text
                   className='font-sans-semibold text-[13px]'
-                  style={{ color: colors.background }}
+                  style={{ color: colors.primaryForeground }}
                 >
                   Send
                 </Text>

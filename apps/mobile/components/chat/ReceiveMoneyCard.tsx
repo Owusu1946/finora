@@ -107,24 +107,22 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
   return (
     <View
-      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      className='my-2 w-full gap-4 overflow-hidden border border-border bg-card p-4'
       style={[styles.card]}
     >
       <View className='flex-row items-center gap-3'>
-        <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+        <View className='h-10 w-10 items-center justify-center rounded-full bg-foreground'>
           <Icon
             name='arrow-down-left'
             size={16}
-            color={colors.foreground}
+            color={colors.background}
           />
         </View>
         <View className='flex-1 gap-0.5'>
-          <Text className='font-sans-medium text-[14px] tracking-[-0.1px] text-muted-foreground'>
-            Receive money
+          <Text className='font-sans-medium text-[12px] uppercase text-muted-foreground'>
+            Inbound funds
           </Text>
-          <Text className='font-sans-semibold text-[19px] tracking-[-0.3px] text-foreground'>
-            Share payment details
-          </Text>
+          <Text className='font-sans-semibold text-[20px] text-foreground'>Receive money</Text>
         </View>
       </View>
 
@@ -186,7 +184,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           haptics.selection();
           setQrOpen(true);
         }}
-        className='self-center p-3'
+        className='self-center rounded-[22px] bg-muted p-3'
         style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
       >
         <MockQrCode
@@ -196,18 +194,18 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           backgroundColor='#ffffff'
         />
       </Pressable>
-      <Text className='font-sans-medium text-center text-[13px] -mt-1 text-muted-foreground'>
-        Tap QR to enlarge · Scan to pay · {active.currency}
+      <Text className='-mt-2 text-center font-sans text-[12px] text-muted-foreground'>
+        Tap to enlarge · {active.currency} receiving code
       </Text>
 
-      <View className='gap-2'>
+      <View className='gap-2 rounded-[22px] bg-muted p-2'>
         {active.fields.map((field) => {
           const key = `${active.id}:${field.label}`;
           const copied = copiedKey === key;
           return (
             <View
               key={key}
-              className='flex-row items-center gap-2.5 border px-3 py-2.5 border-border'
+              className='flex-row items-center gap-2.5 rounded-[18px] border border-border bg-background px-3 py-2.5'
               style={[styles.field]}
             >
               <View className='flex-1 gap-0.5'>
@@ -251,11 +249,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
       <View className='gap-2'>
         <Pressable
           onPress={() => void textDetails()}
-          className='min-h-[46px] flex-row items-center justify-center gap-2'
+          className='min-h-[46px] flex-row items-center justify-center gap-2 rounded-full'
           style={({ pressed }) => [
             styles.primaryBtn,
             {
-              backgroundColor: colors.foreground,
+              backgroundColor: colors.primary,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
@@ -263,9 +261,12 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           <Icon
             name='phone'
             size={16}
-            color={colors.background}
+            color={colors.primaryForeground}
           />
-          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
+          <Text
+            className='font-sans-semibold text-[16px]'
+            style={{ color: colors.primaryForeground }}
+          >
             Text SMS
           </Text>
         </Pressable>
