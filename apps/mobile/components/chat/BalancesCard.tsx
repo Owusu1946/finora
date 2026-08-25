@@ -137,12 +137,8 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
               <Pressable
                 accessibilityLabel={`Send ${wallet.currency}`}
                 onPress={() => prompt(`Send money from my ${wallet.currency} wallet`)}
-                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full'
-                style={({ pressed }) => ({
-                  flex: 1,
-                  backgroundColor: colors.primary,
-                  opacity: pressed ? 0.85 : 1,
-                })}
+                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full active:opacity-85'
+                style={{ flex: 1, backgroundColor: colors.primary }}
               >
                 <Icon
                   name='send'
