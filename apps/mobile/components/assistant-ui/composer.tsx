@@ -315,7 +315,7 @@ function useVoiceComposer() {
     });
 
     return () => subscription.remove();
-  });
+  }, []);
 
   useEffect(() => {
     if (voiceState !== 'recording' || typeof recorderState.metering !== 'number') return;
@@ -565,6 +565,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const aui = useAui();
     const { getToken } = useAuth();
     const getTokenRef = useRef(getToken);
+    getTokenRef.current = getToken;
     const storeText = useAuiState((s) => s.thread.composer.text);
     const [localText, setLocalText] = useState(storeText);
     const nativeTextRef = useRef(storeText);
@@ -573,8 +574,6 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const [directoryLoaded, setDirectoryLoaded] = useState(false);
     const inputRef = useRef<TextInput>(null);
     const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
-
-    getTokenRef.current = getToken;
 
     useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
 
@@ -612,7 +611,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
 
     useEffect(() => {
       if (mentionQuery === null) {
-        setDirectoryLoaded(false);
+        setDirectoryLoaded((prev) => (prev ? false : prev));
         setTagProfiles((current) => (current.length ? [] : current));
         return;
       }
