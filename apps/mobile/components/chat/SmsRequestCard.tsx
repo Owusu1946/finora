@@ -166,12 +166,17 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                 className='grow min-h-11 items-center justify-center'
                 style={({ pressed }) => [
                   {
-                    backgroundColor: colors.foreground,
+                    backgroundColor: colors.primary,
                     opacity: pressed || busy ? 0.85 : 1,
                   },
                 ]}
               >
-                <Text className='font-sans-semibold text-[15px] text-background'>Pay now</Text>
+                <Text
+                  style={{ color: colors.primaryForeground }}
+                  className='font-sans-semibold text-[15px]'
+                >
+                  Pay now
+                </Text>
               </Pressable>
             ) : null}
             <Pressable

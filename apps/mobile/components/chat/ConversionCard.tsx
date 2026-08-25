@@ -264,12 +264,15 @@ export function ConversionCard({
             className='flex-1 min-h-[46px] items-center justify-center'
             style={({ pressed }) => [
               {
-                backgroundColor: colors.foreground,
+                backgroundColor: colors.primary,
                 opacity: pressed || loading ? 0.85 : 1,
               },
             ]}
           >
-            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
+            <Text
+              style={{ color: colors.primaryForeground }}
+              className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+            >
               {loading ? 'Confirming…' : 'Confirm & convert'}
             </Text>
           </Pressable>

@@ -78,12 +78,17 @@ export function FxQuoteStep({
           className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
             {
-              backgroundColor: colors.foreground,
+              backgroundColor: colors.primary,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text className='text-[16px] font-semibold text-background'>Review payment</Text>
+          <Text
+            style={{ color: colors.primaryForeground }}
+            className='text-[16px] font-semibold'
+          >
+            Review payment
+          </Text>
         </Pressable>
       </View>
     </View>

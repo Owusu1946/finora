@@ -375,7 +375,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 style={({ pressed }) => [
                   styles.primaryBtn,
                   {
-                    backgroundColor: colors.foreground,
+                    backgroundColor: colors.primary,
                     opacity: pressed ? 0.85 : 1,
                     flex: 1,
                   },
@@ -384,9 +384,12 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 <Icon
                   name='share'
                   size={16}
-                  color={colors.background}
+                  color={colors.primaryForeground}
                 />
-                <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
+                <Text
+                  style={{ color: colors.primaryForeground }}
+                  className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                >
                   Share QR
                 </Text>
               </Pressable>

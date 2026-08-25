@@ -248,10 +248,10 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
           <Pressable
             disabled={phase === 'applying'}
             onPress={() => void approve()}
-            className='flex-[1.4] min-h-11 items-center justify-center bg-foreground'
+            className='flex-[1.4] min-h-11 items-center justify-center bg-primary'
             style={[styles.primary, { opacity: phase === 'applying' ? 0.6 : 1 }]}
           >
-            <Text className='text-background'>
+            <Text className='text-primary-foreground'>
               {phase === 'applying' ? 'Applying...' : 'Approve changes'}
             </Text>
           </Pressable>

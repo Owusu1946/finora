@@ -148,9 +148,9 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
 
             <Pressable
               onPress={handleExecuteSend}
-              className='mt-3 flex-row items-center justify-center gap-1.5 rounded-full bg-foreground py-3 active:opacity-80'
+              className='mt-3 flex-row items-center justify-center gap-1.5 rounded-full bg-primary py-3 active:opacity-80'
             >
-              <Text className='font-sans-semibold text-[15px] text-background'>
+              <Text className='font-sans-semibold text-[15px] text-primary-foreground'>
                 Confirm & Send Payout
               </Text>
             </Pressable>

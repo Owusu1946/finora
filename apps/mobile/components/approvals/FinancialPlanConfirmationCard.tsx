@@ -235,9 +235,9 @@ export function FinancialPlanConfirmationCard({
               haptics.impact();
               onConfirm?.();
             }}
-            className='min-h-[46px] flex-1 items-center justify-center rounded-[14px] bg-foreground active:opacity-85 disabled:opacity-85'
+            className='min-h-[46px] flex-1 items-center justify-center rounded-[14px] bg-primary active:opacity-85 disabled:opacity-85'
           >
-            <Text className='font-sans-semibold text-base text-background'>
+            <Text className='font-sans-semibold text-base text-primary-foreground'>
               {loading ? 'Confirming…' : 'Approve all'}
             </Text>
           </Pressable>

@@ -271,12 +271,15 @@ export function PaymentRequestWizard({
           className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
             {
-              backgroundColor: colors.foreground,
+              backgroundColor: colors.primary,
               opacity: !canContinue ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text className='font-sans-semibold text-[16px] text-background'>
+          <Text
+            style={{ color: colors.primaryForeground }}
+            className='font-sans-semibold text-[16px]'
+          >
             {step === 'review' ? 'Create link' : 'Continue'}
           </Text>
         </Pressable>
@@ -428,7 +431,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           onPress={() => void textSms()}
           className='min-h-[46px] flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
-            { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+            { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
           ]}
         >
           <Icon
@@ -436,7 +439,12 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
             size={16}
             color={colors.background}
           />
-          <Text className='font-sans-semibold text-[16px] text-background'>Text SMS</Text>
+          <Text
+            style={{ color: colors.primaryForeground }}
+            className='font-sans-semibold text-[16px]'
+          >
+            Text SMS
+          </Text>
         </Pressable>
         <View className='flex-row gap-2'>
           <Pressable
@@ -507,7 +515,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
               className='min-h-[46px] flex-row items-center justify-center gap-2'
               style={({ pressed }) => [
                 {
-                  backgroundColor: colors.foreground,
+                  backgroundColor: colors.primary,
                   opacity: pressed ? 0.85 : 1,
                   width: '100%',
                 },
@@ -518,7 +526,12 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
                 size={16}
                 color={colors.background}
               />
-              <Text className='font-sans-semibold text-[16px] text-background'>Share link</Text>
+              <Text
+                style={{ color: colors.primaryForeground }}
+                className='font-sans-semibold text-[16px]'
+              >
+                Share link
+              </Text>
             </Pressable>
           </Pressable>
         </Pressable>

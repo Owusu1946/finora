@@ -317,10 +317,13 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               }}
               className='flex-1 min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
-                { backgroundColor: colors.foreground, opacity: pressed || busy ? 0.85 : 1 },
+                { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[16px] text-background'>
+              <Text
+                style={{ color: colors.primaryForeground }}
+                className='font-sans-semibold text-[16px]'
+              >
                 {busy ? '…' : 'Pay now'}
               </Text>
             </Pressable>

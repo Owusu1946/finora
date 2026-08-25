@@ -37,7 +37,7 @@ export function AuthButton({
       className={cx(
         'h-[54px] w-full items-center justify-center rounded-[32px] px-5 py-4',
         !inactive && 'active:opacity-85',
-        isPrimary && (inactive ? 'bg-muted' : 'bg-foreground'),
+        isPrimary && (inactive ? 'bg-muted' : 'bg-primary'),
         (isOutline || variant === 'ghost') && 'bg-transparent',
         isOutline && 'border border-border',
       )}
@@ -48,7 +48,7 @@ export function AuthButton({
         <Text
           className={cx(
             'font-sans-semibold text-[17px] tracking-[-0.2px]',
-            isPrimary && (inactive ? 'text-muted-foreground' : 'text-background'),
+            isPrimary && (inactive ? 'text-muted-foreground' : 'text-primary-foreground'),
             !isPrimary && 'text-foreground',
           )}
         >
