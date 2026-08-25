@@ -8,6 +8,7 @@ export function getApiEnv(bindings: Env) {
   const optionalBindings = bindings as Env & {
     CLERK_WEBHOOK_SIGNING_SECRET?: string;
     DEEPGRAM_API_KEY?: string;
+    EXA_API_KEY?: string;
     GOOGLE_OAUTH_CLIENT_ID?: string;
     GOOGLE_OAUTH_CLIENT_SECRET?: string;
     GOOGLE_OAUTH_REDIRECT_URI?: string;
@@ -29,6 +30,7 @@ export function getApiEnv(bindings: Env) {
     CLERK_PUBLISHABLE_KEY: bindings.CLERK_PUBLISHABLE_KEY,
     CLERK_WEBHOOK_SIGNING_SECRET: optionalBindings.CLERK_WEBHOOK_SIGNING_SECRET,
     DEEPGRAM_API_KEY: optionalBindings.DEEPGRAM_API_KEY,
+    EXA_API_KEY: optionalBindings.EXA_API_KEY,
     GOOGLE_OAUTH_CLIENT_ID: optionalBindings.GOOGLE_OAUTH_CLIENT_ID,
     GOOGLE_OAUTH_CLIENT_SECRET: optionalBindings.GOOGLE_OAUTH_CLIENT_SECRET,
     GOOGLE_OAUTH_REDIRECT_URI: optionalBindings.GOOGLE_OAUTH_REDIRECT_URI,

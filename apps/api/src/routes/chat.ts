@@ -64,6 +64,7 @@ import {
   updateUserMemory,
 } from '../db/memory-store';
 import { createCalendarReader } from '../integrations/calendar-reader';
+import { createExaClient } from '../integrations/exa';
 import { createGmailReader, getGmailStatus } from '../integrations/gmail-reader';
 import {
   getDriveFileContent,
@@ -707,6 +708,11 @@ chat.post('/:id', async (c) => {
     const threadSummary =
       compactedMessages === messages ? null : (storedThreadContext?.summary ?? null);
     const latestMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id;
+    const explicitWebMode = currentUserText.match(/^\/(?:web|search)\s+/i)
+      ? 'search_web'
+      : currentUserText.match(/^\/(?:deep|research)\s+/i)
+        ? 'research_web'
+        : null;
     const result = streamText({
       model: openai.chat(provider.modelId),
       system: systemPromptWithContext(relevantMemories, threadSummary),
@@ -788,7 +794,16 @@ chat.post('/:id', async (c) => {
             id,
           }),
         },
+        createExaClient(env.EXA_API_KEY),
       ),
+      ...(explicitWebMode
+        ? {
+            prepareStep: ({ stepNumber }: { stepNumber: number }) =>
+              stepNumber === 0
+                ? { toolChoice: { type: 'tool' as const, toolName: explicitWebMode } }
+                : { toolChoice: 'none' as const },
+          }
+        : {}),
       stopWhen: stepCountIs(5),
       abortSignal: redisSession ? producerAbortController.signal : c.req.raw.signal,
       maxOutputTokens: 2_048,

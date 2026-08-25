@@ -80,6 +80,28 @@ export const SearchDriveFilesInputSchema = z
   .strict();
 export const GetDriveFileInputSchema = z.object({ fileId: z.string().min(1).max(200) }).strict();
 
+export const SearchWebInputSchema = z
+  .object({
+    query: z.string().trim().min(2).max(500),
+    freshness: z.enum(['any', 'recent', 'live']).optional(),
+    limit: z.number().int().min(1).max(8).default(5),
+  })
+  .strict();
+
+export const ResearchWebInputSchema = z
+  .object({
+    query: z.string().trim().min(2).max(800),
+    limit: z.number().int().min(3).max(10).default(6),
+  })
+  .strict();
+
+export const ReadWebPageInputSchema = z
+  .object({
+    url: z.url(),
+    query: z.string().trim().min(2).max(500).optional(),
+  })
+  .strict();
+
 export const FindGmailInvoicesInputSchema = GmailSearchFieldsSchema.extend({
   invoiceOnly: z.literal(true).default(true),
 });

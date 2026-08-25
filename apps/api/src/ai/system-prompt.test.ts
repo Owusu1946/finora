@@ -27,6 +27,9 @@ describe('chat tools', () => {
     expect(() => createChatAgentTools()).not.toThrow();
     expect(createChatAgentTools()).toHaveProperty('search_drive_files');
     expect(createChatAgentTools()).toHaveProperty('get_drive_file');
+    expect(createChatAgentTools()).toHaveProperty('search_web');
+    expect(createChatAgentTools()).toHaveProperty('research_web');
+    expect(createChatAgentTools()).toHaveProperty('read_web_page');
     expect(createChatAgentTools()).toHaveProperty('inspect_payroll_attachment');
     expect(createChatAgentTools()).toHaveProperty('list_payroll_imports');
     expect(createChatAgentTools()).toHaveProperty('propose_payroll_changes');
