@@ -17,6 +17,10 @@ describe('FINORA_SYSTEM_PROMPT', () => {
     'Only the authenticated approval control in the proposal card can apply changes',
     'For one uniquely matched employee, call prepare_employee_payment',
     'Only create, update, or delete a cross-chat memory when the user explicitly asks',
+    'consumer products, retailers, travel, insurance, subscriptions, services, reviews, prices',
+    'Use search_products for consumer-product discovery',
+    'A budget the user explicitly states for a search may be included',
+    'distinguish page-checked listings from unverified discoveries',
   ])('retains the production safety invariant: %s', (invariant) => {
     expect(FINORA_SYSTEM_PROMPT).toContain(invariant);
   });
@@ -28,6 +32,7 @@ describe('chat tools', () => {
     expect(createChatAgentTools()).toHaveProperty('search_drive_files');
     expect(createChatAgentTools()).toHaveProperty('get_drive_file');
     expect(createChatAgentTools()).toHaveProperty('search_web');
+    expect(createChatAgentTools()).toHaveProperty('search_products');
     expect(createChatAgentTools()).toHaveProperty('research_web');
     expect(createChatAgentTools()).toHaveProperty('read_web_page');
     expect(createChatAgentTools()).toHaveProperty('inspect_payroll_attachment');

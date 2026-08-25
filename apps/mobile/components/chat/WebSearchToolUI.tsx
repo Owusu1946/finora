@@ -29,6 +29,35 @@ type WebResult = {
   sources?: WebSource[];
 };
 
+type ProductResult = {
+  id: string;
+  productName: string;
+  price?: string | null;
+  priceAmount?: number | null;
+  currency?: string | null;
+  condition?: 'new' | 'used' | 'refurbished' | 'open_box' | 'unknown';
+  seller: string;
+  location?: string | null;
+  estimatedTotal?: string | null;
+  estimatedTotalAmount?: number | null;
+  availability?: 'listed' | 'unavailable' | 'unknown';
+  verified: boolean;
+  confidence?: 'low' | 'medium' | 'high';
+  withinBudget?: boolean | null;
+  warnings?: string[];
+  source: WebSource;
+};
+
+type ProductSearchResult = {
+  ok?: boolean;
+  errorCode?: string;
+  mode?: 'products';
+  query?: string;
+  budget?: number | null;
+  currency?: string | null;
+  products?: ProductResult[];
+};
+
 function SourceSheet({ sources, onClose }: { sources: WebSource[]; onClose: () => void }) {
   const { colors } = useTheme();
   return (
@@ -194,6 +223,130 @@ function WebResultCard({
   );
 }
 
+function ProductSearchCard({
+  result,
+  running,
+}: {
+  result?: ProductSearchResult;
+  running: boolean;
+}) {
+  const { colors } = useTheme();
+  const products = result?.products ?? [];
+
+  if (running && !result) {
+    return (
+      <View
+        className='my-2 min-h-[70px] flex-row items-center gap-3 border border-border bg-composer px-4'
+        style={styles.card}
+      >
+        <LoadingIcon color={colors.mutedForeground} />
+        <View className='flex-1'>
+          <Text className='font-sans-semibold text-[14px] text-foreground'>Finding products</Text>
+          <Text className='font-sans text-[12px] text-muted-foreground'>
+            Checking prices, condition, availability, and listing pages...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (result?.ok === false || !products.length) {
+    return (
+      <View
+        className='my-2 border border-border bg-composer p-4'
+        style={styles.card}
+      >
+        <Text className='font-sans-medium text-[14px] text-muted-foreground'>
+          {result?.errorCode === 'web_search_not_configured'
+            ? 'Product search is not configured yet.'
+            : 'No credible product listings were returned.'}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className='my-2 gap-2'>
+      <View className='flex-row items-center gap-3 px-1 pb-1'>
+        <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
+          <Icon
+            name='dollar'
+            size={17}
+            color={colors.foreground}
+          />
+        </View>
+        <View className='flex-1'>
+          <Text className='font-sans-semibold text-[14px] text-foreground'>Product matches</Text>
+          <Text className='font-sans text-[12px] text-muted-foreground'>
+            {result?.budget && result.currency
+              ? `Budget ${result.currency} ${result.budget.toLocaleString()}`
+              : `${products.length} listing${products.length === 1 ? '' : 's'}`}
+          </Text>
+        </View>
+      </View>
+      {products.slice(0, 5).map((product) => (
+        <Pressable
+          key={`${product.id}:${product.source.url}`}
+          accessibilityRole='link'
+          accessibilityLabel={`Open ${product.productName}`}
+          onPress={() => void Linking.openURL(product.source.url)}
+          className='border border-border bg-composer p-4'
+          style={({ pressed }) => [styles.product, pressed && { opacity: 0.72 }]}
+        >
+          <View className='flex-row items-start gap-3'>
+            <View className='flex-1 gap-1.5'>
+              <Text
+                numberOfLines={2}
+                className='font-sans-semibold text-[15px] leading-[20px] text-foreground'
+              >
+                {product.productName}
+              </Text>
+              <Text className='font-sans-bold text-[18px] text-foreground'>
+                {product.price ?? 'Price unavailable'}
+              </Text>
+              <Text className='font-sans text-[12px] text-muted-foreground'>
+                {product.seller}
+                {product.condition && product.condition !== 'unknown'
+                  ? ` · ${product.condition.replace('_', ' ')}`
+                  : ''}
+              </Text>
+              <Text
+                className={`font-sans-medium text-[12px] ${
+                  product.withinBudget === true
+                    ? 'text-success'
+                    : product.withinBudget === false
+                      ? 'text-destructive'
+                      : 'text-muted-foreground'
+                }`}
+              >
+                {product.withinBudget === true
+                  ? 'Confirmed within budget'
+                  : product.withinBudget === false
+                    ? 'Over budget'
+                    : 'Delivered total not confirmed'}
+              </Text>
+              <Text className='font-sans text-[11px] text-muted-foreground'>
+                {product.verified ? 'Listing page checked' : 'Search result only'}
+                {product.availability === 'unavailable' ? ' · Unavailable' : ''}
+              </Text>
+              {product.warnings?.[0] ? (
+                <Text className='font-sans text-[11px] leading-[16px] text-muted-foreground'>
+                  {product.warnings[0]}
+                </Text>
+              ) : null}
+            </View>
+            <Icon
+              name='arrow-up'
+              size={16}
+              color={colors.mutedForeground}
+            />
+          </View>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export const SearchWebToolUI = makeAssistantToolUI<Record<string, unknown>, WebResult>({
   toolName: 'search_web',
   display: 'standalone',
@@ -218,7 +371,22 @@ export const ResearchWebToolUI = makeAssistantToolUI<Record<string, unknown>, We
   ),
 });
 
+export const SearchProductsToolUI = makeAssistantToolUI<
+  Record<string, unknown>,
+  ProductSearchResult
+>({
+  toolName: 'search_products',
+  display: 'standalone',
+  render: ({ result, status }) => (
+    <ProductSearchCard
+      result={result}
+      running={status.type === 'running'}
+    />
+  ),
+});
+
 const styles = {
   card: { borderRadius: Radius.card },
   source: { borderRadius: Radius.card },
+  product: { borderRadius: Radius.card },
 };

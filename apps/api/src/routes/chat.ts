@@ -710,6 +710,8 @@ chat.post('/:id', async (c) => {
     const latestMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id;
     const explicitWebMode = currentUserText.match(/^\/(?:web|search)\s+/i)
       ? 'search_web'
+      : currentUserText.match(/^\/(?:shop|products?)\s+/i)
+        ? 'search_products'
       : currentUserText.match(/^\/(?:deep|research)\s+/i)
         ? 'research_web'
         : null;

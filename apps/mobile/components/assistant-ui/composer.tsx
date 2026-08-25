@@ -597,6 +597,12 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
         icon: 'tool' as const,
       },
       {
+        command: '/shop',
+        title: 'Product search',
+        description: 'Find current listings within a budget',
+        icon: 'dollar' as const,
+      },
+      {
         command: '/deep',
         title: 'Deep research',
         description: 'Thorough multi-source investigation',
@@ -771,7 +777,7 @@ export function Composer() {
   const { voiceState, speechActive, startRecording, handleOrbPress } = useVoiceComposer();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const composerText = useAuiState((s) => s.thread.composer.text);
-  const slashMode = /^(\/(?:web|search|deep|research))?(?:\s|$)/i
+  const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
     .exec(composerText)?.[1]
     ?.toLowerCase();
   const inputStyle = useMemo(
@@ -808,7 +814,11 @@ export function Composer() {
               <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
                 <Icon
                   name={
-                    slashMode.includes('deep') || slashMode.includes('research') ? 'brain' : 'tool'
+                    slashMode.includes('deep') || slashMode.includes('research')
+                      ? 'brain'
+                      : slashMode.includes('shop') || slashMode.includes('product')
+                        ? 'dollar'
+                        : 'tool'
                   }
                   size={13}
                   color={colors.foreground}
@@ -817,6 +827,8 @@ export function Composer() {
               <Text className='font-sans-medium text-[12px] text-muted-foreground'>
                 {slashMode.includes('deep') || slashMode.includes('research')
                   ? 'Deep research mode'
+                  : slashMode.includes('shop') || slashMode.includes('product')
+                    ? 'Product search mode'
                   : 'Web search mode'}
               </Text>
             </View>

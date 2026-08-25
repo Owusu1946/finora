@@ -64,7 +64,11 @@ import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollCha
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
-import { ResearchWebToolUI, SearchWebToolUI } from '@/components/chat/WebSearchToolUI';
+import {
+  ResearchWebToolUI,
+  SearchProductsToolUI,
+  SearchWebToolUI,
+} from '@/components/chat/WebSearchToolUI';
 import { AppSwitcherPrivacy } from '@/components/privacy/AppSwitcherPrivacy';
 import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
 import { useSplashGate } from '@/components/splash/useSplashGate';
@@ -273,6 +277,7 @@ function FinoraRuntimeContent({
       <ListVirtualCardsToolUI />
       <GetVirtualCardToolUI />
       <SearchWebToolUI />
+      <SearchProductsToolUI />
       <ResearchWebToolUI />
       <RootNavigator />
       <VirtualCardIssuedPopup />

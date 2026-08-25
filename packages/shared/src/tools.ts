@@ -88,6 +88,22 @@ export const SearchWebInputSchema = z
   })
   .strict();
 
+export const SearchProductsInputSchema = z
+  .object({
+    query: z.string().trim().min(2).max(500),
+    budget: z.number().positive().max(1_000_000_000).optional(),
+    currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).optional(),
+    condition: z.enum(['any', 'new', 'used', 'refurbished', 'open_box']).default('any'),
+    location: z.string().trim().min(2).max(120).optional(),
+    includeShipping: z.boolean().default(true),
+    limit: z.number().int().min(1).max(8).default(5),
+  })
+  .strict()
+  .refine((value) => value.budget === undefined || value.currency !== undefined, {
+    message: 'Currency is required when a product budget is provided.',
+    path: ['currency'],
+  });
+
 export const ResearchWebInputSchema = z
   .object({
     query: z.string().trim().min(2).max(800),

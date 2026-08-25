@@ -42,4 +42,39 @@ describe('Exa integration', () => {
       createExaClient().search({ query: 'current policy rate', limit: 5 }),
     ).rejects.toThrow('web_search_not_configured');
   });
+
+  it('searches and verifies product listings against a stated budget', async () => {
+    const request = vi.fn(async (url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      if (url.endsWith('/search')) {
+        expect(body.query).toContain('budget up to USD 500');
+        return Response.json({
+          requestId: 'product-request',
+          results: [{ title: 'iPhone 17 Pro Max refurbished - $479', url: 'https://shop.example/iphone', highlights: ['$479 refurbished'] }],
+        });
+      }
+      expect(url.endsWith('/contents')).toBe(true);
+      return Response.json({
+        results: [{ title: 'iPhone 17 Pro Max refurbished', url: 'https://shop.example/iphone', text: 'Refurbished iPhone 17 Pro Max. Price: $479. In stock. Free shipping.' }],
+        statuses: [{ id: 'https://shop.example/iphone', status: 'success' }],
+      });
+    });
+    vi.stubGlobal('fetch', request);
+
+    const result = await createExaClient('test-key').products({
+      query: 'find an iPhone 17 Pro Max',
+      budget: 500,
+      currency: 'usd',
+    });
+
+    expect(result.products[0]).toEqual(expect.objectContaining({
+      price: '$479',
+      priceAmount: 479,
+      verified: true,
+      condition: 'refurbished',
+      availability: 'listed',
+      withinBudget: true,
+    }));
+    expect(request).toHaveBeenCalledTimes(2);
+  });
 });
