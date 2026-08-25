@@ -7,6 +7,12 @@
       "skillPath": "assistant-ui/skills/assistant-ui/SKILL.md",
       "computedHash": "1447d72373f8ceedfd38a94174ea59c1b1db90ec1bcf0dd5142486adaa7e767e"
     },
+    "build-with-exa": {
+      "source": "exa-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-with-exa/SKILL.md",
+      "computedHash": "fbbf53078a1b5024b9764c7d9994d6fe59fd3b4b2f2ddf094be59d4af257f5e6"
+    },
     "cloud": {
       "source": "assistant-ui/skills",
       "sourceType": "github",
@@ -18,6 +24,18 @@
       "sourceType": "github",
       "skillPath": "assistant-ui/skills/copilots/SKILL.md",
       "computedHash": "276241d00e2d1fcfba4f26358b6b882be76379e2b7473011a4287298ccdaf9a3"
+    },
+    "exa-contents": {
+      "source": "exa-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/exa-contents/SKILL.md",
+      "computedHash": "175bf0b235af79c49c185b1e2ffd84f7f9bf124ec4ec2f1ada3ddb0515c8924b"
+    },
+    "exa-search": {
+      "source": "exa-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/exa-search/SKILL.md",
+      "computedHash": "1b019d28b521bc5b6774da3d73751ac13ea7d5b8fa59815c717fda513e7c291c"
     },
     "markdown": {
       "source": "assistant-ui/skills",
