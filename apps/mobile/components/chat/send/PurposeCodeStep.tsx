@@ -55,12 +55,17 @@ export function PurposeCodeStep({
           className='flex-[1.4] min-h-[46px] items-center justify-center'
           style={({ pressed }) => [
             {
-              backgroundColor: colors.foreground,
+              backgroundColor: colors.primary,
               opacity: !purposeCode ? 0.4 : pressed ? 0.85 : 1,
             },
           ]}
         >
-          <Text className='text-[16px] font-semibold text-background'>Continue</Text>
+          <Text
+            style={{ color: colors.primaryForeground }}
+            className='text-[16px] font-semibold'
+          >
+            Continue
+          </Text>
         </Pressable>
       </View>
     </View>

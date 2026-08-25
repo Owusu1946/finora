@@ -552,10 +552,10 @@ function NavRow({
           haptics.selection();
           onNext();
         }}
-        className='flex-1 min-h-11 items-center justify-center bg-foreground'
+        className='flex-1 min-h-11 items-center justify-center bg-primary'
         style={[styles.navBtn]}
       >
-        <Text className='font-semibold text-background'>{nextLabel}</Text>
+        <Text className='font-semibold text-primary-foreground'>{nextLabel}</Text>
       </Pressable>
     </View>
   );

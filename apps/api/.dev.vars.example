@@ -3,6 +3,7 @@ CLERK_SECRET_KEY=sk_test_replace_me
 CLERK_PUBLISHABLE_KEY=
 CLERK_WEBHOOK_SIGNING_SECRET=
 DEEPGRAM_API_KEY=
+EXA_API_KEY=
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openai/gpt-5.6-luna
 # Temporary fallback for direct OpenAI usage:

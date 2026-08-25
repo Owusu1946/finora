@@ -92,10 +92,15 @@ function EmployeePayCard({
             }}
             className='min-h-11 items-center justify-center'
             style={({ pressed }) => [
-              { backgroundColor: colors.foreground, opacity: pressed || busy ? 0.85 : 1 },
+              { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
             ]}
           >
-            <Text className='text-[15px] font-semibold text-background'>Approve payment</Text>
+            <Text
+              style={{ color: colors.primaryForeground }}
+              className='text-[15px] font-semibold'
+            >
+              Approve payment
+            </Text>
           </Pressable>
         )}
       </View>

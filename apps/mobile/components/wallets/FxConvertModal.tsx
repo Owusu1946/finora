@@ -352,12 +352,12 @@ export function FxConvertModal({
               style={({ pressed }) => [
                 styles.primaryBtn,
                 {
-                  backgroundColor: colors.foreground,
+                  backgroundColor: colors.primary,
                   opacity: !canSwap ? 0.35 : pressed ? 0.85 : 1,
                 },
               ]}
             >
-              <Text style={[styles.primaryBtnText, { color: colors.background }]}>
+              <Text style={[styles.primaryBtnText, { color: colors.primaryForeground }]}>
                 {isConverting ? 'Swapping…' : `Swap ${fromCurrency} → ${toCurrency}`}
               </Text>
             </Pressable>

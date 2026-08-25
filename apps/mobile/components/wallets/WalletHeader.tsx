@@ -66,14 +66,14 @@ export function WalletHeader({
             haptics.selection();
             onOpenSend();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-transparent bg-foreground py-2.5 active:opacity-80'
+          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-transparent bg-primary py-2.5 active:opacity-80'
         >
           <Icon
             name='arrow-up'
             size={15}
-            color={colors.background}
+            color={colors.primaryForeground}
           />
-          <Text className='font-sans-semibold text-sm text-background'>Payout</Text>
+          <Text className='font-sans-semibold text-sm text-primary-foreground'>Payout</Text>
         </Pressable>
 
         <Pressable

@@ -564,6 +564,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const { colors, isDark } = useTheme();
     const aui = useAui();
     const { getToken } = useAuth();
+    const getTokenRef = useRef(getToken);
     const storeText = useAuiState((s) => s.thread.composer.text);
     const [localText, setLocalText] = useState(storeText);
     const nativeTextRef = useRef(storeText);
@@ -572,6 +573,8 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const [directoryLoaded, setDirectoryLoaded] = useState(false);
     const inputRef = useRef<TextInput>(null);
     const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
+
+    getTokenRef.current = getToken;
 
     useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
 
@@ -585,17 +588,38 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
 
     const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
     const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+    const slashQuery = localText.match(/^\/([a-z]*)$/i)?.[1]?.toLowerCase() ?? null;
+    const slashCommands = [
+      {
+        command: '/web',
+        title: 'Web search',
+        description: 'Fast current information with sources',
+        icon: 'tool' as const,
+      },
+      {
+        command: '/shop',
+        title: 'Product search',
+        description: 'Find current listings within a budget',
+        icon: 'dollar' as const,
+      },
+      {
+        command: '/deep',
+        title: 'Deep research',
+        description: 'Thorough multi-source investigation',
+        icon: 'brain' as const,
+      },
+    ].filter((item) => !slashQuery || item.command.slice(1).startsWith(slashQuery));
 
     useEffect(() => {
       if (mentionQuery === null) {
         setDirectoryLoaded(false);
-        setTagProfiles([]);
+        setTagProfiles((current) => (current.length ? [] : current));
         return;
       }
       let active = true;
       const controller = new AbortController();
       const timer = setTimeout(() => {
-        void searchFinoraTagsRemote(mentionQuery, getToken, controller.signal)
+        void searchFinoraTagsRemote(mentionQuery, getTokenRef.current, controller.signal)
           .then((next) => {
             if (!active) return;
             setTagProfiles(next);
@@ -612,12 +636,22 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
         clearTimeout(timer);
         controller.abort();
       };
-    }, [getToken, mentionQuery]);
+    }, [mentionQuery]);
 
     const selectTag = (profile: FinoraTagSuggestion) => {
       if (!mentionMatch || mentionQuery === null) return;
       const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
       const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
+      nativeTextRef.current = next;
+      setLocalText(next);
+      inputRef.current?.setNativeProps({ text: next });
+      aui.thread.composer().setText(next);
+      haptics.selection();
+      requestAnimationFrame(() => inputRef.current?.focus());
+    };
+
+    const selectSlashCommand = (command: string) => {
+      const next = `${command} `;
       nativeTextRef.current = next;
       setLocalText(next);
       inputRef.current?.setNativeProps({ text: next });
@@ -633,6 +667,44 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
 
     return (
       <View className='w-full'>
+        {slashQuery !== null ? (
+          <View
+            className='border mb-2 p-1.5 bg-background border-border'
+            style={[styles.mentionMenu]}
+          >
+            <Text className='font-sans-semibold text-[11px] tracking-[0.7px] px-2 py-[5px] uppercase text-muted-foreground'>
+              Search modes
+            </Text>
+            {slashCommands.map((item) => (
+              <Pressable
+                key={item.command}
+                accessibilityLabel={`Select ${item.title}`}
+                onPress={() => selectSlashCommand(item.command)}
+                className='min-h-[54px] flex-row items-center gap-3 px-2 py-1.5'
+                style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+              >
+                <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
+                  <Icon
+                    name={item.icon}
+                    size={17}
+                    color={colors.foreground}
+                  />
+                </View>
+                <View className='flex-1'>
+                  <Text className='font-sans-semibold text-[14px] text-foreground'>
+                    {item.title}
+                  </Text>
+                  <Text className='font-sans text-[12px] text-muted-foreground'>
+                    {item.description}
+                  </Text>
+                </View>
+                <Text className='font-sans-medium text-[12px] text-muted-foreground'>
+                  {item.command}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
         {mentionQuery !== null && directoryLoaded && (
           <View
             className='border mb-2 p-1.5 bg-background border-border'
@@ -704,6 +776,10 @@ export function Composer() {
   const [inputFocused, setInputFocused] = useState(false);
   const { voiceState, speechActive, startRecording, handleOrbPress } = useVoiceComposer();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
+  const composerText = useAuiState((s) => s.thread.composer.text);
+  const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
+    .exec(composerText)?.[1]
+    ?.toLowerCase();
   const inputStyle = useMemo(
     () => [styles.input, { color: colors.foreground }],
     [colors.foreground],
@@ -733,6 +809,30 @@ export function Composer() {
           className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
           style={[styles.shell]}
         >
+          {slashMode ? (
+            <View className='flex-row items-center gap-2 px-2'>
+              <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
+                <Icon
+                  name={
+                    slashMode.includes('deep') || slashMode.includes('research')
+                      ? 'brain'
+                      : slashMode.includes('shop') || slashMode.includes('product')
+                        ? 'dollar'
+                        : 'tool'
+                  }
+                  size={13}
+                  color={colors.foreground}
+                />
+              </View>
+              <Text className='font-sans-medium text-[12px] text-muted-foreground'>
+                {slashMode.includes('deep') || slashMode.includes('research')
+                  ? 'Deep research mode'
+                  : slashMode.includes('shop') || slashMode.includes('product')
+                    ? 'Product search mode'
+                  : 'Web search mode'}
+              </Text>
+            </View>
+          ) : null}
           {hasAttachments ? (
             <ScrollView
               horizontal

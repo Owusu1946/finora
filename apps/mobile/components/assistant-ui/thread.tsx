@@ -61,12 +61,13 @@ function SuggestionChip({ prompt }: { prompt: string }) {
 }
 
 function EmptyState() {
-  const suggestions = isBusinessAccount() ? BUSINESS_SUGGESTIONS : PERSONAL_SUGGESTIONS;
+  const isBusiness = isBusinessAccount();
+  const suggestions = isBusiness ? BUSINESS_SUGGESTIONS : PERSONAL_SUGGESTIONS;
+
   return (
     <Pressable
-      accessible={false}
       onPress={Keyboard.dismiss}
-      className='flex-1 justify-center items-center px-6 gap-2.5'
+      className='flex-1 items-center justify-center px-6'
     >
       <FinoraLogo size={48} />
       <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-center mb-6 text-foreground'>

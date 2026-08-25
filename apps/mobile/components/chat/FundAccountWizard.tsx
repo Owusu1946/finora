@@ -367,10 +367,15 @@ export function FundAccountWizard({
               }}
               className='flex-[1.4] min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
-                { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
+                { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
               ]}
             >
-              <Text className='text-[16px] font-semibold text-background'>I’ve sent it</Text>
+              <Text
+                style={{ color: colors.primaryForeground }}
+                className='text-[16px] font-semibold'
+              >
+                I’ve sent it
+              </Text>
             </Pressable>
           </View>
           <NavBack
@@ -473,7 +478,7 @@ export function FundAccountWizard({
               className='flex-[1.4] min-h-[46px] items-center justify-center'
               style={({ pressed }) => [
                 {
-                  backgroundColor: colors.foreground,
+                  backgroundColor: colors.primary,
                   opacity:
                     !(amount ?? (Number(customAmount) > 0 ? Number(customAmount) : null)) ||
                     phone.trim().length < 9
@@ -484,7 +489,12 @@ export function FundAccountWizard({
                 },
               ]}
             >
-              <Text className='text-[16px] font-semibold text-background'>Send prompt</Text>
+              <Text
+                style={{ color: colors.primaryForeground }}
+                className='text-[16px] font-semibold'
+              >
+                Send prompt
+              </Text>
             </Pressable>
           </View>
         </View>

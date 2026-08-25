@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { ReceiveMoneyCard, type ReceiveMethod } from '@/components/chat/ReceiveMoneyCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
+import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -27,6 +28,22 @@ function PreparingCard() {
   );
 }
 
+function EmptyCard() {
+  return (
+    <View
+      className='my-2 gap-1 border border-border bg-composer p-4'
+      style={styles.preparing}
+    >
+      <Text className='font-sans-semibold text-[14px] text-foreground'>
+        Receive methods unavailable
+      </Text>
+      <Text className='font-sans text-[12px] text-muted-foreground'>
+        No supported receiving details were returned for this request.
+      </Text>
+    </View>
+  );
+}
+
 export const ListReceiveMethodsToolUI = makeAssistantToolUI<ListReceiveArgs, ListReceiveResult>({
   toolName: 'list_receive_methods',
   display: 'standalone',
@@ -36,7 +53,7 @@ export const ListReceiveMethodsToolUI = makeAssistantToolUI<ListReceiveArgs, Lis
     }
 
     const methods = result?.methods ?? [];
-    if (!methods.length) return null;
+    if (!methods.length) return <EmptyCard />;
 
     const preferred =
       args?.prefer != null

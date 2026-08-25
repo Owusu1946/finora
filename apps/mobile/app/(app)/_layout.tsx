@@ -1,10 +1,11 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useDrawerStatus } from '@react-navigation/drawer';
 import { DrawerActions } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { useEffect, useRef } from 'react';
-import { Keyboard, Pressable, StyleSheet } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
@@ -15,6 +16,35 @@ import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
 import { usePressGuard } from '@/lib/use-press-guard';
 
+function hexToRgba(hex: string, alpha: number) {
+  const clean = hex.replace('#', '');
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  return hex;
+}
+
+function HeaderGradientBackground() {
+  const { colors } = useTheme();
+  return (
+    <LinearGradient
+      pointerEvents='none'
+      colors={[
+        hexToRgba(colors.background, 1),
+        hexToRgba(colors.background, 0.96),
+        hexToRgba(colors.background, 0.75),
+        hexToRgba(colors.background, 0.3),
+        hexToRgba(colors.background, 0),
+      ]}
+      locations={[0, 0.45, 0.72, 0.88, 1]}
+      style={[StyleSheet.absoluteFill, { bottom: -28 }]}
+    />
+  );
+}
+
 function NewChatButton() {
   const aui = useAui();
   const router = useRouter();
@@ -24,17 +54,17 @@ function NewChatButton() {
   return (
     <Pressable
       accessibilityLabel='New chat'
-      hitSlop={8}
+      hitSlop={6}
       onPress={() => {
         haptics.selection();
         aui.threads.switchToNewThread();
         navigateOnce(() => router.push('/'));
       }}
-      className='size-10 items-center justify-center rounded-full active:opacity-70'
+      className='size-8 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='compose'
-        size={22}
+        size={20}
         color={colors.foreground}
       />
     </Pressable>
@@ -49,16 +79,16 @@ function ScanHeaderButton() {
   return (
     <Pressable
       accessibilityLabel='Scan QR to pay'
-      hitSlop={8}
+      hitSlop={6}
       onPress={() => {
         haptics.selection();
         navigateOnce(() => router.push('/scan'));
       }}
-      className='size-10 items-center justify-center rounded-full active:opacity-70'
+      className='size-8 items-center justify-center rounded-full active:opacity-70'
     >
       <Icon
         name='qr'
-        size={22}
+        size={20}
         color={colors.foreground}
       />
     </Pressable>
@@ -81,11 +111,17 @@ function DrawerTrigger() {
         haptics.selection();
         navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
       }}
-      className='size-10 items-center justify-center rounded-full active:opacity-70'
+      className='size-10 items-center justify-center rounded-full active:opacity-75'
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: StyleSheet.hairlineWidth,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      }}
     >
       <Icon
         name='menu'
-        size={26}
+        size={22}
         color={colors.foreground}
       />
     </Pressable>
@@ -93,11 +129,28 @@ function DrawerTrigger() {
 }
 
 function ChatHeaderRight() {
+  const { colors } = useTheme();
   return (
-    <>
-      <ScanHeaderButton />
+    <View
+      className='h-10 flex-row items-center rounded-full px-1'
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: StyleSheet.hairlineWidth,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      }}
+    >
       <NewChatButton />
-    </>
+      <View
+        style={{
+          width: StyleSheet.hairlineWidth,
+          height: 16,
+          backgroundColor: colors.border,
+          marginHorizontal: 1,
+        }}
+      />
+      <ScanHeaderButton />
+    </View>
   );
 }
 
@@ -119,11 +172,17 @@ function BackHeaderButton({ fallback = 'approvals' }: { fallback?: string }) {
         }
         navigateOnce(() => navigation.dispatch(DrawerActions.jumpTo(fallback)));
       }}
-      style={{ marginLeft: 4, padding: 4 }}
+      className='size-10 items-center justify-center rounded-full active:opacity-75'
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderWidth: StyleSheet.hairlineWidth,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      }}
     >
       <Icon
         name='chevron-left'
-        size={24}
+        size={22}
         color={colors.foreground}
       />
     </Pressable>
@@ -162,6 +221,7 @@ export default function AppLayout() {
       screenOptions={{
         headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
+        headerBackground: () => <HeaderGradientBackground />,
         headerLeftContainerStyle: { paddingLeft: 16, paddingBottom: 8 },
         headerRightContainerStyle: { gap: 10, paddingRight: 16, paddingBottom: 8 },
         headerTitleContainerStyle: { paddingBottom: 8 },
