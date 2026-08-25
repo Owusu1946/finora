@@ -286,9 +286,10 @@ function ProductSearchCard({
         </View>
       </View>
       <ScrollView
+        horizontal
         nestedScrollEnabled
-        showsVerticalScrollIndicator={false}
-        snapToInterval={356}
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={312}
         decelerationRate='fast'
         contentContainerStyle={styles.productCarousel}
         style={styles.productCarouselViewport}
@@ -369,7 +370,7 @@ function ProductSearchCard({
       </ScrollView>
       {products.length > 1 ? (
         <Text className='text-center font-sans text-[11px] text-muted-foreground'>
-          Swipe vertically to compare {products.length} listings
+          Swipe horizontally to compare {products.length} listings
         </Text>
       ) : null}
     </View>
@@ -450,8 +451,8 @@ export const SearchProductsToolUI = makeAssistantToolUI<
 const styles = {
   card: { borderRadius: Radius.card },
   source: { borderRadius: Radius.card },
-  product: { borderRadius: Radius.card, height: 344 },
-  productCarousel: { paddingBottom: 2 },
-  productCarouselViewport: { maxHeight: 400 },
+  product: { borderRadius: Radius.card, height: 344, width: 300, marginRight: 12 },
+  productCarousel: { paddingBottom: 2, paddingRight: 4 },
+  productCarouselViewport: { height: 350 },
   productImage: { width: '100%' as const, height: '100%' as const },
 };
