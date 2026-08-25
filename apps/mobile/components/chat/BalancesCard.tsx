@@ -18,65 +18,49 @@ export type BalanceWallet = {
   usdEquivalent: number;
   symbol: string;
 };
-
-type BalancesCardProps = {
-  wallets: BalanceWallet[];
-  totalUsd?: number;
-};
-
-function maskAmount(symbol: string, amount: number, hidden: boolean) {
-  if (hidden) return `${symbol}••••••`;
-  return `${symbol}${amount.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function receivePrompt(currency: string) {
-  if (currency === 'USDT' || currency === 'USDC') return `Show my ${currency} address`;
-  if (currency === 'GHS') return 'Receive money via MoMo';
-  return `Receive money in ${currency}`;
-}
+type BalancesCardProps = { wallets: BalanceWallet[]; totalUsd?: number };
+const receivePrompt = (currency: string) =>
+  currency === 'GHS'
+    ? 'Receive money via MoMo'
+    : currency === 'USDT' || currency === 'USDC'
+      ? `Show my ${currency} address`
+      : `Receive money in ${currency}`;
+const amount = (symbol: string, value: number, hidden: boolean) =>
+  hidden
+    ? `${symbol}******`
+    : `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
   const { colors } = useTheme();
   const aui = useAui();
   const [hidden, setHidden] = useState(false);
-
   const total =
     totalUsd ??
-    wallets.reduce((sum, w) => sum + (Number.isFinite(w.usdEquivalent) ? w.usdEquivalent : 0), 0);
-
-  const promptSend = (currency: string) => {
+    wallets.reduce(
+      (sum, wallet) => sum + (Number.isFinite(wallet.usdEquivalent) ? wallet.usdEquivalent : 0),
+      0,
+    );
+  const prompt = (text: string) => {
     haptics.selection();
-    sendChatPrompt(aui, `Send money from my ${currency} wallet`);
+    sendChatPrompt(aui, text);
   };
-
-  const promptReceive = (currency: string) => {
-    haptics.selection();
-    sendChatPrompt(aui, receivePrompt(currency));
-  };
-
   return (
     <View
-      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
-      style={[styles.card]}
+      className='my-2 w-full overflow-hidden border border-border bg-card'
+      style={styles.card}
     >
-      <View className='flex-row items-start gap-3'>
-        <View className='flex-1 gap-0.5'>
-          <Text className='font-sans-medium text-[14px] tracking-[-0.1px] text-muted-foreground'>
-            Balances
+      <View className='flex-row items-start gap-3 px-4 pb-4 pt-4'>
+        <View className='flex-1 gap-1'>
+          <Text className='font-sans-medium text-[12px] uppercase text-muted-foreground'>
+            Portfolio balance
           </Text>
-          <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
+          <Text className='font-sans-semibold text-[30px] text-foreground'>
             {hidden
-              ? '$••••••'
-              : `$${total.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`}
+              ? '$******'
+              : `$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </Text>
-          <Text className='font-sans-medium text-[13px] text-muted-foreground'>
-            Total across wallets (USD)
+          <Text className='font-sans text-[12px] text-muted-foreground'>
+            USD equivalent across {wallets.length} wallet{wallets.length === 1 ? '' : 's'}
           </Text>
         </View>
         <Pressable
@@ -84,10 +68,9 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
           hitSlop={10}
           onPress={() => {
             haptics.selection();
-            setHidden((v) => !v);
+            setHidden((value) => !value);
           }}
-          className='w-9 h-9 rounded-[18px] items-center justify-center'
-          style={({ pressed }) => [{ backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
+          className='h-9 w-9 items-center justify-center rounded-full bg-muted'
         >
           <Icon
             name={hidden ? 'eye-off' : 'eye'}
@@ -96,80 +79,73 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
           />
         </Pressable>
       </View>
-
-      <View className='gap-2.5'>
-        {wallets.map((wallet) => (
+      <View className='border-t border-border px-4'>
+        {wallets.map((wallet, index) => (
           <View
             key={wallet.id}
-            className='border p-3 gap-3 border-border'
-            style={[styles.row]}
+            className={`gap-2.5 py-3.5 ${index ? 'border-t border-border' : ''}`}
           >
-            <View className='flex-row items-center gap-2.5'>
+            <View className='flex-row items-center gap-3'>
               <CurrencyIcon
                 currency={wallet.currency}
-                size={34}
+                size={36}
               />
-              <View className='flex-1 gap-0.5'>
-                <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              <View className='min-w-0 flex-1 gap-0.5'>
+                <Text className='font-sans-semibold text-[15px] text-foreground'>
                   {wallet.currency}
                 </Text>
-                <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+                <Text
+                  numberOfLines={1}
+                  className='font-sans text-[12px] text-muted-foreground'
+                >
                   {wallet.name}
                 </Text>
               </View>
               <View className='items-end gap-0.5'>
-                <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
-                  {maskAmount(wallet.symbol, wallet.balance, hidden)}
+                <Text
+                  numberOfLines={1}
+                  className='font-sans-semibold text-[16px] text-foreground'
+                >
+                  {amount(wallet.symbol, wallet.balance, hidden)}
                 </Text>
-                <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+                <Text className='font-sans text-[12px] text-muted-foreground'>
                   {hidden
-                    ? '≈ $••••'
-                    : `≈ $${wallet.usdEquivalent.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}`}
+                    ? 'USD ******'
+                    : `USD $${wallet.usdEquivalent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </Text>
               </View>
             </View>
-
-            <View className='flex-row gap-2'>
+            <View className='flex-row gap-2 pl-12'>
               <Pressable
-                onPress={() => promptReceive(wallet.currency)}
-                className='flex-1 min-h-10 border flex-row items-center justify-center gap-1.5'
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  {
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.75 : 1,
-                  },
-                ]}
+                accessibilityLabel={`Receive ${wallet.currency}`}
+                onPress={() => prompt(receivePrompt(wallet.currency))}
+                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-muted'
               >
                 <Icon
                   name='arrow-down-left'
                   size={14}
                   color={colors.foreground}
                 />
-                <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-foreground'>
-                  Receive
-                </Text>
+                <Text className='font-sans-semibold text-[13px] text-foreground'>Receive</Text>
               </Pressable>
               <Pressable
-                onPress={() => promptSend(wallet.currency)}
-                className='flex-1 min-h-10 border flex-row items-center justify-center gap-1.5 border-0'
-                style={({ pressed }) => [
-                  styles.actionBtn,
-                  {
-                    backgroundColor: colors.foreground,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}
+                accessibilityLabel={`Send ${wallet.currency}`}
+                onPress={() => prompt(`Send money from my ${wallet.currency} wallet`)}
+                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full'
+                style={({ pressed }) => ({
+                  backgroundColor: colors.foreground,
+                  opacity: pressed ? 0.85 : 1,
+                })}
               >
                 <Icon
                   name='send'
                   size={14}
                   color={colors.background}
                 />
-                <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-background'>
+                <Text
+                  className='font-sans-semibold text-[13px]'
+                  style={{ color: colors.background }}
+                >
                   Send
                 </Text>
               </Pressable>
@@ -180,15 +156,4 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
     </View>
   );
 }
-
-const styles = {
-  card: {
-    borderRadius: Radius.card,
-  },
-  row: {
-    borderRadius: Radius.composer,
-  },
-  actionBtn: {
-    borderRadius: Radius.pill,
-  },
-};
+const styles = { card: { borderRadius: Radius.lg } };
