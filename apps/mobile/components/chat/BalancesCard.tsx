@@ -119,20 +119,27 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
               <Pressable
                 accessibilityLabel={`Receive ${wallet.currency}`}
                 onPress={() => prompt(receivePrompt(wallet.currency))}
-                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-muted'
+                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full'
+                style={{ flex: 1, backgroundColor: colors.muted }}
               >
                 <Icon
                   name='arrow-down-left'
                   size={14}
                   color={colors.foreground}
                 />
-                <Text className='font-sans-semibold text-[13px] text-foreground'>Receive</Text>
+                <Text
+                  style={{ color: colors.foreground }}
+                  className='font-sans-semibold text-[13px]'
+                >
+                  Receive
+                </Text>
               </Pressable>
               <Pressable
                 accessibilityLabel={`Send ${wallet.currency}`}
                 onPress={() => prompt(`Send money from my ${wallet.currency} wallet`)}
                 className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full'
                 style={({ pressed }) => ({
+                  flex: 1,
                   backgroundColor: colors.primary,
                   opacity: pressed ? 0.85 : 1,
                 })}
