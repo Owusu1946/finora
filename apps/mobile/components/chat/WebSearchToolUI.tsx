@@ -1,6 +1,6 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, View } from 'react-native';
+import { Image, Linking, Modal, Pressable, ScrollView, View } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -18,6 +18,7 @@ type WebSource = {
   author?: string | null;
   excerpt?: string | null;
   favicon?: string | null;
+  image?: string | null;
 };
 
 type WebResult = {
@@ -284,65 +285,126 @@ function ProductSearchCard({
           </Text>
         </View>
       </View>
-      {products.slice(0, 5).map((product) => (
-        <Pressable
-          key={`${product.id}:${product.source.url}`}
-          accessibilityRole='link'
-          accessibilityLabel={`Open ${product.productName}`}
-          onPress={() => void Linking.openURL(product.source.url)}
-          className='border border-border bg-composer p-4'
-          style={({ pressed }) => [styles.product, pressed && { opacity: 0.72 }]}
-        >
-          <View className='flex-row items-start gap-3'>
-            <View className='flex-1 gap-1.5'>
-              <Text
-                numberOfLines={2}
-                className='font-sans-semibold text-[15px] leading-[20px] text-foreground'
-              >
-                {product.productName}
-              </Text>
-              <Text className='font-sans-bold text-[18px] text-foreground'>
-                {product.price ?? 'Price unavailable'}
-              </Text>
-              <Text className='font-sans text-[12px] text-muted-foreground'>
-                {product.seller}
-                {product.condition && product.condition !== 'unknown'
-                  ? ` · ${product.condition.replace('_', ' ')}`
-                  : ''}
-              </Text>
-              <Text
-                className={`font-sans-medium text-[12px] ${
-                  product.withinBudget === true
-                    ? 'text-success'
-                    : product.withinBudget === false
-                      ? 'text-destructive'
-                      : 'text-muted-foreground'
-                }`}
-              >
-                {product.withinBudget === true
-                  ? 'Confirmed within budget'
-                  : product.withinBudget === false
-                    ? 'Over budget'
-                    : 'Delivered total not confirmed'}
-              </Text>
-              <Text className='font-sans text-[11px] text-muted-foreground'>
-                {product.verified ? 'Listing page checked' : 'Search result only'}
-                {product.availability === 'unavailable' ? ' · Unavailable' : ''}
-              </Text>
-              {product.warnings?.[0] ? (
-                <Text className='font-sans text-[11px] leading-[16px] text-muted-foreground'>
-                  {product.warnings[0]}
-                </Text>
-              ) : null}
-            </View>
-            <Icon
-              name='arrow-up'
-              size={16}
-              color={colors.mutedForeground}
+      <ScrollView
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
+        snapToInterval={356}
+        decelerationRate='fast'
+        contentContainerStyle={styles.productCarousel}
+        style={styles.productCarouselViewport}
+      >
+        {products.slice(0, 5).map((product, index) => (
+          <Pressable
+            key={`${product.id}:${product.source.url}`}
+            accessibilityRole='link'
+            accessibilityLabel={`Open ${product.productName}`}
+            onPress={() => void Linking.openURL(product.source.url)}
+            className='overflow-hidden border border-border bg-composer'
+            style={({ pressed }) => [styles.product, pressed && { opacity: 0.72 }]}
+          >
+            <ProductImage
+              uri={product.source.image}
+              label={`${product.productName} product image`}
+              fallbackColor={colors.mutedForeground}
             />
-          </View>
-        </Pressable>
-      ))}
+            <View className='absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1'>
+              <Text className='font-sans-semibold text-[11px] text-foreground'>#{index + 1}</Text>
+            </View>
+            <View className='flex-1 gap-1.5 p-4'>
+              <View className='flex-1 gap-1.5'>
+                <Text
+                  numberOfLines={2}
+                  className='font-sans-semibold text-[15px] leading-[20px] text-foreground'
+                >
+                  {product.productName}
+                </Text>
+                <Text className='font-sans-bold text-[18px] text-foreground'>
+                  {product.price ?? 'Price unavailable'}
+                </Text>
+                <Text className='font-sans text-[12px] text-muted-foreground'>
+                  {product.seller}
+                  {product.condition && product.condition !== 'unknown'
+                    ? ` · ${product.condition.replace('_', ' ')}`
+                    : ''}
+                </Text>
+                <Text
+                  className={`font-sans-medium text-[12px] ${
+                    product.withinBudget === true
+                      ? 'text-success'
+                      : product.withinBudget === false
+                        ? 'text-destructive'
+                        : 'text-muted-foreground'
+                  }`}
+                >
+                  {product.withinBudget === true
+                    ? 'Confirmed within budget'
+                    : product.withinBudget === false
+                      ? 'Over budget'
+                      : 'Delivered total not confirmed'}
+                </Text>
+                <Text className='font-sans text-[11px] text-muted-foreground'>
+                  {product.verified ? 'Listing page checked' : 'Search result only'}
+                  {product.availability === 'unavailable' ? ' · Unavailable' : ''}
+                </Text>
+                {product.warnings?.[0] ? (
+                  <Text
+                    numberOfLines={2}
+                    className='font-sans text-[11px] leading-[16px] text-muted-foreground'
+                  >
+                    {product.warnings[0]}
+                  </Text>
+                ) : null}
+              </View>
+              <View className='mt-auto flex-row items-center justify-between border-t border-border pt-2'>
+                <Text className='font-sans-medium text-[11px] text-foreground'>View listing</Text>
+                <Icon
+                  name='arrow-up'
+                  size={16}
+                  color={colors.mutedForeground}
+                />
+              </View>
+            </View>
+          </Pressable>
+        ))}
+      </ScrollView>
+      {products.length > 1 ? (
+        <Text className='text-center font-sans text-[11px] text-muted-foreground'>
+          Swipe vertically to compare {products.length} listings
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function ProductImage({
+  uri,
+  label,
+  fallbackColor,
+}: {
+  uri?: string | null;
+  label: string;
+  fallbackColor: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <View className='relative h-[154px] items-center justify-center bg-muted'>
+      {uri && !failed ? (
+        <Image
+          source={{ uri }}
+          accessibilityLabel={label}
+          onError={() => setFailed(true)}
+          resizeMode='contain'
+          style={styles.productImage}
+        />
+      ) : (
+        <View className='h-16 w-16 items-center justify-center rounded-full bg-background'>
+          <Icon
+            name='card'
+            size={30}
+            color={fallbackColor}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -388,5 +450,8 @@ export const SearchProductsToolUI = makeAssistantToolUI<
 const styles = {
   card: { borderRadius: Radius.card },
   source: { borderRadius: Radius.card },
-  product: { borderRadius: Radius.card },
+  product: { borderRadius: Radius.card, height: 344 },
+  productCarousel: { paddingBottom: 2 },
+  productCarouselViewport: { maxHeight: 400 },
+  productImage: { width: '100%' as const, height: '100%' as const },
 };

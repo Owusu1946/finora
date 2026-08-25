@@ -13,6 +13,7 @@ const ExaResultSchema = z.object({
   publishedDate: z.string().nullable().optional(),
   author: z.string().nullable().optional(),
   favicon: z.string().url().optional(),
+  image: z.string().url().optional(),
   highlights: z.array(z.string()).optional(),
   text: z.string().optional(),
   summary: z.string().optional(),
@@ -55,6 +56,7 @@ function source(result: ExaResult, index: number) {
     author: result.author ?? null,
     excerpt: result.highlights?.[0] ?? result.summary ?? result.text?.slice(0, 600) ?? null,
     favicon: result.favicon ?? null,
+    image: result.image ?? null,
   };
 }
 
@@ -84,7 +86,15 @@ function firstPrice(text: string) {
   if (!display) return null;
   const amount = Number(display.replace(/[^\d.,]/g, '').replaceAll(',', ''));
   const code = display.match(/USD|GHS|NGN|KES|EUR|GBP/i)?.[0]?.toUpperCase();
-  const currency = code ?? (display.startsWith('$') ? 'USD' : display.startsWith('€') ? 'EUR' : display.startsWith('£') ? 'GBP' : null);
+  const currency =
+    code ??
+    (display.startsWith('$')
+      ? 'USD'
+      : display.startsWith('€')
+        ? 'EUR'
+        : display.startsWith('£')
+          ? 'GBP'
+          : null);
   return { display, amount: Number.isFinite(amount) ? amount : null, currency };
 }
 
@@ -125,15 +135,14 @@ const PRODUCT_QUERY_STOP_WORDS = new Set([
 ]);
 
 function matchesProductQuery(title: string, query: string) {
-  const tokens = query
-    .toLowerCase()
-    .match(/[a-z0-9]+/g)
-    ?.filter(
-      (token) =>
-        token.length > 1 &&
-        !PRODUCT_QUERY_STOP_WORDS.has(token) &&
-        !/^\d{3,}$/.test(token),
-    ) ?? [];
+  const tokens =
+    query
+      .toLowerCase()
+      .match(/[a-z0-9]+/g)
+      ?.filter(
+        (token) =>
+          token.length > 1 && !PRODUCT_QUERY_STOP_WORDS.has(token) && !/^\d{3,}$/.test(token),
+      ) ?? [];
   if (!tokens.length) return true;
   const normalizedTitle = title.toLowerCase();
   const matched = tokens.filter((token) => normalizedTitle.includes(token)).length;
@@ -195,9 +204,13 @@ export function createExaClient(apiKey?: string) {
       const constraints = [
         input.location ? `available in or shipping to ${input.location}` : null,
         input.budget && input.currency ? `budget up to ${input.currency} ${input.budget}` : null,
-        input.condition !== 'any' ? `${input.condition.replace('_', ' ')} condition` : 'new, used, refurbished, or open-box listings',
+        input.condition !== 'any'
+          ? `${input.condition.replace('_', ' ')} condition`
+          : 'new, used, refurbished, or open-box listings',
         'include current price, seller, availability, delivery, and product page URL',
-      ].filter(Boolean).join('; ');
+      ]
+        .filter(Boolean)
+        .join('; ');
       const payload = await request(
         '/search',
         {
@@ -260,7 +273,8 @@ export function createExaClient(apiKey?: string) {
             const priceAmount = extractedPrice?.amount ?? candidate.priceAmount;
             const currency = extractedPrice?.currency ?? candidate.currency;
             const unavailable = /out of stock|sold out|unavailable/i.test(evidence);
-            const shippingIncluded = /free shipping|free delivery|shipping included|delivery included/i.test(evidence);
+            const shippingIncluded =
+              /free shipping|free delivery|shipping included|delivery included/i.test(evidence);
             const totalKnown = !input.includeShipping || shippingIncluded;
             const comparableBudget =
               input.budget !== undefined && input.currency === currency && priceAmount !== null;
@@ -272,9 +286,11 @@ export function createExaClient(apiKey?: string) {
               currency,
               estimatedTotal: totalKnown ? price : null,
               estimatedTotalAmount: totalKnown ? priceAmount : null,
-              withinBudget:
-                comparableBudget && totalKnown ? priceAmount <= input.budget! : null,
-              condition: conditionFromText(evidence) === 'unknown' ? candidate.condition : conditionFromText(evidence),
+              withinBudget: comparableBudget && totalKnown ? priceAmount <= input.budget! : null,
+              condition:
+                conditionFromText(evidence) === 'unknown'
+                  ? candidate.condition
+                  : conditionFromText(evidence),
               availability: unavailable ? 'unavailable' : 'listed',
               verified: true,
               confidence: price ? ('medium' as const) : ('low' as const),
@@ -283,7 +299,10 @@ export function createExaClient(apiKey?: string) {
                 : totalKnown
                   ? []
                   : ['Shipping and taxes were not confirmed, so delivered cost is unknown.'],
-              source: source(page, 0),
+              source: {
+                ...source(page, 0),
+                image: page.image ?? candidate.source.image,
+              },
             };
           } catch {
             return candidate;
