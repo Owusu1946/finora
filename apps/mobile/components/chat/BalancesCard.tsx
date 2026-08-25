@@ -137,6 +137,7 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
                 onPress={() => promptReceive(wallet.currency)}
                 className='flex-1 min-h-10 border flex-row items-center justify-center gap-1.5'
                 style={({ pressed }) => [
+                  styles.actionBtn,
                   {
                     borderColor: colors.border,
                     opacity: pressed ? 0.75 : 1,
@@ -156,6 +157,7 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
                 onPress={() => promptSend(wallet.currency)}
                 className='flex-1 min-h-10 border flex-row items-center justify-center gap-1.5 border-0'
                 style={({ pressed }) => [
+                  styles.actionBtn,
                   {
                     backgroundColor: colors.foreground,
                     opacity: pressed ? 0.85 : 1,

@@ -145,6 +145,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 }}
                 className='flex-row items-center gap-1.5 px-2.5 py-1.5'
                 style={({ pressed }) => [
+                  styles.tab,
                   {
                     backgroundColor: selected ? colors.foreground : colors.muted,
                     opacity: pressed ? 0.88 : 1,
@@ -252,6 +253,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           onPress={() => void textDetails()}
           className='min-h-[46px] flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
+            styles.primaryBtn,
             {
               backgroundColor: colors.foreground,
               opacity: pressed ? 0.85 : 1,
@@ -273,6 +275,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             onPress={shareDetails}
             className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
+              styles.secondaryBtn,
               {
                 borderColor: colors.border,
                 opacity: pressed ? 0.75 : 1,
@@ -292,6 +295,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             onPress={shareQr}
             className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
+              styles.secondaryBtn,
               {
                 borderColor: colors.border,
                 opacity: pressed ? 0.75 : 1,
@@ -311,6 +315,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             onPress={copyAll}
             className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
+              styles.secondaryBtn,
               {
                 borderColor: colors.border,
                 opacity: pressed ? 0.75 : 1,
@@ -367,6 +372,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 onPress={shareQr}
                 className='min-h-[46px] flex-row items-center justify-center gap-2'
                 style={({ pressed }) => [
+                  styles.primaryBtn,
                   {
                     backgroundColor: colors.foreground,
                     opacity: pressed ? 0.85 : 1,
@@ -390,6 +396,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 }}
                 className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
                 style={({ pressed }) => [
+                  styles.secondaryBtn,
                   {
                     borderColor: colors.border,
                     opacity: pressed ? 0.75 : 1,
