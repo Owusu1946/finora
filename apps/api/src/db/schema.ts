@@ -15,6 +15,12 @@ import {
 } from 'drizzle-orm/pg-core';
 import { halfvec } from 'drizzle-orm/pg-core/columns/vector_extension/halfvec';
 
+import type {
+  AutomationAction,
+  AutomationCondition,
+  AutomationTrigger,
+} from '@finora/shared';
+
 export const accountTypeEnum = pgEnum('account_type', ['personal', 'business']);
 export const aiChatMessageRoleEnum = pgEnum('ai_chat_message_role', ['user', 'assistant']);
 export const aiChatTitleStatusEnum = pgEnum('ai_chat_title_status', [
@@ -44,6 +50,15 @@ export const integrationStatusEnum = pgEnum('integration_status', [
   'syncing',
   'error',
   'reauthorization_required',
+]);
+export const automationStatusEnum = pgEnum('automation_status', ['active', 'paused', 'disabled']);
+export const automationExecutionStatusEnum = pgEnum('automation_execution_status', [
+  'evaluated',
+  'skipped_condition',
+  'prepared_approval',
+  'notified',
+  'failed',
+  'duplicate',
 ]);
 
 export const userProfiles = pgTable(
@@ -399,6 +414,58 @@ export const invoices = pgTable(
   (table) => [
     uniqueIndex('invoices_user_gmail_message_unique').on(table.clerkUserId, table.gmailMessageId),
     index('invoices_user_received_index').on(table.clerkUserId, table.receivedAt),
+  ],
+);
+
+export const automations = pgTable(
+  'automations',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    name: text('name').notNull(),
+    description: text('description'),
+    trigger: jsonb('trigger').$type<AutomationTrigger>().notNull(),
+    conditions: jsonb('conditions').$type<AutomationCondition[]>().notNull().default([]),
+    action: jsonb('action').$type<AutomationAction>().notNull(),
+    status: automationStatusEnum('status').notNull().default('active'),
+    cooldownSeconds: integer('cooldown_seconds').notNull().default(0),
+    version: integer('version').notNull().default(1),
+    lastEvaluatedAt: timestamp('last_evaluated_at', { withTimezone: true }),
+    lastTriggeredAt: timestamp('last_triggered_at', { withTimezone: true }),
+    lastRunStatus: text('last_run_status'),
+    totalRuns: integer('total_runs').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('automations_user_status_index').on(table.clerkUserId, table.status),
+    index('automations_user_updated_index').on(table.clerkUserId, table.updatedAt),
+  ],
+);
+
+export const automationExecutionLogs = pgTable(
+  'automation_execution_logs',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    automationId: uuid('automation_id')
+      .references(() => automations.id, { onDelete: 'cascade' })
+      .notNull(),
+    clerkUserId: text('clerk_user_id').notNull(),
+    eventId: text('event_id'),
+    status: automationExecutionStatusEnum('status').notNull(),
+    summary: text('summary').notNull(),
+    details: jsonb('details').$type<Record<string, unknown>>(),
+    preparationId: text('preparation_id'),
+    approvalId: text('approval_id'),
+    errorCode: text('error_code'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('automation_execution_logs_automation_created_index').on(
+      table.automationId,
+      table.createdAt,
+    ),
+    index('automation_execution_logs_user_created_index').on(table.clerkUserId, table.createdAt),
   ],
 );
 

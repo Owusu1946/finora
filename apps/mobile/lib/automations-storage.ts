@@ -6,6 +6,8 @@ export type Automation = {
   trigger: string;
   action: string;
   status: 'active' | 'paused';
+  source?: 'local' | 'api';
+  remote?: import('@finora/shared').AutomationRecord;
 };
 
 const KEY = 'finora.automations.v1';

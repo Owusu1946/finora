@@ -15,6 +15,7 @@ import { MOCK_BUSINESS_PLAN } from '@/components/approvals/types';
 import { MOCK_INVOICES } from '@/components/invoices/types';
 import { isBusinessAccount } from '@/lib/account';
 import { listAutomations } from '@/lib/automations-storage';
+import { listRemoteAutomations } from '@/lib/automations-api';
 import { listBeneficiaries } from '@/lib/beneficiaries-storage';
 import { getCalendarEvents } from '@/lib/calendar-integration-api';
 import {
@@ -1165,7 +1166,19 @@ const finoraMockAdapter = {
     }
 
     if (isListAutomationsIntent(prompt)) {
-      const automations = await listAutomations();
+      const automations = getToken
+        ? await listRemoteAutomations(getToken)
+            .then((items) =>
+              items.map((item) => ({
+                id: item.id,
+                name: item.name,
+                trigger: item.trigger.type,
+                action: item.action.type,
+                status: item.status === 'disabled' ? 'paused' : item.status,
+              })),
+            )
+            .catch(() => listAutomations())
+        : await listAutomations();
       const args = {};
       const argsText = JSON.stringify(args);
       const reasoning = 'Automations requested.\nLoading business rules…';
