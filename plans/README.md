@@ -14,11 +14,13 @@ STOP conditions, and update the status row when complete.
 | 004 | Validate payment links, QR destinations, and assistant URLs | P1 | M | 001 | TODO |
 | 005 | Remove client-side virtual-card credentials | P1 | L | 003 | TODO |
 | 006 | Align mobile dependencies and project skills | P2 | M | 001 | COMPLETE |
+| 007 | Wire live WeWire APIs into the Finora platform | P1 | XL | none | TODO |
 
 ## Dependency notes
 
 - 002 and 003 both touch approval/auth behavior. The lint baseline in 001 should land first so hook and lifecycle regressions are visible.
 - 005 depends on 003 because card records and reveal state must use the same account/session boundary.
+- 007 phases 0–1 are self-contained; live verification from phase 2 onward needs sandbox keys. Phase 6 assumes the approval-binding shape from 002 but does not block on it landing first.
 - 006 should follow 001 so dependency and skill changes are checked against a stable command baseline.
 
 ## Findings considered and rejected
