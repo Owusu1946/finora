@@ -16,12 +16,28 @@ import {
   getAutomation,
   listAutomationLogs,
   listAutomations,
+  listUserAutomationActivity,
   updateAutomation,
 } from '../db/automation-store';
 import { listActiveAutomations } from '../db/automation-store';
 import { createDb } from '../db/client';
 
 export const automations = new Hono<AppEnv>();
+
+automations.get('/activity', async (c) => {
+  const afterValue = c.req.query('after');
+  const after = afterValue ? new Date(afterValue) : undefined;
+  if (after && Number.isNaN(after.getTime()))
+    return c.json({ message: 'Invalid activity cursor.' }, 400);
+  const activity = await listUserAutomationActivity(
+    createDb(c.get('env').DATABASE_URL),
+    c.get('auth').userId,
+    { after, limit: 50 },
+  );
+  return c.json({
+    activity: activity.map((item) => ({ ...item, createdAt: item.createdAt.toISOString() })),
+  });
+});
 
 automations.post('/events/balance', async (c) => {
   const body = (await c.req.json().catch(() => null)) as {

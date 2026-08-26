@@ -6,7 +6,7 @@ import type {
   UpdateAutomationInput,
 } from '@finora/shared';
 
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -250,4 +250,30 @@ export async function listAutomationLogs(
     )
     .orderBy(desc(automationExecutionLogs.createdAt))
     .limit(limit);
+}
+
+export async function listUserAutomationActivity(
+  db: Database,
+  userId: string,
+  input: { after?: Date; limit?: number } = {},
+) {
+  const filters = [eq(automationExecutionLogs.clerkUserId, userId)];
+  if (input.after) filters.push(gt(automationExecutionLogs.createdAt, input.after));
+  return db
+    .select({
+      id: automationExecutionLogs.id,
+      automationId: automationExecutionLogs.automationId,
+      automationName: automations.name,
+      status: automationExecutionLogs.status,
+      summary: automationExecutionLogs.summary,
+      preparationId: automationExecutionLogs.preparationId,
+      approvalId: automationExecutionLogs.approvalId,
+      errorCode: automationExecutionLogs.errorCode,
+      createdAt: automationExecutionLogs.createdAt,
+    })
+    .from(automationExecutionLogs)
+    .innerJoin(automations, eq(automationExecutionLogs.automationId, automations.id))
+    .where(and(...filters))
+    .orderBy(desc(automationExecutionLogs.createdAt))
+    .limit(Math.min(input.limit ?? 50, 100));
 }
