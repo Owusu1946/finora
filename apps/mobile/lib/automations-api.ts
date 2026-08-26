@@ -89,9 +89,21 @@ export async function testRemoteAutomation(
   id: string,
   input: TestAutomationInput,
 ) {
-  return request<{ matched: boolean; dryRun: true; failedConditions: unknown[] }>(
-    `/v1/automations/${id}/test`,
-    getToken,
-    { method: 'POST', body: JSON.stringify(input) },
-  );
+  return request<{
+    matched: boolean;
+    triggerMatches: boolean;
+    dryRun: true;
+    failedConditions: unknown[];
+  }>(`/v1/automations/${id}/test`, getToken, { method: 'POST', body: JSON.stringify(input) });
+}
+
+export async function runRemoteAutomation(
+  getToken: GetToken,
+  id: string,
+  input: TestAutomationInput,
+) {
+  return request<{ queued: true; eventId: string }>(`/v1/automations/${id}/run`, getToken, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }

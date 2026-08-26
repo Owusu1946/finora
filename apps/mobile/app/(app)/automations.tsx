@@ -13,8 +13,14 @@ import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { isBusinessAccount } from '@/lib/account';
 import {
+  matchingAutomationContext,
+  rejectingAutomationContext,
+  triggerSupportLabel,
+} from '@/lib/automation-test-context';
+import {
   createRemoteAutomation,
   listRemoteAutomations,
+  runRemoteAutomation,
   testRemoteAutomation,
   updateRemoteAutomation,
 } from '@/lib/automations-api';
@@ -41,6 +47,54 @@ export default function AutomationsScreen() {
   const [items, setItems] = useState<Automation[] | null>(null);
   const [builderVisible, setBuilderVisible] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+
+  const runDryTest = useCallback(
+    async (automation: NonNullable<Automation['remote']>, expectation: 'match' | 'reject') => {
+      const context =
+        expectation === 'match'
+          ? matchingAutomationContext(automation)
+          : rejectingAutomationContext(automation);
+      if (!context) {
+        Alert.alert(
+          'No rejection case',
+          'This trigger intentionally accepts every sender. Add a condition to test rejection.',
+        );
+        return;
+      }
+      const result = await testRemoteAutomation(getToken, automation.id, { context });
+      const passed = expectation === 'match' ? result.matched : !result.matched;
+      Alert.alert(
+        passed ? 'Test passed' : 'Test exposed a configuration issue',
+        `${expectation === 'match' ? 'Expected a match.' : 'Expected a rejection.'} ${result.triggerMatches ? 'The trigger matched.' : 'The trigger did not match.'} ${result.failedConditions.length} condition(s) failed.\n\nNo action was created or executed.`,
+      );
+    },
+    [getToken],
+  );
+
+  const runSafeAction = useCallback(
+    async (automation: NonNullable<Automation['remote']>) => {
+      const result = await testRemoteAutomation(getToken, automation.id, {
+        context: matchingAutomationContext(automation),
+      });
+      if (!result.matched) {
+        Alert.alert(
+          'Rule cannot match',
+          'The generated matching case still failed. Review conflicting trigger and condition settings before running it.',
+        );
+        return;
+      }
+      await runRemoteAutomation(getToken, automation.id, {
+        context: matchingAutomationContext(automation),
+      });
+      Alert.alert(
+        'Safe run queued',
+        automation.action.type === 'notify_chat'
+          ? 'This will create a notification activity. Keep Finora open to receive the Expo Go local notification.'
+          : 'This will prepare a pending approval only. It will not move money.',
+      );
+    },
+    [getToken],
+  );
 
   const refresh = useCallback(async () => {
     try {
@@ -162,56 +216,53 @@ export default function AutomationsScreen() {
                   {a.status === 'active' ? 'Pause' : 'Resume'}
                 </Text>
               </Pressable>
-              {a.source === 'api' && a.remote ? (
-                <Pressable
-                  disabled={testingId === a.id}
-                  onPress={async () => {
-                    haptics.selection();
-                    setTestingId(a.id);
-                    try {
-                      const context =
-                        a.remote?.trigger.type === 'balance_threshold'
-                          ? {
-                              currency: a.remote.trigger.config.currency,
-                              walletBalance:
-                                a.remote.trigger.config.operator === 'below'
-                                  ? Math.max(0, a.remote.trigger.config.amount - 1)
-                                  : a.remote.trigger.config.amount + 1,
-                            }
-                          : a.remote?.trigger.type === 'gmail_invoice'
-                            ? {
-                                senderDomain: a.remote.trigger.config.senderDomains[0],
-                                amount: 100,
-                                currency: 'USD' as const,
-                              }
-                            : a.remote?.trigger.type === 'invoice_due'
-                              ? { invoiceDueInDays: a.remote.trigger.config.dueWithinDays }
-                              : { now: new Date().toISOString() };
-                      const result = await testRemoteAutomation(getToken, a.id, { context });
-                      Alert.alert(
-                        result.matched ? 'Rule matched' : 'Rule did not match',
-                        result.matched
-                          ? 'Dry run passed. Finora would prepare the configured action, but nothing was created or executed.'
-                          : 'The trigger or one of its conditions did not match the test context.',
-                      );
-                    } catch (error) {
-                      Alert.alert(
-                        'Dry run failed',
-                        error instanceof Error ? error.message : 'Try again.',
-                      );
-                    } finally {
-                      setTestingId(null);
-                    }
-                  }}
-                  className='min-h-[42px] flex-1 items-center justify-center rounded-[32px] bg-muted'
-                  style={{ opacity: testingId === a.id ? 0.55 : 1 }}
-                >
-                  <Text className='font-sans-semibold text-[14px] text-foreground'>
-                    {testingId === a.id ? 'Testing…' : 'Test now'}
-                  </Text>
-                </Pressable>
-              ) : null}
             </View>
+            {a.source === 'api' && a.remote ? (
+              <View className='mt-1 gap-2 rounded-[18px] bg-muted p-2.5'>
+                <Text className='font-sans-medium text-[12px] leading-4 text-muted-foreground'>
+                  {triggerSupportLabel(a.remote)}
+                </Text>
+                <View className='flex-row gap-2'>
+                  {[
+                    { label: 'Match', action: () => runDryTest(a.remote!, 'match') },
+                    { label: 'Reject', action: () => runDryTest(a.remote!, 'reject') },
+                    { label: 'Safe run', action: () => runSafeAction(a.remote!) },
+                  ].map((test) => (
+                    <Pressable
+                      key={test.label}
+                      disabled={
+                        testingId === a.id || (test.label === 'Safe run' && a.status !== 'active')
+                      }
+                      onPress={async () => {
+                        haptics.selection();
+                        setTestingId(a.id);
+                        try {
+                          await test.action();
+                        } catch (error) {
+                          Alert.alert(
+                            'Automation test failed',
+                            error instanceof Error ? error.message : 'Try again.',
+                          );
+                        } finally {
+                          setTestingId(null);
+                        }
+                      }}
+                      className='min-h-[40px] flex-1 items-center justify-center rounded-[24px] bg-composer'
+                      style={{
+                        opacity:
+                          testingId === a.id || (test.label === 'Safe run' && a.status !== 'active')
+                            ? 0.5
+                            : 1,
+                      }}
+                    >
+                      <Text className='font-sans-semibold text-[13px] text-foreground'>
+                        {testingId === a.id ? 'Testing…' : test.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ) : null}
           </View>
         )}
       />
