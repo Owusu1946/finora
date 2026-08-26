@@ -6,10 +6,12 @@ import { cors } from 'hono/cors';
 import type { AppEnv } from './app-env';
 
 import { requireSession } from './auth';
+import { enqueueDueAutomations, runAutomationMessage } from './automations/runner';
 import { consumeTransactionalEmailQueue } from './email/consumer';
 import { getApiEnv } from './env';
 import { consumeCalendarSyncQueue } from './integrations/calendar-consumer';
 import { consumeGmailSyncQueue } from './integrations/gmail-consumer';
+import { automations } from './routes/automations';
 import { calendarIntegrations, calendarOAuth } from './routes/calendar-integrations';
 import { chat } from './routes/chat';
 import { chats } from './routes/chats';
@@ -18,7 +20,6 @@ import { emailWebhooks } from './routes/email-webhooks';
 import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
 import { invoiceRoutes } from './routes/invoices';
 import { memories } from './routes/memories';
-import { automations } from './routes/automations';
 import { payroll } from './routes/payroll';
 import { v1 } from './routes/v1';
 
@@ -77,10 +78,17 @@ app.route('/v1', v1);
 async function consumeQueue(batch: MessageBatch<unknown>, env: Env) {
   if (batch.queue === 'finora-gmail-sync') return consumeGmailSyncQueue(batch, env);
   if (batch.queue === 'finora-calendar-sync') return consumeCalendarSyncQueue(batch, env);
+  if (batch.queue === 'finora-automation-evaluation') {
+    for (const message of batch.messages) await runAutomationMessage(message, env);
+    return;
+  }
   return consumeTransactionalEmailQueue(batch, env);
 }
 
 export default {
   fetch: app.fetch,
   queue: consumeQueue,
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(enqueueDueAutomations(env));
+  },
 } satisfies ExportedHandler<Env>;

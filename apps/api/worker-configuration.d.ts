@@ -5,6 +5,7 @@ interface __BaseEnv_Env {
 	TRANSACTIONAL_EMAIL_QUEUE: Queue;
 	GMAIL_SYNC_QUEUE: Queue;
 	CALENDAR_SYNC_QUEUE: Queue;
+	AUTOMATION_QUEUE: Queue;
 	AI: Ai;
 	ENVIRONMENT: "development";
 	CLERK_PUBLISHABLE_KEY: "pk_test_b3Blbi1vY3RvcHVzLTMuY2xlcmsuYWNjb3VudHMuZGV2JA";

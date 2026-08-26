@@ -5,9 +5,11 @@ import type {
   TestAutomationInput,
   UpdateAutomationInput,
 } from '@finora/shared';
-import { and, desc, eq } from 'drizzle-orm';
+
+import { and, desc, eq, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
+
 import { automationExecutionLogs, automations } from './schema';
 
 function serialize(row: typeof automations.$inferSelect): AutomationRecord {
@@ -31,11 +33,18 @@ function serialize(row: typeof automations.$inferSelect): AutomationRecord {
   };
 }
 
-export async function listAutomations(db: Database, userId: string, status?: 'active' | 'paused' | 'disabled', limit = 50) {
+export async function listAutomations(
+  db: Database,
+  userId: string,
+  status?: 'active' | 'paused' | 'disabled',
+  limit = 50,
+) {
   const rows = await db
     .select()
     .from(automations)
-    .where(and(eq(automations.clerkUserId, userId), status ? eq(automations.status, status) : undefined))
+    .where(
+      and(eq(automations.clerkUserId, userId), status ? eq(automations.status, status) : undefined),
+    )
     .orderBy(desc(automations.updatedAt))
     .limit(limit);
   return rows.map(serialize);
@@ -76,7 +85,7 @@ export async function updateAutomation(db: Database, userId: string, input: Upda
     ...(input.action !== undefined ? { action: input.action } : {}),
     ...(input.status !== undefined ? { status: input.status } : {}),
     ...(input.cooldownSeconds !== undefined ? { cooldownSeconds: input.cooldownSeconds } : {}),
-    version: undefined,
+    version: sql`${automations.version} + 1`,
     updatedAt: new Date(),
   };
   const [row] = await db
@@ -85,6 +94,42 @@ export async function updateAutomation(db: Database, userId: string, input: Upda
     .where(and(eq(automations.clerkUserId, userId), eq(automations.id, input.id)))
     .returning();
   return row ? serialize(row) : null;
+}
+
+export async function listActiveAutomations(db: Database, limit = 500) {
+  return db
+    .select()
+    .from(automations)
+    .where(eq(automations.status, 'active'))
+    .orderBy(desc(automations.updatedAt))
+    .limit(limit);
+}
+
+export async function markAutomationEvaluation(
+  db: Database,
+  automationId: string,
+  status: string,
+  triggered: boolean,
+) {
+  const now = new Date();
+  await db
+    .update(automations)
+    .set({
+      lastEvaluatedAt: now,
+      lastTriggeredAt: triggered ? now : undefined,
+      lastRunStatus: status,
+      totalRuns: sql`${automations.totalRuns} + 1`,
+      updatedAt: now,
+    })
+    .where(eq(automations.id, automationId));
+}
+
+export async function recordAutomationLog(
+  db: Database,
+  input: typeof automationExecutionLogs.$inferInsert,
+) {
+  const [row] = await db.insert(automationExecutionLogs).values(input).returning();
+  return row;
 }
 
 export async function deleteAutomation(db: Database, userId: string, id: string) {
@@ -98,9 +143,17 @@ export async function deleteAutomation(db: Database, userId: string, id: string)
 function conditionMatches(condition: AutomationCondition, context: TestAutomationInput['context']) {
   switch (condition.type) {
     case 'amount_max':
-      return context.amount != null && context.currency === condition.currency && context.amount <= condition.amount;
+      return (
+        context.amount != null &&
+        context.currency === condition.currency &&
+        context.amount <= condition.amount
+      );
     case 'amount_min':
-      return context.amount != null && context.currency === condition.currency && context.amount >= condition.amount;
+      return (
+        context.amount != null &&
+        context.currency === condition.currency &&
+        context.amount >= condition.amount
+      );
     case 'currency_is':
       return context.currency === condition.currency;
     case 'supplier_is':
@@ -132,7 +185,8 @@ export function evaluateAutomation(input: {
       trigger.config.senderDomains.length === 0 ||
       (input.context.senderDomain != null &&
         trigger.config.senderDomains.some(
-          (domain) => domain.toLocaleLowerCase() === input.context.senderDomain?.toLocaleLowerCase(),
+          (domain) =>
+            domain.toLocaleLowerCase() === input.context.senderDomain?.toLocaleLowerCase(),
         ));
   } else if (trigger.type === 'invoice_due') {
     triggerMatches =
@@ -151,17 +205,26 @@ export function evaluateAutomation(input: {
     const parts = trigger.config.time.split(':').map(Number);
     const hour = parts[0];
     const minute = parts[1];
-    const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(part('weekday') ?? '');
+    const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(
+      part('weekday') ?? '',
+    );
     triggerMatches = Number(part('hour')) === hour && Number(part('minute')) === minute;
-    if (triggerMatches && trigger.config.frequency === 'weekdays') triggerMatches = weekday > 0 && weekday < 6;
-    if (triggerMatches && trigger.config.frequency === 'weekly') triggerMatches = weekday === trigger.config.weekday;
-    if (triggerMatches && trigger.config.frequency === 'monthly') triggerMatches = Number(part('day')) === trigger.config.dayOfMonth;
+    if (triggerMatches && trigger.config.frequency === 'weekdays')
+      triggerMatches = weekday > 0 && weekday < 6;
+    if (triggerMatches && trigger.config.frequency === 'weekly')
+      triggerMatches = weekday === trigger.config.weekday;
+    if (triggerMatches && trigger.config.frequency === 'monthly')
+      triggerMatches = Number(part('day')) === trigger.config.dayOfMonth;
     if (triggerMatches && trigger.config.frequency === 'once') {
-      const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: trigger.config.timezone }).format(now);
+      const localDate = new Intl.DateTimeFormat('en-CA', {
+        timeZone: trigger.config.timezone,
+      }).format(now);
       triggerMatches = localDate === trigger.config.date;
     }
   }
-  const failedConditions = input.conditions.filter((condition) => !conditionMatches(condition, input.context));
+  const failedConditions = input.conditions.filter(
+    (condition) => !conditionMatches(condition, input.context),
+  );
   return {
     matched: triggerMatches && failedConditions.length === 0,
     triggerMatches,
@@ -170,11 +233,21 @@ export function evaluateAutomation(input: {
   };
 }
 
-export async function listAutomationLogs(db: Database, userId: string, automationId: string, limit = 50) {
+export async function listAutomationLogs(
+  db: Database,
+  userId: string,
+  automationId: string,
+  limit = 50,
+) {
   return db
     .select()
     .from(automationExecutionLogs)
-    .where(and(eq(automationExecutionLogs.clerkUserId, userId), eq(automationExecutionLogs.automationId, automationId)))
+    .where(
+      and(
+        eq(automationExecutionLogs.clerkUserId, userId),
+        eq(automationExecutionLogs.automationId, automationId),
+      ),
+    )
     .orderBy(desc(automationExecutionLogs.createdAt))
     .limit(limit);
 }
