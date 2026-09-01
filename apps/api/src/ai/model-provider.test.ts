@@ -21,7 +21,7 @@ describe('getModelProviderConfig', () => {
     expect(getModelProviderConfig({ OPENAI_API_KEY: 'sk-or-router' })).toEqual({
       apiKey: 'sk-or-router',
       isOpenRouter: true,
-      modelId: 'openai/gpt-5-mini',
+      modelId: 'openai/gpt-5.6-luna',
     });
   });
 

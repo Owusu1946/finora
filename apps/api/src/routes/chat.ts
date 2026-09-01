@@ -814,18 +814,18 @@ chat.post('/:id', async (c) => {
         firstChunkMs: FIRST_CHUNK_TIMEOUT_MS,
         totalMs: TOTAL_TIMEOUT_MS,
       },
-      ...(provider.isOpenRouter
-        ? {}
-        : {
-            providerOptions: {
-              openai: {
-                reasoningEffort: 'low',
-                textVerbosity: 'low',
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'low',
+          textVerbosity: 'low',
+          ...(provider.isOpenRouter
+            ? {}
+            : {
                 store: false,
                 safetyIdentifier: await safetyIdentifier(userId),
-              },
-            },
-          }),
+              }),
+        },
+      },
       onError: ({ error }) => reportError(error),
     });
 
