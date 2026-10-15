@@ -39,11 +39,11 @@ through the next foreground visit.
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|---|---|---|
-| Typecheck | `pnpm --filter @finora/mobile check-types` | exit 0 |
-| Lint | `pnpm --filter @finora/mobile lint` | exit 0 |
-| Workspace check | `pnpm check` | exit 0 |
+| Purpose         | Command                                    | Expected on success |
+| --------------- | ------------------------------------------ | ------------------- |
+| Typecheck       | `pnpm --filter @finora/mobile check-types` | exit 0              |
+| Lint            | `pnpm --filter @finora/mobile lint`        | exit 0              |
+| Workspace check | `pnpm check`                               | exit 0              |
 
 ## Scope
 

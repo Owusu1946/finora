@@ -52,8 +52,8 @@ Pattern:
   "outputSchema": {
     "type": "object",
     "properties": {
-      "summary": {"type": "string"},
-      "models": {"type": "array", "items": {"type": "string"}}
+      "summary": { "type": "string" },
+      "models": { "type": "array", "items": { "type": "string" } }
     },
     "required": ["summary", "models"]
   }

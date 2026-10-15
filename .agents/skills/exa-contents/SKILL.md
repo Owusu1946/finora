@@ -1,6 +1,6 @@
 ---
 name: exa-contents
-description: "Call Exa Contents directly with cURL or raw HTTP. Use when an agent already has URLs and needs POST /contents without an SDK for extracted text, highlights, summaries, links, image links, subpages, freshness-controlled crawling, or per-URL status handling."
+description: 'Call Exa Contents directly with cURL or raw HTTP. Use when an agent already has URLs and needs POST /contents without an SDK for extracted text, highlights, summaries, links, image links, subpages, freshness-controlled crawling, or per-URL status handling.'
 ---
 
 # Exa Contents
@@ -55,55 +55,55 @@ Use this endpoint for known-URL extraction. If the agent needs discovery or rank
 
 ### Core request parameters
 
-| Parameter | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `urls` | string[] | Yes | - | URLs to extract content from. Use this for known URLs. |
-| `text` | boolean or object | No | - | Return full page text as markdown. Object form supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, and `excludeSections`. |
-| `highlights` | boolean or object | No | - | Return key excerpts. Prefer `true` for agent workflows unless a custom focus is needed. |
-| `summary` | boolean or object | No | - | Return per-page LLM summaries. Use when the caller wants Exa-side compression or structured extraction. |
-| `maxAgeHours` | integer | No | - | Freshness control. `0` always live crawls; `-1` uses cache only; omit for default cache-first behavior with crawl fallback. |
-| `livecrawlTimeout` | integer | No | `10000` | Timeout for live crawling in milliseconds. Use `10000` to `15000` for most freshness-sensitive calls. |
-| `subpages` | integer | No | `0` | Number of linked subpages to crawl from each URL. |
-| `subpageTarget` | string or string[] | No | - | Terms used to prioritize which subpages matter, such as `["api", "reference", "pricing"]`. |
-| `extras.links` | integer | No | `0` | Number of links to extract from each page. |
-| `extras.imageLinks` | integer | No | `0` | Number of image URLs to extract from each page. |
-| `compliance` | string | No | - | Enterprise-only compliance mode, such as `hipaa`, when enabled for the account. |
+| Parameter           | Type               | Required | Default | Description                                                                                                                                        |
+| ------------------- | ------------------ | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `urls`              | string[]           | Yes      | -       | URLs to extract content from. Use this for known URLs.                                                                                             |
+| `text`              | boolean or object  | No       | -       | Return full page text as markdown. Object form supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, and `excludeSections`. |
+| `highlights`        | boolean or object  | No       | -       | Return key excerpts. Prefer `true` for agent workflows unless a custom focus is needed.                                                            |
+| `summary`           | boolean or object  | No       | -       | Return per-page LLM summaries. Use when the caller wants Exa-side compression or structured extraction.                                            |
+| `maxAgeHours`       | integer            | No       | -       | Freshness control. `0` always live crawls; `-1` uses cache only; omit for default cache-first behavior with crawl fallback.                        |
+| `livecrawlTimeout`  | integer            | No       | `10000` | Timeout for live crawling in milliseconds. Use `10000` to `15000` for most freshness-sensitive calls.                                              |
+| `subpages`          | integer            | No       | `0`     | Number of linked subpages to crawl from each URL.                                                                                                  |
+| `subpageTarget`     | string or string[] | No       | -       | Terms used to prioritize which subpages matter, such as `["api", "reference", "pricing"]`.                                                         |
+| `extras.links`      | integer            | No       | `0`     | Number of links to extract from each page.                                                                                                         |
+| `extras.imageLinks` | integer            | No       | `0`     | Number of image URLs to extract from each page.                                                                                                    |
+| `compliance`        | string             | No       | -       | Enterprise-only compliance mode, such as `hipaa`, when enabled for the account.                                                                    |
 
 ### Text object options
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `maxCharacters` | integer | - | Character limit for returned text. Use this instead of `tokensNum`. |
-| `includeHtmlTags` | boolean | `false` | Preserve HTML tags in output. |
-| `verbosity` | string | `compact` | `compact`, `standard`, or `full`. Pair fresh section-aware extraction with `maxAgeHours: 0`. |
-| `includeSections` | string[] | - | Only include selected sections: `header`, `navigation`, `banner`, `body`, `sidebar`, `footer`, `metadata`. |
-| `excludeSections` | string[] | - | Exclude selected sections from the same section list. |
+| Parameter         | Type     | Default   | Description                                                                                                |
+| ----------------- | -------- | --------- | ---------------------------------------------------------------------------------------------------------- |
+| `maxCharacters`   | integer  | -         | Character limit for returned text. Use this instead of `tokensNum`.                                        |
+| `includeHtmlTags` | boolean  | `false`   | Preserve HTML tags in output.                                                                              |
+| `verbosity`       | string   | `compact` | `compact`, `standard`, or `full`. Pair fresh section-aware extraction with `maxAgeHours: 0`.               |
+| `includeSections` | string[] | -         | Only include selected sections: `header`, `navigation`, `banner`, `body`, `sidebar`, `footer`, `metadata`. |
+| `excludeSections` | string[] | -         | Exclude selected sections from the same section list.                                                      |
 
 ### Highlights object options
 
 Prefer `highlights: true` for the highest-quality default. Only use object form when the agent needs a custom focus or budget.
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `query` | string | - | Custom query guiding which excerpts are returned. |
-| `maxCharacters` | integer | - | Cap highlight characters per URL. Omit unless the caller has a strict budget. |
+| Parameter       | Type    | Default | Description                                                                   |
+| --------------- | ------- | ------- | ----------------------------------------------------------------------------- |
+| `query`         | string  | -       | Custom query guiding which excerpts are returned.                             |
+| `maxCharacters` | integer | -       | Cap highlight characters per URL. Omit unless the caller has a strict budget. |
 
 ### Summary object options
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `query` | string | - | Custom query for the summary. |
-| `schema` | object | - | JSON Schema for structured per-page summaries. |
+| Parameter | Type   | Default | Description                                    |
+| --------- | ------ | ------- | ---------------------------------------------- |
+| `query`   | string | -       | Custom query for the summary.                  |
+| `schema`  | object | -       | JSON Schema for structured per-page summaries. |
 
 ## Content Modes
 
 On `/contents`, `text`, `highlights`, and `summary` are top-level request fields.
 
-| Mode | Best for | Notes |
-| --- | --- | --- |
-| `text` | Deep analysis and broad page context | Use `maxCharacters` to keep payloads bounded. |
-| `highlights` | Agent workflows and factual lookups | Most token-efficient default. Excerpts are grounded in the source page. |
-| `summary` | Compression or structured per-page extraction | Adds Exa-side synthesis per page. |
+| Mode         | Best for                                      | Notes                                                                   |
+| ------------ | --------------------------------------------- | ----------------------------------------------------------------------- |
+| `text`       | Deep analysis and broad page context          | Use `maxCharacters` to keep payloads bounded.                           |
+| `highlights` | Agent workflows and factual lookups           | Most token-efficient default. Excerpts are grounded in the source page. |
+| `summary`    | Compression or structured per-page extraction | Adds Exa-side synthesis per page.                                       |
 
 Avoid requesting multiple modes unless the caller truly needs multiple views of the same page.
 
@@ -111,12 +111,12 @@ Avoid requesting multiple modes unless the caller truly needs multiple views of 
 
 Use `maxAgeHours` as the normative freshness control.
 
-| Value | Behavior |
-| --- | --- |
-| omitted | Use default cache-first behavior with crawl fallback when needed. |
-| positive integer | Use cache if it is less than N hours old, otherwise live crawl. |
-| `0` | Always live crawl. Highest freshness, higher latency. |
-| `-1` | Cache only. Fastest, but fails if no cached content exists. |
+| Value            | Behavior                                                          |
+| ---------------- | ----------------------------------------------------------------- |
+| omitted          | Use default cache-first behavior with crawl fallback when needed. |
+| positive integer | Use cache if it is less than N hours old, otherwise live crawl.   |
+| `0`              | Always live crawl. Highest freshness, higher latency.             |
+| `-1`             | Cache only. Fastest, but fails if no cached content exists.       |
 
 Set `livecrawlTimeout` when live crawling should not block past a fixed budget.
 
@@ -158,26 +158,26 @@ curl -sS -X POST "https://api.exa.ai/contents" \
   }' | jq '{results, statuses}'
 ```
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `requestId` | string | Unique request identifier. |
-| `results` | array | Extracted content result objects. |
-| `results[].title` | string | Page title. |
-| `results[].url` | string | Page URL. |
-| `results[].publishedDate` | string or null | Estimated publication date when available. |
-| `results[].author` | string or null | Author when available. |
-| `results[].text` | string | Returned when `text` is requested. |
-| `results[].highlights` | string[] | Returned when `highlights` is requested. |
-| `results[].highlightScores` | number[] | Similarity scores for highlights. |
-| `results[].summary` | string | Returned when `summary` is requested. |
-| `results[].subpages` | array | Nested result objects from subpage crawling. |
-| `results[].extras.links` | string[] | Extracted links when requested. |
-| `statuses` | array | Per-URL success or error states. Always inspect this field. |
-| `statuses[].id` | string | Requested URL. |
-| `statuses[].status` | string | `success` or `error`. |
-| `statuses[].error.tag` | string | Error type for failed URLs. |
-| `statuses[].error.httpStatusCode` | integer or null | HTTP code associated with a per-URL failure. |
-| `costDollars.total` | number | Total request cost when returned. |
+| Field                             | Type            | Description                                                 |
+| --------------------------------- | --------------- | ----------------------------------------------------------- |
+| `requestId`                       | string          | Unique request identifier.                                  |
+| `results`                         | array           | Extracted content result objects.                           |
+| `results[].title`                 | string          | Page title.                                                 |
+| `results[].url`                   | string          | Page URL.                                                   |
+| `results[].publishedDate`         | string or null  | Estimated publication date when available.                  |
+| `results[].author`                | string or null  | Author when available.                                      |
+| `results[].text`                  | string          | Returned when `text` is requested.                          |
+| `results[].highlights`            | string[]        | Returned when `highlights` is requested.                    |
+| `results[].highlightScores`       | number[]        | Similarity scores for highlights.                           |
+| `results[].summary`               | string          | Returned when `summary` is requested.                       |
+| `results[].subpages`              | array           | Nested result objects from subpage crawling.                |
+| `results[].extras.links`          | string[]        | Extracted links when requested.                             |
+| `statuses`                        | array           | Per-URL success or error states. Always inspect this field. |
+| `statuses[].id`                   | string          | Requested URL.                                              |
+| `statuses[].status`               | string          | `success` or `error`.                                       |
+| `statuses[].error.tag`            | string          | Error type for failed URLs.                                 |
+| `statuses[].error.httpStatusCode` | integer or null | HTTP code associated with a per-URL failure.                |
+| `costDollars.total`               | number          | Total request cost when returned.                           |
 
 Common per-URL error tags include `CRAWL_NOT_FOUND`, `CRAWL_TIMEOUT`, `CRAWL_LIVECRAWL_TIMEOUT`, `SOURCE_NOT_AVAILABLE`, `UNSUPPORTED_URL`, and `CRAWL_UNKNOWN_ERROR`.
 

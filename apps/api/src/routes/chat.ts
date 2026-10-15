@@ -712,9 +712,9 @@ chat.post('/:id', async (c) => {
       ? 'search_web'
       : currentUserText.match(/^\/(?:shop|products?)\s+/i)
         ? 'search_products'
-      : currentUserText.match(/^\/(?:deep|research)\s+/i)
-        ? 'research_web'
-        : null;
+        : currentUserText.match(/^\/(?:deep|research)\s+/i)
+          ? 'research_web'
+          : null;
     const result = streamText({
       model: openai.chat(provider.modelId),
       system: systemPromptWithContext(relevantMemories, threadSummary),

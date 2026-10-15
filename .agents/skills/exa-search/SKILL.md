@@ -1,6 +1,6 @@
 ---
 name: exa-search
-description: "Call Exa Search directly with cURL or raw HTTP. Use when an agent needs Exa semantic web retrieval from POST /search without an SDK, including ranked results, domain or category filters, freshness-aware result content, highlights or text extraction, structured output, or streaming search responses."
+description: 'Call Exa Search directly with cURL or raw HTTP. Use when an agent needs Exa semantic web retrieval from POST /search without an SDK, including ranked results, domain or category filters, freshness-aware result content, highlights or text extraction, structured output, or streaming search responses.'
 ---
 
 # Exa Search
@@ -92,78 +92,78 @@ Use this endpoint when the agent needs search results. If the agent already has 
 
 ### Core request parameters
 
-| Parameter | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `query` | string | Yes | - | Natural-language search query. Long, semantically rich descriptions work well. |
-| `type` | string | No | `auto` | Search method: `auto`, `fast`, `instant`, `deep-lite`, `deep`, or `deep-reasoning`. |
-| `numResults` | integer | No | `10` | Number of results to return. Use small values for agent loops; maximum is 100. |
-| `category` | string | No | - | Specialized result type: `company`, `people`, `research paper`, `news`, `personal site`, or `financial report`. |
-| `includeDomains` | string[] | No | - | Only return results from these domains, paths, or wildcard patterns. Max 1200. |
-| `excludeDomains` | string[] | No | - | Exclude these domains, paths, or wildcard patterns. Max 1200. |
-| `startPublishedDate` | string | No | - | ISO 8601 lower bound for result publication date. |
-| `endPublishedDate` | string | No | - | ISO 8601 upper bound for result publication date. |
-| `userLocation` | string | No | - | Two-letter ISO country code such as `US` or `GB`. |
-| `moderation` | boolean | No | `false` | Filter unsafe content from results. |
-| `additionalQueries` | string[] | No | - | Extra query variants for deep-search variants. Use alongside the main `query`. |
-| `systemPrompt` | string | No | - | Instructions for synthesized output and deep-search planning, such as source preferences. |
-| `outputSchema` | object | No | - | JSON Schema controlling `output.content`. Adds synthesized output and grounding. |
-| `stream` | boolean | No | `false` | If `true`, returns SSE instead of a single JSON response. |
-| `compliance` | string | No | - | Enterprise-only compliance mode, such as `hipaa`, when enabled for the account. |
+| Parameter            | Type     | Required | Default | Description                                                                                                     |
+| -------------------- | -------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `query`              | string   | Yes      | -       | Natural-language search query. Long, semantically rich descriptions work well.                                  |
+| `type`               | string   | No       | `auto`  | Search method: `auto`, `fast`, `instant`, `deep-lite`, `deep`, or `deep-reasoning`.                             |
+| `numResults`         | integer  | No       | `10`    | Number of results to return. Use small values for agent loops; maximum is 100.                                  |
+| `category`           | string   | No       | -       | Specialized result type: `company`, `people`, `research paper`, `news`, `personal site`, or `financial report`. |
+| `includeDomains`     | string[] | No       | -       | Only return results from these domains, paths, or wildcard patterns. Max 1200.                                  |
+| `excludeDomains`     | string[] | No       | -       | Exclude these domains, paths, or wildcard patterns. Max 1200.                                                   |
+| `startPublishedDate` | string   | No       | -       | ISO 8601 lower bound for result publication date.                                                               |
+| `endPublishedDate`   | string   | No       | -       | ISO 8601 upper bound for result publication date.                                                               |
+| `userLocation`       | string   | No       | -       | Two-letter ISO country code such as `US` or `GB`.                                                               |
+| `moderation`         | boolean  | No       | `false` | Filter unsafe content from results.                                                                             |
+| `additionalQueries`  | string[] | No       | -       | Extra query variants for deep-search variants. Use alongside the main `query`.                                  |
+| `systemPrompt`       | string   | No       | -       | Instructions for synthesized output and deep-search planning, such as source preferences.                       |
+| `outputSchema`       | object   | No       | -       | JSON Schema controlling `output.content`. Adds synthesized output and grounding.                                |
+| `stream`             | boolean  | No       | `false` | If `true`, returns SSE instead of a single JSON response.                                                       |
+| `compliance`         | string   | No       | -       | Enterprise-only compliance mode, such as `hipaa`, when enabled for the account.                                 |
 
 ### Content parameters nested under `contents`
 
 On `/search`, `text`, `highlights`, and `summary` must be nested under `contents`.
 
-| Parameter | Type | Required | Default | Description |
-| --- | --- | --- | --- | --- |
-| `contents.text` | boolean or object | No | - | Return full page text as markdown. Object form supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, and `excludeSections`. |
-| `contents.highlights` | boolean or object | No | - | Return query-relevant excerpts. Prefer `true` for agent workflows unless a fixed character budget is required. |
-| `contents.summary` | boolean or object | No | - | Return per-result LLM summaries. Use sparingly because each result adds synthesis work. |
-| `contents.maxAgeHours` | integer | No | - | Freshness control. `0` always live crawls; `-1` uses cache only; omit for default cache-first behavior with crawl fallback. |
-| `contents.livecrawlTimeout` | integer | No | `10000` | Timeout for live crawling in milliseconds. Use `10000` to `15000` for most freshness-sensitive calls. |
-| `contents.subpages` | integer | No | `0` | Number of linked subpages to crawl per result. |
-| `contents.subpageTarget` | string or string[] | No | - | Terms used to prioritize which subpages matter, such as `["api", "pricing"]`. |
-| `contents.extras.links` | integer | No | `0` | Number of links to extract from each result page. |
-| `contents.extras.imageLinks` | integer | No | `0` | Number of image URLs to extract from each result page. |
+| Parameter                    | Type               | Required | Default | Description                                                                                                                                        |
+| ---------------------------- | ------------------ | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contents.text`              | boolean or object  | No       | -       | Return full page text as markdown. Object form supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, and `excludeSections`. |
+| `contents.highlights`        | boolean or object  | No       | -       | Return query-relevant excerpts. Prefer `true` for agent workflows unless a fixed character budget is required.                                     |
+| `contents.summary`           | boolean or object  | No       | -       | Return per-result LLM summaries. Use sparingly because each result adds synthesis work.                                                            |
+| `contents.maxAgeHours`       | integer            | No       | -       | Freshness control. `0` always live crawls; `-1` uses cache only; omit for default cache-first behavior with crawl fallback.                        |
+| `contents.livecrawlTimeout`  | integer            | No       | `10000` | Timeout for live crawling in milliseconds. Use `10000` to `15000` for most freshness-sensitive calls.                                              |
+| `contents.subpages`          | integer            | No       | `0`     | Number of linked subpages to crawl per result.                                                                                                     |
+| `contents.subpageTarget`     | string or string[] | No       | -       | Terms used to prioritize which subpages matter, such as `["api", "pricing"]`.                                                                      |
+| `contents.extras.links`      | integer            | No       | `0`     | Number of links to extract from each result page.                                                                                                  |
+| `contents.extras.imageLinks` | integer            | No       | `0`     | Number of image URLs to extract from each result page.                                                                                             |
 
 ### Text object options
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `maxCharacters` | integer | - | Character limit for returned text. Use this instead of `tokensNum`. |
-| `includeHtmlTags` | boolean | `false` | Preserve HTML tags in output. |
-| `verbosity` | string | `compact` | `compact`, `standard`, or `full`. Pair fresh section-aware extraction with `contents.maxAgeHours: 0`. |
-| `includeSections` | string[] | - | Only include selected sections: `header`, `navigation`, `banner`, `body`, `sidebar`, `footer`, `metadata`. |
-| `excludeSections` | string[] | - | Exclude selected sections from the same section list. |
+| Parameter         | Type     | Default   | Description                                                                                                |
+| ----------------- | -------- | --------- | ---------------------------------------------------------------------------------------------------------- |
+| `maxCharacters`   | integer  | -         | Character limit for returned text. Use this instead of `tokensNum`.                                        |
+| `includeHtmlTags` | boolean  | `false`   | Preserve HTML tags in output.                                                                              |
+| `verbosity`       | string   | `compact` | `compact`, `standard`, or `full`. Pair fresh section-aware extraction with `contents.maxAgeHours: 0`.      |
+| `includeSections` | string[] | -         | Only include selected sections: `header`, `navigation`, `banner`, `body`, `sidebar`, `footer`, `metadata`. |
+| `excludeSections` | string[] | -         | Exclude selected sections from the same section list.                                                      |
 
 ### Highlights object options
 
 Prefer `contents.highlights: true` for the highest-quality default. Only use object form when the agent needs a custom focus or budget.
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `query` | string | - | Custom query guiding which excerpts are returned. |
-| `maxCharacters` | integer | - | Cap highlight characters per URL. Omit unless the caller has a strict budget. |
+| Parameter       | Type    | Default | Description                                                                   |
+| --------------- | ------- | ------- | ----------------------------------------------------------------------------- |
+| `query`         | string  | -       | Custom query guiding which excerpts are returned.                             |
+| `maxCharacters` | integer | -       | Cap highlight characters per URL. Omit unless the caller has a strict budget. |
 
 ### Summary object options
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `query` | string | - | Custom query for the summary. |
-| `schema` | object | - | JSON Schema for structured per-result summaries. |
+| Parameter | Type   | Default | Description                                      |
+| --------- | ------ | ------- | ------------------------------------------------ |
+| `query`   | string | -       | Custom query for the summary.                    |
+| `schema`  | object | -       | JSON Schema for structured per-result summaries. |
 
 ## Search Types
 
 Search `type` controls the retrieval and synthesis mode. Pick the mode for the workflow, not just the output format. `outputSchema` can be used with any search type; use deeper modes when the search process itself needs more planning, synthesis, or reasoning.
 
-| Type | Best for | Tradeoff |
-| --- | --- | --- |
-| `auto` | General default search and most new integrations | Balances speed and quality without requiring the caller to tune retrieval strategy. |
-| `fast` | Low-latency agent loops and product paths | Faster than `auto`; use when responsiveness matters more than maximum reasoning depth. |
-| `instant` | Real-time UI, chat, voice, and autocomplete-style paths | Lowest latency path; use for quick retrieval rather than deep synthesis. |
-| `deep-lite` | Lightweight research or synthesis | Adds more planning and synthesis than `auto` while staying lighter than full `deep`. |
-| `deep` | Multi-step research, comparisons, and synthesis-heavy retrieval | Higher latency; better when the query needs exploration across several sources. |
-| `deep-reasoning` | Hard research tasks with high ambiguity or complex tradeoffs | Highest latency and reasoning depth. |
+| Type             | Best for                                                        | Tradeoff                                                                               |
+| ---------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `auto`           | General default search and most new integrations                | Balances speed and quality without requiring the caller to tune retrieval strategy.    |
+| `fast`           | Low-latency agent loops and product paths                       | Faster than `auto`; use when responsiveness matters more than maximum reasoning depth. |
+| `instant`        | Real-time UI, chat, voice, and autocomplete-style paths         | Lowest latency path; use for quick retrieval rather than deep synthesis.               |
+| `deep-lite`      | Lightweight research or synthesis                               | Adds more planning and synthesis than `auto` while staying lighter than full `deep`.   |
+| `deep`           | Multi-step research, comparisons, and synthesis-heavy retrieval | Higher latency; better when the query needs exploration across several sources.        |
+| `deep-reasoning` | Hard research tasks with high ambiguity or complex tradeoffs    | Highest latency and reasoning depth.                                                   |
 
 Use `auto` unless latency or reasoning depth is the primary constraint. Use `fast` or `instant` for time-sensitive calls. Use `deep`, `deep-lite`, or `deep-reasoning` when the query needs multi-step source discovery, comparison, or synthesis.
 
@@ -255,24 +255,24 @@ Treat streaming as SSE rather than JSON. Each `data:` frame contains an OpenAI-c
 
 ## Response Fields
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `requestId` | string | Unique request identifier. |
-| `results` | array | Ranked result objects. |
-| `results[].title` | string | Page title. |
-| `results[].url` | string | Page URL. |
-| `results[].publishedDate` | string or null | Estimated publication date when available. |
-| `results[].author` | string or null | Author when available. |
-| `results[].text` | string | Returned when `contents.text` is requested. |
-| `results[].highlights` | string[] | Returned when `contents.highlights` is requested. |
-| `results[].highlightScores` | number[] | Similarity scores for highlights. |
-| `results[].summary` | string | Returned when `contents.summary` is requested. |
-| `results[].subpages` | array | Nested result objects from subpage crawling. |
-| `results[].extras.links` | string[] | Extracted links when requested. |
-| `output.content` | string or object | Synthesized output when `outputSchema` is provided. |
-| `output.grounding` | array | Citations and confidence labels for synthesized fields. |
-| `costDollars.total` | number | Total request cost when returned. |
-| `searchTime` | number | Search latency when returned. |
+| Field                       | Type             | Description                                             |
+| --------------------------- | ---------------- | ------------------------------------------------------- |
+| `requestId`                 | string           | Unique request identifier.                              |
+| `results`                   | array            | Ranked result objects.                                  |
+| `results[].title`           | string           | Page title.                                             |
+| `results[].url`             | string           | Page URL.                                               |
+| `results[].publishedDate`   | string or null   | Estimated publication date when available.              |
+| `results[].author`          | string or null   | Author when available.                                  |
+| `results[].text`            | string           | Returned when `contents.text` is requested.             |
+| `results[].highlights`      | string[]         | Returned when `contents.highlights` is requested.       |
+| `results[].highlightScores` | number[]         | Similarity scores for highlights.                       |
+| `results[].summary`         | string           | Returned when `contents.summary` is requested.          |
+| `results[].subpages`        | array            | Nested result objects from subpage crawling.            |
+| `results[].extras.links`    | string[]         | Extracted links when requested.                         |
+| `output.content`            | string or object | Synthesized output when `outputSchema` is provided.     |
+| `output.grounding`          | array            | Citations and confidence labels for synthesized fields. |
+| `costDollars.total`         | number           | Total request cost when returned.                       |
+| `searchTime`                | number           | Search latency when returned.                           |
 
 ## Critical Pitfalls
 

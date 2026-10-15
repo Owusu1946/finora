@@ -370,7 +370,7 @@ export function createChatAgentTools(
     }),
     search_products: tool({
       description:
-        'Find current consumer-product listings and compare them against the user\'s stated budget and constraints. Use proactively for requests such as find, buy, price, shop for, cheapest, best deal, or available near me. Search new, used, refurbished, and open-box listings when condition is unspecified. A user-stated amount is a search budget, not private Finora account data. Consider shipping in estimated total cost when requested. Never claim a listing is available or within budget unless the returned data supports it, never invent a deal, and never purchase or reserve anything.',
+        "Find current consumer-product listings and compare them against the user's stated budget and constraints. Use proactively for requests such as find, buy, price, shop for, cheapest, best deal, or available near me. Search new, used, refurbished, and open-box listings when condition is unspecified. A user-stated amount is a search budget, not private Finora account data. Consider shipping in estimated total cost when requested. Never claim a listing is available or within budget unless the returned data supports it, never invent a deal, and never purchase or reserve anything.",
       inputSchema: zodSchema(SearchProductsInputSchema),
       execute: async (input) => {
         if (!web) return { ok: false as const, errorCode: 'product_search_unavailable' };

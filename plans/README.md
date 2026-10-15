@@ -6,15 +6,15 @@ STOP conditions, and update the status row when complete.
 
 ## Execution order & status
 
-| Plan | Title | Priority | Effort | Depends on | Status |
-|------|-------|----------|--------|------------|--------|
-| 001 | Restore a deterministic mobile verification baseline | P1 | M | none | COMPLETE |
-| 002 | Bind approvals to server execution and keep demos isolated | P1 | L | 001 | TODO |
-| 003 | Isolate local accounts and harden the app lock | P1 | L | 001 | COMPLETE |
-| 004 | Validate payment links, QR destinations, and assistant URLs | P1 | M | 001 | TODO |
-| 005 | Remove client-side virtual-card credentials | P1 | L | 003 | TODO |
-| 006 | Align mobile dependencies and project skills | P2 | M | 001 | COMPLETE |
-| 007 | Wire live WeWire APIs into the Finora platform | P1 | XL | none | TODO |
+| Plan | Title                                                       | Priority | Effort | Depends on | Status   |
+| ---- | ----------------------------------------------------------- | -------- | ------ | ---------- | -------- |
+| 001  | Restore a deterministic mobile verification baseline        | P1       | M      | none       | COMPLETE |
+| 002  | Bind approvals to server execution and keep demos isolated  | P1       | L      | 001        | TODO     |
+| 003  | Isolate local accounts and harden the app lock              | P1       | L      | 001        | COMPLETE |
+| 004  | Validate payment links, QR destinations, and assistant URLs | P1       | M      | 001        | TODO     |
+| 005  | Remove client-side virtual-card credentials                 | P1       | L      | 003        | TODO     |
+| 006  | Align mobile dependencies and project skills                | P2       | M      | 001        | COMPLETE |
+| 007  | Wire live WeWire APIs into the Finora platform              | P1       | XL     | none       | TODO     |
 
 ## Dependency notes
 

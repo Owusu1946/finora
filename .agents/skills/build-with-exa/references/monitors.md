@@ -31,16 +31,16 @@ This file covers the standalone Monitors API only. Websets has its own monitor s
 
 ## Endpoint Summary
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/monitors` | Create a monitor |
-| `GET` | `/monitors` | List monitors |
-| `GET` | `/monitors/{id}` | Get one monitor |
-| `PATCH` | `/monitors/{id}` | Update a monitor |
-| `DELETE` | `/monitors/{id}` | Delete a monitor |
-| `POST` | `/monitors/{id}/trigger` | Trigger an on-demand run |
-| `GET` | `/monitors/{id}/runs` | List runs |
-| `GET` | `/monitors/{id}/runs/{runId}` | Get one run |
+| Method   | Path                          | Purpose                  |
+| -------- | ----------------------------- | ------------------------ |
+| `POST`   | `/monitors`                   | Create a monitor         |
+| `GET`    | `/monitors`                   | List monitors            |
+| `GET`    | `/monitors/{id}`              | Get one monitor          |
+| `PATCH`  | `/monitors/{id}`              | Update a monitor         |
+| `DELETE` | `/monitors/{id}`              | Delete a monitor         |
+| `POST`   | `/monitors/{id}/trigger`      | Trigger an on-demand run |
+| `GET`    | `/monitors/{id}/runs`         | List runs                |
+| `GET`    | `/monitors/{id}/runs/{runId}` | Get one run              |
 
 ## Create Shape
 
@@ -63,14 +63,14 @@ POST https://api.exa.ai/monitors
 
 ### Create Fields
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `name` | string | Optional display name |
-| `search` | object | Required search payload |
-| `trigger` | object | Optional interval schedule; omit for manual-only monitors |
-| `outputSchema` | object | Optional structured output |
-| `metadata` | object | Optional caller metadata |
-| `webhook` | object | Required webhook configuration |
+| Field          | Type   | Notes                                                     |
+| -------------- | ------ | --------------------------------------------------------- |
+| `name`         | string | Optional display name                                     |
+| `search`       | object | Required search payload                                   |
+| `trigger`      | object | Optional interval schedule; omit for manual-only monitors |
+| `outputSchema` | object | Optional structured output                                |
+| `metadata`     | object | Optional caller metadata                                  |
+| `webhook`      | object | Required webhook configuration                            |
 
 ## Search Payload and Trigger Shape
 

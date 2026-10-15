@@ -3,8 +3,8 @@ name: build-with-exa
 description: "Build applications and agents with Exa's API: search, contents extraction, answer, context, Agent API, monitors, websets, OpenAI-compatible endpoints, and exa-py/exa-js SDKs. Use when choosing Exa endpoints, writing Exa API calls, integrating semantic web search or research into products, or debugging Exa request shapes."
 metadata:
   author: Exa
-  version: "0.2.0"
-  docs: "https://exa.ai/docs"
+  version: '0.2.0'
+  docs: 'https://exa.ai/docs'
 ---
 
 # Build with Exa
@@ -104,12 +104,12 @@ for item in result.results:
 **TypeScript** (`/search`):
 
 ```typescript
-import Exa from "exa-js";
+import Exa from 'exa-js';
 
 const exa = new Exa();
-const result = await exa.search("latest developments in LLMs", {
-  type: "auto",
-  contents: { highlights: true }
+const result = await exa.search('latest developments in LLMs', {
+  type: 'auto',
+  contents: { highlights: true },
 });
 
 for (const item of result.results) {
@@ -149,21 +149,21 @@ curl -X POST "https://api.exa.ai/search" \
 
 ## Reference Files
 
-| File | Topics |
-|------|--------|
-| [references/search.md](references/search.md) | Search endpoint request/response shape, search types, filters, nested contents, structured output |
-| [references/contents.md](references/contents.md) | Contents endpoint extraction, freshness, statuses, top-level content fields |
-| [references/answer.md](references/answer.md) | Grounded answer generation with citations and structured output |
-| [references/context.md](references/context.md) | Code-focused retrieval with `tokensNum` |
-| [references/agent.md](references/agent.md) | Agent API for async multi-step research, enrichment, structured output, polling, and events |
-| [references/openai-compat.md](references/openai-compat.md) | OpenAI-compatible endpoints, model routing, `extra_body` usage |
-| [references/monitors.md](references/monitors.md) | Standalone Monitors API for scheduled recurring search |
+| File                                                                             | Topics                                                                                                      |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| [references/search.md](references/search.md)                                     | Search endpoint request/response shape, search types, filters, nested contents, structured output           |
+| [references/contents.md](references/contents.md)                                 | Contents endpoint extraction, freshness, statuses, top-level content fields                                 |
+| [references/answer.md](references/answer.md)                                     | Grounded answer generation with citations and structured output                                             |
+| [references/context.md](references/context.md)                                   | Code-focused retrieval with `tokensNum`                                                                     |
+| [references/agent.md](references/agent.md)                                       | Agent API for async multi-step research, enrichment, structured output, polling, and events                 |
+| [references/openai-compat.md](references/openai-compat.md)                       | OpenAI-compatible endpoints, model routing, `extra_body` usage                                              |
+| [references/monitors.md](references/monitors.md)                                 | Standalone Monitors API for scheduled recurring search                                                      |
 | [references/migrate-websets-to-agent.md](references/migrate-websets-to-agent.md) | Migrate Websets to the Agent API: call-site classification, request mapping, delivery rewrite, verification |
-| [references/sdks.md](references/sdks.md) | Python and TypeScript SDK naming, methods, and shape differences |
-| [references/http-requests.md](references/http-requests.md) | Minimal raw HTTP examples across major Exa surfaces |
-| [references/models-and-modes.md](references/models-and-modes.md) | Search type selection, answer/research model routing, latency tradeoffs |
-| [references/prompting-and-patterns.md](references/prompting-and-patterns.md) | Durable query, prompting, freshness, and output-schema patterns |
-| [references/common-mistakes.md](references/common-mistakes.md) | Over-specification and parameter-shape corrections |
+| [references/sdks.md](references/sdks.md)                                         | Python and TypeScript SDK naming, methods, and shape differences                                            |
+| [references/http-requests.md](references/http-requests.md)                       | Minimal raw HTTP examples across major Exa surfaces                                                         |
+| [references/models-and-modes.md](references/models-and-modes.md)                 | Search type selection, answer/research model routing, latency tradeoffs                                     |
+| [references/prompting-and-patterns.md](references/prompting-and-patterns.md)     | Durable query, prompting, freshness, and output-schema patterns                                             |
+| [references/common-mistakes.md](references/common-mistakes.md)                   | Over-specification and parameter-shape corrections                                                          |
 
 ## Canonical Docs
 

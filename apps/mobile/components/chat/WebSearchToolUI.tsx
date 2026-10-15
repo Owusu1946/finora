@@ -131,9 +131,7 @@ function ProductFxConversion({
   const prodAmount = parsePriceValue(product.price, product.priceAmount);
 
   const availableCurrencies: SupportedCurrency[] = (
-    prodCurrency === 'USD'
-      ? ['GHS', 'EUR', 'GBP', 'USDT']
-      : ['USD', 'GHS', 'EUR', 'GBP', 'USDT']
+    prodCurrency === 'USD' ? ['GHS', 'EUR', 'GBP', 'USDT'] : ['USD', 'GHS', 'EUR', 'GBP', 'USDT']
   ).filter((c) => c !== prodCurrency) as SupportedCurrency[];
 
   const [selectedCurrency, setSelectedCurrency] = useState<SupportedCurrency>(
@@ -197,9 +195,7 @@ function ProductFxConversion({
               maximumFractionDigits: 2,
             })}
           </Text>
-          <Text className='font-sans text-[10px] text-muted-foreground'>
-            Cross-border FX quote
-          </Text>
+          <Text className='font-sans text-[10px] text-muted-foreground'>Cross-border FX quote</Text>
         </View>
         <Pressable
           accessibilityRole='button'

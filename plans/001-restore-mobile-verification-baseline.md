@@ -43,11 +43,11 @@ capitalized React components.
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|---|---|---|
-| Typecheck | `pnpm --filter @finora/mobile check-types` | exit 0 |
-| Lint | `pnpm --filter @finora/mobile lint` | exit 0, no errors |
-| Workspace check | `pnpm check` | exit 0; do not accept formatter changes outside scope |
+| Purpose         | Command                                    | Expected on success                                   |
+| --------------- | ------------------------------------------ | ----------------------------------------------------- |
+| Typecheck       | `pnpm --filter @finora/mobile check-types` | exit 0                                                |
+| Lint            | `pnpm --filter @finora/mobile lint`        | exit 0, no errors                                     |
+| Workspace check | `pnpm check`                               | exit 0; do not accept formatter changes outside scope |
 
 ## Scope
 

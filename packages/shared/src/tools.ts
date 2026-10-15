@@ -92,7 +92,12 @@ export const SearchProductsInputSchema = z
   .object({
     query: z.string().trim().min(2).max(500),
     budget: z.number().positive().max(1_000_000_000).optional(),
-    currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).optional(),
+    currency: z
+      .string()
+      .trim()
+      .length(3)
+      .transform((value) => value.toUpperCase())
+      .optional(),
     condition: z.enum(['any', 'new', 'used', 'refurbished', 'open_box']).default('any'),
     location: z.string().trim().min(2).max(120).optional(),
     includeShipping: z.boolean().default(true),

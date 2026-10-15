@@ -58,15 +58,15 @@ POST https://api.exa.ai/agent/runs
 
 ## Core Fields
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `query` | string | Required natural-language task |
-| `input.data` | object[] | Existing rows to research or enrich |
-| `input.exclusion` | object[] | Records or entities Agent should avoid surfacing |
-| `outputSchema` | object | JSON Schema for validated `output.structured` |
-| `previousRunId` | string | Continue from a completed prior run |
-| `effort` | string | Always set explicitly: `minimal`, `low`, `medium`, `high`, `xhigh`, or `auto`. |
-| `dataSources` | object[] | Exa Connect providers to attach to the run, for example `{ "provider": "similarweb" }` |
+| Field             | Type     | Notes                                                                                  |
+| ----------------- | -------- | -------------------------------------------------------------------------------------- |
+| `query`           | string   | Required natural-language task                                                         |
+| `input.data`      | object[] | Existing rows to research or enrich                                                    |
+| `input.exclusion` | object[] | Records or entities Agent should avoid surfacing                                       |
+| `outputSchema`    | object   | JSON Schema for validated `output.structured`                                          |
+| `previousRunId`   | string   | Continue from a completed prior run                                                    |
+| `effort`          | string   | Always set explicitly: `minimal`, `low`, `medium`, `high`, `xhigh`, or `auto`.         |
+| `dataSources`     | object[] | Exa Connect providers to attach to the run, for example `{ "provider": "similarweb" }` |
 
 `outputSchema` supports JSON Schema. Bound list outputs with `maxItems` where possible so output size and enrichment cost are predictable.
 
@@ -85,7 +85,7 @@ Create returns a run object immediately; final output is available only after a 
 3. Wait for the run to reach a terminal status (`completed`, `failed`, or `cancelled`), either by:
    - **Polling:** `GET /agent/runs/{id}` until `status` is terminal, or
    - **SSE events:** `Accept: text/event-stream` on create, or replay from `GET /agent/runs/{id}/events` with `Last-Event-ID`.
-   The two are equivalent; pick one per integration.
+     The two are equivalent; pick one per integration.
 4. Check how the run ended: on `completed`, read `output`; on `failed` or `cancelled`, surface the error to the caller or UI. Only `completed` carries results — reading `output` without checking the status makes failures look like empty successes, and a hand-rolled wait loop that exits only on `completed` never finishes for failed runs.
 
 Completed runs include:
@@ -155,10 +155,7 @@ Use `dataSources` to attach Exa Connect providers to a run. The agent can call t
 
 ```json
 {
-  "dataSources": [
-    { "provider": "similarweb" },
-    { "provider": "fiber_ai" }
-  ]
+  "dataSources": [{ "provider": "similarweb" }, { "provider": "fiber_ai" }]
 }
 ```
 
@@ -202,26 +199,26 @@ else:
 TypeScript uses camelCase:
 
 ```typescript
-import Exa from "exa-js";
+import Exa from 'exa-js';
 
 const exa = new Exa();
 const run = await exa.agent.runs.create({
-  query: "Find five recently launched developer tools for evaluating AI agents.",
-  effort: "auto",
+  query: 'Find five recently launched developer tools for evaluating AI agents.',
+  effort: 'auto',
   outputSchema: {
-    type: "object",
+    type: 'object',
     properties: {
       tools: {
-        type: "array",
+        type: 'array',
         maxItems: 5,
-        items: { type: "object" }
-      }
+        items: { type: 'object' },
+      },
     },
-    required: ["tools"]
-  }
+    required: ['tools'],
+  },
 });
 const finished = await exa.agent.runs.pollUntilFinished(run.id, { pollInterval: 4000 });
-if (finished.status === "completed") {
+if (finished.status === 'completed') {
   console.log(finished.output?.structured);
   console.log(finished.output?.grounding);
 } else {

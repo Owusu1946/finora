@@ -51,7 +51,7 @@ assumptions in older code:
   original transaction. Treat keys as write-once intents derived from the
   preparation ID either way.
 - All list endpoints return `{ data, totalItems, totalPages, currentPage,
-  pageSize }` with `page`/`limit` query params (limit max 1000). The current
+pageSize }` with `page`/`limit` query params (limit max 1000). The current
   client casts bare arrays — wrong.
 - Existing client paths that are wrong vs docs:
   - `getPairRate` uses `/v1/rates/:from/:to`; docs say
@@ -80,7 +80,7 @@ assumptions in older code:
   bytes before parsing; rotation keeps old secret valid 24h. Delivery is
   at-least-once and unordered — dedupe on resource ID + status/updatedAt.
 - Error envelope: `{ success: false, error: { code, message, statusCode,
-  details? } }`. Branch on `code` (`INSUFFICIENT_BALANCE`,
+details? } }`. Branch on `code` (`INSUFFICIENT_BALANCE`,
   `SUBCUSTOMER_ENHANCED_KYC_REQUIRED`, `INTEGRATION_TIMEOUT` = outcome unknown,
   reconcile don't retry, etc.). Retry only 5xx with backoff + jitter.
 - Ghana corridor returns `202 Accepted` (async); statuses move
@@ -113,12 +113,12 @@ assumptions in older code:
 
 ## Commands you will need
 
-| Purpose            | Command                                    | Expected |
-| ------------------ | ------------------------------------------ | -------- |
-| Workspace check    | `pnpm check && pnpm check-types`           | exit 0   |
-| wewire package     | `pnpm --filter @finora/wewire check-types` | exit 0   |
-| API typecheck      | `pnpm --filter @finora/api check-types`    | exit 0   |
-| Shared typecheck   | `pnpm --filter @finora/shared check-types` | exit 0   |
+| Purpose          | Command                                    | Expected |
+| ---------------- | ------------------------------------------ | -------- |
+| Workspace check  | `pnpm check && pnpm check-types`           | exit 0   |
+| wewire package   | `pnpm --filter @finora/wewire check-types` | exit 0   |
+| API typecheck    | `pnpm --filter @finora/api check-types`    | exit 0   |
+| Shared typecheck | `pnpm --filter @finora/shared check-types` | exit 0   |
 
 ## Scope
 
@@ -136,7 +136,7 @@ production keys.
 
 1. Rewrite `client.ts` transport layer:
    - Pagination-aware request helper returning `{ data, totalItems,
-     totalPages, currentPage, pageSize }` envelopes.
+totalPages, currentPage, pageSize }` envelopes.
    - Typed `WewireError extends Error` carrying `code`, `statusCode`,
      `details[]` parsed from the documented error envelope.
    - Timeout on every request; retry only 5xx with exponential backoff +
@@ -155,7 +155,7 @@ production keys.
    webhook event envelope). Export both the schemas and inferred types from
    `index.ts`.
 5. Add a standalone `verifyWebhookSignature({ secret, id, timestamp, body,
-   signatures })` helper implementing Standard Webhooks verification
+signatures })` helper implementing Standard Webhooks verification
    (constant-time compare, 5-minute timestamp tolerance).
 
 **STOP if**: any doc page contradicts a path used here — re-fetch the page and
@@ -242,15 +242,15 @@ persist `wewire_refs` + audit events → return settlement reference.
 
 Mapping:
 
-| Handler kind | WeWire call |
-| --- | --- |
-| payment / bank_transfer | `initiate-payout` (offshore) or Ghana `pay-out` |
-| momo_disbursement | sub-customer MoMo disburse or Ghana disbursement |
-| internal_transfer / wallet_transfer | sub-customer transfer |
-| conversion | sub-customer conversions |
-| invoice_payment / supplier_payment | payout against stored beneficiary |
-| payroll | batched payouts, serialized ≤10/30s, same key on retry |
-| recurring | scheduled preparation fan-out |
+| Handler kind                        | WeWire call                                            |
+| ----------------------------------- | ------------------------------------------------------ |
+| payment / bank_transfer             | `initiate-payout` (offshore) or Ghana `pay-out`        |
+| momo_disbursement                   | sub-customer MoMo disburse or Ghana disbursement       |
+| internal_transfer / wallet_transfer | sub-customer transfer                                  |
+| conversion                          | sub-customer conversions                               |
+| invoice_payment / supplier_payment  | payout against stored beneficiary                      |
+| payroll                             | batched payouts, serialized ≤10/30s, same key on retry |
+| recurring                           | scheduled preparation fan-out                          |
 
 Add MoMo collection (`collect_approved_*` equivalent) as a new preparation kind
 using the Ghana collection endpoint. Remove the synthetic `WW…` minting from

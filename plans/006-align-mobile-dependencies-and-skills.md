@@ -49,13 +49,13 @@ Expo app.
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|---|---|---|
-| Expo compatibility | `pnpm --filter @finora/mobile exec expo install --check` | no unexpected drift |
-| Expo doctor | `pnpm dlx expo-doctor@latest apps/mobile` | all checks pass or only documented intentional exceptions remain |
-| Dependency audit | `pnpm audit --filter @finora/mobile --prod --audit-level high` | no unreviewed reachable high advisories |
-| Typecheck | `pnpm --filter @finora/mobile check-types` | exit 0 |
-| Lint | `pnpm --filter @finora/mobile lint` | exit 0 |
+| Purpose            | Command                                                        | Expected on success                                              |
+| ------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Expo compatibility | `pnpm --filter @finora/mobile exec expo install --check`       | no unexpected drift                                              |
+| Expo doctor        | `pnpm dlx expo-doctor@latest apps/mobile`                      | all checks pass or only documented intentional exceptions remain |
+| Dependency audit   | `pnpm audit --filter @finora/mobile --prod --audit-level high` | no unreviewed reachable high advisories                          |
+| Typecheck          | `pnpm --filter @finora/mobile check-types`                     | exit 0                                                           |
+| Lint               | `pnpm --filter @finora/mobile lint`                            | exit 0                                                           |
 
 ## Scope
 

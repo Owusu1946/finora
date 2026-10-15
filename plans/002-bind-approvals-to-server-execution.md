@@ -43,12 +43,12 @@ local PIN/biometric check, a timer, and a synthetic ID. They never call an
 
 ## Commands you will need
 
-| Purpose | Command | Expected on success |
-|---|---|---|
-| Mobile typecheck | `pnpm --filter @finora/mobile check-types` | exit 0 |
-| Mobile lint | `pnpm --filter @finora/mobile lint` | exit 0 |
-| API typecheck | `pnpm --filter @finora/api check-types` | exit 0 |
-| Workspace check | `pnpm check` | exit 0 |
+| Purpose          | Command                                    | Expected on success |
+| ---------------- | ------------------------------------------ | ------------------- |
+| Mobile typecheck | `pnpm --filter @finora/mobile check-types` | exit 0              |
+| Mobile lint      | `pnpm --filter @finora/mobile lint`        | exit 0              |
+| API typecheck    | `pnpm --filter @finora/api check-types`    | exit 0              |
+| Workspace check  | `pnpm check`                               | exit 0              |
 
 ## Scope
 
