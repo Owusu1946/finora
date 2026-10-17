@@ -59,7 +59,7 @@ export function UserAvatar({
         <Image
           source={{
             uri: imageUrl,
-            ...(imageVersion ? { cacheKey: `finora-user-avatar:${imageVersion}` } : {}),
+            ...(imageVersion ? { cacheKey: `finora-user-avatar:${imageUrl}:${imageVersion}` } : {}),
           }}
           className='absolute inset-0'
           style={StyleSheet.absoluteFill}
