@@ -140,6 +140,11 @@ export async function inspectPayrollAttachment(c: {
               ],
               maxOutputTokens: 2_000,
               maxRetries: 1,
+              providerOptions: {
+                openai: {
+                  reasoningEffort: 'low',
+                },
+              },
             });
             const raw = result.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
             const parsed: unknown = JSON.parse(raw);

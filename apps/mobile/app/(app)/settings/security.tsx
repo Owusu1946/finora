@@ -74,7 +74,9 @@ export default function SecuritySettingsScreen() {
         .catch((error: unknown) => {
           if (!active) return;
           setTrustedDeviceAvailable(null);
-          setTrustedDevicesError(error instanceof Error ? error.message : 'Could not load trusted devices.');
+          setTrustedDevicesError(
+            error instanceof Error ? error.message : 'Could not load trusted devices.',
+          );
         })
         .finally(() => {
           if (active) setTrustedDevicesLoading(false);
@@ -131,7 +133,10 @@ export default function SecuritySettingsScreen() {
       setTrustedDeviceAvailable(true);
       haptics.success();
     } catch (error: unknown) {
-      Alert.alert('Trusted device', error instanceof Error ? error.message : 'Could not trust this device.');
+      Alert.alert(
+        'Trusted device',
+        error instanceof Error ? error.message : 'Could not trust this device.',
+      );
     } finally {
       setEnrolling(false);
     }
@@ -149,7 +154,10 @@ export default function SecuritySettingsScreen() {
             setTrustedDevices((current) => current.filter((device) => device.id !== id));
             haptics.success();
           } catch (error: unknown) {
-            Alert.alert(t('sec_revoke_title'), error instanceof Error ? error.message : 'Could not revoke device.');
+            Alert.alert(
+              t('sec_revoke_title'),
+              error instanceof Error ? error.message : 'Could not revoke device.',
+            );
           }
         },
       },
@@ -208,9 +216,16 @@ export default function SecuritySettingsScreen() {
               onPress={() => {
                 setTrustedDevicesLoading(true);
                 setTrustedDevicesError(null);
-                void trustedDevicesApi.list()
-                  .then((devices) => setTrustedDevices(devices.filter((device) => device.status === 'active')))
-                  .catch((error: unknown) => setTrustedDevicesError(error instanceof Error ? error.message : 'Could not load trusted devices.'))
+                void trustedDevicesApi
+                  .list()
+                  .then((devices) =>
+                    setTrustedDevices(devices.filter((device) => device.status === 'active')),
+                  )
+                  .catch((error: unknown) =>
+                    setTrustedDevicesError(
+                      error instanceof Error ? error.message : 'Could not load trusted devices.',
+                    ),
+                  )
                   .finally(() => setTrustedDevicesLoading(false));
               }}
             />
@@ -226,8 +241,22 @@ export default function SecuritySettingsScreen() {
                     icon='phone'
                     isLast={index === trustedDevices.length - 1}
                     showChevron={!isCurrent}
-                    onPress={isCurrent ? undefined : () => handleRevokeDevice(device.id, trustedDeviceName(device, currentDeviceId))}
-                    right={isCurrent ? <Text className='font-sans-semibold text-[13px] text-muted-foreground'>{t('sec_current')}</Text> : undefined}
+                    onPress={
+                      isCurrent
+                        ? undefined
+                        : () =>
+                            handleRevokeDevice(
+                              device.id,
+                              trustedDeviceName(device, currentDeviceId),
+                            )
+                    }
+                    right={
+                      isCurrent ? (
+                        <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
+                          {t('sec_current')}
+                        </Text>
+                      ) : undefined
+                    }
                   />
                 );
               })}

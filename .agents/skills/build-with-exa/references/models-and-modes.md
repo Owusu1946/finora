@@ -12,14 +12,14 @@ Stable selection guidance for Exa search types and compatibility-layer model rou
 
 Exa's primary search modes for new work:
 
-| Type | Use When | Tradeoff |
-| --- | --- | --- |
-| `auto` | You want the default; omit `type` entirely rather than sending it | Best general-purpose starting point |
-| `fast` | Latency matters more than maximum synthesis quality | Lower latency |
-| `instant` | Real-time UI and assistant flows | Lowest latency |
-| `deep-lite` | You want lightweight synthesis | More reasoning than default modes |
-| `deep` | You need deeper synthesized retrieval | Higher latency |
-| `deep-reasoning` | You want the strongest research-style reasoning | Highest latency |
+| Type             | Use When                                                          | Tradeoff                            |
+| ---------------- | ----------------------------------------------------------------- | ----------------------------------- |
+| `auto`           | You want the default; omit `type` entirely rather than sending it | Best general-purpose starting point |
+| `fast`           | Latency matters more than maximum synthesis quality               | Lower latency                       |
+| `instant`        | Real-time UI and assistant flows                                  | Lowest latency                      |
+| `deep-lite`      | You want lightweight synthesis                                    | More reasoning than default modes   |
+| `deep`           | You need deeper synthesized retrieval                             | Higher latency                      |
+| `deep-reasoning` | You want the strongest research-style reasoning                   | Highest latency                     |
 
 ## How Output Controls Affect Behavior
 
@@ -41,11 +41,11 @@ Then add deeper reasoning or stronger freshness only when the use case requires 
 
 In OpenAI-compatible flows, current model routing is:
 
-| Model | Typical Use |
-| --- | --- |
-| `exa` | Answer-style compatibility via `/chat/completions` |
-| `exa-research` | Research-style compatibility |
-| `exa-research-pro` | Higher-effort research-style compatibility |
+| Model              | Typical Use                                        |
+| ------------------ | -------------------------------------------------- |
+| `exa`              | Answer-style compatibility via `/chat/completions` |
+| `exa-research`     | Research-style compatibility                       |
+| `exa-research-pro` | Higher-effort research-style compatibility         |
 
 These are compatibility-layer names. Native Exa endpoint choice remains the more important design decision.
 

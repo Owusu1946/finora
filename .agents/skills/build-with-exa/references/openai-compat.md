@@ -28,10 +28,10 @@ If you instead want to **keep** your current agent and have it call Exa as one o
 
 ## Endpoint Mapping
 
-| Exa Endpoint | OpenAI Interface | Models | Primary Route |
-| --- | --- | --- | --- |
+| Exa Endpoint        | OpenAI Interface     | Models                                    | Primary Route                                   |
+| ------------------- | -------------------- | ----------------------------------------- | ----------------------------------------------- |
 | `/chat/completions` | Chat Completions API | `exa`, `exa-research`, `exa-research-pro` | Routes to `/answer` or legacy research behavior |
-| `/responses` | Responses API | `exa-research`, `exa-research-pro` | Research-style compatibility path |
+| `/responses`        | Responses API        | `exa-research`, `exa-research-pro`        | Research-style compatibility path               |
 
 Exa's compatibility layer parses the conversation and forwards the last message into its underlying Exa route.
 
@@ -51,11 +51,11 @@ client = OpenAI(
 TypeScript:
 
 ```typescript
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
 const client = new OpenAI({
-  baseURL: "https://api.exa.ai",
-  apiKey: process.env.EXA_API_KEY
+  baseURL: 'https://api.exa.ai',
+  apiKey: process.env.EXA_API_KEY,
 });
 ```
 

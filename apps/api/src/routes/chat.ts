@@ -712,9 +712,9 @@ chat.post('/:id', async (c) => {
       ? 'search_web'
       : currentUserText.match(/^\/(?:shop|products?)\s+/i)
         ? 'search_products'
-      : currentUserText.match(/^\/(?:deep|research)\s+/i)
-        ? 'research_web'
-        : null;
+        : currentUserText.match(/^\/(?:deep|research)\s+/i)
+          ? 'research_web'
+          : null;
     const result = streamText({
       model: openai.chat(provider.modelId),
       system: systemPromptWithContext(relevantMemories, threadSummary),
@@ -814,18 +814,18 @@ chat.post('/:id', async (c) => {
         firstChunkMs: FIRST_CHUNK_TIMEOUT_MS,
         totalMs: TOTAL_TIMEOUT_MS,
       },
-      ...(provider.isOpenRouter
-        ? {}
-        : {
-            providerOptions: {
-              openai: {
-                reasoningEffort: 'low',
-                textVerbosity: 'low',
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'low',
+          textVerbosity: 'low',
+          ...(provider.isOpenRouter
+            ? {}
+            : {
                 store: false,
                 safetyIdentifier: await safetyIdentifier(userId),
-              },
-            },
-          }),
+              }),
+        },
+      },
       onError: ({ error }) => reportError(error),
     });
 

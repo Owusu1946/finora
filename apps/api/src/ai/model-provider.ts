@@ -1,4 +1,4 @@
-const DEFAULT_OPENROUTER_MODEL = 'openai/gpt-5-mini';
+const DEFAULT_OPENROUTER_MODEL = 'openai/gpt-6-luna';
 const DEFAULT_OPENAI_MODEL = 'gpt-5-mini';
 
 type ModelProviderEnvironment = {

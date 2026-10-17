@@ -184,6 +184,11 @@ export async function refreshChatContext(options: {
     maxOutputTokens: 900,
     maxRetries: 1,
     timeout: { totalMs: 20_000 },
+    providerOptions: {
+      openai: {
+        reasoningEffort: 'low',
+      },
+    },
   });
   const summary = sanitizeSummary(result.text);
   const messageId = options.messages[throughPosition]?.id;

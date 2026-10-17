@@ -43,9 +43,9 @@ POST https://api.exa.ai/context
 
 ## Parameters
 
-| Parameter | Type | Notes |
-| --- | --- | --- |
-| `query` | string | Required; max 2000 characters in the current docs |
+| Parameter   | Type              | Notes                                                    |
+| ----------- | ----------------- | -------------------------------------------------------- |
+| `query`     | string            | Required; max 2000 characters in the current docs        |
 | `tokensNum` | string or integer | Required; `"dynamic"` or a token count from 50 to 100000 |
 
 Use `"dynamic"` for most cases. Set an explicit token count only when you need tighter output-size control.
@@ -103,16 +103,16 @@ print(response.json()["response"])
 TypeScript:
 
 ```typescript
-const response = await fetch("https://api.exa.ai/context", {
-  method: "POST",
+const response = await fetch('https://api.exa.ai/context', {
+  method: 'POST',
   headers: {
-    "Content-Type": "application/json",
-    "x-api-key": process.env.EXA_API_KEY!
+    'Content-Type': 'application/json',
+    'x-api-key': process.env.EXA_API_KEY!,
   },
   body: JSON.stringify({
-    query: "React hooks for state management examples",
-    tokensNum: "dynamic"
-  })
+    query: 'React hooks for state management examples',
+    tokensNum: 'dynamic',
+  }),
 });
 
 const result = await response.json();

@@ -43,14 +43,14 @@ POST https://api.exa.ai/answer
 
 Everything beyond `query` requires an explicit task justification.
 
-| Parameter | Type | Notes |
-| --- | --- | --- |
-| `query` | string | Required |
-| `stream` | boolean | Enables SSE token streaming |
-| `text` | boolean | Include full text in cited source objects; adds payload size, so only when the task needs source text |
-| `outputSchema` | object | JSON Schema for structured answers |
-| `systemPrompt` | string | Guide answer behavior |
-| `userLocation` | string | Two-letter ISO country code |
+| Parameter      | Type    | Notes                                                                                                 |
+| -------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `query`        | string  | Required                                                                                              |
+| `stream`       | boolean | Enables SSE token streaming                                                                           |
+| `text`         | boolean | Include full text in cited source objects; adds payload size, so only when the task needs source text |
+| `outputSchema` | object  | JSON Schema for structured answers                                                                    |
+| `systemPrompt` | string  | Guide answer behavior                                                                                 |
+| `userLocation` | string  | Two-letter ISO country code                                                                           |
 
 ## When To Prefer `/answer`
 
@@ -98,7 +98,7 @@ When `stream: true`, the answer endpoint returns server-sent events. In SDKs, us
 TypeScript:
 
 ```typescript
-for await (const chunk of exa.streamAnswer("Explain quantum computing")) {
+for await (const chunk of exa.streamAnswer('Explain quantum computing')) {
   if (chunk.content) {
     process.stdout.write(chunk.content);
   }

@@ -96,7 +96,7 @@ npm install exa-js
 Instantiate:
 
 ```typescript
-import Exa from "exa-js";
+import Exa from 'exa-js';
 
 const exa = new Exa();
 ```
@@ -120,13 +120,13 @@ const exa = new Exa();
 Use `camelCase` everywhere:
 
 ```typescript
-const result = await exa.search("latest AI funding rounds", {
+const result = await exa.search('latest AI funding rounds', {
   contents: { highlights: true },
   outputSchema: {
-    type: "object",
-    properties: { summary: { type: "string" } },
-    required: ["summary"]
-  }
+    type: 'object',
+    properties: { summary: { type: 'string' } },
+    required: ['summary'],
+  },
 });
 ```
 
@@ -136,15 +136,15 @@ Examples and SDK source may show helpers such as `searchAndContents(...)`. They 
 
 ## Raw HTTP vs SDK Shapes
 
-| Concern | Raw HTTP | Python SDK | TypeScript SDK |
-| --- | --- | --- | --- |
-| Results count | `numResults` | `num_results` | `numResults` |
-| Output schema | `outputSchema` | `output_schema` | `outputSchema` |
-| System prompt | `systemPrompt` | `system_prompt` | `systemPrompt` |
-| Text cap | `maxCharacters` | `max_characters` | `maxCharacters` |
-| Freshness | `maxAgeHours` | `max_age_hours` | `maxAgeHours` |
-| Search contents | nested `contents` | nested `contents` with snake_case keys | nested `contents` with camelCase keys |
-| Contents endpoint text | top-level `text` | top-level `text` | top-level `text` |
+| Concern                | Raw HTTP          | Python SDK                             | TypeScript SDK                        |
+| ---------------------- | ----------------- | -------------------------------------- | ------------------------------------- |
+| Results count          | `numResults`      | `num_results`                          | `numResults`                          |
+| Output schema          | `outputSchema`    | `output_schema`                        | `outputSchema`                        |
+| System prompt          | `systemPrompt`    | `system_prompt`                        | `systemPrompt`                        |
+| Text cap               | `maxCharacters`   | `max_characters`                       | `maxCharacters`                       |
+| Freshness              | `maxAgeHours`     | `max_age_hours`                        | `maxAgeHours`                         |
+| Search contents        | nested `contents` | nested `contents` with snake_case keys | nested `contents` with camelCase keys |
+| Contents endpoint text | top-level `text`  | top-level `text`                       | top-level `text`                      |
 
 ## Critical Pitfalls
 

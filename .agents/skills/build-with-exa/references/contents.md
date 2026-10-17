@@ -40,18 +40,18 @@ POST https://api.exa.ai/contents
 
 ### Core Request Parameters
 
-| Parameter | Type | Notes |
-| --- | --- | --- |
-| `urls` | string[] | Primary way to pass known URLs |
-| `ids` | string[] | Backwards-compatible alias for document IDs from prior Exa calls |
-| `text` | boolean or object | Top-level text extraction control |
-| `highlights` | boolean or object | Top-level highlights extraction control |
-| `summary` | boolean or object | Top-level summary extraction control |
-| `maxAgeHours` | integer | Normative freshness control |
-| `livecrawlTimeout` | integer | Timeout in milliseconds |
-| `subpages` | integer | Crawl linked subpages |
-| `subpageTarget` | string or string[] | Focus which subpages to crawl |
-| `extras` | object | Extra link and image extraction |
+| Parameter          | Type               | Notes                                                            |
+| ------------------ | ------------------ | ---------------------------------------------------------------- |
+| `urls`             | string[]           | Primary way to pass known URLs                                   |
+| `ids`              | string[]           | Backwards-compatible alias for document IDs from prior Exa calls |
+| `text`             | boolean or object  | Top-level text extraction control                                |
+| `highlights`       | boolean or object  | Top-level highlights extraction control                          |
+| `summary`          | boolean or object  | Top-level summary extraction control                             |
+| `maxAgeHours`      | integer            | Normative freshness control                                      |
+| `livecrawlTimeout` | integer            | Timeout in milliseconds                                          |
+| `subpages`         | integer            | Crawl linked subpages                                            |
+| `subpageTarget`    | string or string[] | Focus which subpages to crawl                                    |
+| `extras`           | object             | Extra link and image extraction                                  |
 
 ## Top-Level Content Fields
 
@@ -72,11 +72,11 @@ result = exa.get_contents(
 
 ### Content Field Behavior
 
-| Field | Best For | Notes |
-| --- | --- | --- |
-| `text` | Full extraction | Supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, `excludeSections`; object options require an explicit task requirement |
-| `highlights` | Token-efficient excerpts | Good default for all tasks unless otherwise specified; use bare `true` |
-| `summary` | Per-page compression | Each page adds its own synthesis step; only when the user explicitly requests Exa-side summaries |
+| Field        | Best For                 | Notes                                                                                                                                               |
+| ------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`       | Full extraction          | Supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, `excludeSections`; object options require an explicit task requirement |
+| `highlights` | Token-efficient excerpts | Good default for all tasks unless otherwise specified; use bare `true`                                                                              |
+| `summary`    | Per-page compression     | Each page adds its own synthesis step; only when the user explicitly requests Exa-side summaries                                                    |
 
 Pick exactly one of `text`, `highlights`, or `summary`. Stacking them is unnecessary. `summary` adds a per-page LLM call, and combining `text` with `highlights` increases billing for two views of the same page.
 
@@ -84,12 +84,12 @@ Pick exactly one of `text`, `highlights`, or `summary`. Stacking them is unneces
 
 Use `maxAgeHours` for crawl freshness. It caps how old cached page content may be before Exa livecrawls; it does not filter by publication date:
 
-| Value | Behavior |
-| --- | --- |
-| omitted | Default behavior; cached content first, crawl fallback when needed |
-| positive integer | Accept cache up to that age, then live crawl |
-| `0` | Always live crawl |
-| `-1` | Cache only |
+| Value            | Behavior                                                           |
+| ---------------- | ------------------------------------------------------------------ |
+| omitted          | Default behavior; cached content first, crawl fallback when needed |
+| positive integer | Accept cache up to that age, then live crawl                       |
+| `0`              | Always live crawl                                                  |
+| `-1`             | Cache only                                                         |
 
 Set `livecrawlTimeout` whenever live crawling matters so slow pages do not block the whole request longer than expected.
 

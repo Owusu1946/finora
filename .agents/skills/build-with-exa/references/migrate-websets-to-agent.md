@@ -67,18 +67,18 @@ Classify before touching code, and KEEP the style — do not "upgrade" raw HTTP 
 
 ## Request Mapping
 
-| Websets concept | Agent API equivalent |
-| --- | --- |
-| `Webset` container | A run (`POST /agent/runs`); follow-ups chain with `previousRunId` |
-| `search.query` | `query` |
-| `search.count` | `maxItems` on the output array in `outputSchema` |
-| `search.entity` | Entity description inside `query` and the item shape in `outputSchema` |
-| `criteria` (verification rules) | Constraints stated in `query`; the agent verifies before returning |
-| `Enrichment` jobs | Fields on the item schema in `outputSchema`; contact fields via JSON Schema formats (`email`, `phone`, `uri`) |
-| Imports / existing rows to enrich | `input.data` |
-| Records to suppress | `input.exclusion` |
-| Webhooks and events | Poll `GET /agent/runs/{id}` or stream `GET /agent/runs/{id}/events` |
-| Websets monitor subresources | Standalone Monitors API (`/monitors`) |
+| Websets concept                   | Agent API equivalent                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Webset` container                | A run (`POST /agent/runs`); follow-ups chain with `previousRunId`                                             |
+| `search.query`                    | `query`                                                                                                       |
+| `search.count`                    | `maxItems` on the output array in `outputSchema`                                                              |
+| `search.entity`                   | Entity description inside `query` and the item shape in `outputSchema`                                        |
+| `criteria` (verification rules)   | Constraints stated in `query`; the agent verifies before returning                                            |
+| `Enrichment` jobs                 | Fields on the item schema in `outputSchema`; contact fields via JSON Schema formats (`email`, `phone`, `uri`) |
+| Imports / existing rows to enrich | `input.data`                                                                                                  |
+| Records to suppress               | `input.exclusion`                                                                                             |
+| Webhooks and events               | Poll `GET /agent/runs/{id}` or stream `GET /agent/runs/{id}/events`                                           |
+| Websets monitor subresources      | Standalone Monitors API (`/monitors`)                                                                         |
 
 ## Migration Example
 

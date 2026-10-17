@@ -50,12 +50,24 @@ describe('Exa integration', () => {
         expect(body.query).toContain('budget up to USD 500');
         return Response.json({
           requestId: 'product-request',
-          results: [{ title: 'iPhone 17 Pro Max refurbished - $479', url: 'https://shop.example/iphone', highlights: ['$479 refurbished'] }],
+          results: [
+            {
+              title: 'iPhone 17 Pro Max refurbished - $479',
+              url: 'https://shop.example/iphone',
+              highlights: ['$479 refurbished'],
+            },
+          ],
         });
       }
       expect(url.endsWith('/contents')).toBe(true);
       return Response.json({
-        results: [{ title: 'iPhone 17 Pro Max refurbished', url: 'https://shop.example/iphone', text: 'Refurbished iPhone 17 Pro Max. Price: $479. In stock. Free shipping.' }],
+        results: [
+          {
+            title: 'iPhone 17 Pro Max refurbished',
+            url: 'https://shop.example/iphone',
+            text: 'Refurbished iPhone 17 Pro Max. Price: $479. In stock. Free shipping.',
+          },
+        ],
         statuses: [{ id: 'https://shop.example/iphone', status: 'success' }],
       });
     });
@@ -67,14 +79,16 @@ describe('Exa integration', () => {
       currency: 'usd',
     });
 
-    expect(result.products[0]).toEqual(expect.objectContaining({
-      price: '$479',
-      priceAmount: 479,
-      verified: true,
-      condition: 'refurbished',
-      availability: 'listed',
-      withinBudget: true,
-    }));
+    expect(result.products[0]).toEqual(
+      expect.objectContaining({
+        price: '$479',
+        priceAmount: 479,
+        verified: true,
+        condition: 'refurbished',
+        availability: 'listed',
+        withinBudget: true,
+      }),
+    );
     expect(request).toHaveBeenCalledTimes(2);
   });
 });

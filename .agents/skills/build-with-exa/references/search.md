@@ -48,10 +48,10 @@ POST https://api.exa.ai/search
 }
 ```
 
-| Parameter | Type | Notes |
-| --- | --- | --- |
-| `query` | string | Required natural-language query |
-| `type` | string | `auto` is the server default; stating it explicitly is fine, other modes need a task reason |
+| Parameter  | Type   | Notes                                                                                                                                              |
+| ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `query`    | string | Required natural-language query                                                                                                                    |
+| `type`     | string | `auto` is the server default; stating it explicitly is fine, other modes need a task reason                                                        |
 | `contents` | object | Content extraction per result; `{ "highlights": true }` is the recommendation, not a server default — omit `contents` and results carry no content |
 
 Encode intent in the query itself: subject, constraints, time window, and source preferences all belong in natural language before they belong in request parameters.
@@ -60,29 +60,29 @@ Encode intent in the query itself: subject, constraints, time window, and source
 
 Every parameter below changes behavior away from the server defaults. Add one only when the task requires it.
 
-| Parameter | Type | Add only when |
-| --- | --- | --- |
-| `numResults` | integer | A specific result count is an intentional product decision. The server default is 10. |
-| `category` | string | The user explicitly requests category-constrained retrieval. See Category. |
-| `includeDomains` | string[] | The user explicitly requests a hard allowlist and supplies or approves its contents. Supports paths and wildcards such as `openai.com/blog` or `*.substack.com`. |
+| Parameter        | Type     | Add only when                                                                                                                                                                          |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `numResults`     | integer  | A specific result count is an intentional product decision. The server default is 10.                                                                                                  |
+| `category`       | string   | The user explicitly requests category-constrained retrieval. See Category.                                                                                                             |
+| `includeDomains` | string[] | The user explicitly requests a hard allowlist and supplies or approves its contents. Supports paths and wildcards such as `openai.com/blog` or `*.substack.com`.                       |
 | `excludeDomains` | string[] | The user explicitly requests a hard blocklist and supplies or approves its contents. Do not convert source preferences or examples into filters; use query phrasing or `systemPrompt`. |
-| `userLocation` | string | The task is location-sensitive. Two-letter ISO country code. |
-| `systemPrompt` | string | The task uses synthesized output and needs behavior, emphasis, or source-preference guidance. |
-| `outputSchema` | object | The task requires structured output in `output.content`. |
-| `stream` | boolean | The caller consumes typed SSE chunks for synthesized output. |
+| `userLocation`   | string   | The task is location-sensitive. Two-letter ISO country code.                                                                                                                           |
+| `systemPrompt`   | string   | The task uses synthesized output and needs behavior, emphasis, or source-preference guidance.                                                                                          |
+| `outputSchema`   | object   | The task requires structured output in `output.content`.                                                                                                                               |
+| `stream`         | boolean  | The caller consumes typed SSE chunks for synthesized output.                                                                                                                           |
 
 ## Search Types
 
 Use Exa's primary search types as latency/quality presets:
 
-| Type | Best For | Tradeoff |
-| --- | --- | --- |
-| `auto` | General default | Best default balance of speed and quality |
-| `fast` | Low-latency apps | Faster than `auto`, slightly less headroom for synthesis-heavy work |
-| `instant` | Real-time apps | Lowest latency path |
-| `deep-lite` | Lightweight synthesized output | More reasoning and synthesis than `auto` |
-| `deep` | Multi-step synthesis | Higher latency, better for structured or research-like output |
-| `deep-reasoning` | Hardest research tasks | Highest reasoning depth and highest latency |
+| Type             | Best For                       | Tradeoff                                                            |
+| ---------------- | ------------------------------ | ------------------------------------------------------------------- |
+| `auto`           | General default                | Best default balance of speed and quality                           |
+| `fast`           | Low-latency apps               | Faster than `auto`, slightly less headroom for synthesis-heavy work |
+| `instant`        | Real-time apps                 | Lowest latency path                                                 |
+| `deep-lite`      | Lightweight synthesized output | More reasoning and synthesis than `auto`                            |
+| `deep`           | Multi-step synthesis           | Higher latency, better for structured or research-like output       |
+| `deep-reasoning` | Hardest research tasks         | Highest reasoning depth and highest latency                         |
 
 `auto` is the server default. Stay on it unless the use case clearly prioritizes real-time speed, deeper reasoning, or configuration control.
 `outputSchema` works across search types, so do not pick a deep variant only because you want structured output.
@@ -104,17 +104,17 @@ On the search endpoint, all content-extraction controls live inside `contents`. 
 
 `contents.highlights: true` is the recommended extraction mode; the server returns no content at all unless `contents` is sent. Every other option below needs an explicit task requirement.
 
-| Parameter | Type | Add only when |
-| --- | --- | --- |
-| `contents.highlights` | boolean or object | Recommended as bare `true`. Object options such as `maxCharacters` require an explicit budget requirement; avoid values below about 400 because they truncate too aggressively for downstream LLM use. |
-| `contents.text` | boolean or object | Downstream logic truly needs broad page context. Object form supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, `excludeSections`. |
-| `contents.summary` | boolean or object | The user explicitly requests Exa-side per-result synthesis. Each result adds its own LLM call. A summarized final product is not sufficient justification; use highlights and synthesize downstream. |
-| `contents.maxAgeHours` | integer | The task states a content-freshness requirement. Caps cached page content age before live crawl. `0` forces live crawl, `-1` is cache only. |
-| `contents.livecrawlTimeout` | integer | Live crawling is in use and slow pages must not block the request. Milliseconds. |
-| `contents.subpages` | integer | The task requires crawling linked subpages per result. |
-| `contents.subpageTarget` | string or string[] | `subpages` is in use and needs focusing. |
-| `contents.extras.links` | integer | The task requires extracted links. |
-| `contents.extras.imageLinks` | integer | The task requires extracted image URLs. |
+| Parameter                    | Type               | Add only when                                                                                                                                                                                          |
+| ---------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `contents.highlights`        | boolean or object  | Recommended as bare `true`. Object options such as `maxCharacters` require an explicit budget requirement; avoid values below about 400 because they truncate too aggressively for downstream LLM use. |
+| `contents.text`              | boolean or object  | Downstream logic truly needs broad page context. Object form supports `maxCharacters`, `includeHtmlTags`, `verbosity`, `includeSections`, `excludeSections`.                                           |
+| `contents.summary`           | boolean or object  | The user explicitly requests Exa-side per-result synthesis. Each result adds its own LLM call. A summarized final product is not sufficient justification; use highlights and synthesize downstream.   |
+| `contents.maxAgeHours`       | integer            | The task states a content-freshness requirement. Caps cached page content age before live crawl. `0` forces live crawl, `-1` is cache only.                                                            |
+| `contents.livecrawlTimeout`  | integer            | Live crawling is in use and slow pages must not block the request. Milliseconds.                                                                                                                       |
+| `contents.subpages`          | integer            | The task requires crawling linked subpages per result.                                                                                                                                                 |
+| `contents.subpageTarget`     | string or string[] | `subpages` is in use and needs focusing.                                                                                                                                                               |
+| `contents.extras.links`      | integer            | The task requires extracted links.                                                                                                                                                                     |
+| `contents.extras.imageLinks` | integer            | The task requires extracted image URLs.                                                                                                                                                                |
 
 ### Text vs Highlights vs Summary
 
