@@ -1,8 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { getSystemLanguage } from './i18n';
-import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
-import { getActiveUserId } from './session-storage';
+import { getActiveUserId, isUserStorageKeyWritable, userStorageKey } from './session-storage';
 
 const BASE_KEY = 'finora.settings.v1';
 const key = () => userStorageKey(BASE_KEY);
