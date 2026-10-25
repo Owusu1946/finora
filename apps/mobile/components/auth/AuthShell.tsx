@@ -26,7 +26,7 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
       <AuthCanvas colors={colors} />
       <KeyboardAvoidingView
         className='flex-1'
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
           contentContainerStyle={{
