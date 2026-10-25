@@ -368,6 +368,12 @@ export function createRemoteChatResumeStream(config: RemoteChatConfig, expectedS
       await persistActiveStreamId(config.chatId, null);
     } catch (error) {
       if (abortSignal.aborted) return;
+      console.error('[remote-chat:resume] reconnect failed', {
+        chatId: config.chatId,
+        expectedStreamId: activeStreamId,
+        errorName: error instanceof Error ? error.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     } finally {
       abortSignal.removeEventListener('abort', onAbort);
@@ -449,14 +455,35 @@ export function createRemoteChatAdapter(config: RemoteChatConfig): ChatModelAdap
         await persistActiveStreamId(chatId, null);
       } catch (error) {
         if (abortSignal.aborted) return;
-        if (!activeStreamId) throw error;
+        if (!activeStreamId) {
+          console.error('[remote-chat:run] failed before stream id was known', {
+            chatId,
+            activeStreamId,
+            incomingMessageCount: messages.length,
+            errorName: error instanceof Error ? error.name : typeof error,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+          throw error;
+        }
 
+        console.warn('[remote-chat:run] stream errored, attempting reconnect', {
+          chatId,
+          activeStreamId,
+          errorName: error instanceof Error ? error.name : typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
         const resumed = await transport.reconnectToStream({
           abortSignal,
           chatId,
           headers: await api.authHeaders(),
         });
-        if (!resumed) throw error;
+        if (!resumed) {
+          console.error('[remote-chat:run] reconnect returned no stream', {
+            chatId,
+            activeStreamId,
+          });
+          throw error;
+        }
         yield* assistantResults(resumed);
         await persistActiveStreamId(chatId, null);
       } finally {
