@@ -136,12 +136,27 @@ export default function AddPhoneScreen() {
       haptics.success();
       finish();
     } catch (caught) {
+      // Definite code errors clear the entry (auto-check runs again on the
+      // retyped attempt); request_failed keeps the code so a manual retry
+      // doesn't force a retype.
+      const caughtCode = caught instanceof PhoneVerificationError ? caught.code : null;
+      if (caughtCode !== 'request_failed') setCode('');
       showError(caught, 'That code is invalid or expired.');
     } finally {
       setLoading(false);
       submittingRef.current = false;
     }
   }, [code, finish, loading, markVerified, phoneVerification, showError]);
+
+  // Auto-check the moment the code reaches full length.
+  const lastCodeRef = useRef('');
+  useEffect(() => {
+    const previous = lastCodeRef.current;
+    lastCodeRef.current = code;
+    if (code.length !== AUTH_OTP_LENGTH) return;
+    if (previous.length === AUTH_OTP_LENGTH) return;
+    void verifyCode();
+  }, [code, verifyCode]);
 
   const resendCode = useCallback(async () => {
     if (!normalizedPhone || resending || cooldown > 0) return;

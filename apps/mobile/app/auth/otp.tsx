@@ -1,6 +1,6 @@
 import { useSignIn, useSignUp } from '@clerk/expo';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { AuthButton } from '@/components/auth/AuthButton';
@@ -50,11 +50,13 @@ export default function AuthOtpScreen() {
       if (result.error) {
         haptics.impact();
         setError(clerkErrorMessage(result.error, 'That reset code is invalid or expired.'));
+        setCode('');
         return;
       }
       if (signIn.status !== 'needs_new_password') {
         haptics.impact();
         setError('Password recovery could not continue. Request a new code.');
+        setCode('');
         return;
       }
       haptics.success();
@@ -69,22 +71,37 @@ export default function AuthOtpScreen() {
     if (result.error) {
       haptics.impact();
       setError(clerkErrorMessage(result.error, 'That verification code is invalid or expired.'));
+      setCode('');
       return;
     }
     if (signUp.status !== 'complete') {
       haptics.impact();
       setError('Your account still has incomplete sign-up requirements.');
+      setCode('');
       return;
     }
     const finalized = await signUp.finalize();
     if (finalized.error) {
       haptics.impact();
       setError(clerkErrorMessage(finalized.error, 'Could not finish creating your account.'));
+      setCode('');
       return;
     }
     haptics.success();
     await postAuthNavigate(signUp.createdUserId);
   }, [canVerify, code, email, isReset, loading, postAuthNavigate, router, signIn, signUp]);
+
+  // Auto-check the moment the code reaches full length. Every failure path
+  // clears the code, so a retry is always a fresh entry; the button covers
+  // manual retries.
+  const lastCodeRef = useRef('');
+  useEffect(() => {
+    const previous = lastCodeRef.current;
+    lastCodeRef.current = code;
+    if (code.length !== AUTH_OTP_LENGTH) return;
+    if (previous.length === AUTH_OTP_LENGTH) return;
+    void handleVerify();
+  }, [code, handleVerify]);
 
   const handleResend = useCallback(async () => {
     if (resending || cooldown > 0 || !email) return;
