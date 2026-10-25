@@ -110,6 +110,10 @@ export function VoiceScreenBloom({
   const [height, setHeight] = useState(BLOOM_HEIGHT + bottomBleed);
   useLayoutEffect(() => setHeight(BLOOM_HEIGHT + bottomBleed), [bottomBleed]);
 
+  // Visible content edge: the glow line sits just above the safe-area bleed
+  // so it shows on screen while spilling into the inset below.
+  const edgeY = height - bottomBleed + 6;
+
   const processingRef = useSharedValue(processing);
   useEffect(() => {
     processingRef.value = processing;
@@ -180,7 +184,7 @@ export function VoiceScreenBloom({
           flow={flow}
           gather={gather}
           width={width}
-          bottomY={height - 2}
+          bottomY={edgeY}
         />
 
         {/* Core along the bottom edge, brightest behind the composer row */}
@@ -188,7 +192,7 @@ export function VoiceScreenBloom({
           color={colors.core}
           band0={band0}
           width={width}
-          bottomY={height - 2}
+          bottomY={edgeY}
         />
 
         {/* Gathered transcription sweep */}
@@ -197,7 +201,7 @@ export function VoiceScreenBloom({
           gather={gather}
           sweepPhase={sweepPhase}
           width={width}
-          bottomY={height - 2}
+          bottomY={edgeY}
         />
       </Canvas>
     </View>

@@ -253,9 +253,7 @@ function useVoiceComposer() {
   const recorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-  const [speechActive, setSpeechActive] = useState(false);
   const voiceStateRef = useRef<VoiceState>('idle');
-  const speechActiveRef = useRef(false);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const draftBeforeRecordingRef = useRef('');
@@ -290,16 +288,9 @@ function useVoiceComposer() {
     if (mountedRef.current) setVoiceState(next);
   };
 
-  const updateSpeechActive = (next: boolean) => {
-    if (speechActiveRef.current === next) return;
-    speechActiveRef.current = next;
-    if (mountedRef.current) setSpeechActive(next);
-  };
-
   const stopRecording = async (discard = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
-    updateSpeechActive(false);
     updateVoiceState(discard ? 'idle' : 'transcribing');
     clearStopTimer();
 
@@ -356,13 +347,11 @@ function useVoiceComposer() {
       lastVoiceActivityAtRef.current = now;
       if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
         speechDetectedRef.current = true;
-        updateSpeechActive(true);
       }
       return;
     }
 
     voiceActivitySamplesRef.current = 0;
-    updateSpeechActive(false);
     if (!speechDetectedRef.current) {
       if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
         void stopRecordingRef.current(true);
@@ -391,7 +380,6 @@ function useVoiceComposer() {
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
     speechDetectedRef.current = false;
-    updateSpeechActive(false);
     voiceActivitySamplesRef.current = 0;
     lastVoiceActivityAtRef.current = 0;
     updateVoiceState('requesting_permission');
@@ -443,26 +431,23 @@ function useVoiceComposer() {
     }
   };
 
-  const handleOrbPress = () => {
+  const cancelVoice = () => {
+    haptics.selection();
     if (voiceStateRef.current === 'recording') {
-      haptics.light();
-      void stopRecording(false);
-      return;
-    }
-    if (voiceStateRef.current === 'requesting_permission') {
-      haptics.selection();
-      voiceSessionRef.current += 1;
-      updateVoiceState('idle');
-      return;
-    }
-    if (voiceStateRef.current === 'transcribing') {
-      haptics.selection();
+      void stopRecording(true);
+    } else {
       voiceSessionRef.current += 1;
       updateVoiceState('idle');
     }
   };
 
-  return { voiceState, speechActive, level, startRecording, handleOrbPress };
+  const acceptVoice = () => {
+    if (voiceStateRef.current !== 'recording') return;
+    haptics.light();
+    void stopRecording(false);
+  };
+
+  return { voiceState, level, startRecording, cancelVoice, acceptVoice };
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -754,7 +739,7 @@ export function Composer() {
   const { colors, isDark } = useTheme();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, level, startRecording, handleOrbPress } = useVoiceComposer();
+  const { voiceState, level, startRecording, cancelVoice, acceptVoice } = useVoiceComposer();
   const insets = useSafeAreaInsets();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const composerText = useAuiState((s) => s.thread.composer.text);
@@ -779,8 +764,10 @@ export function Composer() {
       inputRef.current?.blur();
       Keyboard.dismiss();
       void startRecording();
+    } else if (voiceState === 'recording') {
+      acceptVoice();
     } else {
-      handleOrbPress();
+      cancelVoice();
     }
   };
 
@@ -789,83 +776,93 @@ export function Composer() {
       className='w-full self-center px-3 pt-2'
       style={[styles.container]}
     >
-      <View
-        className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
-        style={[styles.shell]}
-      >
-        {slashMode ? (
-          <View className='flex-row items-center gap-2 px-2'>
-            <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
-              <Icon
-                name={
-                  slashMode.includes('deep') || slashMode.includes('research')
-                    ? 'brain'
-                    : slashMode.includes('shop') || slashMode.includes('product')
-                      ? 'dollar'
-                      : 'tool'
-                }
-                size={13}
-                color={colors.foreground}
-              />
-            </View>
-            <Text className='font-sans-medium text-[12px] text-muted-foreground'>
-              {slashMode.includes('deep') || slashMode.includes('research')
-                ? 'Deep research mode'
-                : slashMode.includes('shop') || slashMode.includes('product')
-                  ? 'Product search mode'
-                  : 'Web search mode'}
-            </Text>
-          </View>
-        ) : null}
-        {hasAttachments ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className='max-h-[84px] grow-0'
-            contentContainerStyle={styles.attachmentsRow}
-            keyboardShouldPersistTaps='handled'
-          >
-            <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
-          </ScrollView>
-        ) : null}
-
-        <ComposerInput
-          ref={inputRef}
-          style={inputStyle}
-          placeholder='Ask Finora… use @ to tag'
-          placeholderTextColor={colors.mutedForeground}
-          multiline
-          maxLength={4000}
-          onFocus={() => setInputFocused(true)}
-          onBlur={() => setInputFocused(false)}
+      {voiceState !== 'idle' ? (
+        <VoiceComposerCard
+          state={voiceState}
+          onCancel={cancelVoice}
+          onAccept={acceptVoice}
         />
-
-        <View className='flex-row items-center gap-1 pt-0.5'>
-          <AttachButton />
-          <ScanButton />
-          <View className='flex-1' />
-          {inputFocused ? (
-            <Pressable
-              accessibilityLabel='Hide keyboard'
-              hitSlop={8}
-              onPress={() => {
-                inputRef.current?.blur();
-                Keyboard.dismiss();
-              }}
-              className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
-              style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
-            >
-              <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
-            </Pressable>
+      ) : (
+        <View
+          className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
+          style={[styles.shell]}
+        >
+          {slashMode ? (
+            <View className='flex-row items-center gap-2 px-2'>
+              <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
+                <Icon
+                  name={
+                    slashMode.includes('deep') || slashMode.includes('research')
+                      ? 'brain'
+                      : slashMode.includes('shop') || slashMode.includes('product')
+                        ? 'dollar'
+                        : 'tool'
+                  }
+                  size={13}
+                  color={colors.foreground}
+                />
+              </View>
+              <Text className='font-sans-medium text-[12px] text-muted-foreground'>
+                {slashMode.includes('deep') || slashMode.includes('research')
+                  ? 'Deep research mode'
+                  : slashMode.includes('shop') || slashMode.includes('product')
+                    ? 'Product search mode'
+                    : 'Web search mode'}
+              </Text>
+            </View>
           ) : null}
-          <AuiIf condition={(s) => !s.thread.isRunning}>
-            <PrimaryComposerAction onPressMic={handleMicPress} />
-          </AuiIf>
-          <AuiIf condition={(s) => s.thread.isRunning}>
-            <CancelButton />
-          </AuiIf>
+          {hasAttachments ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className='max-h-[84px] grow-0'
+              contentContainerStyle={styles.attachmentsRow}
+              keyboardShouldPersistTaps='handled'
+            >
+              <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+            </ScrollView>
+          ) : null}
+
+          <ComposerInput
+            ref={inputRef}
+            style={inputStyle}
+            placeholder='Ask Finora… use @ to tag'
+            placeholderTextColor={colors.mutedForeground}
+            multiline
+            maxLength={4000}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
+          />
+
+          <View className='flex-row items-center gap-1 pt-0.5'>
+            <AttachButton />
+            <ScanButton />
+            <View className='flex-1' />
+            {inputFocused ? (
+              <Pressable
+                accessibilityLabel='Hide keyboard'
+                hitSlop={8}
+                onPress={() => {
+                  inputRef.current?.blur();
+                  Keyboard.dismiss();
+                }}
+                className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
+                style={({ pressed }) => [
+                  { backgroundColor: pressed ? colors.muted : 'transparent' },
+                ]}
+              >
+                <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
+              </Pressable>
+            ) : null}
+            <AuiIf condition={(s) => !s.thread.isRunning}>
+              <PrimaryComposerAction onPressMic={handleMicPress} />
+            </AuiIf>
+            <AuiIf condition={(s) => s.thread.isRunning}>
+              <CancelButton />
+            </AuiIf>
+          </View>
         </View>
-      </View>
+      )}
       {voiceState !== 'idle' ? (
         <VoiceScreenBloom
           level={level}
@@ -874,6 +871,76 @@ export function Composer() {
           colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
         />
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * Composer replacement shown while voice capture is active: cancel on the
+ * left, status in the middle, finish-and-transcribe on the right. The bloom
+ * overlays this card and the bottom of the message list (rendered by the
+ * parent so it can escape the shell's bounds).
+ */
+function VoiceComposerCard({
+  state,
+  onCancel,
+  onAccept,
+}: {
+  state: VoiceState;
+  onCancel: () => void;
+  onAccept: () => void;
+}) {
+  const { colors } = useTheme();
+  const label =
+    state === 'recording'
+      ? 'Listening… tap ✓ when done'
+      : state === 'transcribing'
+        ? 'Transcribing…'
+        : 'Starting voice…';
+  return (
+    <View
+      className='flex-col justify-center rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
+      style={[styles.shell, { minHeight: 96 }]}
+    >
+      <View className='min-h-[52px] flex-row items-center gap-3 px-1.5'>
+        <Pressable
+          accessibilityLabel='Cancel voice input'
+          accessibilityRole='button'
+          onPress={onCancel}
+          className='h-11 w-11 items-center justify-center rounded-full'
+          style={({ pressed }) => [
+            { backgroundColor: pressed ? colors.muted : colors.muted, opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Icon
+            name='remove'
+            size={18}
+            color={colors.foreground}
+          />
+        </Pressable>
+        <Text className='flex-1 text-center font-sans-medium text-[14px] text-muted-foreground'>
+          {label}
+        </Text>
+        {state === 'recording' ? (
+          <Pressable
+            accessibilityLabel='Finish voice input'
+            accessibilityRole='button'
+            onPress={onAccept}
+            className='h-11 w-11 items-center justify-center rounded-full'
+            style={({ pressed }) => [
+              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Icon
+              name='check'
+              size={18}
+              color={colors.primaryForeground}
+            />
+          </Pressable>
+        ) : (
+          <View className='h-11 w-11' />
+        )}
+      </View>
     </View>
   );
 }
