@@ -239,7 +239,7 @@ function BloomLobes({
           bandValue={lobe.band === 0 ? band0 : lobe.band === 1 ? band1 : band2}
           clock={clock}
           color={colors[index % colors.length]}
-          restX={lobe.x * 36 * 1.35 * scale}
+          restX={lobe.x * 1.35 * scale}
           span={36 * LOBE_DEFS.length * 1.35 * scale}
           flowValue={flow}
           gather={gather}
@@ -288,7 +288,7 @@ function BloomLobe({
     const shimmer = 0.85 + 0.15 * Math.sin(clock.value * 2.1 + index * 1.9);
     const env = edgeEnvelope(wrapX(restX + flowValue.value, span), span);
     // While processing, lobes hand the stage to the gathered beam.
-    return clamp01(0.62 * env * shimmer * bandValue.value * (1 - 0.55 * gather.value));
+    return clamp01(0.75 * env * shimmer * bandValue.value * (1 - 0.55 * gather.value));
   });
   const w = useDerivedValue(() => {
     'worklet';
@@ -347,11 +347,12 @@ function BloomCore({
   return (
     <Group opacity={opacity}>
       <Paint>
+        {/* Compact hot centre hugging the edge, like the reference. */}
         <RadialGradient
           c={{ x: width / 2, y: bottomY }}
-          r={Math.max(width, 60)}
+          r={Math.max(140, width * 0.42)}
           colors={[color, `${color}00`]}
-          positions={[0, 0.28]}
+          positions={[0, 0.38]}
         />
       </Paint>
       <RoundedRect

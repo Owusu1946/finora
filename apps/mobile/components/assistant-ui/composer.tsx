@@ -6,6 +6,7 @@ import {
   setAudioModeAsync,
   useAudioRecorder,
   useAudioRecorderState,
+  type RecordingOptions,
 } from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,6 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -37,6 +39,7 @@ import {
   type FinoraTagSuggestion,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
+import { startLiveTranscription, type LiveTranscriptionSession } from '@/lib/live-transcription';
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
 import { ensureMediaLibraryPermission } from '@/lib/permissions';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
@@ -228,9 +231,14 @@ const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
 const TRAILING_SILENCE_TIMEOUT_MS = 2_500;
 const VOICE_ACTIVITY_THRESHOLD_DB = -42;
 const VOICE_ACTIVITY_SAMPLES_REQUIRED = 2;
-const VOICE_RECORDING_OPTIONS = {
+const VOICE_RECORDING_OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
   isMeteringEnabled: true,
+  // ADTS AAC on both platforms: raw frames can be tailed out of the file and
+  // streamed to the live transcription WebSocket while the recorder runs.
+  extension: '.aac',
+  numberOfChannels: 1,
+  android: { ...RecordingPresets.HIGH_QUALITY.android, outputFormat: 'aac_adts' },
 };
 
 // expo-audio metering is dB (about -160..0). Speech sits between -42 and -8,
@@ -238,13 +246,17 @@ const VOICE_RECORDING_OPTIONS = {
 const METERING_FLOOR_DB = -50;
 const METERING_RANGE_DB = 44;
 
+// Lobes are the reference aurora palette (green, sky, violet, rose) — vivid
+// on both themes. The core is the hot line at the bottom edge: near-white
+// teal on dark to read as the bright centre; a soft tint on light where a
+// strong core would smear into a dark band.
 const VOICE_BLOOM_LIGHT: VoiceBloomPalette = {
-  core: '#2DD4BF',
-  lobes: ['#22D3EE', '#A78BFA', '#4ADE80', '#F472B6'],
+  core: '#CCFBF1',
+  lobes: ['#22C55E', '#38BDF8', '#A855F7', '#F43F5E'],
 };
 const VOICE_BLOOM_DARK: VoiceBloomPalette = {
-  core: '#2DD4BF',
-  lobes: ['#0EA5E9', '#8B5CF6', '#22C55E', '#EC4899'],
+  core: '#D8FFF6',
+  lobes: ['#22C55E', '#38BDF8', '#A855F7', '#F43F5E'],
 };
 
 function useVoiceComposer() {
@@ -262,6 +274,9 @@ function useVoiceComposer() {
   const voiceActivitySamplesRef = useRef(0);
   const lastVoiceActivityAtRef = useRef(0);
   const stopRecordingRef = useRef<(discard?: boolean) => Promise<void>>(() => Promise.resolve());
+  const liveSessionRef = useRef<LiveTranscriptionSession | null>(null);
+  const liveFinalsRef = useRef('');
+  const [preview, setPreview] = useState('');
 
   // Smoothed 0–1 mic level for the glow, animated on the UI thread.
   const level = useSharedValue(0);
@@ -288,11 +303,30 @@ function useVoiceComposer() {
     if (mountedRef.current) setVoiceState(next);
   };
 
+  // Live previews append committed phrases and swap the interim partial:
+  // "finals + current partial" is what the user reads while speaking.
+  const resetLivePreview = () => {
+    liveFinalsRef.current = '';
+    setPreview('');
+  };
+  const setLivePartial = (text: string) => {
+    const finals = liveFinalsRef.current;
+    setPreview(finals ? `${finals} ${text}` : text);
+  };
+
   const stopRecording = async (discard = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
     updateVoiceState(discard ? 'idle' : 'transcribing');
     clearStopTimer();
+
+    const live = liveSessionRef.current;
+    liveSessionRef.current = null;
+    if (live) {
+      // Flush the tail before closing so the preview sees everything spoken
+      // right up to the press; cancel discards unstreamed bytes.
+      await live.stop(!discard);
+    }
 
     let uri: string | null = null;
     try {
@@ -305,7 +339,7 @@ function useVoiceComposer() {
         return;
       }
 
-      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4';
+      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
       const result = await transcribeRecording(uri, contentType, getToken);
       if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
@@ -368,6 +402,7 @@ function useVoiceComposer() {
     return () => {
       mountedRef.current = false;
       clearStopTimer();
+      void liveSessionRef.current?.stop(false);
       if (voiceStateRef.current === 'recording') {
         void recorder.stop().then(() => deleteRecording(recorder.uri));
       }
@@ -411,6 +446,31 @@ function useVoiceComposer() {
         () => void stopRecording(false),
         MAX_RECORDING_SECONDS * 1000,
       );
+
+      // Stream the growing recording into the live transcript feed for the
+      // on-device preview. Failures here degrade to no preview only; the
+      // one-shot transcription after stop stays authoritative.
+      resetLivePreview();
+      const liveUri = recorder.uri;
+      if (liveUri) {
+        void startLiveTranscription(liveUri, getToken, {
+          onTranscript: (text, isFinal) => {
+            if (voiceSessionRef.current !== sessionId) return;
+            if (isFinal) liveFinalsRef.current = `${liveFinalsRef.current} ${text}`.trim();
+            setLivePartial(isFinal ? '' : text);
+          },
+          onError: (error) => {
+            console.warn('[voice:live]', error);
+          },
+        })
+          .then((session) => {
+            if (voiceSessionRef.current !== sessionId) void session.stop(false);
+            else liveSessionRef.current = session;
+          })
+          .catch((error) => {
+            console.warn('[voice:live]', error);
+          });
+      }
     } catch (error) {
       if (voiceSessionRef.current === sessionId || voiceStateRef.current === 'idle') {
         await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
@@ -433,10 +493,18 @@ function useVoiceComposer() {
 
   const cancelVoice = () => {
     haptics.selection();
+    // Voice never touches the composer text until a transcript lands, so
+    // restoring the pre-recording draft is "bring back composer empty" for
+    // the everyday case and keeps an existing draft safe.
+    aui.thread.composer().setText(draftBeforeRecordingRef.current);
+    resetLivePreview();
     if (voiceStateRef.current === 'recording') {
       void stopRecording(true);
     } else {
       voiceSessionRef.current += 1;
+      const live = liveSessionRef.current;
+      liveSessionRef.current = null;
+      void live?.stop(false);
       updateVoiceState('idle');
     }
   };
@@ -447,7 +515,7 @@ function useVoiceComposer() {
     void stopRecording(false);
   };
 
-  return { voiceState, level, startRecording, cancelVoice, acceptVoice };
+  return { voiceState, level, preview, startRecording, cancelVoice, acceptVoice };
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -739,7 +807,8 @@ export function Composer() {
   const { colors, isDark } = useTheme();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, level, startRecording, cancelVoice, acceptVoice } = useVoiceComposer();
+  const { voiceState, level, preview, startRecording, cancelVoice, acceptVoice } =
+    useVoiceComposer();
   const insets = useSafeAreaInsets();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const composerText = useAuiState((s) => s.thread.composer.text);
@@ -777,11 +846,72 @@ export function Composer() {
       style={[styles.container]}
     >
       {voiceState !== 'idle' ? (
-        <VoiceComposerCard
-          state={voiceState}
-          onCancel={cancelVoice}
-          onAccept={acceptVoice}
-        />
+        <>
+          {/* Glow renders first so the transcript and controls draw over it. */}
+          <VoiceScreenBloom
+            level={level}
+            processing={voiceState === 'transcribing'}
+            bottomBleed={insets.bottom + 14}
+            colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
+          />
+          <View className='h-[128px] w-full items-center justify-end'>
+            <View className='min-h-[56px] w-full items-center justify-end pb-3'>
+              {preview ? (
+                <Text
+                  numberOfLines={3}
+                  className='text-center font-sans-medium text-[17px] text-foreground'
+                >
+                  {preview}
+                </Text>
+              ) : null}
+            </View>
+            <View className='mb-2 flex-row items-center gap-6'>
+              <Pressable
+                accessibilityLabel='Cancel voice input'
+                accessibilityRole='button'
+                onPress={cancelVoice}
+                className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                style={({ pressed }) => [
+                  { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.88 },
+                ]}
+              >
+                <Icon
+                  name='remove'
+                  size={20}
+                  color={colors.foreground}
+                />
+              </Pressable>
+              {voiceState === 'recording' ? (
+                <Pressable
+                  accessibilityLabel='Finish voice input'
+                  accessibilityRole='button'
+                  onPress={acceptVoice}
+                  className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                  style={({ pressed }) => [
+                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.88 },
+                  ]}
+                >
+                  <Icon
+                    name='check'
+                    size={20}
+                    color={colors.primary}
+                  />
+                </Pressable>
+              ) : null}
+              {voiceState === 'transcribing' ? (
+                <View
+                  className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                  style={[{ backgroundColor: colors.composer, opacity: 0.88 }]}
+                >
+                  <LoadingIcon
+                    color={colors.mutedForeground}
+                    size={20}
+                  />
+                </View>
+              ) : null}
+            </View>
+          </View>
+        </>
       ) : (
         <View
           className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
@@ -863,84 +993,6 @@ export function Composer() {
           </View>
         </View>
       )}
-      {voiceState !== 'idle' ? (
-        <VoiceScreenBloom
-          level={level}
-          processing={voiceState === 'transcribing'}
-          bottomBleed={insets.bottom + 14}
-          colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
-        />
-      ) : null}
-    </View>
-  );
-}
-
-/**
- * Composer replacement shown while voice capture is active: cancel on the
- * left, status in the middle, finish-and-transcribe on the right. The bloom
- * overlays this card and the bottom of the message list (rendered by the
- * parent so it can escape the shell's bounds).
- */
-function VoiceComposerCard({
-  state,
-  onCancel,
-  onAccept,
-}: {
-  state: VoiceState;
-  onCancel: () => void;
-  onAccept: () => void;
-}) {
-  const { colors } = useTheme();
-  const label =
-    state === 'recording'
-      ? 'Listening… tap ✓ when done'
-      : state === 'transcribing'
-        ? 'Transcribing…'
-        : 'Starting voice…';
-  return (
-    <View
-      className='flex-col justify-center rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
-      style={[styles.shell, { minHeight: 96 }]}
-    >
-      <View className='min-h-[52px] flex-row items-center gap-3 px-1.5'>
-        <Pressable
-          accessibilityLabel='Cancel voice input'
-          accessibilityRole='button'
-          onPress={onCancel}
-          className='h-11 w-11 items-center justify-center rounded-full'
-          style={({ pressed }) => [
-            { backgroundColor: pressed ? colors.muted : colors.muted, opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Icon
-            name='remove'
-            size={18}
-            color={colors.foreground}
-          />
-        </Pressable>
-        <Text className='flex-1 text-center font-sans-medium text-[14px] text-muted-foreground'>
-          {label}
-        </Text>
-        {state === 'recording' ? (
-          <Pressable
-            accessibilityLabel='Finish voice input'
-            accessibilityRole='button'
-            onPress={onAccept}
-            className='h-11 w-11 items-center justify-center rounded-full'
-            style={({ pressed }) => [
-              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
-            ]}
-          >
-            <Icon
-              name='check'
-              size={18}
-              color={colors.primaryForeground}
-            />
-          </Pressable>
-        ) : (
-          <View className='h-11 w-11' />
-        )}
-      </View>
     </View>
   );
 }
@@ -990,9 +1042,5 @@ const styles = {
   },
   doneButton: {
     borderRadius: Radius.pill,
-  },
-  voiceShell: {
-    ...Rounded,
-    borderRadius: Radius.lg,
   },
 } as const;
