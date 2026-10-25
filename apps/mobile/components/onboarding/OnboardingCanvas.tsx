@@ -26,6 +26,8 @@ type OnboardingCanvasProps = {
   progress: SharedValue<number>;
   /** 0 = none, 1 = personal, 2 = business */
   accountSelection: SharedValue<number>;
+  /** 1 while a Skip jump is in flight — transit motifs stay hidden. */
+  fastForward: SharedValue<number>;
   colors: Palette;
   isDark: boolean;
   /** Vertical center of the hero stage (screen coords). */
@@ -35,6 +37,7 @@ type OnboardingCanvasProps = {
 export function OnboardingCanvas({
   progress,
   accountSelection,
+  fastForward,
   colors,
   isDark,
   heroCenterY,
@@ -135,6 +138,7 @@ export function OnboardingCanvas({
 
       <MessageBubbleMotif
         progress={progress}
+        fastForward={fastForward}
         cx={cx}
         cy={cy}
         colors={colors}
@@ -144,6 +148,7 @@ export function OnboardingCanvas({
       <LiquidGlassRing
         progress={progress}
         clock={clock}
+        fastForward={fastForward}
         cx={cx}
         cy={cy}
         r={ringR}

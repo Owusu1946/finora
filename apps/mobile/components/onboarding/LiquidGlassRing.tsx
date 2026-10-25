@@ -22,6 +22,8 @@ import type { Palette } from '@/constants/theme';
 type LiquidGlassRingProps = {
   progress: SharedValue<number>;
   clock: SharedValue<number>;
+  /** 1 while a Skip jump is in flight. */
+  fastForward?: SharedValue<number>;
   cx: number;
   cy: number;
   r: number;
@@ -33,6 +35,7 @@ type LiquidGlassRingProps = {
 export function LiquidGlassRing({
   progress,
   clock,
+  fastForward,
   cx,
   cy,
   r,
@@ -52,7 +55,11 @@ export function LiquidGlassRing({
   }, [cx, cy, r]);
 
   const opacity = useDerivedValue(() => {
-    return interpolate(progress.value, [1.2, 1.65, 2.35, 2.85], [0, 1, 1, 0], Extrapolation.CLAMP);
+    const transit = fastForward ? 1 - fastForward.value : 1;
+    return (
+      interpolate(progress.value, [1.2, 1.65, 2.35, 2.85], [0, 1, 1, 0], Extrapolation.CLAMP) *
+      transit
+    );
   });
 
   const discOpacity = useDerivedValue(() => {

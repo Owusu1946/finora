@@ -40,6 +40,8 @@ export function OnboardingScreen() {
   const progress = useSharedValue(0);
   const dragStart = useSharedValue(0);
   const accountSelection = useSharedValue(0);
+  /** 1 while the canvas is flying past skipped steps — intermediate motifs stay hidden. */
+  const fastForward = useSharedValue(0);
   const [stepIndex, setStepIndex] = useState(0);
   const [accountType, setAccountTypeLocal] = useState<AccountType | null>(null);
   const [finishing, setFinishing] = useState(false);
@@ -72,7 +74,7 @@ export function OnboardingScreen() {
   useAnimatedReaction(
     () => progress.value,
     (current, previous) => {
-      if (previous == null) return;
+      if (previous == null || fastForward.value === 1) return;
       const thresholds = [1.45, 1.7, 1.95];
       for (const t of thresholds) {
         if (previous < t && current >= t) {
@@ -81,6 +83,19 @@ export function OnboardingScreen() {
       }
     },
     [],
+  );
+
+  // End the fast-forward once the skip lands, so later swipes show motifs again
+  const clearFastForward = useCallback(() => {
+    fastForward.value = 0;
+  }, [fastForward]);
+
+  useAnimatedReaction(
+    () => fastForward.value === 1 && Math.abs(progress.value - LAST_STEP) < 0.02,
+    (settled) => {
+      if (settled) runOnJS(clearFastForward)();
+    },
+    [clearFastForward],
   );
 
   const goToStep = useCallback(
@@ -100,6 +115,7 @@ export function OnboardingScreen() {
         .failOffsetY([-16, 16])
         .onBegin(() => {
           dragStart.value = progress.value;
+          fastForward.value = 0;
         })
         .onUpdate((e) => {
           const next = dragStart.value - e.translationX / width;
@@ -114,7 +130,7 @@ export function OnboardingScreen() {
             runOnJS(haptics.selection)();
           }
         }),
-    [commitStep, dragStart, progress, width],
+    [commitStep, dragStart, fastForward, progress, width],
   );
 
   const handleContinue = useCallback(async () => {
@@ -144,14 +160,16 @@ export function OnboardingScreen() {
   );
 
   const handleSkip = useCallback(() => {
+    fastForward.value = 1;
     goToStep(LAST_STEP);
-  }, [goToStep]);
+  }, [fastForward, goToStep]);
 
   return (
     <View className='flex-1 bg-background'>
       <OnboardingCanvas
         progress={progress}
         accountSelection={accountSelection}
+        fastForward={fastForward}
         colors={colors}
         isDark={isDark}
         heroCenterY={heroCenterY}
