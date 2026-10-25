@@ -1,6 +1,5 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
-import { ThinkingOrb } from '@mhaadi/thinking-orbs-native';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -25,6 +24,7 @@ import {
   type TextInputProps,
 } from 'react-native';
 import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
@@ -46,7 +46,7 @@ import {
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
 } from './attachment';
-import { VoiceGlow, type VoiceGlowPalette } from './VoiceGlow';
+import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
 
 const COMPOSER_ATTACHMENT_COMPONENTS = {
   Image: ComposerImageAttachment,
@@ -238,15 +238,13 @@ const VOICE_RECORDING_OPTIONS = {
 const METERING_FLOOR_DB = -50;
 const METERING_RANGE_DB = 44;
 
-const VOICE_GLOW_LIGHT: VoiceGlowPalette = {
-  core: '#0F766E',
-  mid: '#14B8A6',
-  outer: '#2DD4BF',
-};
-const VOICE_GLOW_DARK: VoiceGlowPalette = {
+const VOICE_BLOOM_LIGHT: VoiceBloomPalette = {
   core: '#2DD4BF',
-  mid: '#14B8A6',
-  outer: '#0D9488',
+  lobes: ['#22D3EE', '#A78BFA', '#4ADE80', '#F472B6'],
+};
+const VOICE_BLOOM_DARK: VoiceBloomPalette = {
+  core: '#2DD4BF',
+  lobes: ['#0EA5E9', '#8B5CF6', '#22C55E', '#EC4899'],
 };
 
 function useVoiceComposer() {
@@ -486,58 +484,9 @@ function MicButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function PrimaryComposerAction({ onStartVoice }: { onStartVoice: () => void }) {
+function PrimaryComposerAction({ onPressMic }: { onPressMic: () => void }) {
   const canSend = useAuiState((s) => s.thread.composer.canSend);
-  return canSend ? <SendButton /> : <MicButton onPress={onStartVoice} />;
-}
-
-function VoiceComposer({
-  state,
-  speechActive,
-  onPress,
-}: {
-  state: VoiceState;
-  speechActive: boolean;
-  onPress: () => void;
-}) {
-  const { isDark } = useTheme();
-  const label =
-    state === 'recording'
-      ? 'Listening. Tap to stop and transcribe.'
-      : state === 'transcribing'
-        ? 'Transcribing. Tap to cancel.'
-        : 'Starting voice input. Tap to cancel.';
-
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      onPress={onPress}
-      className='h-20 w-full items-center justify-center rounded-[22px] border border-border bg-composer p-2'
-      style={({ pressed }) => [
-        {
-          opacity: pressed ? 0.72 : 1,
-        },
-      ]}
-    >
-      <View pointerEvents='none'>
-        <ThinkingOrb
-          state={
-            state === 'recording'
-              ? 'listening'
-              : state === 'transcribing'
-                ? 'solving'
-                : 'connecting'
-          }
-          size={64}
-          speed={state === 'requesting_permission' ? 1.2 : 1.5}
-          paused={state === 'recording' && !speechActive}
-          theme={isDark ? 'dark' : 'light'}
-          accessibilityLabel={label}
-        />
-      </View>
-    </Pressable>
-  );
+  return canSend ? <SendButton /> : <MicButton onPress={onPressMic} />;
 }
 
 function SendButton() {
@@ -805,7 +754,8 @@ export function Composer() {
   const { colors, isDark } = useTheme();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, speechActive, level, startRecording, handleOrbPress } = useVoiceComposer();
+  const { voiceState, level, startRecording, handleOrbPress } = useVoiceComposer();
+  const insets = useSafeAreaInsets();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const composerText = useAuiState((s) => s.thread.composer.text);
   const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
@@ -824,111 +774,106 @@ export function Composer() {
     return () => subscription.remove();
   }, []);
 
+  const handleMicPress = () => {
+    if (voiceState === 'idle') {
+      inputRef.current?.blur();
+      Keyboard.dismiss();
+      void startRecording();
+    } else {
+      handleOrbPress();
+    }
+  };
+
   return (
     <View
       className='w-full self-center px-3 pt-2'
       style={[styles.container]}
     >
+      <View
+        className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
+        style={[styles.shell]}
+      >
+        {slashMode ? (
+          <View className='flex-row items-center gap-2 px-2'>
+            <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
+              <Icon
+                name={
+                  slashMode.includes('deep') || slashMode.includes('research')
+                    ? 'brain'
+                    : slashMode.includes('shop') || slashMode.includes('product')
+                      ? 'dollar'
+                      : 'tool'
+                }
+                size={13}
+                color={colors.foreground}
+              />
+            </View>
+            <Text className='font-sans-medium text-[12px] text-muted-foreground'>
+              {slashMode.includes('deep') || slashMode.includes('research')
+                ? 'Deep research mode'
+                : slashMode.includes('shop') || slashMode.includes('product')
+                  ? 'Product search mode'
+                  : 'Web search mode'}
+            </Text>
+          </View>
+        ) : null}
+        {hasAttachments ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className='max-h-[84px] grow-0'
+            contentContainerStyle={styles.attachmentsRow}
+            keyboardShouldPersistTaps='handled'
+          >
+            <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+          </ScrollView>
+        ) : null}
+
+        <ComposerInput
+          ref={inputRef}
+          style={inputStyle}
+          placeholder='Ask Finora… use @ to tag'
+          placeholderTextColor={colors.mutedForeground}
+          multiline
+          maxLength={4000}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
+        />
+
+        <View className='flex-row items-center gap-1 pt-0.5'>
+          <AttachButton />
+          <ScanButton />
+          <View className='flex-1' />
+          {inputFocused ? (
+            <Pressable
+              accessibilityLabel='Hide keyboard'
+              hitSlop={8}
+              onPress={() => {
+                inputRef.current?.blur();
+                Keyboard.dismiss();
+              }}
+              className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
+              style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
+            >
+              <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
+            </Pressable>
+          ) : null}
+          <AuiIf condition={(s) => !s.thread.isRunning}>
+            <PrimaryComposerAction onPressMic={handleMicPress} />
+          </AuiIf>
+          <AuiIf condition={(s) => s.thread.isRunning}>
+            <CancelButton />
+          </AuiIf>
+        </View>
+      </View>
       {voiceState !== 'idle' ? (
-        <VoiceGlow
+        <VoiceScreenBloom
           level={level}
           processing={voiceState === 'transcribing'}
-          colors={isDark ? VOICE_GLOW_DARK : VOICE_GLOW_LIGHT}
-          className='self-center h-20 w-[38%] min-w-[104px] max-w-36'
-        >
-          <VoiceComposer
-            state={voiceState}
-            speechActive={speechActive}
-            onPress={handleOrbPress}
-          />
-        </VoiceGlow>
-      ) : (
-        <View
-          className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
-          style={[styles.shell]}
-        >
-          {slashMode ? (
-            <View className='flex-row items-center gap-2 px-2'>
-              <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
-                <Icon
-                  name={
-                    slashMode.includes('deep') || slashMode.includes('research')
-                      ? 'brain'
-                      : slashMode.includes('shop') || slashMode.includes('product')
-                        ? 'dollar'
-                        : 'tool'
-                  }
-                  size={13}
-                  color={colors.foreground}
-                />
-              </View>
-              <Text className='font-sans-medium text-[12px] text-muted-foreground'>
-                {slashMode.includes('deep') || slashMode.includes('research')
-                  ? 'Deep research mode'
-                  : slashMode.includes('shop') || slashMode.includes('product')
-                    ? 'Product search mode'
-                    : 'Web search mode'}
-              </Text>
-            </View>
-          ) : null}
-          {hasAttachments ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className='max-h-[84px] grow-0'
-              contentContainerStyle={styles.attachmentsRow}
-              keyboardShouldPersistTaps='handled'
-            >
-              <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
-            </ScrollView>
-          ) : null}
-
-          <ComposerInput
-            ref={inputRef}
-            style={inputStyle}
-            placeholder='Ask Finora… use @ to tag'
-            placeholderTextColor={colors.mutedForeground}
-            multiline
-            maxLength={4000}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-          />
-
-          <View className='flex-row items-center gap-1 pt-0.5'>
-            <AttachButton />
-            <ScanButton />
-            <View className='flex-1' />
-            {inputFocused ? (
-              <Pressable
-                accessibilityLabel='Hide keyboard'
-                hitSlop={8}
-                onPress={() => {
-                  inputRef.current?.blur();
-                  Keyboard.dismiss();
-                }}
-                className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
-                style={({ pressed }) => [
-                  { backgroundColor: pressed ? colors.muted : 'transparent' },
-                ]}
-              >
-                <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
-              </Pressable>
-            ) : null}
-            <AuiIf condition={(s) => !s.thread.isRunning}>
-              <PrimaryComposerAction
-                onStartVoice={() => {
-                  inputRef.current?.blur();
-                  Keyboard.dismiss();
-                  void startRecording();
-                }}
-              />
-            </AuiIf>
-            <AuiIf condition={(s) => s.thread.isRunning}>
-              <CancelButton />
-            </AuiIf>
-          </View>
-        </View>
-      )}
+          bottomBleed={insets.bottom + 14}
+          colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
+        />
+      ) : null}
     </View>
   );
 }
