@@ -257,7 +257,7 @@ export function OnboardingScreen() {
                 style={[{ color: canContinue ? colors.background : colors.mutedForeground }]}
                 className='font-sans-semibold text-[17px] tracking-[-0.2px]'
               >
-                {isLast ? (finishing ? 'Continuing…' : 'Get Started') : 'Continue'}
+                {isLast && finishing ? 'Continuing…' : step.cta}
               </Text>
             </Pressable>
           </View>
