@@ -5,7 +5,13 @@ import type { AppEnv } from '../app-env';
 
 const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
 const DEEPGRAM_TIMEOUT_MS = 12_000;
-const SUPPORTED_AUDIO_TYPES = new Set(['audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm']);
+const SUPPORTED_AUDIO_TYPES = new Set([
+  'audio/mp4',
+  'audio/m4a',
+  'audio/x-m4a',
+  'audio/aac',
+  'audio/webm',
+]);
 
 const DeepgramResponseSchema = z.object({
   metadata: z.object({ duration: z.number().nonnegative().optional() }).optional(),
@@ -19,6 +25,53 @@ const DeepgramResponseSchema = z.object({
 });
 
 export const transcriptions = new Hono<AppEnv>();
+
+/**
+ * Mints a short-lived Deepgram access token so the device can open a live
+ * WebSocket directly against api.deepgram.com for streaming transcripts
+ * without ever exposing the project API key. Used by the composer's voice
+ * preview; the authoritative transcript still flows through POST /.
+ */
+transcriptions.get('/live-token', async (c) => {
+  const noStore = { 'Cache-Control': 'no-store' };
+  const apiKey = c.var.env.DEEPGRAM_API_KEY;
+  if (!apiKey) {
+    return c.json(
+      { error: 'transcription_unavailable', message: 'Voice transcription is not configured.' },
+      503,
+      noStore,
+    );
+  }
+
+  const response = await fetch('https://api.deepgram.com/v1/auth/grant', {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ttl_seconds: 30 }),
+  });
+  if (!response.ok) {
+    console.error('Deepgram token grant failed.', { status: response.status });
+    return c.json(
+      { error: 'token_request_failed', message: 'Live transcription is unavailable.' },
+      502,
+      noStore,
+    );
+  }
+
+  const grant = (await response.json()) as { access_token?: unknown };
+  if (typeof grant.access_token !== 'string' || !grant.access_token) {
+    console.error('Deepgram returned an invalid token grant.');
+    return c.json(
+      { error: 'token_request_failed', message: 'Live transcription is unavailable.' },
+      502,
+      noStore,
+    );
+  }
+
+  return c.json({ token: grant.access_token, expiresIn: 30 }, 200, noStore);
+});
 
 transcriptions.post('/', async (c) => {
   const noStore = { 'Cache-Control': 'no-store' };
