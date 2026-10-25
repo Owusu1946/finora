@@ -24,6 +24,7 @@ import {
   TextInput,
   type TextInputProps,
 } from 'react-native';
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
@@ -45,6 +46,7 @@ import {
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
 } from './attachment';
+import { VoiceGlow, type VoiceGlowPalette } from './VoiceGlow';
 
 const COMPOSER_ATTACHMENT_COMPONENTS = {
   Image: ComposerImageAttachment,
@@ -231,6 +233,22 @@ const VOICE_RECORDING_OPTIONS = {
   isMeteringEnabled: true,
 };
 
+// expo-audio metering is dB (about -160..0). Speech sits between -42 and -8,
+// so a -50..-6 window maps a full quiet-to-loud swing onto 0..1.
+const METERING_FLOOR_DB = -50;
+const METERING_RANGE_DB = 44;
+
+const VOICE_GLOW_LIGHT: VoiceGlowPalette = {
+  core: '#0F766E',
+  mid: '#14B8A6',
+  outer: '#2DD4BF',
+};
+const VOICE_GLOW_DARK: VoiceGlowPalette = {
+  core: '#2DD4BF',
+  mid: '#14B8A6',
+  outer: '#0D9488',
+};
+
 function useVoiceComposer() {
   const { getToken } = useAuth();
   const aui = useAui();
@@ -248,6 +266,18 @@ function useVoiceComposer() {
   const voiceActivitySamplesRef = useRef(0);
   const lastVoiceActivityAtRef = useRef(0);
   const stopRecordingRef = useRef<(discard?: boolean) => Promise<void>>(() => Promise.resolve());
+
+  // Smoothed 0–1 mic level for the glow, animated on the UI thread.
+  const level = useSharedValue(0);
+  useEffect(() => {
+    const metering = recorderState.metering;
+    if (voiceState !== 'recording' || typeof metering !== 'number') {
+      level.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.quad) });
+      return;
+    }
+    const normalized = Math.min(1, Math.max(0, (metering - METERING_FLOOR_DB) / METERING_RANGE_DB));
+    level.value = withTiming(normalized, { duration: 170, easing: Easing.out(Easing.quad) });
+  }, [level, recorderState.durationMillis, recorderState.metering, voiceState]);
 
   voiceStateRef.current = voiceState;
 
@@ -434,7 +464,7 @@ function useVoiceComposer() {
     }
   };
 
-  return { voiceState, speechActive, startRecording, handleOrbPress };
+  return { voiceState, speechActive, level, startRecording, handleOrbPress };
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -483,7 +513,7 @@ function VoiceComposer({
       accessibilityLabel={label}
       accessibilityRole='button'
       onPress={onPress}
-      className='h-20 w-[38%] min-w-[104px] max-w-36 items-center justify-center self-center rounded-[22px] border border-border bg-composer p-2'
+      className='h-20 w-full items-center justify-center rounded-[22px] border border-border bg-composer p-2'
       style={({ pressed }) => [
         {
           opacity: pressed ? 0.72 : 1,
@@ -772,10 +802,10 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
 );
 
 export function Composer() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, speechActive, startRecording, handleOrbPress } = useVoiceComposer();
+  const { voiceState, speechActive, level, startRecording, handleOrbPress } = useVoiceComposer();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const composerText = useAuiState((s) => s.thread.composer.text);
   const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
@@ -800,11 +830,18 @@ export function Composer() {
       style={[styles.container]}
     >
       {voiceState !== 'idle' ? (
-        <VoiceComposer
-          state={voiceState}
-          speechActive={speechActive}
-          onPress={handleOrbPress}
-        />
+        <VoiceGlow
+          level={level}
+          processing={voiceState === 'transcribing'}
+          colors={isDark ? VOICE_GLOW_DARK : VOICE_GLOW_LIGHT}
+          className='self-center h-20 w-[38%] min-w-[104px] max-w-36'
+        >
+          <VoiceComposer
+            state={voiceState}
+            speechActive={speechActive}
+            onPress={handleOrbPress}
+          />
+        </VoiceGlow>
       ) : (
         <View
           className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
