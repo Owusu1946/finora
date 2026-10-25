@@ -141,25 +141,26 @@ chats.post('/:id/title', async (c) => {
   const provider = getModelProviderConfig(env);
   if (!provider) return c.json({ title: fallback, titleStatus: 'fallback' as const });
 
-  try {
-    const title = await generateAndPersistChatTitle({
+  // Respond with the seed title immediately and generate in the background
+  // (t3code pattern): the client polls the list, and the row flips to
+  // 'generated' when the detached job finishes. A slow model then can't hold
+  // the request past the client's timeout.
+  c.executionCtx.waitUntil(
+    generateAndPersistChatTitle({
       db,
       chatId: id.data,
       userId,
       messages: [message],
       provider,
       referer: env.WELCOME_EMAIL_CTA_URL,
-    });
-    return c.json({
-      title,
-      titleStatus: title ? ('generated' as const) : ('fallback' as const),
-    });
-  } catch (error) {
-    console.error('[chat:title]', {
-      errorName: error instanceof Error ? error.name : typeof error,
-    });
-    return c.json({ title: fallback, titleStatus: 'fallback' as const });
-  }
+    }).catch((error) => {
+      console.error('[chat:title:bg]', {
+        errorName: error instanceof Error ? error.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+    }),
+  );
+  return c.json({ title: fallback, titleStatus: 'fallback' as const });
 });
 
 chats.patch('/:id', async (c) => {
