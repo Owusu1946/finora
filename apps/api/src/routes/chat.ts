@@ -20,6 +20,7 @@ import { Hono } from 'hono';
 import type { StoredChatContext } from '../db/chat-context-store';
 import type { AppEnv } from '../types';
 
+import { paragraphStreamingFilter } from '../ai/assistant-streaming';
 import { messagesForModel, refreshChatContext, threadContextPrompt } from '../ai/chat-context';
 import { fallbackChatTitle } from '../ai/chat-title';
 import { logChatError, toPublicChatError } from '../ai/errors';
@@ -830,7 +831,7 @@ chat.post('/:id', async (c) => {
     });
 
     const stream = toUIMessageStream({
-      stream: result.stream,
+      stream: result.stream.pipeThrough(paragraphStreamingFilter()),
       originalMessages: messages,
       generateMessageId: () => `msg_${crypto.randomUUID().replaceAll('-', '')}`,
       sendReasoning: false,
