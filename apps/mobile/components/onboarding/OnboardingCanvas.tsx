@@ -1,8 +1,8 @@
 import {
-  BlurMask,
-  Canvas,
   Circle,
   Fill,
+  Canvas,
+  BlurMask,
   Group,
   LinearGradient,
   useClock,
@@ -18,30 +18,18 @@ import {
 
 import type { Palette } from '@/constants/theme';
 
-import { AccountSplitDiscs } from './AccountSplitDiscs';
 import { LiquidGlassRing } from './LiquidGlassRing';
 import { MessageBubbleMotif } from './MessageBubbleMotif';
 
 type OnboardingCanvasProps = {
   progress: SharedValue<number>;
-  /** 0 = none, 1 = personal, 2 = business */
-  accountSelection: SharedValue<number>;
-  /** 1 while a Skip jump is in flight — transit motifs stay hidden. */
-  fastForward: SharedValue<number>;
   colors: Palette;
   isDark: boolean;
   /** Vertical center of the hero stage (screen coords). */
   heroCenterY: number;
 };
 
-export function OnboardingCanvas({
-  progress,
-  accountSelection,
-  fastForward,
-  colors,
-  isDark,
-  heroCenterY,
-}: OnboardingCanvasProps) {
+export function OnboardingCanvas({ progress, colors, isDark, heroCenterY }: OnboardingCanvasProps) {
   const { width, height } = useWindowDimensions();
   const clock = useClock();
   const cx = width / 2;
@@ -138,7 +126,6 @@ export function OnboardingCanvas({
 
       <MessageBubbleMotif
         progress={progress}
-        fastForward={fastForward}
         cx={cx}
         cy={cy}
         colors={colors}
@@ -148,19 +135,9 @@ export function OnboardingCanvas({
       <LiquidGlassRing
         progress={progress}
         clock={clock}
-        fastForward={fastForward}
         cx={cx}
         cy={cy}
         r={ringR}
-        colors={colors}
-        isDark={isDark}
-      />
-
-      <AccountSplitDiscs
-        progress={progress}
-        selection={accountSelection}
-        cx={cx}
-        cy={cy}
         colors={colors}
         isDark={isDark}
       />

@@ -28,6 +28,7 @@ import { haptics } from '@/lib/haptics';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { completeOnboarding } from '@/lib/onboarding-storage';
 
+import { AccountDiscs } from './AccountDiscs';
 import { AccountPicker } from './AccountPicker';
 import { OnboardingCanvas } from './OnboardingCanvas';
 import { ProgressDots } from './ProgressDots';
@@ -47,8 +48,6 @@ export function OnboardingScreen() {
   const progress = useSharedValue(0);
   const dragStart = useSharedValue(0);
   const accountSelection = useSharedValue(0);
-  /** 1 while the canvas is flying past skipped steps — intermediate motifs stay hidden. */
-  const fastForward = useSharedValue(0);
   const [stepIndex, setStepIndex] = useState(0);
   const [accountType, setAccountTypeLocal] = useState<AccountType | null>(null);
   const [finishing, setFinishing] = useState(false);
@@ -81,7 +80,7 @@ export function OnboardingScreen() {
   useAnimatedReaction(
     () => progress.value,
     (current, previous) => {
-      if (previous == null || fastForward.value === 1) return;
+      if (previous == null) return;
       const thresholds = [1.45, 1.7, 1.95];
       for (const t of thresholds) {
         if (previous < t && current >= t) {
@@ -92,11 +91,6 @@ export function OnboardingScreen() {
     [],
   );
 
-  // End the fast-forward once the skip lands, so later swipes show motifs again
-  const clearFastForward = useCallback(() => {
-    fastForward.value = 0;
-  }, [fastForward]);
-
   // Brand mark draws itself in on mount, owned by Beat 0 only
   const markReveal = useSharedValue(0);
   useEffect(() => {
@@ -106,14 +100,6 @@ export function OnboardingScreen() {
   const markFade = useAnimatedStyle(() => ({
     opacity: interpolate(progress.value, [0, 0.45], [1, 0], Extrapolation.CLAMP),
   }));
-
-  useAnimatedReaction(
-    () => fastForward.value === 1 && Math.abs(progress.value - LAST_STEP) < 0.02,
-    (settled) => {
-      if (settled) runOnJS(clearFastForward)();
-    },
-    [clearFastForward],
-  );
 
   const goToStep = useCallback(
     (index: number, withHaptic = true) => {
@@ -132,7 +118,6 @@ export function OnboardingScreen() {
         .failOffsetY([-16, 16])
         .onBegin(() => {
           dragStart.value = progress.value;
-          fastForward.value = 0;
         })
         .onUpdate((e) => {
           const next = dragStart.value - e.translationX / width;
@@ -147,7 +132,7 @@ export function OnboardingScreen() {
             runOnJS(haptics.selection)();
           }
         }),
-    [commitStep, dragStart, fastForward, progress, width],
+    [commitStep, dragStart, progress, width],
   );
 
   const handleContinue = useCallback(async () => {
@@ -176,17 +161,17 @@ export function OnboardingScreen() {
     [accountSelection],
   );
 
+  // Skip lands directly on the account step: no tween, so nothing flashes through
   const handleSkip = useCallback(() => {
-    fastForward.value = 1;
-    goToStep(LAST_STEP);
-  }, [fastForward, goToStep]);
+    commitStep(LAST_STEP);
+    progress.value = LAST_STEP;
+    haptics.selection();
+  }, [commitStep, progress]);
 
   return (
     <View className='flex-1 bg-background'>
       <OnboardingCanvas
         progress={progress}
-        accountSelection={accountSelection}
-        fastForward={fastForward}
         colors={colors}
         isDark={isDark}
         heroCenterY={heroCenterY}
@@ -218,21 +203,45 @@ export function OnboardingScreen() {
             )}
           </View>
 
-          {/* Skia hero: brand step centers the Finora mark, later steps get motifs */}
-          <View
-            className='h-[240px] w-full items-center justify-center'
-            pointerEvents='none'
-          >
-            {step.brand ? (
-              <Animated.View style={markFade}>
-                <FinoraMarkMotion
-                  size={80}
-                  progress={markReveal}
-                  color={colors.foreground}
+          {/* Hero stage: Skia motifs behind, account discs on the last beat */}
+          {!step.brand ? (
+            <View
+              className='relative h-[240px] w-full'
+              pointerEvents='none'
+            >
+              {isLast ? (
+                <AccountDiscs
+                  progress={progress}
+                  selection={accountSelection}
+                  cx={width / 2 - 24}
+                  colors={colors}
                 />
-              </Animated.View>
-            ) : null}
-          </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* Brand step: mark pinned to the exact middle of the screen */}
+          {step.brand ? (
+            <Animated.View
+              pointerEvents='none'
+              style={[
+                markFade,
+                {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: height / 2 - 40,
+                  alignItems: 'center',
+                },
+              ]}
+            >
+              <FinoraMarkMotion
+                size={80}
+                progress={markReveal}
+                color={colors.foreground}
+              />
+            </Animated.View>
+          ) : null}
 
           <View
             className={cx(

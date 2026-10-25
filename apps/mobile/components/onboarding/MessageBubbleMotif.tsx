@@ -11,8 +11,6 @@ import type { Palette } from '@/constants/theme';
 
 type MessageBubbleMotifProps = {
   progress: SharedValue<number>;
-  /** 1 while a Skip jump is in flight. */
-  fastForward?: SharedValue<number>;
   cx: number;
   cy: number;
   colors: Palette;
@@ -20,14 +18,7 @@ type MessageBubbleMotifProps = {
 };
 
 /** Chat-bubble outline that draws in on Beat 1 (Speak) and fades out after. */
-export function MessageBubbleMotif({
-  progress,
-  fastForward,
-  cx,
-  cy,
-  colors,
-  isDark,
-}: MessageBubbleMotifProps) {
+export function MessageBubbleMotif({ progress, cx, cy, colors, isDark }: MessageBubbleMotifProps) {
   const w = 150;
   const h = 88;
   const x = cx - w / 2;
@@ -44,13 +35,8 @@ export function MessageBubbleMotif({
     return path;
   }, [x, y, w, h]);
 
-  const transit = useDerivedValue(() => (fastForward ? 1 - fastForward.value : 1));
-
   const opacity = useDerivedValue(() => {
-    return (
-      interpolate(progress.value, [0.35, 0.85, 1.15, 1.55], [0, 1, 1, 0], Extrapolation.CLAMP) *
-      transit.value
-    );
+    return interpolate(progress.value, [0.35, 0.85, 1.15, 1.55], [0, 1, 1, 0], Extrapolation.CLAMP);
   });
 
   const trimEnd = useDerivedValue(() => {

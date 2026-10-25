@@ -1,9 +1,9 @@
 import { Pressable, View } from 'react-native';
 
+import type { IconName } from '@/components/ui/icon-mappings';
 import type { AccountType } from '@/lib/account';
 
 import { Icon } from '@/components/ui/icon';
-import type { IconName } from '@/components/ui/icon-mappings';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
