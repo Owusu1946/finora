@@ -33,11 +33,11 @@ export default function ResetPasswordScreen() {
             Reset password
           </Text>
           <Text className='font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
-            Start again from forgot password to get a new code.
+            Your reset code has expired. Start again and we’ll send a new one.
           </Text>
         </View>
         <AuthButton
-          label='Forgot password'
+          label='Back to forgot password'
           onPress={() => router.replace('/auth/forgot-password' as Href)}
         />
       </AuthShell>
@@ -105,8 +105,9 @@ export default function ResetPasswordScreen() {
           Choose a new password
         </Text>
         <Text className='font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
-          Use at least 15 characters for{' '}
-          <Text className='font-sans-semibold text-foreground'>{email}</Text>
+          You’re updating the password for{' '}
+          <Text className='font-sans-semibold text-foreground'>{email}</Text>. Use at least 15
+          characters.
         </Text>
       </View>
 

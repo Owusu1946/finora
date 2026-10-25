@@ -26,7 +26,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
   },
   {
     title: 'How will you use Finora?',
-    subtitle: 'Choose an account type, then get started.',
+    subtitle: 'Choose an account type to continue.',
     cta: 'Get Started',
   },
 ] as const;

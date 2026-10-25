@@ -1,22 +1,29 @@
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  Easing,
+  Extrapolation,
   FadeIn,
   FadeOut,
+  interpolate,
   runOnJS,
   useAnimatedReaction,
+  useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AccountType } from '@/lib/account';
 
+import { FinoraMarkMotion } from '@/components/ui/finora-mark-motion';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { completeOnboarding } from '@/lib/onboarding-storage';
@@ -89,6 +96,16 @@ export function OnboardingScreen() {
   const clearFastForward = useCallback(() => {
     fastForward.value = 0;
   }, [fastForward]);
+
+  // Brand mark draws itself in on mount, owned by Beat 0 only
+  const markReveal = useSharedValue(0);
+  useEffect(() => {
+    markReveal.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
+  }, [markReveal]);
+
+  const markFade = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.45], [1, 0], Extrapolation.CLAMP),
+  }));
 
   useAnimatedReaction(
     () => fastForward.value === 1 && Math.abs(progress.value - LAST_STEP) < 0.02,
@@ -201,13 +218,28 @@ export function OnboardingScreen() {
             )}
           </View>
 
-          {/* Skia hero lives visually here — no text overlaid */}
+          {/* Skia hero: brand step centers the Finora mark, later steps get motifs */}
           <View
-            className='h-[240px] w-full'
+            className='h-[240px] w-full items-center justify-center'
             pointerEvents='none'
-          />
+          >
+            {step.brand ? (
+              <Animated.View style={markFade}>
+                <FinoraMarkMotion
+                  size={80}
+                  progress={markReveal}
+                  color={colors.foreground}
+                />
+              </Animated.View>
+            ) : null}
+          </View>
 
-          <View className='flex-1 items-center justify-start gap-5 pt-2'>
+          <View
+            className={cx(
+              'flex-1 items-center gap-5 pt-2',
+              step.brand ? 'justify-end pb-2' : 'justify-start',
+            )}
+          >
             <Animated.View
               key={stepIndex}
               entering={FadeIn.duration(240)}

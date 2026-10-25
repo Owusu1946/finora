@@ -41,11 +41,8 @@ export default function AuthWelcomeScreen() {
       }
     >
       <View className='items-center gap-3 px-2'>
-        <Text className='font-sans-semibold text-sm uppercase tracking-[0.6px] text-muted-foreground'>
-          Finora
-        </Text>
         <Text className='text-center font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
-          Money, in conversation.
+          Welcome to Finora.
         </Text>
         <Text className='max-w-[300px] text-center font-sans-medium text-[17px] leading-[23px] tracking-[-0.2px] text-muted-foreground'>
           Create an account or sign in to continue.
