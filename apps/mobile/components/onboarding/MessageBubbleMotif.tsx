@@ -1,10 +1,13 @@
 import { BlurMask, Group, Path, RoundedRect, Skia } from '@shopify/react-native-skia';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
+  Easing,
   Extrapolation,
   type SharedValue,
   interpolate,
   useDerivedValue,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
 import type { Palette } from '@/constants/theme';
@@ -17,7 +20,7 @@ type MessageBubbleMotifProps = {
   isDark: boolean;
 };
 
-/** Chat-bubble outline that draws in on Beat 1 (Speak). */
+/** Chat-bubble outline that draws in on mount and fades toward Beat 2. */
 export function MessageBubbleMotif({ progress, cx, cy, colors, isDark }: MessageBubbleMotifProps) {
   const w = 150;
   const h = 88;
@@ -35,27 +38,28 @@ export function MessageBubbleMotif({ progress, cx, cy, colors, isDark }: Message
     return path;
   }, [x, y, w, h]);
 
-  const opacity = useDerivedValue(() => {
-    return interpolate(progress.value, [0.35, 0.85, 1.15, 1.55], [0, 1, 1, 0], Extrapolation.CLAMP);
-  });
+  // Draws in once on mount, then rides the swipe out toward Beat 2
+  const reveal = useSharedValue(0);
+  useEffect(() => {
+    reveal.value = withTiming(1, { duration: 950, easing: Easing.out(Easing.cubic) });
+  }, [reveal]);
 
-  const trimEnd = useDerivedValue(() => {
-    return interpolate(progress.value, [0.45, 1, 1.25], [0, 1, 1], Extrapolation.CLAMP);
-  });
+  const exit = useDerivedValue(() =>
+    interpolate(progress.value, [1.15, 1.55], [1, 0], Extrapolation.CLAMP),
+  );
 
-  const fillOpacity = useDerivedValue(() => {
-    return interpolate(progress.value, [0.7, 1, 1.2, 1.5], [0, 0.14, 0.14, 0], Extrapolation.CLAMP);
-  });
+  const opacity = useDerivedValue(() => reveal.value * exit.value);
+
+  const trimEnd = useDerivedValue(() => reveal.value);
+
+  const fillOpacity = useDerivedValue(
+    () => interpolate(reveal.value, [0.7, 1], [0, 0.14]) * exit.value,
+  );
 
   // Secondary “reply” capsule
-  const replyOpacity = useDerivedValue(() => {
-    return interpolate(
-      progress.value,
-      [0.75, 1.05, 1.25, 1.55],
-      [0, 0.7, 0.7, 0],
-      Extrapolation.CLAMP,
-    );
-  });
+  const replyOpacity = useDerivedValue(
+    () => interpolate(reveal.value, [0.85, 1], [0, 0.7]) * exit.value,
+  );
 
   return (
     <Group opacity={opacity}>

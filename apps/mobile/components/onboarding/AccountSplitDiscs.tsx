@@ -63,8 +63,8 @@ export function AccountSplitDiscs({
   });
 
   const fill = colors.foreground;
-  const bloom = isDark ? 0.18 : 0.1;
-  const core = isDark ? 0.28 : 0.16;
+  const bloom = isDark ? 0.26 : 0.18;
+  const core = isDark ? 0.42 : 0.36;
 
   return (
     <Group opacity={opacity}>

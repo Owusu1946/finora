@@ -29,8 +29,11 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerClassName='grow px-6'
           contentContainerStyle={{
+            // Inline styles only: contentContainerClassName is not applied reliably
+            // under NativeWind 5 preview, which dropped the auth padding/flex growth.
+            flexGrow: 1,
+            paddingHorizontal: 24,
             paddingTop: insets.top + 8,
             paddingBottom: Math.max(insets.bottom, 16) + 24,
           }}
