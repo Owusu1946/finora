@@ -28,7 +28,6 @@ import { haptics } from '@/lib/haptics';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { completeOnboarding } from '@/lib/onboarding-storage';
 
-import { AccountDiscs } from './AccountDiscs';
 import { AccountPicker } from './AccountPicker';
 import { OnboardingCanvas } from './OnboardingCanvas';
 import { ProgressDots } from './ProgressDots';
@@ -81,6 +80,8 @@ export function OnboardingScreen() {
     () => progress.value,
     (current, previous) => {
       if (previous == null) return;
+      // Skip lands in one update — beat haptics are only for actual swipes
+      if (Math.abs(current - previous) > 0.25) return;
       const thresholds = [1.45, 1.7, 1.95];
       for (const t of thresholds) {
         if (previous < t && current >= t) {
@@ -203,21 +204,12 @@ export function OnboardingScreen() {
             )}
           </View>
 
-          {/* Hero stage: Skia motifs behind, account discs on the last beat */}
+          {/* Hero stage: Skia motifs draw behind on beats 1-2 */}
           {!step.brand ? (
             <View
-              className='relative h-[240px] w-full'
+              className='h-[240px] w-full'
               pointerEvents='none'
-            >
-              {isLast ? (
-                <AccountDiscs
-                  progress={progress}
-                  selection={accountSelection}
-                  cx={width / 2 - 24}
-                  colors={colors}
-                />
-              ) : null}
-            </View>
+            />
           ) : null}
 
           {/* Brand step: mark pinned to the exact middle of the screen */}
