@@ -1,12 +1,12 @@
 import {
   BlurMask,
   Rect,
-  Paint,
   Canvas,
   Group,
   Oval,
   RadialGradient,
   RoundedRect,
+  vec,
 } from '@shopify/react-native-skia';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -368,22 +368,24 @@ function BloomCore({
   });
   return (
     <Group opacity={opacity}>
-      <Paint>
-        {/* Compact hot centre hugging the edge, like the reference. */}
-        <RadialGradient
-          c={{ x: width / 2, y: bottomY }}
-          r={Math.max(140, width * 0.42)}
-          colors={[color, `${color}00`]}
-          positions={[0, 0.38]}
-        />
-      </Paint>
+      {/* Compact hot centre hugging the edge, like the reference. The shader
+          must live inside the shape with a real SkPoint: a plain {x,y} object
+          or an outer <Paint> silently drops the gradient and Skia's default
+          black fill paints the bar instead. */}
       <RoundedRect
         x={0}
         y={bottomY - coreH}
         width={width}
         height={coreH}
         r={coreH / 2}
-      />
+      >
+        <RadialGradient
+          c={vec(width / 2, bottomY)}
+          r={Math.max(140, width * 0.42)}
+          colors={[color, `${color}00`]}
+          positions={[0, 0.38]}
+        />
+      </RoundedRect>
     </Group>
   );
 }
