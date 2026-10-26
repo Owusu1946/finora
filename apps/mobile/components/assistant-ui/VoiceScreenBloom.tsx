@@ -5,7 +5,6 @@ import {
   Group,
   Oval,
   RadialGradient,
-  RoundedRect,
   vec,
 } from '@shopify/react-native-skia';
 import { useEffect, useLayoutEffect, useState } from 'react';
@@ -362,30 +361,32 @@ function BloomCore({
   bottomY: number;
 }) {
   const coreH = 34;
+  const r = Math.max(140, width * 0.42);
   const opacity = useDerivedValue(() => {
     'worklet';
     return 0.22 + clamp01(band0.value) * 0.78;
   });
   return (
     <Group opacity={opacity}>
-      {/* Compact hot centre hugging the edge, like the reference. The shader
-          must live inside the shape with a real SkPoint: a plain {x,y} object
-          or an outer <Paint> silently drops the gradient and Skia's default
-          black fill paints the bar instead. */}
-      <RoundedRect
+      {/* Hot centre hugging the edge, like the reference. Painted as a bare
+          wash: a shaped rect (however rounded) clips the radial gradient into
+          a perceivable pill. The gradient itself must also carry the shape,
+          so the surface extends well past the gradient radius and the shader
+          inside the shape gets a real SkPoint via vec() (a plain {x,y} or an
+          outer <Paint> silently drops the shader → Skia's default black). */}
+      <Rect
         x={0}
-        y={bottomY - coreH}
+        y={bottomY - r * 2}
         width={width}
-        height={coreH}
-        r={coreH / 2}
+        height={r * 2 + coreH}
       >
         <RadialGradient
           c={vec(width / 2, bottomY)}
-          r={Math.max(140, width * 0.42)}
+          r={r}
           colors={[color, `${color}00`]}
           positions={[0, 0.38]}
         />
-      </RoundedRect>
+      </Rect>
     </Group>
   );
 }
