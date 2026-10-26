@@ -17,6 +17,15 @@ import {
   type SharedValue,
 } from 'react-native-reanimated';
 
+/**
+ * Bump the lobe gain on dark themes: additive blending plus a higher base
+ * opacity matches the reference's peak luminance, where overlapping color
+ * washes visibly stack. Light themes stay on normal blending (plus would
+ * saturate the white background) at a slightly boosted opacity.
+ */
+const LOBE_GAIN_DARK = 0.95;
+const LOBE_GAIN_LIGHT = 0.8;
+
 export type VoiceBloomPalette = {
   /** Bright core hugging the bottom edge */
   core: string;
@@ -32,6 +41,8 @@ type VoiceScreenBloomProps = {
   /** How far the canvas must extend past the composer to reach the screen edge */
   bottomBleed: number;
   colors: VoiceBloomPalette;
+  /** Dark themes: lobes blend additively so overlapping washes stack */
+  additive?: boolean;
 };
 
 /**
@@ -105,6 +116,7 @@ export function VoiceScreenBloom({
   processing,
   bottomBleed,
   colors,
+  additive = false,
 }: VoiceScreenBloomProps) {
   const [width, setWidth] = useState(0);
   const [height, setHeight] = useState(BLOOM_HEIGHT + bottomBleed);
@@ -185,6 +197,7 @@ export function VoiceScreenBloom({
           gather={gather}
           width={width}
           bottomY={edgeY}
+          additive={additive}
         />
 
         {/* Core along the bottom edge, brightest behind the composer row */}
@@ -218,6 +231,7 @@ function BloomLobes({
   gather,
   width,
   bottomY,
+  additive,
 }: {
   band0: SharedValue<number>;
   band1: SharedValue<number>;
@@ -228,6 +242,7 @@ function BloomLobes({
   gather: SharedValue<number>;
   width: number;
   bottomY: number;
+  additive: boolean;
 }) {
   const scale = (width / REF_WIDTH) * MOBILE.scale;
 
@@ -248,6 +263,7 @@ function BloomLobes({
           index={index}
           width={width}
           bottomY={bottomY}
+          additive={additive}
         />
       ))}
     </Group>
@@ -268,6 +284,7 @@ function BloomLobe({
   index,
   width,
   bottomY,
+  additive,
 }: {
   bandValue: SharedValue<number>;
   clock: SharedValue<number>;
@@ -281,6 +298,7 @@ function BloomLobe({
   index: number;
   width: number;
   bottomY: number;
+  additive: boolean;
 }) {
   const opacity = useDerivedValue(() => {
     'worklet';
@@ -288,7 +306,8 @@ function BloomLobe({
     const shimmer = 0.85 + 0.15 * Math.sin(clock.value * 2.1 + index * 1.9);
     const env = edgeEnvelope(wrapX(restX + flowValue.value, span), span);
     // While processing, lobes hand the stage to the gathered beam.
-    return clamp01(0.75 * env * shimmer * bandValue.value * (1 - 0.55 * gather.value));
+    const gain = additive ? LOBE_GAIN_DARK : LOBE_GAIN_LIGHT;
+    return clamp01(gain * env * shimmer * bandValue.value * (1 - 0.55 * gather.value));
   });
   const w = useDerivedValue(() => {
     'worklet';
@@ -312,7 +331,10 @@ function BloomLobe({
   });
 
   return (
-    <Group opacity={opacity}>
+    <Group
+      opacity={opacity}
+      blendMode={additive ? 'plus' : undefined}
+    >
       <BlurMask
         blur={glowW * 0.32}
         style='normal'

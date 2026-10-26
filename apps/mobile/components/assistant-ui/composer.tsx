@@ -853,6 +853,7 @@ export function Composer() {
             processing={voiceState === 'transcribing'}
             bottomBleed={insets.bottom + 14}
             colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
+            additive={isDark}
           />
           <View className='h-[128px] w-full items-center justify-end'>
             <View className='min-h-[56px] w-full items-center justify-end pb-3'>
