@@ -14,6 +14,7 @@ import {
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
@@ -102,7 +103,10 @@ export function FinancialPlanConfirmationCard({
           : 'Confirm financial plan';
 
   return (
-    <View className='gap-3.5 rounded-3xl border border-border bg-composer p-4'>
+    <View
+      className='gap-3.5 border border-border bg-composer p-4'
+      style={{ borderRadius: Radius.card }}
+    >
       <View className='flex-row items-start gap-3'>
         <Animated.View
           className={cx(
@@ -125,9 +129,13 @@ export function FinancialPlanConfirmationCard({
           )}
         </Animated.View>
         <View className='min-w-0 flex-1 gap-0.5'>
-          <Text className='font-sans-semibold text-[13px] text-muted-foreground'>{eyebrow}</Text>
-          <Text className='font-sans-semibold text-[17px] text-foreground'>{plan.intent}</Text>
-          <Text className='mt-1 font-sans-semibold text-[29px] text-foreground'>
+          <Text className='font-sans-medium text-[14px] tracking-[-0.1px] text-muted-foreground'>
+            {eyebrow}
+          </Text>
+          <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
+            {plan.intent}
+          </Text>
+          <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
             {formatPaymentAmount(plan.total, plan.currency)}
           </Text>
           <Text className='font-sans-medium text-sm text-muted-foreground'>
@@ -205,9 +213,9 @@ export function FinancialPlanConfirmationCard({
                 haptics.selection();
                 onViewDetails();
               }}
-              className='min-h-[42px] items-center justify-center rounded-xl border border-border active:opacity-75'
+              className='min-h-[46px] items-center justify-center rounded-full bg-muted active:opacity-80'
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
                 View in activity
               </Text>
             </Pressable>
@@ -224,9 +232,11 @@ export function FinancialPlanConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='min-h-[46px] flex-1 items-center justify-center rounded-[14px] border border-border active:opacity-70 disabled:opacity-70'
+            className='min-h-[46px] flex-1 items-center justify-center rounded-full bg-muted active:opacity-75 disabled:opacity-70'
           >
-            <Text className='font-sans-semibold text-base text-foreground'>Reject</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              Reject
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole='button'
@@ -235,9 +245,9 @@ export function FinancialPlanConfirmationCard({
               haptics.impact();
               onConfirm?.();
             }}
-            className='min-h-[46px] flex-1 items-center justify-center rounded-[14px] bg-primary active:opacity-85 disabled:opacity-85'
+            className='min-h-[46px] flex-1 items-center justify-center rounded-full bg-primary active:opacity-85 disabled:opacity-85'
           >
-            <Text className='font-sans-semibold text-base text-primary-foreground'>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'>
               {loading ? 'Confirming…' : 'Approve all'}
             </Text>
           </Pressable>
@@ -278,7 +288,7 @@ function PlanItemRow({
     <View
       className={cx('flex-row items-center gap-2.5 py-2.5', !isLast && 'border-b border-border')}
     >
-      <View className='rounded-lg bg-muted px-2 py-1'>
+      <View className='rounded-full bg-muted px-2 py-1'>
         <Text className='font-sans-semibold text-xs text-muted-foreground'>
           {kindLabel(item.kind)}
         </Text>

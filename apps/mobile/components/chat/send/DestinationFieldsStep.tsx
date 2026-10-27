@@ -6,7 +6,6 @@ import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { SETTLEMENT_METHOD_LABELS } from '@/lib/send-corridors';
 
 export type DestinationFields = {
   network?: string;
@@ -51,6 +50,19 @@ const FIELD_META: Record<
 const MOMO_NETWORKS = ['MTN', 'VODAFONE', 'TELECEL', 'AIRTEL', 'MPESA'];
 const CHAINS = ['TRON', 'ETHEREUM', 'POLYGON', 'SOLANA', 'BASE'];
 
+/** One line telling the user what this step actually collects. */
+const STEP_SUBTITLES: Record<SettlementMethod, string> = {
+  MOMO: 'Mobile money · pick the network and phone number for settlement',
+  LOCAL_BANK: 'Bank account · provide the receiving account details',
+  ACH: 'Bank account · provide the receiving account details',
+  WIRE: 'Wire · provide the receiving account details',
+  FPS: 'Faster Payments · provide the sort code and account number',
+  CHAPS: 'CHAPS · provide the sort code and account number',
+  SEPA: 'SEPA · provide the IBAN of the receiving account',
+  SWIFT: 'SWIFT · provide the account number and SWIFT/BIC',
+  CRYPTO: 'Crypto · paste the receiving wallet address',
+};
+
 export function DestinationFieldsStep({
   step,
   total,
@@ -90,7 +102,7 @@ export function DestinationFieldsStep({
         step={step}
         total={total}
         title='Recipient details'
-        subtitle={`${SETTLEMENT_METHOD_LABELS[method]} · enter settlement fields`}
+        subtitle={STEP_SUBTITLES[method] ?? 'Check the details before you continue'}
       />
 
       <TextInput
@@ -184,7 +196,11 @@ export function DestinationFieldsStep({
             <TextInput
               value={value}
               onChangeText={(t) => set(key as keyof DestinationFields, t)}
-              placeholder={meta.placeholder}
+              placeholder={
+                key === 'accountName' && method === 'MOMO'
+                  ? 'Name registered on the account'
+                  : meta.placeholder
+              }
               placeholderTextColor={colors.mutedForeground}
               autoCapitalize={meta.autoCap === 'none' ? 'none' : (meta.autoCap ?? 'sentences')}
               className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
@@ -197,15 +213,17 @@ export function DestinationFieldsStep({
       <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          className='flex-1 min-h-[46px] border items-center justify-center'
-          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+            Back
+          </Text>
         </Pressable>
         <Pressable
           disabled={!complete || !(values.recipientName ?? '').trim()}
           onPress={onContinue}
-          className='flex-[1.4] min-h-[46px] items-center justify-center'
+          className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -215,7 +233,7 @@ export function DestinationFieldsStep({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='text-[16px] font-semibold'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
           >
             Continue
           </Text>
@@ -227,12 +245,6 @@ export function DestinationFieldsStep({
 
 const styles = {
   input: {
-    borderRadius: Radius.composer,
-  },
-  navBtn: {
-    borderRadius: Radius.composer,
-  },
-  navBtnPrimary: {
     borderRadius: Radius.composer,
   },
 };

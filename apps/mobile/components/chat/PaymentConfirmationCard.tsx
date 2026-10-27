@@ -293,7 +293,7 @@ export function PaymentConfirmationCard({
                 className='flex-row items-center gap-2.5'
               >
                 <View
-                  className='w-[22px] h-[22px] rounded-[11px] border items-center justify-center'
+                  className='h-[18px] w-[18px] items-center justify-center rounded-full border-[1.5px]'
                   style={[
                     {
                       borderColor: done || active ? colors.foreground : colors.border,
@@ -341,11 +341,10 @@ export function PaymentConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center px-3.5 border'
+            className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full bg-muted'
             style={({ pressed }) => [
               {
-                borderColor: colors.border,
-                opacity: pressed || loading ? 0.7 : 1,
+                opacity: pressed || loading ? 0.75 : 1,
               },
             ]}
           >
@@ -360,7 +359,7 @@ export function PaymentConfirmationCard({
               haptics.impact();
               onConfirm?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center px-3.5'
+            className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full'
             style={({ pressed }) => [
               {
                 backgroundColor: colors.primary,
@@ -504,12 +503,10 @@ function SentHero({
             haptics.selection();
             onViewDetails();
           }}
-          className='mt-1 w-[100%] min-h-11 border flex-row items-center justify-center gap-2'
+          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full bg-muted'
           style={({ pressed }) => [
             {
-              borderColor: colors.border,
-              backgroundColor: 'transparent',
-              opacity: pressed ? 0.75 : 1,
+              opacity: pressed ? 0.8 : 1,
             },
           ]}
         >
@@ -531,12 +528,11 @@ function SentHero({
             haptics.selection();
             onSaveContact();
           }}
-          className='mt-1 w-[100%] min-h-11 border flex-row items-center justify-center gap-2'
+          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full'
           style={({ pressed }) => [
             {
-              borderColor: colors.border,
-              backgroundColor: contactSaved ? colors.muted : 'transparent',
-              opacity: pressed && !contactSaved ? 0.75 : 1,
+              backgroundColor: colors.muted,
+              opacity: pressed && !contactSaved ? 0.8 : 1,
             },
           ]}
         >
@@ -604,13 +600,7 @@ const styles = {
     fontVariant: ['tabular-nums'] as TextStyle['fontVariant'],
     letterSpacing: -0.1,
   },
-  btn: {
-    borderRadius: Radius.composer,
-  },
   statusPill: {
     borderRadius: Radius.pill,
-  },
-  saveContactBtn: {
-    borderRadius: Radius.composer,
   },
 } as const;
