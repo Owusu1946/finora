@@ -866,14 +866,14 @@ export function Composer() {
                 </Text>
               ) : null}
             </View>
-            <View className='mb-2 flex-row items-center gap-6'>
+            <View className='mb-2 flex-row items-center justify-end gap-6'>
               <Pressable
                 accessibilityLabel='Cancel voice input'
                 accessibilityRole='button'
                 onPress={cancelVoice}
                 className='h-12 w-12 items-center justify-center rounded-full border border-border'
                 style={({ pressed }) => [
-                  { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.88 },
+                  { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 1 },
                 ]}
               >
                 <Icon
@@ -889,11 +889,11 @@ export function Composer() {
                   onPress={acceptVoice}
                   className='h-12 w-12 items-center justify-center rounded-full border border-border'
                   style={({ pressed }) => [
-                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.88 },
+                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 1 },
                   ]}
                 >
                   <Icon
-                    name='check'
+                    name='mic'
                     size={20}
                     color={colors.primary}
                   />
@@ -902,7 +902,7 @@ export function Composer() {
               {voiceState === 'transcribing' ? (
                 <View
                   className='h-12 w-12 items-center justify-center rounded-full border border-border'
-                  style={[{ backgroundColor: colors.composer, opacity: 0.88 }]}
+                  style={[{ backgroundColor: colors.composer }]}
                 >
                   <LoadingIcon
                     color={colors.mutedForeground}

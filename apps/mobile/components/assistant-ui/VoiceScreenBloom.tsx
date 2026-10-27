@@ -24,6 +24,8 @@ import {
  */
 const LOBE_GAIN_DARK = 0.95;
 const LOBE_GAIN_LIGHT = 0.8;
+/** Resting share of the gain so the beam is present before the first word. */
+const LOBE_IDLE = 0.5;
 
 export type VoiceBloomPalette = {
   /** Bright core hugging the bottom edge */
@@ -304,18 +306,24 @@ function BloomLobe({
     // Slight per-lobe shimmer so the seven don't move in lockstep.
     const shimmer = 0.85 + 0.15 * Math.sin(clock.value * 2.1 + index * 1.9);
     const env = edgeEnvelope(wrapX(restX + flowValue.value, span), span);
-    // While processing, lobes hand the stage to the gathered beam.
+    // While processing, lobes hand the stage to the gathered beam. The idle
+    // floor keeps the beam visible before the first word arrives.
     const gain = additive ? LOBE_GAIN_DARK : LOBE_GAIN_LIGHT;
-    return clamp01(gain * env * shimmer * bandValue.value * (1 - 0.55 * gather.value));
+    return clamp01(
+      gain *
+        env *
+        shimmer *
+        (LOBE_IDLE + (1 - LOBE_IDLE) * bandValue.value) *
+        (1 - 0.55 * gather.value),
+    );
   });
   const w = useDerivedValue(() => {
     'worklet';
-    return glowW * (1 + 0.22 * bandValue.value);
+    return glowW * (1.1 + 0.22 * bandValue.value);
   });
   const h = useDerivedValue(() => {
     'worklet';
-    const lift = glowH * 0.6 * bandValue.value;
-    return Math.max(glowH * 0.4, glowH * 0.42 + lift);
+    return glowH * (0.62 + 0.6 * bandValue.value);
   });
   const x = useDerivedValue(() => {
     'worklet';
@@ -364,7 +372,7 @@ function BloomCore({
   const r = Math.max(140, width * 0.42);
   const opacity = useDerivedValue(() => {
     'worklet';
-    return 0.22 + clamp01(band0.value) * 0.78;
+    return 0.45 + clamp01(band0.value) * 0.55;
   });
   return (
     <Group opacity={opacity}>
