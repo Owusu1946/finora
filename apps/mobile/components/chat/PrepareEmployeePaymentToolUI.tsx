@@ -54,7 +54,7 @@ function EmployeePayCard({
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
-          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+          <View className='w-9 h-9 rounded-full items-center justify-center bg-muted'>
             <Icon
               name={approved ? 'check' : 'contacts'}
               size={16}

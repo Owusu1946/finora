@@ -277,7 +277,7 @@ export function PasscodeModal({
                     haptics.selection();
                     onAddPhone?.();
                   }}
-                  className='min-h-[52px] items-center justify-center rounded-[18px] bg-foreground px-[18px] active:opacity-85'
+                  className='min-h-[52px] items-center justify-center rounded-full bg-foreground px-5 active:opacity-85'
                 >
                   <Text className='font-sans-medium text-base text-background'>
                     Add phone number

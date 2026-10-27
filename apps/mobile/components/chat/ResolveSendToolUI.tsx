@@ -242,7 +242,7 @@ function ResolveSendFlow({
               ]}
             >
               <View
-                className='w-10 h-10 rounded-[20px] items-center justify-center'
+                className='w-10 h-10 rounded-full items-center justify-center'
                 style={[{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}
               >
                 <Text className='font-sans-semibold text-white text-[14px]'>{c.initials}</Text>

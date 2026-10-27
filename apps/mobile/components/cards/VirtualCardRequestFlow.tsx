@@ -191,7 +191,7 @@ export function VirtualCardRequestFlow() {
 
       {isReview ? (
         <View
-          className='gap-3.5 rounded-2xl border border-border bg-muted p-[18px]'
+          className='gap-3.5 rounded-[26px] border border-border bg-composer p-[18px]'
           style={{ borderCurve: 'continuous' }}
         >
           <Text className='mb-0.5 font-sans-semibold text-lg text-foreground'>
@@ -255,7 +255,7 @@ export function VirtualCardRequestFlow() {
               Monthly spending limit
             </Text>
             <View
-              className='min-h-[54px] flex-row items-center rounded-xl border border-border bg-muted px-3.5'
+              className='min-h-[54px] flex-row items-center rounded-[32px] border border-border bg-background px-3.5'
               style={{ borderCurve: 'continuous' }}
             >
               <Text className='mr-[9px] font-sans-semibold text-base text-muted-foreground'>

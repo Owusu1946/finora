@@ -322,7 +322,7 @@ export default function PayrollScreen() {
                   router.push('/');
                   aui.composer.setText('Create a payroll from an attachment');
                 }}
-                className='mt-1 min-h-11 items-center justify-center rounded-[32px] bg-foreground'
+                className='mt-1 min-h-11 items-center justify-center rounded-full bg-foreground'
               >
                 <Text className='font-sans-semibold text-[15px] text-background'>
                   Create payroll in chat
@@ -384,7 +384,7 @@ export default function PayrollScreen() {
             accessibilityLabel='Delete selected'
             disabled={busy === 'bulk'}
             onPress={confirmDeleteBulk}
-            className='min-h-[42px] min-w-[100px] flex-row items-center justify-center gap-[7px] rounded-lg bg-destructive px-3.5'
+            className='min-h-[42px] min-w-[100px] flex-row items-center justify-center gap-[7px] rounded-full bg-destructive px-3.5'
           >
             {busy === 'bulk' ? (
               <LoadingIcon color='#fff' />
@@ -824,7 +824,7 @@ function Editor({
                 payDate: values.payDate || null,
               })
             }
-            className='mt-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+            className='mt-1 min-h-[46px] items-center justify-center rounded-full bg-foreground'
             style={{ opacity: busy ? 0.6 : 1 }}
           >
             <Text className='text-background'>{busy ? 'Saving…' : 'Save changes'}</Text>

@@ -75,7 +75,7 @@ export default function ExpensesScreen() {
               aui.composer.setText('Show business expenses this month');
               aui.composer.send();
             }}
-            className='mb-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+            className='mb-1 min-h-[46px] items-center justify-center rounded-full bg-foreground'
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>

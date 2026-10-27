@@ -128,7 +128,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 onChangeText={setSendRecipient}
                 placeholder='e.g. GB82 CLRB ... or +233 24 ...'
                 placeholderTextColor={colors.mutedForeground}
-                className='rounded-xl border border-border bg-muted px-3 py-2.5 font-sans text-base text-foreground'
+                className='rounded-[32px] border border-border bg-background px-3.5 py-3 font-sans text-base text-foreground'
               />
             </View>
 
@@ -142,7 +142,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 placeholder='0.00'
                 keyboardType='numeric'
                 placeholderTextColor={colors.mutedForeground}
-                className='rounded-xl border border-border bg-muted px-3 py-2.5 font-sans text-base text-foreground'
+                className='rounded-[32px] border border-border bg-background px-3.5 py-3 font-sans text-base text-foreground'
               />
             </View>
 
@@ -150,7 +150,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
               onPress={handleExecuteSend}
               className='mt-3 flex-row items-center justify-center gap-1.5 rounded-full bg-primary py-3 active:opacity-80'
             >
-              <Text className='font-sans-semibold text-[15px] text-primary-foreground'>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'>
                 Confirm & Send Payout
               </Text>
             </Pressable>

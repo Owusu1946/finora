@@ -144,7 +144,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
       >
         <View className='flex-row items-center gap-3'>
           <Animated.View
-            className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'
+            className='w-9 h-9 rounded-full items-center justify-center bg-muted'
             style={[{ opacity: phase === 'sending' ? pulse : 1 }]}
           >
             {phase === 'sending' ? (

@@ -98,7 +98,7 @@ export function ConversionCard({
     >
       <View className='flex-row items-center gap-3'>
         <Animated.View
-          className='w-9 h-9 rounded-[18px] items-center justify-center'
+          className='w-9 h-9 rounded-full items-center justify-center'
           style={[
             {
               backgroundColor: failed ? colors.destructiveSurface : colors.muted,

@@ -35,7 +35,7 @@ export function AuthButton({
         onPress();
       }}
       className={cx(
-        'h-[54px] w-full items-center justify-center rounded-[32px] px-5 py-4 will-change-pressable',
+        'h-[54px] w-full items-center justify-center rounded-full px-5 py-4 will-change-pressable',
         !inactive && 'active:opacity-85',
         isPrimary && (inactive ? 'bg-primary/40' : 'bg-primary'),
         (isOutline || variant === 'ghost') && 'bg-transparent',

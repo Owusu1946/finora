@@ -277,7 +277,7 @@ export default function AddPhoneScreen() {
             placeholder='024 123 4567 or +233…'
             error={error ?? undefined}
           />
-          <View className='flex-row items-start gap-2.5 rounded-[22px] border border-border bg-composer p-3.5'>
+          <View className='flex-row items-start gap-2.5 rounded-[26px] border border-border bg-composer p-3.5'>
             <Icon
               name='shield'
               size={18}

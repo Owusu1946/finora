@@ -158,7 +158,7 @@ export function VirtualCardManagePanel({
       />
 
       <Text className='mb-0.5 mt-3 font-sans-semibold text-xl text-foreground'>Spending</Text>
-      <View className='flex-row gap-2 rounded-2xl border border-border bg-card p-4 shadow'>
+      <View className='flex-row gap-2 rounded-[26px] border border-border bg-composer p-4 shadow'>
         <Stat
           label='Spent'
           value={formatCardAmount(card.spent, card.currency)}
@@ -174,7 +174,7 @@ export function VirtualCardManagePanel({
       </View>
 
       <Text className='mb-0.5 mt-3 font-sans-semibold text-xl text-foreground'>Card details</Text>
-      <View className='flex-col gap-2.5 rounded-2xl border border-border bg-card p-4 shadow'>
+      <View className='flex-col gap-2.5 rounded-[26px] border border-border bg-composer p-4 shadow'>
         <View className='flex-row flex-wrap items-center justify-between gap-2.5'>
           <Text className='font-sans-medium text-sm text-muted-foreground'>
             Number · expiry · CVV
@@ -250,13 +250,13 @@ export function VirtualCardManagePanel({
       </View>
 
       {editingLimit ? (
-        <View className='gap-2.5 rounded-2xl border border-border bg-card p-3.5'>
+        <View className='gap-2.5 rounded-[26px] border border-border bg-composer p-3.5'>
           <Text className='font-sans-medium text-sm text-foreground'>Edit limit</Text>
           <TextInput
             value={limitDraft}
             onChangeText={(t) => setLimitDraft(t.replace(/[^0-9.]/g, ''))}
             keyboardType='decimal-pad'
-            className='rounded-xl border border-border px-3 py-3 font-sans text-base text-foreground'
+            className='rounded-[32px] border border-border bg-background px-3.5 py-3 font-sans text-base text-foreground'
           />
           <View className='flex-row gap-2'>
             <ActionButton

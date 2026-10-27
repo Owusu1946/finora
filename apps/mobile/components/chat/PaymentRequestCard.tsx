@@ -359,7 +359,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
       style={[styles.card]}
     >
       <View className='flex-row items-center gap-3'>
-        <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+        <View className='w-9 h-9 rounded-full items-center justify-center bg-muted'>
           <Icon
             name='qr'
             size={16}
@@ -419,7 +419,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         <Pressable
           accessibilityLabel='Copy payment link'
           onPress={() => void copy(request.link, 'link')}
-          className='w-[34px] h-[34px] rounded-[17px] items-center justify-center'
+          className='w-9 h-9 rounded-full items-center justify-center'
           style={({ pressed }) => [{ backgroundColor: colors.muted, opacity: pressed ? 0.7 : 1 }]}
         >
           <Icon

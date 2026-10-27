@@ -53,7 +53,7 @@ export function AccountPicker({ value, onChange }: AccountPickerProps) {
               onChange(option.type);
             }}
             className={cx(
-              'flex-row items-center gap-3 rounded-xl border px-4 py-3.5 active:opacity-[0.88]',
+              'flex-row items-center gap-3 rounded-[18px] border px-4 py-3.5 active:opacity-[0.88]',
               selected ? 'border-foreground bg-muted' : 'border-border bg-background',
             )}
           >

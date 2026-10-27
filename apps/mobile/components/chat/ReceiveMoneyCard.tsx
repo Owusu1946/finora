@@ -231,7 +231,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   accessibilityLabel={`Copy ${field.label}`}
                   hitSlop={8}
                   onPress={() => copyValue(field.value, key)}
-                  className='w-[34px] h-[34px] rounded-[17px] items-center justify-center'
+                  className='w-9 h-9 rounded-full items-center justify-center'
                   style={({ pressed }) => [
                     {
                       backgroundColor: colors.muted,
