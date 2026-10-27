@@ -10,12 +10,16 @@ import { haptics } from '@/lib/haptics';
 
 export const ThreadListItem = memo(function ThreadListItem({
   onSelect,
+  onRequestDelete,
 }: {
   onSelect: (switchTo: () => void) => void;
+  onRequestDelete: (target: { id: string; title: string | null }) => void;
 }) {
   const aui = useAui();
   const { colors } = useTheme();
   const isActive = useAuiState((s) => s.threads.mainThreadId === s.threadListItem.id);
+  const threadId = useAuiState((s) => s.threadListItem.id);
+  const title = useAuiState((s) => s.threadListItem.title ?? null);
 
   return (
     <ThreadListItemPrimitive.Root className='mx-2 flex-row items-center'>
@@ -39,10 +43,12 @@ export const ThreadListItem = memo(function ThreadListItem({
           <ThreadListItemPrimitive.Title fallback='New chat' />
         </Text>
       </Pressable>
-      <ThreadListItemPrimitive.Delete
+      <Pressable
+        accessibilityRole='button'
         accessibilityLabel='Delete chat'
-        onPressIn={haptics.selection}
         hitSlop={6}
+        onPressIn={haptics.selection}
+        onPress={() => onRequestDelete({ id: threadId, title })}
         className='ml-1 h-7 w-7 items-center justify-center rounded-full active:bg-muted'
       >
         <Icon
@@ -50,7 +56,7 @@ export const ThreadListItem = memo(function ThreadListItem({
           size={16}
           color={colors.mutedForeground}
         />
-      </ThreadListItemPrimitive.Delete>
+      </Pressable>
     </ThreadListItemPrimitive.Root>
   );
 });
