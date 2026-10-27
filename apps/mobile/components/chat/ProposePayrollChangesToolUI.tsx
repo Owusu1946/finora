@@ -248,7 +248,7 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
           <Pressable
             disabled={phase === 'applying'}
             onPress={() => void cancel()}
-            className='flex-1 min-h-[46px] rounded-full items-center justify-center'
+            className='flex-1 min-h-[46px] rounded-full items-center justify-center px-3.5'
             style={[styles.secondary, { backgroundColor: colors.muted }]}
           >
             <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -258,7 +258,7 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
           <Pressable
             disabled={phase === 'applying'}
             onPress={() => void approve()}
-            className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center bg-primary'
+            className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center bg-primary px-3.5'
             style={[styles.primary, { opacity: phase === 'applying' ? 0.6 : 1 }]}
           >
             <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'>

@@ -384,7 +384,7 @@ export function PaymentConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='min-h-[46px] mt-0.5 items-center justify-center rounded-full bg-muted'
+            className='min-h-[46px] mt-0.5 items-center justify-center rounded-full bg-muted px-3.5'
             style={({ pressed }) => [
               {
                 opacity: pressed || loading ? 0.75 : 1,
@@ -524,19 +524,20 @@ function SentHero({
             haptics.selection();
             onViewDetails();
           }}
-          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5 bg-muted'
+          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5'
           style={({ pressed }) => [
             {
-              opacity: pressed ? 0.8 : 1,
+              backgroundColor: colors.foreground,
+              opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
           <Icon
             name='activity'
             size={16}
-            color={colors.foreground}
+            color={colors.background}
           />
-          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
             View transaction
           </Text>
         </Pressable>

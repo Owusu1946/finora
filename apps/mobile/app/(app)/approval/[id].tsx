@@ -234,13 +234,14 @@ export default function ApprovalDetailScreen() {
           {status === 'sent' ? (
             <Pressable
               onPress={openTransaction}
-              className='min-h-[46px] items-center justify-center px-4 bg-muted'
+              className='min-h-[46px] items-center justify-center rounded-full px-4'
               style={({ pressed }) => ({
+                backgroundColor: colors.foreground,
                 borderRadius: Radius.pill,
-                opacity: pressed ? 0.75 : 1,
+                opacity: pressed ? 0.85 : 1,
               })}
             >
-              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
                 View transaction detail
               </Text>
             </Pressable>
@@ -252,7 +253,7 @@ export default function ApprovalDetailScreen() {
                 haptics.selection();
                 router.back();
               }}
-              className='min-h-[46px] items-center justify-center px-4 bg-muted'
+              className='min-h-[46px] items-center justify-center rounded-full px-4 bg-muted'
               style={({ pressed }) => ({
                 borderRadius: Radius.pill,
                 opacity: pressed ? 0.75 : 1,

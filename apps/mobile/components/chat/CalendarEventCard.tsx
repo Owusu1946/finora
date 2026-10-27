@@ -174,7 +174,7 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                   if (!ok) return;
                   setPhase('sending');
                 }}
-                className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+                className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
                 style={({ pressed }) => [
                   {
                     backgroundColor: colors.primary,
@@ -200,7 +200,7 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                 setPhase('dismissed');
                 setBusy(false);
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}

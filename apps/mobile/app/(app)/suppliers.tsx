@@ -77,7 +77,7 @@ export default function SuppliersScreen() {
               aui.composer.setText('Show suppliers');
               aui.composer.send();
             }}
-            className='min-h-[46px] items-center justify-center rounded-full bg-foreground'
+            className='min-h-[46px] items-center justify-center rounded-full bg-foreground px-4'
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>

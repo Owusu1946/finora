@@ -322,7 +322,7 @@ export default function PayrollScreen() {
                   router.push('/');
                   aui.composer.setText('Create a payroll from an attachment');
                 }}
-                className='mt-1 min-h-11 items-center justify-center rounded-full bg-foreground'
+                className='mt-1 min-h-11 items-center justify-center rounded-full bg-foreground px-4'
               >
                 <Text className='font-sans-semibold text-[15px] text-background'>
                   Create payroll in chat
@@ -685,7 +685,7 @@ function EmployeeRow({
                   x.value = withSpring(0, { damping: 20, stiffness: 220 });
                 });
               }}
-              className='size-[38px] items-center justify-center'
+              className='size-[38px] items-center justify-center rounded-full'
             >
               <Icon
                 name='remove'

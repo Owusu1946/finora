@@ -134,11 +134,13 @@ export function CreateVirtualCardWizard({
             className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
             style={[styles.input]}
           />
-          <PrimaryButton
-            label='Continue'
-            disabled={!resolvedLabel}
-            onPress={() => setStep('limit')}
-          />
+          <View className='flex-row'>
+            <PrimaryButton
+              label='Continue'
+              disabled={!resolvedLabel}
+              onPress={() => setStep('limit')}
+            />
+          </View>
         </View>
       ) : null}
 
@@ -278,7 +280,7 @@ function PrimaryButton({
         haptics.selection();
         onPress();
       }}
-      className='flex-1 min-h-[46px] items-center'
+      className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4'
       style={[
         styles.primary,
         {
@@ -304,7 +306,7 @@ function SecondaryButton({ label, onPress }: { label: string; onPress: () => voi
         haptics.selection();
         onPress();
       }}
-      className='min-h-[46px] rounded-full bg-muted px-4 items-center justify-center'
+      className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
       style={[styles.secondary]}
     >
       <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>

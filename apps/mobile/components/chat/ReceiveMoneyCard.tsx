@@ -254,7 +254,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
       <View className='gap-2'>
         <Pressable
           onPress={() => void textDetails()}
-          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2'
+          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-4'
           style={({ pressed }) => [
             styles.primaryBtn,
             {
@@ -279,7 +279,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         <View className='flex-row gap-2'>
           <Pressable
             onPress={shareDetails}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
             style={({ pressed }) => [
               styles.secondaryBtn,
               {
@@ -299,7 +299,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           </Pressable>
           <Pressable
             onPress={shareQr}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
             style={({ pressed }) => [
               styles.secondaryBtn,
               {
@@ -319,7 +319,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           </Pressable>
           <Pressable
             onPress={copyAll}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
             style={({ pressed }) => [
               styles.secondaryBtn,
               {
@@ -391,7 +391,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             <View className='flex-row gap-2 w-[100%] mt-1'>
               <Pressable
                 onPress={shareQr}
-                className='min-h-[46px] flex-row items-center justify-center gap-2 px-4'
+                className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-4'
                 style={({ pressed }) => [
                   styles.primaryBtn,
                   {
@@ -418,7 +418,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   haptics.selection();
                   setQrOpen(false);
                 }}
-                className='min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
+                className='min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-4'
                 style={({ pressed }) => [
                   styles.secondaryBtn,
                   {
@@ -455,7 +455,7 @@ const styles = {
     borderRadius: Radius.lg,
   },
   field: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.md,
   },
   primaryBtn: {
     borderRadius: Radius.pill,

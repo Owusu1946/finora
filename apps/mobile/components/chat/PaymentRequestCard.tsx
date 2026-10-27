@@ -433,7 +433,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
       <View className='gap-2'>
         <Pressable
           onPress={() => void textSms()}
-          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2'
+          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-4'
           style={({ pressed }) => [
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
           ]}
@@ -453,7 +453,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         <View className='flex-row gap-2'>
           <Pressable
             onPress={share}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
             style={({ pressed }) => [
               { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
             ]}
@@ -469,7 +469,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           </Pressable>
           <Pressable
             onPress={() => void copy(shareMessage, 'all')}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
             style={({ pressed }) => [
               { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
             ]}
@@ -533,7 +533,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
             </View>
             <Pressable
               onPress={share}
-              className='min-h-[46px] w-[100%] rounded-full flex-row items-center justify-center gap-2'
+              className='min-h-[46px] w-[100%] rounded-full flex-row items-center justify-center gap-2 px-4'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
@@ -568,13 +568,13 @@ const styles = {
     borderRadius: Radius.composer,
   },
   review: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
   qrWrap: {
     borderRadius: Radius.lg,
   },
   linkRow: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.md,
   },
   statusPill: {
     borderRadius: Radius.pill,

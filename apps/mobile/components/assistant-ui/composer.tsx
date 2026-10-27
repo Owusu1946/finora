@@ -1066,12 +1066,13 @@ export function Composer() {
                   inputRef.current?.blur();
                   Keyboard.dismiss();
                 }}
-                className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
+                className='h-[38px] min-w-12 items-center justify-center rounded-full px-3.5'
                 style={({ pressed }) => [
-                  { backgroundColor: pressed ? colors.muted : 'transparent' },
+                  styles.doneButton,
+                  { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
                 ]}
               >
-                <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
+                <Text className='font-sans-semibold text-[14px] text-background'>Done</Text>
               </Pressable>
             ) : null}
             <AuiIf condition={(s) => !s.thread.isRunning}>

@@ -169,7 +169,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                   if (!ok) return;
                   setPhase('sending');
                 }}
-                className='grow min-h-[46px] items-center justify-center rounded-full'
+                className='grow min-h-[46px] items-center justify-center rounded-full px-3.5'
                 style={({ pressed }) => [
                   {
                     backgroundColor: colors.primary,
@@ -204,7 +204,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                   haptics.success();
                 }
               }}
-              className='grow min-h-[46px] items-center justify-center rounded-full'
+              className='grow min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
@@ -223,7 +223,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                 setPhase('dismissed');
                 setBusy(false);
               }}
-              className='grow min-h-[46px] items-center justify-center rounded-full'
+              className='grow min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}

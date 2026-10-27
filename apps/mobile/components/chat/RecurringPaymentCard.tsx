@@ -136,7 +136,7 @@ export function RecurringPaymentCard({
                 setCancelled(true);
                 onCancelled?.();
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
@@ -175,7 +175,7 @@ export function RecurringPaymentCard({
                   `Scheduled ${formatPaymentAmount(draft.amount, draft.currency)} to ${draft.recipientName} ${FREQ_LABEL[draft.frequency].toLowerCase()}. Next run ${new Date(nextRun).toLocaleDateString()}. Manage it under Recurring in the drawer.`,
                 );
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
               ]}

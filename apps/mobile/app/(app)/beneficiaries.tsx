@@ -72,7 +72,7 @@ export default function BeneficiariesScreen() {
               aui.composer.setText('Show beneficiaries');
               aui.composer.send();
             }}
-            className='mb-1 min-h-[46px] items-center justify-center rounded-full bg-foreground'
+            className='mb-1 min-h-[46px] items-center justify-center rounded-full bg-foreground px-4'
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>

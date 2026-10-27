@@ -266,7 +266,7 @@ export default function ScanScreen() {
           />
           <Pressable
             onPress={loadPersonalProfile}
-            className='mt-2 items-center rounded-full bg-foreground py-3.5'
+            className='mt-2 items-center rounded-full bg-foreground px-4 py-3.5'
           >
             <Text className='font-sans text-[17px] font-bold text-background'>Retry</Text>
           </Pressable>
@@ -306,7 +306,7 @@ export default function ScanScreen() {
           />
           <Pressable
             onPress={openScanner}
-            className='mt-2 items-center rounded-full bg-foreground py-3.5'
+            className='mt-2 items-center rounded-full bg-foreground px-4 py-3.5'
           >
             <Text className='font-sans text-[17px] font-bold text-background'>Back to scan</Text>
           </Pressable>
@@ -341,7 +341,7 @@ export default function ScanScreen() {
             haptics.selection();
             void requestPermission();
           }}
-          className='mt-2 items-center rounded-full bg-foreground py-3.5'
+          className='mt-2 items-center rounded-full bg-foreground px-4 py-3.5'
         >
           <Text className='font-sans text-[17px] font-bold text-background'>Allow camera</Text>
         </Pressable>
@@ -559,7 +559,7 @@ function AmountStep({
       <Pressable
         onPress={onContinue}
         disabled={amount == null || amount <= 0}
-        className='mt-2 items-center rounded-full bg-foreground py-3.5'
+        className='mt-2 items-center rounded-full bg-foreground px-4 py-3.5'
         style={{ opacity: amount == null || amount <= 0 ? 0.4 : 1 }}
       >
         <Text className='font-sans text-[17px] font-bold text-background'>Continue to confirm</Text>
@@ -672,7 +672,7 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
       <Pressable
         onPress={() => void shareCode()}
         disabled={actionState.busy}
-        className='mt-2 items-center rounded-full bg-foreground py-3.5'
+        className='mt-2 items-center rounded-full bg-foreground px-4 py-3.5'
       >
         <Text className='font-sans text-[17px] font-bold text-background'>
           {actionState.busy ? 'Working…' : 'Share code'}
@@ -681,7 +681,7 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
       <Pressable
         onPress={() => void saveCode()}
         disabled={actionState.busy}
-        className='flex-row items-center justify-center rounded-full border border-border py-3'
+        className='flex-row items-center justify-center rounded-full border border-border px-4 py-3'
       >
         <Text className='font-sans-semibold text-base text-foreground'>Save image</Text>
       </Pressable>
@@ -783,7 +783,7 @@ function PasteBlock({
           onSubmit();
         }}
         disabled={!paste.trim()}
-        className='mt-2 items-center rounded-full bg-foreground py-3.5'
+        className='mt-2 items-center rounded-full bg-foreground px-4 py-3.5'
         style={{ opacity: paste.trim() ? 1 : 0.4 }}
       >
         <Text className='font-sans text-[17px] font-bold text-background'>Use payload</Text>

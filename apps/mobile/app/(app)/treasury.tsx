@@ -75,7 +75,7 @@ export default function TreasuryScreen() {
             aui.composer.setText('Show treasury overview');
             aui.composer.send();
           }}
-          className='mt-1 min-h-[46px] items-center justify-center rounded-full bg-foreground'
+          className='mt-1 min-h-[46px] items-center justify-center rounded-full bg-foreground px-4'
           style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
         >
           <Text className='font-sans-semibold text-[15px] text-background'>Ask in chat</Text>

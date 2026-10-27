@@ -546,7 +546,7 @@ function NavRow({
           haptics.selection();
           onBack();
         }}
-        className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+        className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
         style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
       >
         <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -558,7 +558,7 @@ function NavRow({
           haptics.selection();
           onNext();
         }}
-        className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+        className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
         style={({ pressed }) => [{ backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
       >
         <Text
@@ -580,9 +580,9 @@ const styles = {
     borderRadius: Radius.composer,
   },
   railRow: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
   preview: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
 };

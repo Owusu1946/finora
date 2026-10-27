@@ -136,7 +136,7 @@ export function ConversionCard({
       </View>
 
       <View
-        className='border p-3 flex-row items-center justify-between gap-2 border-border'
+        className='border p-3.5 flex-row items-center justify-between gap-2 border-border'
         style={[styles.pair]}
       >
         <View className='flex-row items-center gap-2 flex-1'>
@@ -243,7 +243,7 @@ export function ConversionCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+            className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
             style={({ pressed }) => [
               {
                 backgroundColor: colors.muted,
@@ -261,7 +261,7 @@ export function ConversionCard({
               haptics.impact();
               onConfirm?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+            className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
             style={({ pressed }) => [
               {
                 backgroundColor: colors.primary,
@@ -389,7 +389,7 @@ const styles = {
     borderRadius: Radius.card,
   },
   pair: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
   statusPill: {
     borderRadius: Radius.pill,

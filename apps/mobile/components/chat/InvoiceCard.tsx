@@ -296,7 +296,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 onUpdated?.({ ...invoice, status: 'dismissed' });
                 setBusy(false);
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
@@ -317,7 +317,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 finishedRef.current = false;
                 setPhase('sending');
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
               ]}
@@ -342,17 +342,17 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               haptics.selection();
               router.push(`/transaction/${txRecordId ?? transactionId}` as Href);
             }}
-            className='min-h-11 rounded-full flex-row items-center justify-center gap-2'
+            className='min-h-11 rounded-full flex-row items-center justify-center gap-2 px-4'
             style={({ pressed }) => [
-              { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
+              { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
             ]}
           >
             <Icon
               name='activity'
               size={16}
-              color={colors.foreground}
+              color={colors.background}
             />
-            <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+            <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-background'>
               View transaction
             </Text>
           </Pressable>

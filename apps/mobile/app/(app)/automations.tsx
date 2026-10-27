@@ -76,7 +76,7 @@ export default function AutomationsScreen() {
               aui.composer.setText('Show my automations');
               aui.composer.send();
             }}
-            className='mb-1 min-h-[46px] items-center justify-center rounded-full bg-foreground'
+            className='mb-1 min-h-[46px] items-center justify-center rounded-full bg-foreground px-4'
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>
@@ -96,7 +96,7 @@ export default function AutomationsScreen() {
               await setAutomationStatus(a.id, a.status === 'active' ? 'paused' : 'active');
               await refresh();
             }}
-            className='mt-1 min-h-[42px] items-center justify-center rounded-full bg-muted'
+            className='mt-1 min-h-[42px] items-center justify-center rounded-full bg-muted px-4'
             style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-foreground'>

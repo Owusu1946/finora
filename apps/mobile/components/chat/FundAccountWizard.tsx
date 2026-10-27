@@ -353,7 +353,7 @@ export function FundAccountWizard({
           <View className='flex-row gap-2.5'>
             <Pressable
               onPress={() => void shareMethod(method)}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
               style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -366,7 +366,7 @@ export function FundAccountWizard({
                 setAmount(null);
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full'
+              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
               ]}
@@ -455,7 +455,7 @@ export function FundAccountWizard({
           <View className='flex-row gap-2.5'>
             <Pressable
               onPress={() => setStep('source')}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
               style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -477,7 +477,7 @@ export function FundAccountWizard({
                 }
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full'
+              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-3.5'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
@@ -571,7 +571,7 @@ const styles = {
     borderRadius: Radius.lg,
   },
   field: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.md,
   },
   input: {
     borderRadius: Radius.composer,
