@@ -17,7 +17,7 @@
   "dependencies": {
     "@ai-sdk/openai": "4.0.41",
     "@ai-sdk/provider": "4.0.7",
-    "@clerk/backend": "3.16.3",
+    "@clerk/backend": "^3.16.9",
     "@clerk/hono": "^0.1.70",
     "@finora/env": "workspace:*",
     "@finora/shared": "workspace:*",
