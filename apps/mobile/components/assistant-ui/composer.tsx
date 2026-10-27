@@ -591,6 +591,7 @@ function CancelButton() {
  */
 type ComposerInputHandle = {
   blur: () => void;
+  focus: () => void;
 };
 
 const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
@@ -609,7 +610,14 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const inputRef = useRef<TextInput>(null);
     const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
 
-    useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
+    useImperativeHandle(
+      ref,
+      () => ({
+        blur: () => inputRef.current?.blur(),
+        focus: () => inputRef.current?.focus(),
+      }),
+      [],
+    );
 
     useEffect(() => {
       if (nativeTextRef.current === storeText) return;
@@ -914,7 +922,9 @@ export function Composer() {
           </View>
         </>
       ) : (
-        <View
+        <Pressable
+          accessible={false}
+          onPress={() => inputRef.current?.focus()}
           className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
           style={[styles.shell]}
         >
@@ -992,7 +1002,7 @@ export function Composer() {
               <CancelButton />
             </AuiIf>
           </View>
-        </View>
+        </Pressable>
       )}
     </View>
   );
@@ -1011,7 +1021,8 @@ const styles = {
     fontSize: 17,
     lineHeight: 22,
     minHeight: 28,
-    maxHeight: 132,
+    // Four lines of 22px + top/bottom padding.
+    maxHeight: 96,
     paddingHorizontal: 10,
     paddingTop: 6,
     paddingBottom: 2,

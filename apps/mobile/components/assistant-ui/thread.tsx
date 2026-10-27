@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FinoraLogo } from '@/components/ui/finora-mark';
+import { SwipeKeyboardDismiss } from '@/components/ui/swipe-keyboard-dismiss';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -163,15 +164,19 @@ export function Thread() {
         keyboardVerticalOffset={0}
         enabled={isFocused && Platform.OS === 'ios'}
       >
-        <View className='flex-1'>
-          <ChatMessages headerHeight={headerHeight} />
-        </View>
+        <SwipeKeyboardDismiss className='flex-1'>
+          <View className='flex-1'>
+            <ChatMessages headerHeight={headerHeight} />
+          </View>
+        </SwipeKeyboardDismiss>
         <View
           style={{
             paddingBottom: keyboardVisible ? 8 : insets.bottom + 6,
           }}
         >
-          <Composer />
+          <SwipeKeyboardDismiss>
+            <Composer />
+          </SwipeKeyboardDismiss>
         </View>
       </KeyboardAvoidingView>
     </View>
