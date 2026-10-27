@@ -16,6 +16,20 @@ type OAuthEndpointProvider = keyof typeof PROVIDER_PICTURE_ENDPOINTS;
 type GoogleUserInfo = { picture?: unknown };
 type FacebookPicture = { data?: { url?: unknown } };
 
+/** Clerk's REST objects alternate between `google` and `oauth_google`. */
+function matchesProvider(actual: string | undefined, provider: OAuthEndpointProvider) {
+  return actual === provider || actual === `oauth_${provider}`;
+}
+
+/**
+ * Google serves the same avatar with many URL decorations (=s96-c, ?sz=64,
+ * =w96-...). Compare on the resource path so a size-suffix difference is not
+ * mistaken for an actual image change.
+ */
+function normalizePictureUrl(url: string) {
+  return url.split('?')[0].replace(/=[a-z0-9._-]+$/i, '');
+}
+
 async function resolveProviderPicture(
   provider: OAuthEndpointProvider,
   accessToken: string,
@@ -45,21 +59,38 @@ export async function syncOAuthAvatar(clerk: ClerkClient, user: User): Promise<U
 
   try {
     for (const provider of Object.keys(PROVIDER_PICTURE_ENDPOINTS) as OAuthEndpointProvider[]) {
-      const account = user.externalAccounts.find((item) => item.provider === provider);
+      const account = user.externalAccounts.find((item) =>
+        matchesProvider(item.provider, provider),
+      );
       if (!account) continue;
 
       const accessTokens = await clerk.users.getUserOauthAccessToken(user.id, provider);
       const token = accessTokens.data[0]?.token;
-      if (!token) continue;
+      if (!token) {
+        console.log(`[oauth-avatar] ${provider}: no access token for ${user.id}, skipping.`);
+        continue;
+      }
 
       const pictureUrl = await resolveProviderPicture(provider, token);
-      if (!pictureUrl) continue;
+      if (!pictureUrl) {
+        console.log(`[oauth-avatar] ${provider}: provider returned no picture, skipping.`);
+        continue;
+      }
       // Equality against both snapshots means the provider avatar matches
       // what Clerk already imported, and nothing needs to move.
-      if (pictureUrl === account.imageUrl || pictureUrl === user.imageUrl) continue;
+      if (
+        normalizePictureUrl(pictureUrl) === normalizePictureUrl(account.imageUrl) ||
+        normalizePictureUrl(pictureUrl) === normalizePictureUrl(user.imageUrl)
+      ) {
+        console.log(`[oauth-avatar] ${provider}: picture unchanged for ${user.id}.`);
+        continue;
+      }
 
       const download = await fetch(pictureUrl);
-      if (!download.ok) continue;
+      if (!download.ok) {
+        console.log(`[oauth-avatar] ${provider}: picture download ${download.status}, skipping.`);
+        continue;
+      }
       const bytes = await download.arrayBuffer();
       if (!bytes.byteLength) continue;
 
@@ -67,6 +98,7 @@ export async function syncOAuthAvatar(clerk: ClerkClient, user: User): Promise<U
       await clerk.users.updateUserProfileImage(user.id, {
         file: new Blob([bytes], { type: contentType }),
       });
+      console.log(`[oauth-avatar] ${provider}: pushed fresh avatar for ${user.id}.`);
       return (await clerk.users.getUser(user.id)) ?? user;
     }
   } catch (error) {
