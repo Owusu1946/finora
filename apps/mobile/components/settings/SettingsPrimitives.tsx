@@ -1,12 +1,21 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
@@ -55,6 +64,44 @@ export function SettingsScreen({
   );
 }
 
+/** Custom zinc pill toggle. Mirrors the app's button language: filled track, no border. */
+
+function Toggle({ value, disabled }: { value: boolean; disabled?: boolean }) {
+  const { colors } = useTheme();
+  const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: value ? 1 : 0,
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start();
+  }, [progress, value]);
+
+  // 3px insets on both ends: travel = 44 − 22 − 3 − 3 = 16.
+  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, 16] });
+
+  return (
+    <View
+      className={cx('h-[28px] w-[44px] flex-row items-center', disabled && 'opacity-45')}
+      style={{
+        borderRadius: Radius.pill,
+        borderCurve: Rounded.borderCurve,
+        backgroundColor: value ? colors.foreground : colors.muted,
+      }}
+    >
+      <Animated.View
+        className='ml-[3px] h-[22px] w-[22px] rounded-full'
+        style={{
+          transform: [{ translateX }],
+          backgroundColor: value ? colors.background : colors.mutedForeground,
+        }}
+      />
+    </View>
+  );
+}
+
 export function SettingsSection({
   title,
   children,
@@ -72,8 +119,8 @@ export function SettingsSection({
         </Text>
       ) : null}
       <View
-        className='overflow-hidden rounded-2xl border border-border bg-composer'
-        style={{ borderCurve: 'continuous' }}
+        className='overflow-hidden border border-border bg-composer'
+        style={{ borderRadius: Radius.card, borderCurve: Rounded.borderCurve }}
       >
         {children}
       </View>
@@ -115,7 +162,7 @@ export function SettingsRow({
   const content = (
     <>
       {icon ? (
-        <View className='h-8 w-8 items-center justify-center rounded-full bg-muted'>
+        <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
           <Icon
             name={icon}
             size={16}
@@ -200,7 +247,6 @@ export function SettingsSwitchRow({
   disabled?: boolean;
   isLast?: boolean;
 }) {
-  const { colors } = useTheme();
   const [optimisticValue, setOptimisticValue] = useState(value);
   const controlledValueRef = useRef(value);
   const requestRef = useRef(0);
@@ -218,10 +264,13 @@ export function SettingsSwitchRow({
       disabled={disabled}
       isLast={isLast}
       right={
-        <Switch
-          value={optimisticValue}
+        <Pressable
+          accessibilityRole='switch'
+          accessibilityState={{ checked: optimisticValue }}
           disabled={disabled}
-          onValueChange={async (next) => {
+          hitSlop={10}
+          onPress={async () => {
+            const next = !optimisticValue;
             const request = ++requestRef.current;
             setOptimisticValue(next);
             haptics.selection();
@@ -236,10 +285,9 @@ export function SettingsSwitchRow({
               setOptimisticValue(controlledValueRef.current);
             }
           }}
-          trackColor={{ false: colors.muted, true: colors.foreground }}
-          thumbColor={colors.background}
-          ios_backgroundColor={colors.muted}
-        />
+        >
+          <Toggle value={optimisticValue} disabled={disabled} />
+        </Pressable>
       }
     />
   );

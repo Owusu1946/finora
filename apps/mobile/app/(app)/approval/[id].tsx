@@ -13,6 +13,7 @@ import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getApproval, resolveApproval } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
@@ -189,14 +190,17 @@ export default function ApprovalDetailScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View className='gap-1 rounded-2xl bg-muted p-3.5'>
+          <View
+            className='gap-1 bg-muted p-3.5'
+            style={{ borderRadius: Radius.card, borderCurve: Rounded.borderCurve }}
+          >
             <Text className='font-sans-semibold text-[13px] tracking-[-0.1px] text-muted-foreground'>
               {isPlan ? 'Agent plan' : 'Agent request'}
             </Text>
-            <Text className='font-sans-semibold text-[19px] tracking-[-0.3px] text-foreground'>
+            <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
               {approval.agent}
             </Text>
-            <Text className='font-sans-medium text-sm text-muted-foreground'>
+            <Text className='font-sans-medium text-[14px] text-muted-foreground'>
               Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
             </Text>
           </View>
@@ -230,10 +234,13 @@ export default function ApprovalDetailScreen() {
           {status === 'sent' ? (
             <Pressable
               onPress={openTransaction}
-              className='min-h-[46px] items-center justify-center rounded-[14px] border border-border'
-              style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+              className='min-h-[46px] items-center justify-center bg-muted'
+              style={({ pressed }) => ({
+                borderRadius: Radius.pill,
+                opacity: pressed ? 0.75 : 1,
+              })}
             >
-              <Text className='font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
                 View transaction detail
               </Text>
             </Pressable>
@@ -245,10 +252,13 @@ export default function ApprovalDetailScreen() {
                 haptics.selection();
                 router.back();
               }}
-              className='min-h-[46px] items-center justify-center rounded-[14px] border border-border'
-              style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+              className='min-h-[46px] items-center justify-center bg-muted'
+              style={({ pressed }) => ({
+                borderRadius: Radius.pill,
+                opacity: pressed ? 0.75 : 1,
+              })}
             >
-              <Text className='font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
                 Back to inbox
               </Text>
             </Pressable>
