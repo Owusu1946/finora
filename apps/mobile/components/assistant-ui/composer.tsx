@@ -873,7 +873,7 @@ export function Composer() {
                 onPress={cancelVoice}
                 className='h-12 w-12 items-center justify-center rounded-full border border-border'
                 style={({ pressed }) => [
-                  { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 1 },
+                  { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
                 ]}
               >
                 <Icon
@@ -889,7 +889,7 @@ export function Composer() {
                   onPress={acceptVoice}
                   className='h-12 w-12 items-center justify-center rounded-full border border-border'
                   style={({ pressed }) => [
-                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 1 },
+                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
                   ]}
                 >
                   <Icon
@@ -902,7 +902,7 @@ export function Composer() {
               {voiceState === 'transcribing' ? (
                 <View
                   className='h-12 w-12 items-center justify-center rounded-full border border-border'
-                  style={[{ backgroundColor: colors.composer }]}
+                  style={[{ backgroundColor: colors.composer, opacity: 0.95 }]}
                 >
                   <LoadingIcon
                     color={colors.mutedForeground}
