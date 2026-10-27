@@ -11,7 +11,10 @@ import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
-const SCROLL_THRESHOLD = 120;
+// When the remaining content fits in this many px, treat the list as at the
+// bottom and hide the floating chevron — otherwise it overlaps the last
+// message's text while a few px of padding still keep the list "unscrolled".
+const SCROLL_THRESHOLD = 48;
 
 /**
  * useScrollToBottom – manages scroll-to-bottom state and provides a

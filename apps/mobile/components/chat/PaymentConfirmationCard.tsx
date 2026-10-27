@@ -163,7 +163,7 @@ export function PaymentConfirmationCard({
         <>
           <View className='flex-row items-center gap-3'>
             <Animated.View
-              className='w-9 h-9 rounded-[18px] items-center justify-center'
+              className='w-9 h-9 rounded-full items-center justify-center'
               style={[
                 {
                   backgroundColor: failed ? colors.destructiveSurface : colors.muted,
@@ -333,7 +333,50 @@ export function PaymentConfirmationCard({
       ) : null}
 
       {pending ? (
-        <View className='flex-row gap-2.5 mt-0.5'>
+        onConfirm ? (
+          <View className='flex-row gap-2.5 mt-0.5'>
+            <Pressable
+              accessibilityRole='button'
+              disabled={loading}
+              onPress={() => {
+                haptics.selection();
+                onCancel?.();
+              }}
+              className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full bg-muted'
+              style={({ pressed }) => [
+                {
+                  opacity: pressed || loading ? 0.75 : 1,
+                },
+              ]}
+            >
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Cancel
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole='button'
+              disabled={loading}
+              onPress={() => {
+                haptics.impact();
+                onConfirm?.();
+              }}
+              className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full'
+              style={({ pressed }) => [
+                {
+                  backgroundColor: colors.primary,
+                  opacity: pressed || loading ? 0.85 : 1,
+                },
+              ]}
+            >
+              <Text
+                style={{ color: colors.primaryForeground }}
+                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+              >
+                {loading ? 'Confirming…' : 'Confirm & send'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
           <Pressable
             accessibilityRole='button'
             disabled={loading}
@@ -341,7 +384,7 @@ export function PaymentConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full bg-muted'
+            className='min-h-[46px] mt-0.5 items-center justify-center rounded-full bg-muted'
             style={({ pressed }) => [
               {
                 opacity: pressed || loading ? 0.75 : 1,
@@ -352,29 +395,7 @@ export function PaymentConfirmationCard({
               Cancel
             </Text>
           </Pressable>
-          <Pressable
-            accessibilityRole='button'
-            disabled={loading}
-            onPress={() => {
-              haptics.impact();
-              onConfirm?.();
-            }}
-            className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full'
-            style={({ pressed }) => [
-              {
-                backgroundColor: colors.primary,
-                opacity: pressed || loading ? 0.85 : 1,
-              },
-            ]}
-          >
-            <Text
-              style={{ color: colors.primaryForeground }}
-              className='font-sans-semibold text-[16px] tracking-[-0.2px]'
-            >
-              {loading ? 'Confirming…' : 'Confirm & send'}
-            </Text>
-          </Pressable>
-        </View>
+        )
       ) : null}
 
       {cancelled || failed ? (
@@ -503,7 +524,7 @@ function SentHero({
             haptics.selection();
             onViewDetails();
           }}
-          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full bg-muted'
+          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5 bg-muted'
           style={({ pressed }) => [
             {
               opacity: pressed ? 0.8 : 1,
@@ -515,7 +536,7 @@ function SentHero({
             size={16}
             color={colors.foreground}
           />
-          <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
             View transaction
           </Text>
         </Pressable>
@@ -528,10 +549,9 @@ function SentHero({
             haptics.selection();
             onSaveContact();
           }}
-          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full'
+          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5 bg-muted'
           style={({ pressed }) => [
             {
-              backgroundColor: colors.muted,
               opacity: pressed && !contactSaved ? 0.8 : 1,
             },
           ]}
@@ -541,7 +561,7 @@ function SentHero({
             size={16}
             color={colors.foreground}
           />
-          <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
             {contactSaving ? 'Saving…' : contactSaved ? 'Saved to contacts' : 'Save contact'}
           </Text>
         </Pressable>

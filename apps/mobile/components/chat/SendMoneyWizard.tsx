@@ -71,11 +71,16 @@ function destinationSummary(
 ): { label: string; value: string } {
   const label = SETTLEMENT_METHOD_LABELS[method];
   if (method === 'MOMO') {
-    return { label: `${fields.network ?? 'MoMo'} MoMo`, value: fields.phone ?? '—' };
+    // Network name (e.g. "MTN"); avoid "MoMo MoMo" when the network is unknown.
+    return {
+      label: fields.network ? `${fields.network} MoMo` : 'Mobile money',
+      value: fields.phone ?? '—',
+    };
   }
   if (method === 'CRYPTO') {
+    const label = fields.network ?? fields.blockchain ?? 'Crypto wallet';
     return {
-      label: `${fields.blockchain ?? 'Crypto'}`,
+      label,
       value: fields.cryptoAddress ?? '—',
     };
   }

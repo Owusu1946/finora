@@ -27,7 +27,7 @@ export const Colors: { light: Palette; dark: Palette } = {
     foreground: '#18181b',
     card: '#ffffff',
     cardForeground: '#18181b',
-    muted: '#f4f4f5',
+    muted: '#ebebef',
     mutedForeground: '#71717a',
     accent: '#f4f4f5',
     border: '#e4e4e7',
