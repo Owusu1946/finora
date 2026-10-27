@@ -62,9 +62,23 @@ function normalInvCdf(p: number): number {
   );
 }
 
-// Segment widths are equal (uniform over [0.5, 0.5 + mass]); midpoints in
-// sigma units land where the gaussian CDF crosses each segment's middle.
-const SEGMENT_MASS = (normalInvCdf(0.5 + GAUSSIAN_REACH) - 0.5) / TAP_PAIRS;
+// Standard normal CDF via Abramowitz & Stegun 7.1.26 (erf approx, |err| < 1.5e-7).
+function normalCdf(z: number): number {
+  const sign = z < 0 ? -1 : 1;
+  const x = Math.abs(z) / Math.SQRT2;
+  const t = 1 / (1 + 0.3275911 * x);
+  const erf =
+    1 -
+    ((((1.061399848 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) *
+      t *
+      Math.exp(-x * x);
+  return 0.5 * (1 + sign * erf);
+}
+
+// Segment widths are equal (uniform over [0.5, Φ(2.5)] in probability space);
+// midpoints in sigma units land where the gaussian CDF crosses each segment's
+// middle. Φ(2.5) ≈ 0.9938, so every midpoint argument stays inside (0, 1).
+const SEGMENT_MASS = (normalCdf(GAUSSIAN_REACH) - 0.5) / TAP_PAIRS;
 const TAPS = Array.from({ length: TAP_PAIRS }, (_, i) =>
   normalInvCdf(0.5 + SEGMENT_MASS * (i + 0.5)),
 );
