@@ -2,10 +2,12 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
+import { ProgressiveBlur } from '@/components/ui/progressive-blur';
+import { useTheme } from '@/hooks/use-theme';
 
 type Row<Item> =
   | { kind: 'intro' }
@@ -15,8 +17,17 @@ type Row<Item> =
 
 const bodyTitleTopGap = 16;
 
-function HeaderBackground() {
-  return <View className='absolute inset-0 bg-background' />;
+/** Edge-blurred header backdrop: content scrolling under fades into the blur. */
+function HeaderBackground({ height, tint }: { height: number; tint: string }) {
+  return (
+    <ProgressiveBlur
+      side='top'
+      height={height}
+      tint={tint}
+      tintStrength={0.36}
+      style={StyleSheet.absoluteFill}
+    />
+  );
 }
 
 export function CollapsibleList<Item>({
@@ -44,6 +55,7 @@ export function CollapsibleList<Item>({
 }) {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const navigation = useNavigation();
   const [collapsed, setCollapsed] = useState(false);
   const collapsedRef = useRef(false);
@@ -61,9 +73,14 @@ export function CollapsibleList<Item>({
       headerTransparent: true,
       headerStyle: { backgroundColor: 'transparent' },
       headerTitle: () => (collapsed ? <HeaderTitleWithAccount title={title} /> : <AccountBadge />),
-      headerBackground: () => <HeaderBackground />,
+      headerBackground: () => (
+        <HeaderBackground
+          height={headerHeight}
+          tint={colors.background}
+        />
+      ),
     });
-  }, [collapsed, navigation, title]);
+  }, [collapsed, navigation, title, colors.background, headerHeight]);
 
   const rows = useMemo<Row<Item>[]>(
     () => [

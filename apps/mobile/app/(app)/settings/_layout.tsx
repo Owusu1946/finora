@@ -1,10 +1,12 @@
 import { useAui } from '@assistant-ui/react-native';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { DrawerActions } from '@react-navigation/native';
 import { Stack, useNavigation, useRouter } from 'expo-router';
-import { Pressable } from 'react-native';
+import { StyleSheet, Pressable } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { Icon } from '@/components/ui/icon';
+import { ProgressiveBlur } from '@/components/ui/progressive-blur';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
@@ -81,6 +83,21 @@ function NewChatHeaderButton() {
   );
 }
 
+/** Progressive blur behind the whole settings stack; content scrolls under. */
+function SettingsHeaderBackground() {
+  const { colors } = useTheme();
+  const headerHeight = useHeaderHeight();
+  return (
+    <ProgressiveBlur
+      side='top'
+      height={headerHeight || 96}
+      tint={colors.background}
+      tintStrength={0.36}
+      style={StyleSheet.absoluteFill}
+    />
+  );
+}
+
 export default function SettingsLayout() {
   const { colors } = useTheme();
   const { t } = useSettings();
@@ -93,7 +110,9 @@ export default function SettingsLayout() {
         headerShadowVisible: false,
         headerBackVisible: false,
         headerTintColor: colors.foreground,
-        headerStyle: { backgroundColor: colors.background },
+        headerTransparent: true,
+        headerStyle: { backgroundColor: 'transparent' },
+        headerBackground: () => <SettingsHeaderBackground />,
         headerTitleAlign: 'center',
         contentStyle: { backgroundColor: colors.background },
         headerBackTitle: t('nav_settings'),

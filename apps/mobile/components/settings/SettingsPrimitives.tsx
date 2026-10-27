@@ -1,3 +1,4 @@
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, Switch, View, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -22,10 +23,15 @@ export function SettingsScreen({
   contentStyle?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useTheme();
+  // Transparent header: content must start below it, then scroll under it.
+  const headerHeight = useHeaderHeight();
 
   if (loading) {
     return (
-      <View className='flex-1 items-center justify-center bg-background'>
+      <View
+        className='flex-1 items-center justify-center bg-background'
+        style={{ paddingTop: headerHeight }}
+      >
         <LoadingIcon color={colors.mutedForeground} />
       </View>
     );
@@ -39,8 +45,8 @@ export function SettingsScreen({
         keyboardShouldPersistTaps='handled'
       >
         <View
-          className='gap-[22px] px-5 pb-12 pt-3'
-          style={contentStyle}
+          className='gap-[22px] px-5 pb-12'
+          style={[contentStyle, { paddingTop: headerHeight + 12 }]}
         >
           {children}
         </View>

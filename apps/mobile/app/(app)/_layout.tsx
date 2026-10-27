@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useDrawerStatus } from '@react-navigation/drawer';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { DrawerActions } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
 import { useEffect, useRef } from 'react';
@@ -11,36 +11,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
 import { Icon } from '@/components/ui/icon';
+import { ProgressiveBlur } from '@/components/ui/progressive-blur';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import { useSettings } from '@/lib/settings-context';
 import { usePressGuard } from '@/lib/use-press-guard';
 
-function hexToRgba(hex: string, alpha: number) {
-  const clean = hex.replace('#', '');
-  if (clean.length === 6) {
-    const r = parseInt(clean.slice(0, 2), 16);
-    const g = parseInt(clean.slice(2, 4), 16);
-    const b = parseInt(clean.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-  return hex;
-}
-
-function HeaderGradientBackground() {
+/** Progressive blur for the main drawer headers; content scrolls under. */
+function HeaderBlurBackground() {
   const { colors } = useTheme();
+  const headerHeight = useHeaderHeight();
   return (
-    <LinearGradient
-      pointerEvents='none'
-      colors={[
-        hexToRgba(colors.background, 1),
-        hexToRgba(colors.background, 0.96),
-        hexToRgba(colors.background, 0.75),
-        hexToRgba(colors.background, 0.3),
-        hexToRgba(colors.background, 0),
-      ]}
-      locations={[0, 0.45, 0.72, 0.88, 1]}
-      style={[StyleSheet.absoluteFill, { bottom: -28 }]}
+    <ProgressiveBlur
+      side='top'
+      height={headerHeight || 96}
+      tint={colors.background}
+      tintStrength={0.36}
+      style={StyleSheet.absoluteFill}
     />
   );
 }
@@ -221,7 +208,7 @@ export default function AppLayout() {
       screenOptions={{
         headerLeft: () => <DrawerTrigger />,
         headerRight: () => <ChatHeaderRight />,
-        headerBackground: () => <HeaderGradientBackground />,
+        headerBackground: () => <HeaderBlurBackground />,
         headerLeftContainerStyle: { paddingLeft: 16, paddingBottom: 8 },
         headerRightContainerStyle: { gap: 10, paddingRight: 16, paddingBottom: 8 },
         headerTitleContainerStyle: { paddingBottom: 8 },
