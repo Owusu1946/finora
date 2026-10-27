@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Share, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Share, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
@@ -44,6 +44,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
   const [activeId, setActiveId] = useState(initialMethodId ?? methods[0]?.id ?? '');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [smsError, setSmsError] = useState<string | null>(null);
 
   const active = useMemo(
     () => methods.find((m) => m.id === activeId) ?? methods[0],
@@ -74,10 +75,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
   const textDetails = async () => {
     haptics.selection();
+    setSmsError(null);
     const result = await sendSms({ message: formatDetails(active) });
     if (!result.ok) {
       haptics.impact();
-      Alert.alert('SMS unavailable', result.error);
+      setSmsError(result.error);
       return;
     }
     if (result.result === 'sent') haptics.success();
@@ -107,15 +109,15 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
   return (
     <View
-      className='my-2 w-full gap-4 overflow-hidden border border-border bg-card p-4'
+      className='my-2 w-full gap-3.5 overflow-hidden border border-border bg-composer p-4'
       style={[styles.card]}
     >
       <View className='flex-row items-center gap-3'>
-        <View className='h-10 w-10 items-center justify-center rounded-full bg-foreground'>
+        <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
           <Icon
             name='arrow-down-left'
             size={16}
-            color={colors.background}
+            color={colors.foreground}
           />
         </View>
         <View className='flex-1 gap-0.5'>
@@ -184,7 +186,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           haptics.selection();
           setQrOpen(true);
         }}
-        className='self-center rounded-[22px] bg-muted p-3'
+        className='self-center bg-muted p-3'
         style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
       >
         <MockQrCode
@@ -198,14 +200,17 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         Tap to enlarge · {active.currency} receiving code
       </Text>
 
-      <View className='gap-2 rounded-[22px] bg-muted p-2'>
+      <View
+        className='gap-2.5 bg-muted p-2.5'
+        style={[styles.fieldsPanel]}
+      >
         {active.fields.map((field) => {
           const key = `${active.id}:${field.label}`;
           const copied = copiedKey === key;
           return (
             <View
               key={key}
-              className='flex-row items-center gap-2.5 rounded-[18px] border border-border bg-background px-3 py-2.5'
+              className='flex-row items-center gap-2.5 border border-border bg-background px-3 py-3'
               style={[styles.field]}
             >
               <View className='flex-1 gap-0.5'>
@@ -249,7 +254,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
       <View className='gap-2'>
         <Pressable
           onPress={() => void textDetails()}
-          className='min-h-[46px] flex-row items-center justify-center gap-2 rounded-full'
+          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
             styles.primaryBtn,
             {
@@ -264,7 +269,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             color={colors.primaryForeground}
           />
           <Text
-            className='font-sans-semibold text-[16px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
             style={{ color: colors.primaryForeground }}
           >
             Text SMS
@@ -274,11 +279,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         <View className='flex-row gap-2'>
           <Pressable
             onPress={shareDetails}
-            className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
               styles.secondaryBtn,
               {
-                borderColor: colors.border,
+                backgroundColor: colors.muted,
                 opacity: pressed ? 0.75 : 1,
               },
             ]}
@@ -294,11 +299,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           </Pressable>
           <Pressable
             onPress={shareQr}
-            className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
               styles.secondaryBtn,
               {
-                borderColor: colors.border,
+                backgroundColor: colors.muted,
                 opacity: pressed ? 0.75 : 1,
               },
             ]}
@@ -314,11 +319,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
           </Pressable>
           <Pressable
             onPress={copyAll}
-            className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
               styles.secondaryBtn,
               {
-                borderColor: colors.border,
+                backgroundColor: colors.muted,
                 opacity: pressed ? 0.75 : 1,
               },
             ]}
@@ -333,6 +338,21 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             </Text>
           </Pressable>
         </View>
+        {smsError ? (
+          <View
+            className='flex-row items-center gap-2 self-start px-3 py-2.5 bg-destructive-surface'
+            style={[styles.statusPill]}
+          >
+            <Icon
+              name='remove'
+              size={14}
+              color={colors.destructive}
+            />
+            <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-destructive'>
+              Can’t text from here · {smsError}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <Modal
@@ -348,7 +368,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
         >
           <Pressable
             onPress={(e) => e.stopPropagation()}
-            className='w-[100%] max-w-[360px] border p-5 gap-3 items-center bg-background border-border'
+            className='w-[100%] max-w-[360px] border p-5 gap-3.5 items-center bg-background border-border'
             style={[styles.modalCard]}
           >
             <Text className='font-sans-semibold text-[18px] tracking-[-0.3px] text-center text-foreground'>
@@ -398,11 +418,11 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                   haptics.selection();
                   setQrOpen(false);
                 }}
-                className='flex-1 min-h-11 border flex-row items-center justify-center gap-1.5'
+                className='min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
                 style={({ pressed }) => [
                   styles.secondaryBtn,
                   {
-                    borderColor: colors.border,
+                    backgroundColor: colors.muted,
                     opacity: pressed ? 0.75 : 1,
                     flex: 0,
                     paddingHorizontal: 16,
@@ -431,14 +451,20 @@ const styles = {
   qrWrap: {
     borderRadius: Radius.lg,
   },
+  fieldsPanel: {
+    borderRadius: Radius.lg,
+  },
   field: {
     borderRadius: Radius.composer,
   },
   primaryBtn: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.pill,
   },
   secondaryBtn: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.pill,
+  },
+  statusPill: {
+    borderRadius: Radius.pill,
   },
   modalCard: {
     borderRadius: Radius.card,

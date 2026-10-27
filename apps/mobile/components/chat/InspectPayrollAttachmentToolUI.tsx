@@ -24,7 +24,9 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
           style={[styles.card]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='text-muted-foreground'>Reading payroll attachment...</Text>
+          <Text className='font-sans-medium text-muted-foreground'>
+            Reading payroll attachment…
+          </Text>
         </View>
       );
     }
@@ -34,10 +36,10 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
           className='w-[100%] border p-4 gap-2.5 my-1.5 bg-composer border-border'
           style={[styles.card]}
         >
-          <Text className='text-[16px] font-bold text-foreground'>
+          <Text className='text-[16px] font-sans-semibold text-foreground'>
             Payroll file could not be read
           </Text>
-          <Text className='text-muted-foreground'>
+          <Text className='font-sans text-muted-foreground'>
             {result.errorCode ?? 'Please check the file and try again.'}
           </Text>
         </View>
@@ -49,14 +51,14 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
         className='w-[100%] border p-4 gap-2.5 my-1.5 bg-composer border-border'
         style={[styles.card]}
       >
-        <Text className='text-[12px] font-semibold text-muted-foreground'>
+        <Text className='text-[12px] font-sans-semibold text-muted-foreground'>
           {blocked ? 'Needs review' : 'Payroll extracted'}
         </Text>
-        <Text className='text-[16px] font-bold text-foreground'>{result.sourceName}</Text>
+        <Text className='text-[16px] font-sans-semibold text-foreground'>{result.sourceName}</Text>
         <View className='flex-row items-center justify-between'>
-          <Text className='text-foreground'>{result.rows?.length ?? 0} employees</Text>
+          <Text className='font-sans text-foreground'>{result.rows?.length ?? 0} employees</Text>
           {result.totals ? (
-            <Text className='font-bold text-foreground'>
+            <Text className='font-sans-semibold tabular-nums text-foreground'>
               {formatPaymentAmount(result.totals.total, result.totals.currency)}
             </Text>
           ) : null}
@@ -67,24 +69,26 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
             className='flex-row items-center gap-3'
           >
             <View className='flex-1 min-w-0'>
-              <Text className='text-foreground'>{row.employeeName ?? 'Unnamed employee'}</Text>
-              <Text className='text-[12px] text-muted-foreground'>
+              <Text className='font-sans-medium text-foreground'>
+                {row.employeeName ?? 'Unnamed employee'}
+              </Text>
+              <Text className='text-[12px] font-sans text-muted-foreground'>
                 {row.citations[0]?.location ?? 'Imported row'}
               </Text>
             </View>
-            <Text className='text-foreground'>
+            <Text className='font-sans-medium tabular-nums text-foreground'>
               {row.amount == null
-                ? 'Amount needed'
+                ? 'Missing amount'
                 : formatPaymentAmount(row.amount, row.currency ?? 'USD')}
             </Text>
           </View>
         ))}
         {blocked ? (
-          <Text className='text-[13px] leading-[18px] text-destructive'>
+          <Text className='text-[13px] leading-[18px] font-sans text-destructive'>
             {result.blockingIssues?.[0]?.message} Fix the flagged rows before approval.
           </Text>
         ) : (
-          <Text className='text-muted-foreground'>
+          <Text className='font-sans text-muted-foreground'>
             Validated and ready for payroll preparation. Approval is still required.
           </Text>
         )}

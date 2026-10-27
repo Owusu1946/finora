@@ -223,7 +223,7 @@ function ResolveSendFlow({
                 : `${candidates.length} contacts — pick one to continue.`
           }
         />
-        <View className='gap-2'>
+        <View className='gap-2.5'>
           {candidates.map((c, index) => (
             <Pressable
               key={c.id}
@@ -233,6 +233,7 @@ function ResolveSendFlow({
               }}
               className='flex-row items-center gap-3 p-3 border'
               style={({ pressed }) => [
+                styles.contactRow,
                 {
                   borderColor: colors.border,
                   backgroundColor: colors.background,
@@ -248,11 +249,11 @@ function ResolveSendFlow({
               </View>
               <View style={{ flex: 1 }}>
                 <Text className='font-sans-semibold text-[16px] text-foreground'>{c.name}</Text>
-                <Text className='text-[13px] text-muted-foreground'>
+                <Text className='text-[13px] font-sans text-muted-foreground'>
                   {c.method} · {c.identifier}
                 </Text>
               </View>
-              <Text className='text-[13px] text-muted-foreground'>{c.currency}</Text>
+              <Text className='text-[13px] font-sans text-muted-foreground'>{c.currency}</Text>
             </Pressable>
           ))}
         </View>
@@ -262,7 +263,7 @@ function ResolveSendFlow({
             onCancelled();
           }}
         >
-          <Text className='text-center font-semibold text-muted-foreground'>Cancel</Text>
+          <Text className='text-center font-sans-semibold text-muted-foreground'>Cancel</Text>
         </Pressable>
       </View>
     );
@@ -282,7 +283,7 @@ function ResolveSendFlow({
           }}
           className='ml-2 mb-0.5'
         >
-          <Text className='font-semibold text-muted-foreground'>← Change contact</Text>
+          <Text className='font-sans-medium text-muted-foreground'>← Change contact</Text>
         </Pressable>
       ) : null}
       <SendMoneyWizard

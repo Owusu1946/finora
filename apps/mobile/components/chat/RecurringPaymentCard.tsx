@@ -85,7 +85,7 @@ export function RecurringPaymentCard({
                   ? 'Recurring payment active'
                   : 'Schedule recurring payment'}
             </Text>
-            <Text className='font-sans-semibold text-[25px] tracking-[-0.5px] text-foreground'>
+            <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
               {formatPaymentAmount(draft.amount, draft.currency)}
             </Text>
           </View>
@@ -136,12 +136,14 @@ export function RecurringPaymentCard({
                 setCancelled(true);
                 onCancelled?.();
               }}
-              className='flex-1 min-h-[46px] items-center justify-center border'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
-                { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
+                { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[16px] text-foreground'>Cancel</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Cancel
+              </Text>
             </Pressable>
             <Pressable
               disabled={busy}
@@ -173,14 +175,14 @@ export function RecurringPaymentCard({
                   `Scheduled ${formatPaymentAmount(draft.amount, draft.currency)} to ${draft.recipientName} ${FREQ_LABEL[draft.frequency].toLowerCase()}. Next run ${new Date(nextRun).toLocaleDateString()}. Manage it under Recurring in the drawer.`,
                 );
               }}
-              className='flex-1 min-h-[46px] items-center justify-center'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
               ]}
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
               >
                 {busy ? <LoadingIcon color={colors.background} /> : 'Confirm schedule'}
               </Text>
@@ -205,7 +207,9 @@ function Row({
   return (
     <View className='gap-0.5'>
       <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
-      <Text className='font-sans-medium text-[16px] text-foreground'>{value}</Text>
+      <Text className='font-sans-medium text-[16px] tracking-[-0.2px] text-foreground'>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -213,8 +217,5 @@ function Row({
 const styles = {
   card: {
     borderRadius: Radius.card,
-  },
-  btn: {
-    borderRadius: Radius.composer,
   },
 };

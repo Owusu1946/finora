@@ -82,7 +82,7 @@ function PayrollConfirmCard({
                   {employee.role} · {employee.destination.label}
                 </Text>
               </View>
-              <Text className='font-sans-semibold text-[14px] text-foreground'>
+              <Text className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'>
                 {formatPaymentAmount(employee.salary, employee.currency)}
               </Text>
             </View>
@@ -100,7 +100,7 @@ function PayrollConfirmCard({
               setPhase('approved');
               haptics.success();
             }}
-            className='min-h-11 items-center justify-center'
+            className='min-h-11 rounded-full items-center justify-center'
             style={({ pressed }) => [
               {
                 backgroundColor: colors.primary,
@@ -110,7 +110,7 @@ function PayrollConfirmCard({
           >
             <Text
               style={{ color: colors.primaryForeground }}
-              className='font-sans-semibold text-[15px]'
+              className='font-sans-semibold text-[16px] tracking-[-0.2px]'
             >
               Approve payroll
             </Text>
@@ -179,8 +179,5 @@ const styles = {
   },
   card: {
     borderRadius: Radius.card,
-  },
-  btn: {
-    borderRadius: Radius.composer,
   },
 };

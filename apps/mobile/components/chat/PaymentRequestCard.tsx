@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, Share, View } from 'react-native';
+import { Modal, Pressable, Share, View } from 'react-native';
 
 import { MockQrCode } from '@/components/chat/MockQrCode';
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
@@ -237,7 +237,7 @@ export function PaymentRequestWizard({
           className='border p-4 gap-1.5 items-center border-border'
           style={[styles.review]}
         >
-          <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
+          <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
             {formatPaymentAmount(amount, currency)}
           </Text>
           {memo.trim() ? (
@@ -245,7 +245,9 @@ export function PaymentRequestWizard({
               “{memo.trim()}”
             </Text>
           ) : (
-            <Text className='font-sans-medium text-[15px] text-muted-foreground'>No note</Text>
+            <Text className='font-sans-medium text-[15px] text-muted-foreground'>
+              No note added
+            </Text>
           )}
           {seed.payerHint ? (
             <Text className='font-sans-medium text-[14px] text-muted-foreground'>
@@ -258,17 +260,17 @@ export function PaymentRequestWizard({
       <View className='flex-row gap-2'>
         <Pressable
           onPress={goBack}
-          className='flex-1 min-h-[46px] border items-center justify-center'
-          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          className='flex-1 min-h-[46px] rounded-full bg-muted items-center justify-center'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text className='font-sans-semibold text-[16px] text-foreground'>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
             {stepIndex === 1 ? 'Cancel' : 'Back'}
           </Text>
         </Pressable>
         <Pressable
           disabled={!canContinue}
           onPress={goNext}
-          className='flex-[1.4] min-h-[46px] items-center justify-center'
+          className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -278,7 +280,7 @@ export function PaymentRequestWizard({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='font-sans-semibold text-[16px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
           >
             {step === 'review' ? 'Create link' : 'Continue'}
           </Text>
@@ -292,6 +294,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
   const { colors, isDark } = useTheme();
   const [copied, setCopied] = useState<'link' | 'all' | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [smsError, setSmsError] = useState<string | null>(null);
 
   const expiresLabel = useMemo(() => {
     if (!request.expiresAt) return null;
@@ -340,10 +343,11 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
 
   const textSms = async () => {
     haptics.selection();
+    setSmsError(null);
     const result = await sendSms({ message: shareMessage });
     if (!result.ok) {
       haptics.impact();
-      Alert.alert('SMS unavailable', result.error);
+      setSmsError(result.error);
       return;
     }
     if (result.result === 'sent') haptics.success();
@@ -429,7 +433,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
       <View className='gap-2'>
         <Pressable
           onPress={() => void textSms()}
-          className='min-h-[46px] flex-row items-center justify-center gap-2'
+          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2'
           style={({ pressed }) => [
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
           ]}
@@ -437,11 +441,11 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           <Icon
             name='phone'
             size={16}
-            color={colors.background}
+            color={colors.primaryForeground}
           />
           <Text
             style={{ color: colors.primaryForeground }}
-            className='font-sans-semibold text-[16px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
           >
             Text SMS
           </Text>
@@ -449,9 +453,9 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         <View className='flex-row gap-2'>
           <Pressable
             onPress={share}
-            className='min-h-11 border flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              { borderColor: colors.border, opacity: pressed ? 0.75 : 1, flex: 1 },
+              { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
             ]}
           >
             <Icon
@@ -459,13 +463,15 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
               size={15}
               color={colors.foreground}
             />
-            <Text className='font-sans-semibold text-[15px] text-foreground'>Share</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              Share
+            </Text>
           </Pressable>
           <Pressable
             onPress={() => void copy(shareMessage, 'all')}
-            className='min-h-11 border flex-row items-center justify-center gap-1.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5'
             style={({ pressed }) => [
-              { borderColor: colors.border, opacity: pressed ? 0.75 : 1, flex: 1 },
+              { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
             ]}
           >
             <Icon
@@ -473,11 +479,26 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
               size={15}
               color={colors.foreground}
             />
-            <Text className='font-sans-semibold text-[15px] text-foreground'>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
               {copied === 'all' ? 'Copied' : 'Copy'}
             </Text>
           </Pressable>
         </View>
+        {smsError ? (
+          <View
+            className='flex-row items-center gap-2 self-start px-3 py-2.5 bg-destructive-surface'
+            style={[styles.statusPill]}
+          >
+            <Icon
+              name='remove'
+              size={14}
+              color={colors.destructive}
+            />
+            <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-destructive'>
+              Can’t text from here · {smsError}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <Modal
@@ -512,23 +533,22 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
             </View>
             <Pressable
               onPress={share}
-              className='min-h-[46px] flex-row items-center justify-center gap-2'
+              className='min-h-[46px] w-[100%] rounded-full flex-row items-center justify-center gap-2'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
                   opacity: pressed ? 0.85 : 1,
-                  width: '100%',
                 },
               ]}
             >
               <Icon
                 name='share'
                 size={16}
-                color={colors.background}
+                color={colors.primaryForeground}
               />
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
               >
                 Share link
               </Text>
@@ -550,23 +570,14 @@ const styles = {
   review: {
     borderRadius: Radius.composer,
   },
-  navBtn: {
-    borderRadius: Radius.composer,
-  },
-  navBtnPrimary: {
-    borderRadius: Radius.composer,
-  },
   qrWrap: {
     borderRadius: Radius.lg,
   },
   linkRow: {
     borderRadius: Radius.composer,
   },
-  primaryBtn: {
-    borderRadius: Radius.composer,
-  },
-  secondaryBtnFull: {
-    borderRadius: Radius.composer,
+  statusPill: {
+    borderRadius: Radius.pill,
   },
   modalCard: {
     borderRadius: Radius.card,

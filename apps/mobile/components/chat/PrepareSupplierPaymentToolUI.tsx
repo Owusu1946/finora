@@ -151,7 +151,7 @@ function SupplierPaymentCard({
               if (!ok) return;
               setPhase('sending');
             }}
-            className='min-h-11 items-center justify-center'
+            className='min-h-11 rounded-full items-center justify-center'
             style={({ pressed }) => [
               {
                 backgroundColor: colors.primary,
@@ -161,7 +161,7 @@ function SupplierPaymentCard({
           >
             <Text
               style={{ color: colors.primaryForeground }}
-              className='font-sans-semibold text-[15px]'
+              className='font-sans-semibold text-[16px] tracking-[-0.2px]'
             >
               Approve payment
             </Text>
@@ -232,8 +232,5 @@ const styles = {
   },
   card: {
     borderRadius: Radius.card,
-  },
-  btn: {
-    borderRadius: Radius.composer,
   },
 };

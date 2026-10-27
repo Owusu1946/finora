@@ -33,7 +33,7 @@ function mockTransactionId() {
 }
 
 function formatDue(iso: string | null | undefined) {
-  if (!iso) return 'Not specified';
+  if (!iso) return 'No due date';
   return new Date(iso).toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -172,7 +172,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                       ? 'Scheduled'
                       : 'Supplier invoice'}
             </Text>
-            <Text className='font-sans-semibold text-[25px] tracking-[-0.5px] text-foreground'>
+            <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
               {formatPaymentAmount(invoice.amount, invoice.currency)}
             </Text>
           </View>
@@ -213,7 +213,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
           ) : (
             <Row
               label='Payment details'
-              value='Not available from this invoice email'
+              value='Not on this email — add them in Invoices'
               colors={colors}
             />
           )}
@@ -244,7 +244,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                   className='flex-row items-center gap-2.5'
                 >
                   <View
-                    className='w-[22px] h-[22px] rounded-[11px] border items-center justify-center'
+                    className='w-[18px] h-[18px] rounded-full border-[1.5px] items-center justify-center'
                     style={[
                       {
                         borderColor: done || active ? colors.foreground : colors.border,
@@ -296,12 +296,14 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 onUpdated?.({ ...invoice, status: 'dismissed' });
                 setBusy(false);
               }}
-              className='flex-1 min-h-[46px] items-center justify-center border'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
-                { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
+                { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[16px] text-foreground'>Dismiss</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Dismiss
+              </Text>
             </Pressable>
             <Pressable
               disabled={busy}
@@ -315,14 +317,14 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 finishedRef.current = false;
                 setPhase('sending');
               }}
-              className='flex-1 min-h-[46px] items-center justify-center'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
               ]}
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
               >
                 {busy ? '…' : 'Pay now'}
               </Text>
@@ -340,15 +342,19 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
               haptics.selection();
               router.push(`/transaction/${txRecordId ?? transactionId}` as Href);
             }}
-            className='min-h-11 border flex-row items-center justify-center gap-2'
-            style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+            className='min-h-11 rounded-full flex-row items-center justify-center gap-2'
+            style={({ pressed }) => [
+              { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
+            ]}
           >
             <Icon
               name='activity'
               size={16}
               color={colors.foreground}
             />
-            <Text className='font-sans-semibold text-[15px] text-foreground'>View transaction</Text>
+            <Text className='font-sans-semibold text-[15px] tracking-[-0.2px] text-foreground'>
+              View transaction
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -370,7 +376,7 @@ function Row({
     <View className='gap-0.5'>
       <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
       <Text
-        className='font-sans-medium text-[16px] tracking-[-0.2px] text-foreground'
+        className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'
 
         numberOfLines={2}
       >
@@ -386,11 +392,5 @@ const styles = {
   },
   sourcePill: {
     borderRadius: Radius.pill,
-  },
-  btn: {
-    borderRadius: Radius.composer,
-  },
-  linkBtn: {
-    borderRadius: Radius.composer,
   },
 } as const;

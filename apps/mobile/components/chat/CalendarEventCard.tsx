@@ -109,7 +109,7 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
   return (
     <>
       <View
-        className='w-[100%] border p-4 gap-3 my-1.5 bg-composer border-border'
+        className='w-[100%] border p-4 gap-3.5 my-1.5 bg-composer border-border'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
@@ -174,7 +174,7 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                   if (!ok) return;
                   setPhase('sending');
                 }}
-                className='flex-1 min-h-11 items-center justify-center'
+                className='flex-1 min-h-[46px] items-center justify-center rounded-full'
                 style={({ pressed }) => [
                   {
                     backgroundColor: colors.primary,
@@ -184,7 +184,7 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
               >
                 <Text
                   style={{ color: colors.primaryForeground }}
-                  className='font-sans-semibold text-[15px]'
+                  className='font-sans-semibold text-[16px] tracking-[-0.2px]'
                 >
                   Pay now
                 </Text>
@@ -200,12 +200,14 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
                 setPhase('dismissed');
                 setBusy(false);
               }}
-              className='flex-1 min-h-11 items-center justify-center border'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
-                { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
+                { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>Dismiss</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Dismiss
+              </Text>
             </Pressable>
           </View>
         ) : null}
@@ -218,8 +220,5 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
 const styles = {
   card: {
     borderRadius: Radius.card,
-  },
-  btn: {
-    borderRadius: Radius.composer,
   },
 };

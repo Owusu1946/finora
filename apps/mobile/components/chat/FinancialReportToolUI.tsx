@@ -47,7 +47,7 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
           style={[styles.box]}
         >
           <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
-            No report available.
+            Couldn’t generate a report for that period yet.
           </Text>
         </View>
       );
@@ -55,7 +55,7 @@ export const FinancialReportToolUI = makeAssistantToolUI<{ period?: string }, Re
 
     return (
       <View
-        className='my-1.5 border p-4 gap-2 border-border bg-composer'
+        className='my-1.5 border p-4 gap-3.5 border-border bg-composer'
         style={[styles.card]}
       >
         <Text className='font-sans-semibold text-[12px] text-muted-foreground'>{report.title}</Text>
@@ -102,7 +102,9 @@ function Metric({
   return (
     <View className='flex-1 gap-0.5'>
       <Text className='font-sans-semibold text-[12px] text-muted-foreground'>{label}</Text>
-      <Text className='font-sans-semibold text-[15px] text-foreground'>{value}</Text>
+      <Text className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'>
+        {value}
+      </Text>
     </View>
   );
 }

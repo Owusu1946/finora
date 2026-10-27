@@ -1,6 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
@@ -44,6 +44,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
   const [phase, setPhase] = useState<'idle' | 'sending' | 'paid' | 'dismissed'>(
     initial.status === 'paid' ? 'paid' : initial.status === 'dismissed' ? 'dismissed' : 'idle',
   );
+  const [smsError, setSmsError] = useState<string | null>(null);
   const finishedRef = useRef(false);
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
   return (
     <>
       <View
-        className='w-[100%] border p-4 gap-3 my-1.5 bg-composer border-border'
+        className='w-[100%] border p-4 gap-3.5 my-1.5 bg-composer border-border'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
@@ -168,7 +169,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                   if (!ok) return;
                   setPhase('sending');
                 }}
-                className='grow min-h-11 items-center justify-center'
+                className='grow min-h-[46px] items-center justify-center rounded-full'
                 style={({ pressed }) => [
                   {
                     backgroundColor: colors.primary,
@@ -178,7 +179,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
               >
                 <Text
                   style={{ color: colors.primaryForeground }}
-                  className='font-sans-semibold text-[15px]'
+                  className='font-sans-semibold text-[16px] tracking-[-0.2px]'
                 >
                   Pay now
                 </Text>
@@ -188,6 +189,7 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
               disabled={busy}
               onPress={async () => {
                 haptics.selection();
+                setSmsError(null);
                 const reply = request.network?.toLowerCase().includes('momo')
                   ? 'PAY'
                   : `Re: ${request.body.slice(0, 80)}`;
@@ -197,17 +199,19 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                 });
                 if (!result.ok) {
                   haptics.impact();
-                  Alert.alert('SMS unavailable', result.error);
+                  setSmsError(result.error);
                 } else if (result.result === 'sent') {
                   haptics.success();
                 }
               }}
-              className='grow min-h-11 items-center justify-center border'
+              className='grow min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
-                { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
+                { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>Reply SMS</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Reply SMS
+              </Text>
             </Pressable>
             <Pressable
               disabled={busy}
@@ -219,13 +223,31 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
                 setPhase('dismissed');
                 setBusy(false);
               }}
-              className='grow min-h-11 items-center justify-center border'
+              className='grow min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
-                { borderColor: colors.border, opacity: pressed || busy ? 0.7 : 1 },
+                { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>Dismiss</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Dismiss
+              </Text>
             </Pressable>
+          </View>
+        ) : null}
+
+        {smsError ? (
+          <View
+            className='flex-row items-center gap-2 self-start px-3 py-2.5 bg-destructive-surface'
+            style={[styles.statusPill]}
+          >
+            <Icon
+              name='remove'
+              size={14}
+              color={colors.destructive}
+            />
+            <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-destructive'>
+              Can’t text from here · {smsError}
+            </Text>
           </View>
         ) : null}
       </View>
@@ -238,8 +260,7 @@ const styles = {
   card: {
     borderRadius: Radius.card,
   },
-  btn: {
-    flexBasis: '30%',
-    borderRadius: Radius.composer,
+  statusPill: {
+    borderRadius: Radius.pill,
   },
 };

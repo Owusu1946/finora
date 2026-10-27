@@ -32,7 +32,7 @@ function EmptyCard() {
     >
       <Text className='font-sans-semibold text-[14px] text-foreground'>Balances unavailable</Text>
       <Text className='font-sans text-[12px] text-muted-foreground'>
-        No wallet balances were returned. Try again in a moment.
+        Couldn’t reach your wallets — try again in a moment.
       </Text>
     </View>
   );

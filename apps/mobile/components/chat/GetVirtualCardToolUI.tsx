@@ -74,11 +74,11 @@ function CardPreview({ card }: { card: VirtualCard }) {
             haptics.selection();
             router.push(`/card/${card.id}` as Href);
           }}
-          className='border px-3.5 py-2'
+          className='px-3.5 py-2'
           style={({ pressed }) => [
+            styles.openButton,
             {
               backgroundColor: colors.muted,
-              borderColor: colors.border,
               opacity: pressed ? 0.7 : 1,
             },
           ]}
