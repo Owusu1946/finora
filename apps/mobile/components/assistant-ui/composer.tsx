@@ -16,8 +16,6 @@ import {
   View,
   AppState,
   Platform,
-  ActionSheetIOS,
-  Alert,
   Keyboard,
   Pressable,
   ScrollView,
@@ -30,6 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -50,6 +49,35 @@ import {
   ComposerAttachmentChip,
 } from './attachment';
 import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
+
+/* ------------------------------------------------------------------ */
+/* Composer notices — in-app pill replacing native error alerts         */
+/* ------------------------------------------------------------------ */
+
+const noticeListeners = new Set<(message: string | null) => void>();
+
+/** Show a transient pill inside the composer (auto-dismisses). */
+function showComposerNotice(message: string) {
+  noticeListeners.forEach((emit) => emit(message));
+}
+
+function useComposerNotice() {
+  const [notice, setNotice] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const emit = (message: string | null) => {
+      setNotice(message);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (message) timerRef.current = setTimeout(() => setNotice(null), 3200);
+    };
+    noticeListeners.add(emit);
+    return () => {
+      noticeListeners.delete(emit);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+  return notice;
+}
 
 const COMPOSER_ATTACHMENT_COMPONENTS = {
   Image: ComposerImageAttachment,
@@ -80,9 +108,8 @@ function AttachButton() {
       });
       haptics.success();
     } catch (error) {
-      Alert.alert(
-        'Could not attach file',
-        error instanceof Error ? error.message : 'Please try again.',
+      showComposerNotice(
+        error instanceof Error ? `Could not attach file · ${error.message}` : 'Could not attach file',
       );
     }
   };
@@ -148,7 +175,14 @@ function AttachButton() {
     }
   };
 
-  const handlePress = () => {
+const ATTACHMENT_ACTIONS = [
+  { key: 'photo', label: 'Photo library', icon: 'image' as const },
+  { key: 'document', label: 'Choose document', icon: 'file' as const },
+] as const;
+
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  const openAttachmentPicker = () => {
     haptics.selection();
     // Settle keyboard layout before the system picker takes over.
     Keyboard.dismiss();
@@ -158,45 +192,74 @@ function AttachButton() {
       return;
     }
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Photo Library', 'Choose Document'],
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) void handleNativePickImage();
-          else if (buttonIndex === 2) void handleNativePickDocument();
-        },
-      );
-      return;
-    }
+    setPickerVisible(true);
+  };
 
-    Alert.alert('Add Attachment', 'Choose attachment type', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Photo', onPress: () => void handleNativePickImage() },
-      { text: 'Document', onPress: () => void handleNativePickDocument() },
-    ]);
+  const pick = (action: (typeof ATTACHMENT_ACTIONS)[number]['key']) => {
+    setPickerVisible(false);
+    haptics.selection();
+    if (action === 'photo') void handleNativePickImage();
+    else void handleNativePickDocument();
   };
 
   return (
-    <Pressable
-      accessibilityLabel='Attach file or photo'
-      hitSlop={8}
-      onPress={handlePress}
-      className='h-[38px] w-[38px] items-center justify-center'
-      style={({ pressed }) => [
-        {
-          backgroundColor: pressed ? colors.muted : 'transparent',
-        },
-      ]}
-    >
-      <Icon
-        name='attach'
-        size={20}
-        color={colors.mutedForeground}
-      />
-    </Pressable>
+    <>
+      <Pressable
+        accessibilityLabel='Attach file or photo'
+        hitSlop={8}
+        onPress={openAttachmentPicker}
+        className='h-[38px] w-[38px] items-center justify-center'
+        style={({ pressed }) => [
+          {
+            backgroundColor: pressed ? colors.muted : 'transparent',
+          },
+        ]}
+      >
+        <Icon
+          name='attach'
+          size={20}
+          color={colors.mutedForeground}
+        />
+      </Pressable>
+
+      <SheetModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        style={{ paddingHorizontal: 20, gap: 3 }}
+      >
+        <Text className='mb-2 mt-1 font-sans-semibold text-lg text-foreground'>Attach</Text>
+        {ATTACHMENT_ACTIONS.map((action) => (
+          <Pressable
+            key={action.key}
+            accessibilityRole='button'
+            onPress={() => pick(action.key)}
+            className='min-h-[52px] flex-row items-center gap-3 bg-muted px-4'
+            style={({ pressed }) => [
+              { borderRadius: Radius.md, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Icon
+              name={action.icon}
+              size={18}
+              color={colors.foreground}
+            />
+            <Text className='font-sans-semibold text-[16px] text-foreground'>
+              {action.label}
+            </Text>
+          </Pressable>
+        ))}
+        <Pressable
+          accessibilityRole='button'
+          onPress={() => setPickerVisible(false)}
+          className='mt-2 min-h-[46px] items-center justify-center rounded-full bg-muted'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
+        >
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-muted-foreground'>
+            Cancel
+          </Text>
+        </Pressable>
+      </SheetModal>
+    </>
   );
 }
 
@@ -351,9 +414,10 @@ function useVoiceComposer() {
     } catch (error) {
       if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
         haptics.error();
-        Alert.alert(
-          'Could not transcribe',
-          error instanceof Error ? error.message : 'Please try recording again.',
+        showComposerNotice(
+          error instanceof Error
+            ? `Could not transcribe · ${error.message}`
+            : 'Could not transcribe · try recording again',
         );
       }
     } finally {
@@ -423,10 +487,7 @@ function useVoiceComposer() {
     try {
       const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          'Microphone access needed',
-          'Allow microphone access in Settings to dictate messages to Finora.',
-        );
+        showComposerNotice('Allow microphone access in Settings to dictate messages');
         return;
       }
       if (voiceSessionRef.current !== sessionId) return;
@@ -476,9 +537,10 @@ function useVoiceComposer() {
         await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
       }
       if (voiceSessionRef.current === sessionId) {
-        Alert.alert(
-          'Could not start recording',
-          error instanceof Error ? error.message : 'Please try again.',
+        showComposerNotice(
+          error instanceof Error
+            ? `Could not start recording · ${error.message}`
+            : 'Could not start recording',
         );
       }
     } finally {
@@ -593,7 +655,6 @@ type ComposerInputHandle = {
   blur: () => void;
   focus: () => void;
 };
-
 const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
   function ComposerInput(props, ref) {
     const { colors, isDark } = useTheme();
@@ -813,6 +874,7 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
 
 export function Composer() {
   const { colors, isDark } = useTheme();
+  const notice = useComposerNotice();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const { voiceState, level, preview, startRecording, cancelVoice, acceptVoice } =
@@ -853,6 +915,19 @@ export function Composer() {
       className='w-full self-center px-3 pt-2'
       style={[styles.container]}
     >
+      {notice ? (
+        <View
+          className='mb-2 self-center rounded-full bg-foreground px-4 py-2.5'
+          style={{ maxWidth: '92%' }}
+        >
+          <Text
+            numberOfLines={2}
+            className='text-center font-sans-medium text-[13px] text-background'
+          >
+            {notice}
+          </Text>
+        </View>
+      ) : null}
       {voiceState !== 'idle' ? (
         <>
           {/* Glow renders first so the transcript and controls draw over it. */}
