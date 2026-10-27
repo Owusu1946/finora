@@ -71,9 +71,11 @@ function destinationSummary(
 ): { label: string; value: string } {
   const label = SETTLEMENT_METHOD_LABELS[method];
   if (method === 'MOMO') {
-    // Network name (e.g. "MTN"); avoid "MoMo MoMo" when the network is unknown.
+    // Network name (e.g. "MTN"); avoid "MoMo MoMo" when the network is already named MoMo or unknown.
+    const net = fields.network?.trim();
+    const finalLabel = !net ? 'Mobile money' : /momo/i.test(net) ? net : `${net} MoMo`;
     return {
-      label: fields.network ? `${fields.network} MoMo` : 'Mobile money',
+      label: finalLabel,
       value: fields.phone ?? '—',
     };
   }
@@ -314,7 +316,7 @@ export function SendMoneyWizard({
 
   if (step === 'confirm' && payment) {
     return (
-      <View className='gap-2'>
+      <View className='gap-2.5'>
         <PaymentConfirmationCard
           payment={payment}
           status='pending'
@@ -323,12 +325,14 @@ export function SendMoneyWizard({
           onCancel={onCancel}
         />
         <Pressable
+          accessibilityRole='button'
+          accessibilityLabel='Edit transfer details'
           onPress={() => {
             haptics.selection();
             onEdit?.();
             setStep(needsFx ? 'fx' : 'purpose');
           }}
-          className='py-1 px-1'
+          className='self-start rounded-full px-3.5 py-1.5 active:opacity-75 bg-muted'
         >
           <Text className='font-sans-medium text-[14px] text-muted-foreground'>← Edit details</Text>
         </Pressable>
@@ -338,7 +342,7 @@ export function SendMoneyWizard({
 
   return (
     <View
-      className='my-2 border p-4 gap-3.5 max-w-[420px] self-stretch bg-composer border-border'
+      className='my-2 border p-5 gap-4 max-w-[420px] self-stretch bg-composer border-border'
       style={[styles.card]}
     >
       {step === 'country' ? (
@@ -442,7 +446,7 @@ export function SendMoneyWizard({
           {step === 'rail' ? (
             <Pressable
               onPress={() => goBackFrom('rail')}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
               style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -452,7 +456,7 @@ export function SendMoneyWizard({
           ) : (
             <Pressable
               onPress={onCancel}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
               style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>

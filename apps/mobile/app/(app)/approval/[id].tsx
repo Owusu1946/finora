@@ -183,15 +183,15 @@ export default function ApprovalDetailScreen() {
       <View className='flex-1 bg-background'>
         <ScrollView
           contentContainerStyle={{
-            gap: 12,
+            gap: 16,
             paddingHorizontal: 20,
-            paddingTop: 12,
+            paddingTop: 16,
             paddingBottom: 40,
           }}
           showsVerticalScrollIndicator={false}
         >
           <View
-            className='gap-1 bg-muted p-3.5'
+            className='gap-1.5 bg-muted p-5'
             style={{ borderRadius: Radius.card, borderCurve: Rounded.borderCurve }}
           >
             <Text className='font-sans-semibold text-[13px] tracking-[-0.1px] text-muted-foreground'>
@@ -231,36 +231,34 @@ export default function ApprovalDetailScreen() {
             <Text className='text-muted-foreground'>Invalid approval payload.</Text>
           )}
 
-          {status === 'sent' ? (
+          {status === 'sent' && !canOpenTx ? (
             <Pressable
-              onPress={openTransaction}
-              className='min-h-[46px] items-center justify-center rounded-full px-4'
-              style={({ pressed }) => ({
-                backgroundColor: colors.foreground,
-                borderRadius: Radius.pill,
-                opacity: pressed ? 0.85 : 1,
-              })}
+              accessibilityRole='button'
+              accessibilityLabel='Back to approvals'
+              onPress={() => {
+                haptics.selection();
+                router.back();
+              }}
+              className='min-h-[46px] items-center justify-center rounded-full px-5 bg-muted active:opacity-75'
             >
-              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
-                View transaction detail
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Back to approvals
               </Text>
             </Pressable>
           ) : null}
 
           {status === 'cancelled' ? (
             <Pressable
+              accessibilityRole='button'
+              accessibilityLabel='Back to approvals'
               onPress={() => {
                 haptics.selection();
                 router.back();
               }}
-              className='min-h-[46px] items-center justify-center rounded-full px-4 bg-muted'
-              style={({ pressed }) => ({
-                borderRadius: Radius.pill,
-                opacity: pressed ? 0.75 : 1,
-              })}
+              className='min-h-[46px] items-center justify-center rounded-full px-5 bg-muted active:opacity-75'
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
-                Back to inbox
+                Back to approvals
               </Text>
             </Pressable>
           ) : null}

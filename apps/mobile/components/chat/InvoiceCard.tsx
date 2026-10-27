@@ -139,7 +139,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
   return (
     <>
       <View
-        className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+        className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
@@ -296,7 +296,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
                 onUpdated?.({ ...invoice, status: 'dismissed' });
                 setBusy(false);
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-50'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
@@ -324,7 +324,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
               >
                 {busy ? '…' : 'Pay now'}
               </Text>

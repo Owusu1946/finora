@@ -82,7 +82,7 @@ export function CreateVirtualCardWizard({
   return (
     <View
       className={
-        step === 'issued' ? 'my-2.5 w-full' : 'my-2 gap-3.5 border border-border bg-composer p-4'
+        step === 'issued' ? 'my-2.5 w-full' : 'my-2 gap-4 border border-border bg-composer p-5'
       }
       style={step === 'issued' ? undefined : styles.shell}
     >
@@ -218,8 +218,10 @@ export function CreateVirtualCardWizard({
           </View>
           {onCancelled ? (
             <Pressable
+              accessibilityRole='button'
+              accessibilityLabel='Cancel'
               onPress={onCancelled}
-              className='items-center py-1'
+              className='items-center justify-center rounded-full px-4 py-2 self-center active:opacity-75'
             >
               <Text className='font-sans-medium text-[14px] text-muted-foreground'>Cancel</Text>
             </Pressable>
@@ -280,7 +282,7 @@ function PrimaryButton({
         haptics.selection();
         onPress();
       }}
-      className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4'
+      className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-50'
       style={[
         styles.primary,
         {
@@ -290,7 +292,7 @@ function PrimaryButton({
       ]}
     >
       <Text
-        className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+        className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
         style={[{ color: disabled ? colors.mutedForeground : colors.primaryForeground }]}
       >
         {label}

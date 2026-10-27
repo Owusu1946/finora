@@ -118,7 +118,7 @@ export function PaymentRequestWizard({
 
   return (
     <View
-      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
       style={[styles.card]}
     >
       <WizardStepHeader
@@ -260,7 +260,7 @@ export function PaymentRequestWizard({
       <View className='flex-row gap-2'>
         <Pressable
           onPress={goBack}
-          className='flex-1 min-h-[46px] rounded-full bg-muted items-center justify-center px-3.5'
+          className='flex-1 min-h-[46px] rounded-full bg-muted items-center justify-center px-4 active:opacity-75'
           style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
           <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -270,7 +270,7 @@ export function PaymentRequestWizard({
         <Pressable
           disabled={!canContinue}
           onPress={goNext}
-          className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center px-3.5'
+          className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center px-4 bg-primary active:opacity-85 disabled:opacity-40'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -280,7 +280,7 @@ export function PaymentRequestWizard({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
           >
             {step === 'review' ? 'Create link' : 'Continue'}
           </Text>
@@ -355,7 +355,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
 
   return (
     <View
-      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
       style={[styles.card]}
     >
       <View className='flex-row items-center gap-3'>
@@ -433,7 +433,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
       <View className='gap-2'>
         <Pressable
           onPress={() => void textSms()}
-          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-4'
+          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-5 bg-primary active:opacity-85'
           style={({ pressed }) => [
             { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
           ]}
@@ -445,7 +445,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           />
           <Text
             style={{ color: colors.primaryForeground }}
-            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
           >
             Text SMS
           </Text>
@@ -453,7 +453,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
         <View className='flex-row gap-2'>
           <Pressable
             onPress={share}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-4'
             style={({ pressed }) => [
               { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
             ]}
@@ -469,7 +469,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
           </Pressable>
           <Pressable
             onPress={() => void copy(shareMessage, 'all')}
-            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-3.5'
+            className='flex-1 min-h-11 rounded-full flex-row items-center justify-center gap-1.5 px-4'
             style={({ pressed }) => [
               { backgroundColor: colors.muted, opacity: pressed ? 0.75 : 1 },
             ]}
@@ -533,7 +533,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
             </View>
             <Pressable
               onPress={share}
-              className='min-h-[46px] w-[100%] rounded-full flex-row items-center justify-center gap-2 px-4'
+              className='min-h-[46px] w-[100%] rounded-full flex-row items-center justify-center gap-2 px-5 bg-primary active:opacity-85'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
@@ -548,7 +548,7 @@ export function PaymentRequestCard({ request }: { request: PaymentRequestResult 
               />
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
               >
                 Share link
               </Text>

@@ -481,7 +481,7 @@ function ImportCard({
                 allRowsSelected ? 'Clear employee selection' : 'Select all employees'
               }
               onPress={onToggleAllRows}
-              className='min-h-6 min-w-[38px] items-end justify-center'
+              className='min-h-6 min-w-[38px] items-center justify-center rounded-full px-2.5 py-0.5 bg-muted active:opacity-75'
             >
               <Text className='font-sans-semibold text-xs text-muted-foreground'>
                 {allRowsSelected ? 'Clear' : 'All'}

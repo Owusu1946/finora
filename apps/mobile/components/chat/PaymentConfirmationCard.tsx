@@ -146,7 +146,7 @@ export function PaymentConfirmationCard({
 
   return (
     <View
-      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
       style={[styles.card]}
     >
       {sent ? (
@@ -342,7 +342,7 @@ export function PaymentConfirmationCard({
                 haptics.selection();
                 onCancel?.();
               }}
-              className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full bg-muted'
+              className='flex-1 min-h-[46px] items-center justify-center px-4 rounded-full bg-muted active:opacity-75 disabled:opacity-50'
               style={({ pressed }) => [
                 {
                   opacity: pressed || loading ? 0.75 : 1,
@@ -360,7 +360,7 @@ export function PaymentConfirmationCard({
                 haptics.impact();
                 onConfirm?.();
               }}
-              className='flex-1 min-h-[46px] items-center justify-center px-3.5 rounded-full'
+              className='flex-1 min-h-[46px] items-center justify-center px-4 rounded-full bg-primary active:opacity-85 disabled:opacity-50'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
@@ -370,7 +370,7 @@ export function PaymentConfirmationCard({
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
               >
                 {loading ? 'Confirming…' : 'Confirm & send'}
               </Text>
@@ -384,7 +384,7 @@ export function PaymentConfirmationCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='min-h-[46px] mt-0.5 items-center justify-center rounded-full bg-muted px-3.5'
+            className='min-h-[46px] mt-0.5 items-center justify-center rounded-full bg-muted px-4 active:opacity-75 disabled:opacity-50'
             style={({ pressed }) => [
               {
                 opacity: pressed || loading ? 0.75 : 1,
@@ -400,7 +400,7 @@ export function PaymentConfirmationCard({
 
       {cancelled || failed ? (
         <View
-          className='flex-row items-center gap-2 self-start px-3 py-2 bg-destructive-surface'
+          className='flex-row items-center gap-2 self-start px-3.5 py-2 bg-destructive-surface'
           style={[styles.statusPill]}
         >
           <Icon
@@ -518,55 +518,57 @@ function SentHero({
         ) : null}
       </View>
 
-      {onViewDetails ? (
-        <Pressable
-          onPress={() => {
-            haptics.selection();
-            onViewDetails();
-          }}
-          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5'
-          style={({ pressed }) => [
-            {
-              backgroundColor: colors.foreground,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Icon
-            name='activity'
-            size={16}
-            color={colors.background}
-          />
-          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
-            View transaction
-          </Text>
-        </Pressable>
-      ) : null}
+      <View className='w-full gap-2.5 mt-2'>
+        {onViewDetails ? (
+          <Pressable
+            onPress={() => {
+              haptics.selection();
+              onViewDetails();
+            }}
+            className='min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5 bg-foreground active:opacity-85'
+            style={({ pressed }) => [
+              {
+                backgroundColor: colors.foreground,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Icon
+              name='activity'
+              size={16}
+              color={colors.background}
+            />
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-background'>
+              View transaction
+            </Text>
+          </Pressable>
+        ) : null}
 
-      {onSaveContact ? (
-        <Pressable
-          disabled={contactSaved || contactSaving}
-          onPress={() => {
-            haptics.selection();
-            onSaveContact();
-          }}
-          className='mt-1 min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5 bg-muted'
-          style={({ pressed }) => [
-            {
-              opacity: pressed && !contactSaved ? 0.8 : 1,
-            },
-          ]}
-        >
-          <Icon
-            name={contactSaved ? 'check' : 'contacts'}
-            size={16}
-            color={colors.foreground}
-          />
-          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
-            {contactSaving ? 'Saving…' : contactSaved ? 'Saved to contacts' : 'Save contact'}
-          </Text>
-        </Pressable>
-      ) : null}
+        {onSaveContact ? (
+          <Pressable
+            disabled={contactSaved || contactSaving}
+            onPress={() => {
+              haptics.selection();
+              onSaveContact();
+            }}
+            className='min-h-11 flex-row items-center justify-center gap-2 rounded-full px-5 bg-muted active:opacity-75'
+            style={({ pressed }) => [
+              {
+                opacity: pressed && !contactSaved ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Icon
+              name={contactSaved ? 'check' : 'contacts'}
+              size={16}
+              color={colors.foreground}
+            />
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              {contactSaving ? 'Saving…' : contactSaved ? 'Saved to contacts' : 'Save contact'}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </Animated.View>
   );
 }
@@ -587,10 +589,11 @@ function DetailRow({
     mutedForeground: string;
   };
 }) {
+  const cleanLabel = label === 'MoMo MoMo' ? 'MoMo' : label;
   return (
     <View className='gap-1'>
       <Text className='font-sans-medium text-[13px] tracking-[-0.1px] text-muted-foreground'>
-        {label}
+        {cleanLabel}
       </Text>
       <View className='flex-row items-center gap-1.5'>
         {icon ? (

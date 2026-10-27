@@ -283,7 +283,7 @@ export function OnboardingScreen() {
               accessibilityRole='button'
               disabled={!canContinue || finishing}
               onPress={handleContinue}
-              className='self-stretch items-center justify-center rounded-full py-4 active:opacity-85'
+              className='self-stretch items-center justify-center rounded-full px-6 py-4 active:opacity-85'
               style={{ backgroundColor: canContinue ? colors.foreground : colors.muted }}
             >
               <Text

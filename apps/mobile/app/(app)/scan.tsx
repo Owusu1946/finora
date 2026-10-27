@@ -271,10 +271,11 @@ export default function ScanScreen() {
             <Text className='font-sans text-[17px] font-bold text-background'>Retry</Text>
           </Pressable>
           <Pressable
+            accessibilityRole='button'
             onPress={openScanner}
-            className='items-center py-2'
+            className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
           >
-            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+            <Text className='font-sans text-[15px] font-medium text-muted-foreground'>Scan QR</Text>
           </Pressable>
         </>
       );
@@ -288,10 +289,11 @@ export default function ScanScreen() {
             subtitle='Checking your verified mobile-money profile.'
           />
           <Pressable
+            accessibilityRole='button'
             onPress={openScanner}
-            className='items-center py-2'
+            className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
           >
-            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+            <Text className='font-sans text-[15px] font-medium text-muted-foreground'>Scan QR</Text>
           </Pressable>
         </>
       );
@@ -346,17 +348,23 @@ export default function ScanScreen() {
           <Text className='font-sans text-[17px] font-bold text-background'>Allow camera</Text>
         </Pressable>
         <Pressable
+          accessibilityRole='button'
           onPress={openPayloadEntry}
-          className='items-center py-2'
+          className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
         >
-          <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Enter payload instead</Text>
+          <Text className='font-sans text-[15px] font-medium text-muted-foreground'>
+            Enter payload instead
+          </Text>
         </Pressable>
         {user?.id ? (
           <Pressable
+            accessibilityRole='button'
             onPress={openMyCode}
-            className='items-center py-2'
+            className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
           >
-            <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Show my code</Text>
+            <Text className='font-sans text-[15px] font-medium text-muted-foreground'>
+              Show my code
+            </Text>
           </Pressable>
         ) : null}
       </>
@@ -565,10 +573,11 @@ function AmountStep({
         <Text className='font-sans text-[17px] font-bold text-background'>Continue to confirm</Text>
       </Pressable>
       <Pressable
+        accessibilityRole='button'
         onPress={onBack}
-        className='items-center py-2'
+        className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
       >
-        <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan again</Text>
+        <Text className='font-sans text-[15px] font-medium text-muted-foreground'>Scan again</Text>
       </Pressable>
     </>
   );
@@ -686,10 +695,11 @@ function MyCodeStep({ method, onBack }: { method: ReceiveMethod; onBack: () => v
         <Text className='font-sans-semibold text-base text-foreground'>Save image</Text>
       </Pressable>
       <Pressable
+        accessibilityRole='button'
         onPress={onBack}
-        className='items-center py-2'
+        className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
       >
-        <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+        <Text className='font-sans text-[15px] font-medium text-muted-foreground'>Scan QR</Text>
       </Pressable>
     </>
   );
@@ -790,13 +800,14 @@ function PasteBlock({
       </Pressable>
       {onScanQr ? (
         <Pressable
+          accessibilityRole='button'
           onPress={() => {
             haptics.selection();
             onScanQr();
           }}
-          className='items-center py-2'
+          className='items-center justify-center rounded-full px-4 py-2.5 active:opacity-75'
         >
-          <Text style={{ color: colors.mutedForeground, fontSize: 15 }}>Scan QR</Text>
+          <Text className='font-sans text-[15px] font-medium text-muted-foreground'>Scan QR</Text>
         </Pressable>
       ) : null}
     </ScrollView>

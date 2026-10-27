@@ -166,7 +166,7 @@ export function FundAccountWizard({
 
   return (
     <View
-      className='my-2 border p-4 gap-3.5 max-w-[420px] self-stretch bg-composer border-border'
+      className='my-2 border p-5 gap-4 max-w-[420px] self-stretch bg-composer border-border'
       style={[styles.card]}
     >
       {step === 'source' ? (
@@ -366,14 +366,14 @@ export function FundAccountWizard({
                 setAmount(null);
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-3.5'
+              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
               ]}
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
               >
                 I’ve sent it
               </Text>
@@ -477,7 +477,7 @@ export function FundAccountWizard({
                 }
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-3.5'
+              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-40'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
@@ -493,7 +493,7 @@ export function FundAccountWizard({
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
               >
                 Send prompt
               </Text>

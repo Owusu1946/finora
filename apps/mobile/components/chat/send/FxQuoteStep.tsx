@@ -64,7 +64,7 @@ export function FxQuoteStep({
       <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
+          className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
           style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
           <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -73,7 +73,7 @@ export function FxQuoteStep({
         </Pressable>
         <Pressable
           onPress={onContinue}
-          className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-3.5'
+          className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-40'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -83,7 +83,7 @@ export function FxQuoteStep({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
           >
             Review payment
           </Text>

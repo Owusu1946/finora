@@ -109,7 +109,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
 
   return (
     <View
-      className='my-2 w-full gap-3.5 overflow-hidden border border-border bg-composer p-4'
+      className='my-2 w-full gap-4 overflow-hidden border border-border bg-composer p-5'
       style={[styles.card]}
     >
       <View className='flex-row items-center gap-3'>
@@ -254,7 +254,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
       <View className='gap-2'>
         <Pressable
           onPress={() => void textDetails()}
-          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-4'
+          className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-5 bg-primary active:opacity-85'
           style={({ pressed }) => [
             styles.primaryBtn,
             {
@@ -269,7 +269,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             color={colors.primaryForeground}
           />
           <Text
-            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
             style={{ color: colors.primaryForeground }}
           >
             Text SMS
@@ -391,7 +391,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             <View className='flex-row gap-2 w-[100%] mt-1'>
               <Pressable
                 onPress={shareQr}
-                className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-4'
+                className='min-h-[46px] rounded-full flex-row items-center justify-center gap-2 px-5 bg-primary active:opacity-85'
                 style={({ pressed }) => [
                   styles.primaryBtn,
                   {
@@ -408,7 +408,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
                 />
                 <Text
                   style={{ color: colors.primaryForeground }}
-                  className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                  className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
                 >
                   Share QR
                 </Text>

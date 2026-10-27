@@ -66,7 +66,7 @@ export function RecurringPaymentCard({
   return (
     <>
       <View
-        className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+        className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
@@ -136,7 +136,7 @@ export function RecurringPaymentCard({
                 setCancelled(true);
                 onCancelled?.();
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
               style={({ pressed }) => [
                 { backgroundColor: colors.muted, opacity: pressed || busy ? 0.7 : 1 },
               ]}
@@ -175,14 +175,14 @@ export function RecurringPaymentCard({
                   `Scheduled ${formatPaymentAmount(draft.amount, draft.currency)} to ${draft.recipientName} ${FREQ_LABEL[draft.frequency].toLowerCase()}. Next run ${new Date(nextRun).toLocaleDateString()}. Manage it under Recurring in the drawer.`,
                 );
               }}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-50'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
               ]}
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
               >
                 {busy ? <LoadingIcon color={colors.background} /> : 'Confirm schedule'}
               </Text>

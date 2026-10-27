@@ -50,7 +50,7 @@ function EmployeePayCard({
   return (
     <>
       <View
-        className='w-[100%] border p-4 gap-3 my-1.5 bg-composer border-border'
+        className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
@@ -90,14 +90,14 @@ function EmployeePayCard({
               setApproved(true);
               haptics.success();
             }}
-            className='min-h-11 rounded-full items-center justify-center'
+            className='min-h-11 rounded-full items-center justify-center px-5 bg-primary active:opacity-85 disabled:opacity-50'
             style={({ pressed }) => [
               { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
             ]}
           >
             <Text
               style={{ color: colors.primaryForeground }}
-              className='text-[16px] font-sans-semibold tracking-[-0.2px]'
+              className='text-[16px] font-sans-semibold tracking-[-0.2px] text-primary-foreground'
             >
               Approve payment
             </Text>
