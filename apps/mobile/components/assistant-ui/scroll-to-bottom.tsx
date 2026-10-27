@@ -83,7 +83,7 @@ export function ScrollToBottomButton({
         style={({ pressed }) => [
           styles.button,
           {
-            backgroundColor: colors.card,
+            backgroundColor: colors.foreground,
             transform: [{ scale: pressed ? 0.92 : 1 }],
           },
         ]}
@@ -91,7 +91,7 @@ export function ScrollToBottomButton({
         <Icon
           name='arrow-down'
           size={22}
-          color={colors.foreground}
+          color={colors.background}
         />
       </Pressable>
     </Animated.View>

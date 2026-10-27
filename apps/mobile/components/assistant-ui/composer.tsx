@@ -210,7 +210,7 @@ function AttachButton() {
         accessibilityLabel='Attach file or photo'
         hitSlop={8}
         onPress={openAttachmentPicker}
-        className='h-[38px] w-[38px] items-center justify-center'
+        className='h-[38px] w-[38px] items-center justify-center rounded-full'
         style={({ pressed }) => [
           {
             backgroundColor: pressed ? colors.muted : 'transparent',
@@ -273,7 +273,7 @@ function ScanButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      className='h-[38px] w-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center rounded-full'
       style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
     >
       <Icon
@@ -585,7 +585,7 @@ function MicButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel='Dictate message'
       hitSlop={8}
       onPress={onPress}
-      className='h-[38px] w-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center rounded-full'
       style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
     >
       <Icon
