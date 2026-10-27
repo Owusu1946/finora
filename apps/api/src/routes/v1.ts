@@ -34,6 +34,7 @@ import {
   upsertUserProfile,
 } from '../db/user-profiles';
 import { createPreparation, mockStore, newId } from '../mock/store';
+import { syncOAuthAvatar } from '../oauth-avatar';
 import { PayrollPreparationError, preparePayrollImport } from '../payroll/prepare-import';
 import { transcriptions } from './transcriptions';
 
@@ -300,7 +301,7 @@ v1.post('/auth/passcode-recovery/verify', async (c) => {
 v1.get('/auth/me', async (c) => {
   const { userId } = c.get('auth');
   const clerk = c.get('clerk');
-  const user = await clerk.users.getUser(userId);
+  const user = await syncOAuthAvatar(clerk, await clerk.users.getUser(userId));
   const primaryEmail =
     user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
     user.emailAddresses[0]?.emailAddress;
@@ -329,7 +330,7 @@ v1.patch('/auth/me', async (c) => {
 
   const { userId } = c.get('auth');
   const clerk = c.get('clerk');
-  const user = await clerk.users.getUser(userId);
+  const user = await syncOAuthAvatar(clerk, await clerk.users.getUser(userId));
   const primaryEmail =
     user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress ??
     user.emailAddresses[0]?.emailAddress;

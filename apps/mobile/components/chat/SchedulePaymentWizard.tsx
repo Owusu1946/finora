@@ -163,7 +163,7 @@ export function SchedulePaymentWizard({
             size={16}
             color={colors.mutedForeground}
           />
-          <Text className='font-semibold text-muted-foreground'>Edit details</Text>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>Edit details</Text>
         </Pressable>
         <RecurringPaymentCard
           draft={draft}
@@ -256,7 +256,7 @@ export function SchedulePaymentWizard({
             value={customAmount}
             onChangeText={setCustomAmount}
             keyboardType='decimal-pad'
-            placeholder='Or type amount'
+            placeholder='Or enter an amount'
             placeholderTextColor={colors.mutedForeground}
             className='font-sans-medium border px-3.5 py-3 text-[16px] text-foreground border-border bg-background'
             style={[styles.input]}
@@ -331,7 +331,7 @@ export function SchedulePaymentWizard({
                 );
                 setTimeout(goNext, 120);
               }}
-              className='flex-row items-center gap-3 p-3 border bg-background'
+              className='flex-row items-center gap-3 p-4 border bg-background'
               style={[
                 styles.railRow,
                 { borderColor: rail === opt.kind ? colors.foreground : colors.border },
@@ -349,8 +349,12 @@ export function SchedulePaymentWizard({
                 color={colors.foreground}
               />
               <View style={{ flex: 1 }}>
-                <Text className='font-sans-semibold text-[16px] text-foreground'>{opt.label}</Text>
-                <Text className='text-[13px] text-muted-foreground'>{opt.hint}</Text>
+                <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                  {opt.label}
+                </Text>
+                <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+                  {opt.hint}
+                </Text>
               </View>
             </Pressable>
           ))}
@@ -369,7 +373,7 @@ export function SchedulePaymentWizard({
         <View className='gap-3'>
           <Text className='font-sans-medium text-[14px] text-muted-foreground'>
             {rail === 'mobile_money'
-              ? 'MoMo number the landlord gets paid on'
+              ? 'Mobile money number to pay to'
               : rail === 'crypto_wallet'
                 ? 'Wallet address (TRC-20 for USDT)'
                 : 'Account number or IBAN'}
@@ -427,7 +431,7 @@ export function SchedulePaymentWizard({
           <TextInput
             value={destValue}
             onChangeText={setDestValue}
-            placeholder='Or paste / type destination'
+            placeholder='Or paste a destination'
             placeholderTextColor={colors.mutedForeground}
             autoCapitalize='none'
             className='font-sans-medium border px-3.5 py-3 text-[16px] text-foreground border-border bg-background'
@@ -496,7 +500,7 @@ export function SchedulePaymentWizard({
             ))}
           </View>
           <View
-            className='flex-row items-start gap-2 p-3 border bg-background border-border'
+            className='flex-row items-start gap-2 p-4 border bg-background border-border'
             style={[styles.preview]}
           >
             <Icon
@@ -525,12 +529,12 @@ export function SchedulePaymentWizard({
 }
 
 function NavRow({
-  colors: _colors,
+  colors,
   onBack,
   onNext,
   nextLabel,
 }: {
-  colors: { foreground: string; background: string; border: string; mutedForeground: string };
+  colors: { primary: string; primaryForeground: string };
   onBack: () => void;
   onNext: () => void;
   nextLabel: string;
@@ -542,20 +546,27 @@ function NavRow({
           haptics.selection();
           onBack();
         }}
-        className='flex-1 min-h-11 items-center justify-center border border-border'
-        style={[styles.navBtn]}
+        className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
+        style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
       >
-        <Text className='font-semibold text-foreground'>Back</Text>
+        <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+          Back
+        </Text>
       </Pressable>
       <Pressable
         onPress={() => {
           haptics.selection();
           onNext();
         }}
-        className='flex-1 min-h-11 items-center justify-center bg-primary'
-        style={[styles.navBtn]}
+        className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85'
+        style={({ pressed }) => [{ backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
       >
-        <Text className='font-semibold text-primary-foreground'>{nextLabel}</Text>
+        <Text
+          style={{ color: colors.primaryForeground }}
+          className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
+        >
+          {nextLabel}
+        </Text>
       </Pressable>
     </View>
   );
@@ -569,12 +580,9 @@ const styles = {
     borderRadius: Radius.composer,
   },
   railRow: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
   preview: {
-    borderRadius: Radius.composer,
-  },
-  navBtn: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
 };

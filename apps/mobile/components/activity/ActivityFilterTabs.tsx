@@ -20,7 +20,7 @@ interface ActivityFilterTabsProps {
 
 export function ActivityFilterTabs({ filter, onSelectFilter }: ActivityFilterTabsProps) {
   return (
-    <View className='flex-row gap-4 border-b border-white/15 pb-1'>
+    <View className='flex-row gap-4 border-b border-border pb-1'>
       {TABS.map((t) => {
         const active = filter === t.key;
         return (

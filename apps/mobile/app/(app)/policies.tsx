@@ -76,7 +76,7 @@ export default function PoliciesScreen() {
               aui.composer.setText('What happens if I send 2000 USD to a new recipient?');
               aui.composer.send();
             }}
-            className='mb-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+            className='mb-1 min-h-[46px] items-center justify-center rounded-full bg-foreground px-4'
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-background'>Simulate in chat</Text>

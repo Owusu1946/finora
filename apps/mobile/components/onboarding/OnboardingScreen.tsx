@@ -1,22 +1,29 @@
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  Easing,
+  Extrapolation,
   FadeIn,
   FadeOut,
+  interpolate,
   runOnJS,
   useAnimatedReaction,
+  useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AccountType } from '@/lib/account';
 
+import { FinoraMarkMotion } from '@/components/ui/finora-mark-motion';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
+import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingGate } from '@/lib/onboarding-gate';
 import { completeOnboarding } from '@/lib/onboarding-storage';
@@ -73,6 +80,8 @@ export function OnboardingScreen() {
     () => progress.value,
     (current, previous) => {
       if (previous == null) return;
+      // Skip lands in one update — beat haptics are only for actual swipes
+      if (Math.abs(current - previous) > 0.25) return;
       const thresholds = [1.45, 1.7, 1.95];
       for (const t of thresholds) {
         if (previous < t && current >= t) {
@@ -82,6 +91,16 @@ export function OnboardingScreen() {
     },
     [],
   );
+
+  // Brand mark draws itself in on mount, owned by Beat 0 only
+  const markReveal = useSharedValue(0);
+  useEffect(() => {
+    markReveal.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
+  }, [markReveal]);
+
+  const markFade = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.45], [1, 0], Extrapolation.CLAMP),
+  }));
 
   const goToStep = useCallback(
     (index: number, withHaptic = true) => {
@@ -143,15 +162,17 @@ export function OnboardingScreen() {
     [accountSelection],
   );
 
+  // Skip lands directly on the account step: no tween, so nothing flashes through
   const handleSkip = useCallback(() => {
-    goToStep(LAST_STEP);
-  }, [goToStep]);
+    commitStep(LAST_STEP);
+    progress.value = LAST_STEP;
+    haptics.selection();
+  }, [commitStep, progress]);
 
   return (
     <View className='flex-1 bg-background'>
       <OnboardingCanvas
         progress={progress}
-        accountSelection={accountSelection}
         colors={colors}
         isDark={isDark}
         heroCenterY={heroCenterY}
@@ -183,13 +204,43 @@ export function OnboardingScreen() {
             )}
           </View>
 
-          {/* Skia hero lives visually here — no text overlaid */}
-          <View
-            className='h-[240px] w-full'
-            pointerEvents='none'
-          />
+          {/* Hero stage: Skia motifs draw behind on beats 1-2 */}
+          {!step.brand ? (
+            <View
+              className='h-[240px] w-full'
+              pointerEvents='none'
+            />
+          ) : null}
 
-          <View className='flex-1 items-center justify-start gap-5 pt-2'>
+          {/* Brand step: mark pinned to the exact middle of the screen */}
+          {step.brand ? (
+            <Animated.View
+              pointerEvents='none'
+              style={[
+                markFade,
+                {
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: height / 2 - 40,
+                  alignItems: 'center',
+                },
+              ]}
+            >
+              <FinoraMarkMotion
+                size={80}
+                progress={markReveal}
+                color={colors.foreground}
+              />
+            </Animated.View>
+          ) : null}
+
+          <View
+            className={cx(
+              'flex-1 items-center gap-5 pt-2',
+              step.brand ? 'justify-end pb-2' : 'justify-start',
+            )}
+          >
             <Animated.View
               key={stepIndex}
               entering={FadeIn.duration(240)}
@@ -232,14 +283,14 @@ export function OnboardingScreen() {
               accessibilityRole='button'
               disabled={!canContinue || finishing}
               onPress={handleContinue}
-              className='self-stretch items-center justify-center rounded-full py-4 active:opacity-85'
+              className='self-stretch items-center justify-center rounded-full px-6 py-4 active:opacity-85'
               style={{ backgroundColor: canContinue ? colors.foreground : colors.muted }}
             >
               <Text
                 style={[{ color: canContinue ? colors.background : colors.mutedForeground }]}
                 className='font-sans-semibold text-[17px] tracking-[-0.2px]'
               >
-                {isLast ? (finishing ? 'Continuing…' : 'Get Started') : 'Continue'}
+                {isLast && finishing ? 'Continuing…' : step.cta}
               </Text>
             </Pressable>
           </View>

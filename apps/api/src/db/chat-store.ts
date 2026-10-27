@@ -19,7 +19,7 @@ export async function ensureChat(db: Database, chatId: string, clerkUserId: stri
   const [existing] = await db
     .select({ clerkUserId: aiChats.clerkUserId })
     .from(aiChats)
-    .where(eq(aiChats.id, chatId))
+    .where(and(eq(aiChats.id, chatId), isNull(aiChats.deletedAt)))
     .limit(1);
   return existing?.clerkUserId === clerkUserId;
 }
@@ -47,6 +47,7 @@ export async function listChats(
     .where(
       and(
         eq(aiChats.clerkUserId, clerkUserId),
+        isNull(aiChats.deletedAt),
         exists(
           db
             .select({ id: aiChatMessages.id })
@@ -71,7 +72,9 @@ export async function getChatMetadata(db: Database, chatId: string, clerkUserId:
       updatedAt: aiChats.updatedAt,
     })
     .from(aiChats)
-    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .where(
+      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.deletedAt)),
+    )
     .limit(1);
   return chat ?? null;
 }
@@ -90,15 +93,20 @@ export async function updateChatMetadata(
         : {}),
       ...(values.archived !== undefined ? { archivedAt: values.archived ? new Date() : null } : {}),
     })
-    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .where(
+      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.deletedAt)),
+    )
     .returning({ id: aiChats.id });
   return chat !== undefined;
 }
 
 export async function deleteChat(db: Database, chatId: string, clerkUserId: string) {
   const deleted = await db
-    .delete(aiChats)
-    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .update(aiChats)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.deletedAt)),
+    )
     .returning({ id: aiChats.id });
   return deleted.length > 0;
 }
@@ -113,7 +121,12 @@ export async function setFallbackChatTitle(
     .update(aiChats)
     .set({ title, titleStatus: 'fallback' })
     .where(
-      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.title)),
+      and(
+        eq(aiChats.id, chatId),
+        eq(aiChats.clerkUserId, clerkUserId),
+        isNull(aiChats.deletedAt),
+        isNull(aiChats.title),
+      ),
     );
 }
 
@@ -130,6 +143,7 @@ export async function setGeneratedChatTitle(
       and(
         eq(aiChats.id, chatId),
         eq(aiChats.clerkUserId, clerkUserId),
+        isNull(aiChats.deletedAt),
         eq(aiChats.titleStatus, 'fallback'),
       ),
     )
@@ -142,7 +156,9 @@ export async function loadChat(db: Database, chatId: string, clerkUserId: string
     .select({ ...getTableColumns(aiChats), payload: aiChatMessages.payload })
     .from(aiChats)
     .leftJoin(aiChatMessages, eq(aiChatMessages.chatId, aiChats.id))
-    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .where(
+      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.deletedAt)),
+    )
     .orderBy(asc(aiChatMessages.position));
   const first = rows[0];
   if (!first) return null;
@@ -174,6 +190,7 @@ export async function claimChatStream(
       and(
         eq(aiChats.id, chatId),
         eq(aiChats.clerkUserId, clerkUserId),
+        isNull(aiChats.deletedAt),
         or(
           isNull(aiChats.activeStreamId),
           isNull(aiChats.activeStreamStartedAt),
@@ -225,7 +242,7 @@ export async function finalizeChatStream(
   await db.$client.transaction((tx) => [
     tx.query(
       `select id from ai_chats
-       where id = $1 and clerk_user_id = $2 and active_stream_id = $3
+       where id = $1 and clerk_user_id = $2 and active_stream_id = $3 and deleted_at is null
        for update`,
       [chatId, clerkUserId, streamId],
     ),
@@ -233,7 +250,7 @@ export async function finalizeChatStream(
       `delete from ai_chat_messages
        where chat_id in (
          select id from ai_chats
-         where id = $1 and clerk_user_id = $2 and active_stream_id = $3
+         where id = $1 and clerk_user_id = $2 and active_stream_id = $3 and deleted_at is null
        )`,
       [chatId, clerkUserId, streamId],
     ),
@@ -247,7 +264,8 @@ export async function finalizeChatStream(
          message.value -> 'payload'
        from ai_chats as chat
        cross join jsonb_array_elements($4::jsonb) as message(value)
-       where chat.id = $1 and chat.clerk_user_id = $2 and chat.active_stream_id = $3`,
+       where chat.id = $1 and chat.clerk_user_id = $2 and chat.active_stream_id = $3
+         and chat.deleted_at is null`,
       [chatId, clerkUserId, streamId, JSON.stringify(messageRows)],
     ),
     tx.query(
@@ -268,14 +286,21 @@ export async function replaceChatMessages(
   clerkUserId: string,
   messages: UIMessage[],
 ) {
-  const deleteMessages = db.delete(aiChatMessages).where(eq(aiChatMessages.chatId, chatId));
-  const touchChat = db
+  // Guard on a soft-deleted chat first: touching nothing keeps its message
+  // rows intact instead of wiping them from the delete/insert batch.
+  const [touched] = await db
     .update(aiChats)
     .set({ updatedAt: new Date() })
-    .where(and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId)));
+    .where(
+      and(eq(aiChats.id, chatId), eq(aiChats.clerkUserId, clerkUserId), isNull(aiChats.deletedAt)),
+    )
+    .returning({ id: aiChats.id });
+  if (touched === undefined) return;
+
+  const deleteMessages = db.delete(aiChatMessages).where(eq(aiChatMessages.chatId, chatId));
 
   if (messages.length === 0) {
-    await db.batch([deleteMessages, touchChat]);
+    await db.batch([deleteMessages]);
     return;
   }
 
@@ -288,7 +313,7 @@ export async function replaceChatMessages(
       payload: message,
     })),
   );
-  await db.batch([deleteMessages, insertMessages, touchChat]);
+  await db.batch([deleteMessages, insertMessages]);
 }
 
 export function chatIsActive(chat: {

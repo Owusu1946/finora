@@ -77,7 +77,7 @@ export default function SuppliersScreen() {
               aui.composer.setText('Show suppliers');
               aui.composer.send();
             }}
-            className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground'
+            className='min-h-[46px] items-center justify-center rounded-full bg-foreground px-4'
             style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>
@@ -113,7 +113,7 @@ export default function SuppliersScreen() {
               aui.composer.setText(`Pay ${supplier.name} ${amount} ${supplier.currency}`);
               aui.composer.send();
             }}
-            className='min-h-[42px] items-center justify-center rounded-[32px] border border-border'
+            className='min-h-[42px] items-center justify-center rounded-full bg-muted'
             style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-foreground'>Pay in chat</Text>

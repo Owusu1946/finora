@@ -170,6 +170,7 @@ export const depositStyles = {
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 15,
+    paddingHorizontal: 20,
     borderRadius: Radius.pill,
     marginTop: 4,
   },

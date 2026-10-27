@@ -71,17 +71,17 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
           style={[styles.loading]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='text-muted-foreground'>Preparing payroll changes...</Text>
+          <Text className='font-sans-medium text-muted-foreground'>Preparing payroll changes…</Text>
         </View>
       );
     if (!result?.proposalId || !result.changes)
       return (
         <View
-          className='my-2 border p-4 gap-3 border-border bg-composer'
+          className='my-2 border p-4 gap-3.5 border-border bg-composer'
           style={[styles.card]}
         >
-          <Text className='text-destructive'>
-            I could not prepare a safe payroll change proposal.
+          <Text className='text-destructive font-sans-medium'>
+            Couldn’t prepare a safe payroll change proposal.
           </Text>
         </View>
       );
@@ -89,11 +89,11 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
       return (
         <Animated.View
           entering={FadeInDown.duration(220)}
-          className='my-2 border p-4 gap-3 border-border bg-composer'
+          className='my-2 border p-4 gap-3.5 border-border bg-composer'
           style={[styles.card]}
         >
           <View className='flex-row items-center gap-2.5'>
-            <View className='w-[34px] h-[34px] rounded-[17px] justify-center items-center bg-muted'>
+            <View className='h-9 w-9 justify-center items-center rounded-full bg-muted'>
               <Icon
                 name={phase === 'applied' ? 'check' : 'close-circle'}
                 size={17}
@@ -101,15 +101,15 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
               />
             </View>
             <View className='flex-1'>
-              <Text className='text-[12px] font-semibold text-muted-foreground'>
+              <Text className='text-[12px] font-sans-semibold text-muted-foreground'>
                 {phase === 'applied' ? 'Payroll updated' : 'Changes cancelled'}
               </Text>
-              <Text className='text-[16px] font-bold text-foreground'>
+              <Text className='text-[16px] font-sans-semibold text-foreground'>
                 {result.sourceName ?? 'Payroll'}
               </Text>
             </View>
           </View>
-          <Text className='text-[13px] text-muted-foreground'>
+          <Text className='text-[13px] font-sans text-muted-foreground'>
             {phase === 'applied'
               ? 'The approved changes are saved. No money was moved.'
               : 'No payroll data was changed.'}
@@ -143,11 +143,11 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
     return (
       <Animated.View
         entering={FadeInDown.duration(260)}
-        className='my-2 border p-4 gap-3 border-border bg-composer'
+        className='my-2 border p-4 gap-3.5 border-border bg-composer'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-2.5'>
-          <View className='w-[34px] h-[34px] rounded-[17px] justify-center items-center bg-muted'>
+          <View className='h-9 w-9 justify-center items-center rounded-full bg-muted'>
             <Icon
               name='edit'
               size={17}
@@ -155,15 +155,19 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
             />
           </View>
           <View className='flex-1'>
-            <Text className='text-[12px] font-semibold text-muted-foreground'>Review changes</Text>
-            <Text className='text-[16px] font-bold text-foreground'>
+            <Text className='text-[12px] font-sans-semibold text-muted-foreground'>
+              Review changes
+            </Text>
+            <Text className='text-[16px] font-sans-semibold text-foreground'>
               {result.sourceName ?? 'Payroll'}
             </Text>
           </View>
-          <Text className='text-[18px] font-bold text-foreground'>{result.changes.length}</Text>
+          <Text className='text-[18px] font-sans-semibold text-foreground'>
+            {result.changes.length}
+          </Text>
         </View>
-        <Text className='text-[13px] text-muted-foreground'>
-          {before.employeeCount ?? 0} employees to {after.employeeCount ?? 0} Â·{' '}
+        <Text className='text-[13px] font-sans text-muted-foreground'>
+          {before.employeeCount ?? 0} employees to {after.employeeCount ?? 0} ·{' '}
           {String(after.currency ?? before.currency ?? '')}{' '}
           {Number(before.total ?? 0).toLocaleString()} to{' '}
           {Number(after.total ?? 0).toLocaleString()}
@@ -191,21 +195,25 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
                   ]}
                 />
                 <View className='flex-1'>
-                  <Text className='text-[14px] font-semibold mb-[3px] text-foreground'>{name}</Text>
+                  <Text className='text-[14px] font-sans-semibold mb-[3px] text-foreground'>
+                    {name}
+                  </Text>
                   {change.operation === 'delete' ? (
-                    <Text className='text-[13px] text-destructive'>Removed from payroll</Text>
+                    <Text className='text-[13px] font-sans text-destructive'>
+                      Removed from payroll
+                    </Text>
                   ) : (
                     diffs.map((diff) => (
                       <View
                         key={diff.key}
                         className='min-h-[22px] flex-row items-center gap-[5px]'
                       >
-                        <Text className='w-[74px] text-[11px] text-muted-foreground'>
+                        <Text className='w-[74px] text-[11px] font-sans text-muted-foreground'>
                           {diff.label}
                         </Text>
                         <Text
                           numberOfLines={1}
-                          className='max-w-[74px] text-[12px] line-through text-muted-foreground'
+                          className='max-w-[74px] text-[12px] font-sans line-through text-muted-foreground'
                         >
                           {diff.before}
                         </Text>
@@ -216,7 +224,7 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
                         />
                         <Text
                           numberOfLines={1}
-                          className='flex-1 text-[12px] font-semibold text-foreground'
+                          className='flex-1 text-[12px] font-sans-semibold text-foreground'
                         >
                           {diff.after}
                         </Text>
@@ -235,28 +243,30 @@ export const ProposePayrollChangesToolUI = makeAssistantToolUI<Record<string, un
             );
           })}
         </View>
-        {error ? <Text className='text-destructive'>{error}</Text> : null}
+        {error ? <Text className='text-destructive font-sans-medium'>{error}</Text> : null}
         <View className='flex-row gap-2'>
           <Pressable
             disabled={phase === 'applying'}
             onPress={() => void cancel()}
-            className='flex-1 min-h-11 border items-center justify-center border-border'
-            style={[styles.secondary]}
+            className='flex-1 min-h-[46px] rounded-full items-center justify-center px-3.5'
+            style={[styles.secondary, { backgroundColor: colors.muted }]}
           >
-            <Text className='text-foreground'>Cancel</Text>
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+              Cancel
+            </Text>
           </Pressable>
           <Pressable
             disabled={phase === 'applying'}
             onPress={() => void approve()}
-            className='flex-[1.4] min-h-11 items-center justify-center bg-primary'
+            className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center bg-primary px-3.5'
             style={[styles.primary, { opacity: phase === 'applying' ? 0.6 : 1 }]}
           >
-            <Text className='text-primary-foreground'>
-              {phase === 'applying' ? 'Applying...' : 'Approve changes'}
+            <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'>
+              {phase === 'applying' ? 'Applying…' : 'Approve changes'}
             </Text>
           </Pressable>
         </View>
-        <Text className='text-[12px] text-center text-muted-foreground'>
+        <Text className='text-[12px] text-center font-sans text-muted-foreground'>
           Edits payroll data only. No money is moved.
         </Text>
       </Animated.View>
@@ -272,9 +282,9 @@ const styles = {
     borderRadius: Radius.card,
   },
   secondary: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.pill,
   },
   primary: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.pill,
   },
 };

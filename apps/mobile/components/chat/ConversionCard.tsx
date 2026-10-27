@@ -93,12 +93,12 @@ export function ConversionCard({
 
   return (
     <View
-      className='w-[100%] border p-4 gap-3.5 my-2 bg-composer border-border'
+      className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
       style={[styles.card]}
     >
       <View className='flex-row items-center gap-3'>
         <Animated.View
-          className='w-9 h-9 rounded-[18px] items-center justify-center'
+          className='w-9 h-9 rounded-full items-center justify-center'
           style={[
             {
               backgroundColor: failed ? colors.destructiveSurface : colors.muted,
@@ -136,7 +136,7 @@ export function ConversionCard({
       </View>
 
       <View
-        className='border p-3 flex-row items-center justify-between gap-2 border-border'
+        className='border p-3.5 flex-row items-center justify-between gap-2 border-border'
         style={[styles.pair]}
       >
         <View className='flex-row items-center gap-2 flex-1'>
@@ -196,7 +196,7 @@ export function ConversionCard({
                 className='flex-row items-center gap-2.5'
               >
                 <View
-                  className='w-[22px] h-[22px] rounded-[11px] border items-center justify-center'
+                  className='w-[18px] h-[18px] rounded-full border-[1.5px] items-center justify-center'
                   style={[
                     {
                       borderColor: done || active ? colors.foreground : colors.border,
@@ -243,10 +243,10 @@ export function ConversionCard({
               haptics.selection();
               onCancel?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center border'
+            className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-50'
             style={({ pressed }) => [
               {
-                borderColor: colors.border,
+                backgroundColor: colors.muted,
                 opacity: pressed || loading ? 0.7 : 1,
               },
             ]}
@@ -261,7 +261,7 @@ export function ConversionCard({
               haptics.impact();
               onConfirm?.();
             }}
-            className='flex-1 min-h-[46px] items-center justify-center'
+            className='flex-1 min-h-[46px] items-center justify-center rounded-full px-3.5'
             style={({ pressed }) => [
               {
                 backgroundColor: colors.primary,
@@ -271,7 +271,7 @@ export function ConversionCard({
           >
             <Text
               style={{ color: colors.primaryForeground }}
-              className='font-sans-semibold text-[16px] tracking-[-0.2px]'
+              className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
             >
               {loading ? 'Confirming…' : 'Confirm & convert'}
             </Text>
@@ -281,7 +281,7 @@ export function ConversionCard({
 
       {cancelled || failed ? (
         <View
-          className='flex-row items-center gap-2 self-start px-3 py-2 bg-destructive-surface'
+          className='flex-row items-center gap-2 self-start px-3 py-2.5 bg-destructive-surface'
           style={[styles.statusPill]}
         >
           <Icon
@@ -289,7 +289,7 @@ export function ConversionCard({
             size={14}
             color={colors.destructive}
           />
-          <Text className='font-sans-semibold text-[14px] text-destructive'>
+          <Text className='font-sans-semibold text-[14px] tracking-[-0.1px] text-destructive'>
             {failed ? 'Couldn’t complete conversion' : 'Cancelled'}
           </Text>
         </View>
@@ -328,7 +328,7 @@ function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conver
         className='items-center gap-2 pt-2'
         style={[{ opacity, transform: [{ scale }] }]}
       >
-        <View className='w-16 h-16 rounded-[32px] items-center justify-center mb-1 bg-muted'>
+        <View className='w-16 h-16 rounded-full items-center justify-center mb-1 bg-muted'>
           <Icon
             name='check'
             size={28}
@@ -336,7 +336,7 @@ function ConvertedHero({ quote, conversionId }: { quote: ConversionQuote; conver
           />
         </View>
         <Text className='font-sans-semibold text-[16px] text-foreground'>Converted</Text>
-        <Text className='font-sans-semibold text-[29px] tracking-[-0.6px] text-foreground'>
+        <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
           {formatAmt(quote.toAmount, quote.toCurrency)}
         </Text>
         <Text className='font-sans-medium text-[15px] mb-2 text-muted-foreground'>
@@ -376,7 +376,7 @@ function MetaRow({
       <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
       <Text
         selectable
-        className='font-sans-medium text-[15px] tracking-[-0.1px] text-foreground'
+        className='font-sans-medium text-[16px] tracking-[-0.2px] text-foreground'
       >
         {value}
       </Text>
@@ -389,10 +389,7 @@ const styles = {
     borderRadius: Radius.card,
   },
   pair: {
-    borderRadius: Radius.composer,
-  },
-  btn: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.lg,
   },
   statusPill: {
     borderRadius: Radius.pill,

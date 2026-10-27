@@ -160,8 +160,8 @@ function ProductFxConversion({
 
   return (
     <View
-      className='mt-2.5 gap-2 rounded-2xl border border-border/70 p-3'
-      style={{ backgroundColor: colors.muted }}
+      className='mt-2.5 gap-2.5 border border-border p-3.5'
+      style={{ backgroundColor: colors.muted, borderRadius: Radius.composer }}
     >
       <View className='flex-row items-center justify-between'>
         <Pressable
@@ -339,7 +339,7 @@ function WebResultCard({
         <Text className='font-sans-medium text-[14px] text-muted-foreground'>
           {result?.errorCode === 'web_search_not_configured'
             ? 'Web search is not configured yet.'
-            : 'No usable web sources were returned.'}
+            : 'No sources came back for that query — try rephrasing it.'}
         </Text>
       </View>
     );
@@ -423,7 +423,7 @@ function ProductSearchCard({
         <Text className='font-sans-medium text-[14px] text-muted-foreground'>
           {result?.errorCode === 'web_search_not_configured'
             ? 'Product search is not configured yet.'
-            : 'No credible product listings were returned.'}
+            : 'No listings matched that search — try widening the query or budget.'}
         </Text>
       </View>
     );

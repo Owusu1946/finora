@@ -8,6 +8,7 @@ import { TransactionTimeline } from '@/components/activity/TransactionTimeline';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
@@ -41,6 +42,11 @@ const SOURCE_LABEL: Record<NonNullable<Transaction['source']>, string> = {
   mcp: 'AI agent (MCP)',
   manual: 'Manual',
 };
+
+/** Plan payouts carry an item count instead of an address, so the row label follows. */
+function destinationLabel(value?: string): string {
+  return value?.endsWith('line items') ? 'Items' : 'Destination';
+}
 
 export function TransactionDetail({ tx }: { tx: Transaction }) {
   const { colors } = useTheme();
@@ -90,14 +96,21 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
         </View>
       </View>
 
-      <View className='gap-3 rounded-2xl border border-border bg-composer p-4'>
+      <View
+        className='gap-3 border border-border bg-composer p-4'
+        style={{ borderRadius: Radius.card, borderCurve: Rounded.borderCurve }}
+      >
         <Text className='mb-0.5 font-sans-semibold text-base text-foreground'>Status</Text>
         <TransactionTimeline steps={tx.timeline ?? []} />
       </View>
 
-      <View className='gap-3 rounded-2xl border border-border bg-composer p-4'>
+      <View
+        className='gap-3 border border-border bg-composer p-4'
+        style={{ borderRadius: Radius.card, borderCurve: Rounded.borderCurve }}
+      >
         <Text className='mb-0.5 font-sans-semibold text-base text-foreground'>Details</Text>
         <DetailRow
+          first
           label='Rail'
           value={tx.rail ?? tx.method}
           colors={colors}
@@ -122,7 +135,7 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
         ) : null}
         {tx.destinationValue ? (
           <DetailRow
-            label='Destination'
+            label={destinationLabel(tx.destinationValue)}
             value={tx.destinationValue}
             mono
             colors={colors}
@@ -142,6 +155,7 @@ export function TransactionDetail({ tx }: { tx: Transaction }) {
               tx.feeCurrency === tx.currency ? tx.symbol : (tx.feeCurrency ?? ''),
               tx.fee,
             )}
+            mono
             colors={colors}
           />
         ) : null}
@@ -172,17 +186,20 @@ function DetailRow({
   label,
   value,
   mono,
+  first,
   colors,
   onCopy,
 }: {
   label: string;
   value: string;
   mono?: boolean;
+  /** First row under the section title: no divider (dividers run between rows only). */
+  first?: boolean;
   colors: { foreground: string; mutedForeground: string; border: string };
   onCopy?: () => void;
 }) {
   return (
-    <View className='gap-1 border-t border-border pt-3'>
+    <View className={cx('gap-1 pt-3', !first && 'border-t border-border')}>
       <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
       <Pressable
         disabled={!onCopy}
@@ -192,7 +209,7 @@ function DetailRow({
         <Text
           selectable
           className={cx(
-            'flex-1 font-sans-medium text-base text-foreground',
+            'flex-1 font-sans-medium text-[16px] text-foreground',
             mono && 'tabular-nums',
           )}
           numberOfLines={2}

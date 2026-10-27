@@ -50,11 +50,11 @@ function EmployeePayCard({
   return (
     <>
       <View
-        className='w-[100%] border p-4 gap-3 my-1.5 bg-composer border-border'
+        className='w-[100%] border p-5 gap-4 my-2 bg-composer border-border'
         style={[styles.card]}
       >
         <View className='flex-row items-center gap-3'>
-          <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+          <View className='w-9 h-9 rounded-full items-center justify-center bg-muted'>
             <Icon
               name={approved ? 'check' : 'contacts'}
               size={16}
@@ -62,21 +62,21 @@ function EmployeePayCard({
             />
           </View>
           <View className='flex-1 gap-0.5 min-w-0'>
-            <Text className='text-[12px] font-semibold text-muted-foreground'>
+            <Text className='text-[12px] font-sans-semibold text-muted-foreground'>
               {approved ? 'Approval recorded' : 'Employee payment ready'}
             </Text>
-            <Text className='text-[16px] font-semibold text-foreground'>{employee.name}</Text>
+            <Text className='text-[16px] font-sans-semibold text-foreground'>{employee.name}</Text>
           </View>
-          <Text className='text-[16px] font-bold text-foreground'>
+          <Text className='text-[16px] font-sans-semibold text-foreground'>
             {formatPaymentAmount(amount, currency)}
           </Text>
         </View>
-        <Text className='text-[13px] font-medium text-muted-foreground'>
+        <Text className='text-[13px] font-sans-medium text-muted-foreground'>
           {employee.role || 'Employee'} · {employee.destination.label}
           {memo ? ` · ${memo}` : ''}
         </Text>
         {approved ? (
-          <Text className='text-[13px] font-medium text-muted-foreground'>
+          <Text className='text-[13px] font-sans-medium text-muted-foreground'>
             Approved for platform execution. No money was moved by chat.
           </Text>
         ) : (
@@ -90,14 +90,14 @@ function EmployeePayCard({
               setApproved(true);
               haptics.success();
             }}
-            className='min-h-11 items-center justify-center'
+            className='min-h-11 rounded-full items-center justify-center px-5 bg-primary active:opacity-85 disabled:opacity-50'
             style={({ pressed }) => [
               { backgroundColor: colors.primary, opacity: pressed || busy ? 0.85 : 1 },
             ]}
           >
             <Text
               style={{ color: colors.primaryForeground }}
-              className='text-[15px] font-semibold'
+              className='text-[16px] font-sans-semibold tracking-[-0.2px] text-primary-foreground'
             >
               Approve payment
             </Text>
@@ -121,8 +121,8 @@ export const PrepareEmployeePaymentToolUI = makeAssistantToolUI<Args, Result>({
           style={[styles.box]}
         >
           <LoadingIcon color={colors.mutedForeground} />
-          <Text className='text-[13px] font-medium text-muted-foreground'>
-            Preparing employee payment...
+          <Text className='text-[13px] font-sans-medium text-muted-foreground'>
+            Preparing employee payment…
           </Text>
         </View>
       );
@@ -132,8 +132,8 @@ export const PrepareEmployeePaymentToolUI = makeAssistantToolUI<Args, Result>({
           className='my-2 min-h-[72px] border items-center justify-center gap-2 p-4 border-border bg-composer'
           style={[styles.box]}
         >
-          <Text className='text-[13px] font-medium text-muted-foreground'>
-            Could not prepare that employee payment. Confirm the employee and payroll import.
+          <Text className='text-[13px] font-sans-medium text-muted-foreground'>
+            Couldn’t prepare that payment — confirm the employee and payroll import.
           </Text>
         </View>
       );
@@ -154,8 +154,5 @@ const styles = {
   },
   card: {
     borderRadius: Radius.card,
-  },
-  btn: {
-    borderRadius: Radius.composer,
   },
 };

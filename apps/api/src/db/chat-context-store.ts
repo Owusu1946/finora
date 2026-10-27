@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -20,7 +20,13 @@ export async function getChatContext(db: Database, chatId: string, clerkUserId: 
     })
     .from(aiChatContexts)
     .innerJoin(aiChats, eq(aiChats.id, aiChatContexts.chatId))
-    .where(and(eq(aiChatContexts.chatId, chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .where(
+      and(
+        eq(aiChatContexts.chatId, chatId),
+        eq(aiChats.clerkUserId, clerkUserId),
+        isNull(aiChats.deletedAt),
+      ),
+    )
     .limit(1);
   return context ?? null;
 }
@@ -39,7 +45,13 @@ export async function saveChatContext(
   const [ownedChat] = await db
     .select({ id: aiChats.id })
     .from(aiChats)
-    .where(and(eq(aiChats.id, input.chatId), eq(aiChats.clerkUserId, clerkUserId)))
+    .where(
+      and(
+        eq(aiChats.id, input.chatId),
+        eq(aiChats.clerkUserId, clerkUserId),
+        isNull(aiChats.deletedAt),
+      ),
+    )
     .limit(1);
   if (!ownedChat) return false;
 

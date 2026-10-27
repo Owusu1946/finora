@@ -13,6 +13,7 @@ import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
+import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getApproval, resolveApproval } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
@@ -182,21 +183,24 @@ export default function ApprovalDetailScreen() {
       <View className='flex-1 bg-background'>
         <ScrollView
           contentContainerStyle={{
-            gap: 12,
+            gap: 16,
             paddingHorizontal: 20,
-            paddingTop: 12,
+            paddingTop: 16,
             paddingBottom: 40,
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View className='gap-1 rounded-2xl bg-muted p-3.5'>
+          <View
+            className='gap-1.5 bg-muted p-5'
+            style={{ borderRadius: Radius.card, borderCurve: Rounded.borderCurve }}
+          >
             <Text className='font-sans-semibold text-[13px] tracking-[-0.1px] text-muted-foreground'>
               {isPlan ? 'Agent plan' : 'Agent request'}
             </Text>
-            <Text className='font-sans-semibold text-[19px] tracking-[-0.3px] text-foreground'>
+            <Text className='font-sans-semibold text-[17px] tracking-[-0.2px] text-foreground'>
               {approval.agent}
             </Text>
-            <Text className='font-sans-medium text-sm text-muted-foreground'>
+            <Text className='font-sans-medium text-[14px] text-muted-foreground'>
               Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
             </Text>
           </View>
@@ -227,29 +231,34 @@ export default function ApprovalDetailScreen() {
             <Text className='text-muted-foreground'>Invalid approval payload.</Text>
           )}
 
-          {status === 'sent' ? (
+          {status === 'sent' && !canOpenTx ? (
             <Pressable
-              onPress={openTransaction}
-              className='min-h-[46px] items-center justify-center rounded-[14px] border border-border'
-              style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+              accessibilityRole='button'
+              accessibilityLabel='Back to approvals'
+              onPress={() => {
+                haptics.selection();
+                router.back();
+              }}
+              className='min-h-[46px] items-center justify-center rounded-full px-5 bg-muted active:opacity-75'
             >
-              <Text className='font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
-                View transaction detail
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Back to approvals
               </Text>
             </Pressable>
           ) : null}
 
           {status === 'cancelled' ? (
             <Pressable
+              accessibilityRole='button'
+              accessibilityLabel='Back to approvals'
               onPress={() => {
                 haptics.selection();
                 router.back();
               }}
-              className='min-h-[46px] items-center justify-center rounded-[14px] border border-border'
-              style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
+              className='min-h-[46px] items-center justify-center rounded-full px-5 bg-muted active:opacity-75'
             >
-              <Text className='font-sans-semibold text-base tracking-[-0.2px] text-foreground'>
-                Back to inbox
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Back to approvals
               </Text>
             </Pressable>
           ) : null}

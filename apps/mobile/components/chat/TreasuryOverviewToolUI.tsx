@@ -39,7 +39,7 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
           style={[styles.box]}
         >
           <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
-            Couldn’t load treasury.
+            Couldn’t load treasury — ask me to retry.
           </Text>
         </View>
       );
@@ -47,25 +47,27 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
 
     return (
       <View
-        className='my-1.5 border p-4 gap-2 border-border bg-composer'
+        className='my-1.5 border p-4 gap-3.5 border-border bg-composer'
         style={[styles.card]}
       >
         <Text className='font-sans-semibold text-[12px] text-muted-foreground'>Treasury</Text>
-        <Text className='font-sans-semibold text-[28px] tracking-[-0.5px] text-foreground'>
+        <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
           {formatPaymentAmount(overview.totalUsd, 'USD')}
         </Text>
         <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
           Total across wallets (USD equivalent)
         </Text>
 
-        <View className='mt-1.5 gap-2'>
+        <View className='mt-1.5 gap-2.5'>
           {overview.balances.map((b) => (
             <View
               key={b.currency}
               className='flex-row items-center justify-between gap-2.5'
             >
-              <Text className='font-sans-semibold text-[15px] text-foreground'>{b.currency}</Text>
-              <Text className='font-sans-semibold text-[14px] text-foreground'>
+              <Text className='font-sans-medium text-[13px] text-muted-foreground'>
+                {b.currency}
+              </Text>
+              <Text className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'>
                 {formatPaymentAmount(b.balance, b.currency)}
               </Text>
             </View>
@@ -83,13 +85,13 @@ export const TreasuryOverviewToolUI = makeAssistantToolUI<Record<string, never>,
                 className='flex-row items-center justify-between gap-2.5'
               >
                 <Text
-                  className='font-sans-semibold text-[15px] text-foreground'
+                  className='font-sans-medium text-[13px] text-muted-foreground'
                   style={[{ flex: 1 }]}
                   numberOfLines={1}
                 >
                   {item.label}
                 </Text>
-                <Text className='font-sans-semibold text-[14px] text-foreground'>
+                <Text className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'>
                   {formatPaymentAmount(item.amount, item.currency)}
                 </Text>
               </View>

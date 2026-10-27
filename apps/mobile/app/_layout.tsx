@@ -154,7 +154,10 @@ function RootNavigator() {
   useDrainPendingPaymentLink();
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'inactive' || state === 'background') lock();
+      // Lock only when the app fully leaves the foreground. 'inactive' also
+      // fires for OS pulls (notification shade, Control Center, app switcher
+      // peek), which must not invalidate the session.
+      if (state === 'background') lock();
     });
     return () => subscription.remove();
   }, [lock]);

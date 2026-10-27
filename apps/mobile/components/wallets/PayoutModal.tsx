@@ -81,7 +81,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
             />
             <Text className='font-sans-semibold text-lg text-foreground'>Payout Submitted</Text>
             <Text className='text-center font-sans text-sm text-muted-foreground'>
-              Sent ${sendAmount} via WeWire infrastructure. Policy verified.
+              Sent ${sendAmount} via Finora rails. Policy verified.
             </Text>
           </View>
         ) : (
@@ -128,7 +128,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 onChangeText={setSendRecipient}
                 placeholder='e.g. GB82 CLRB ... or +233 24 ...'
                 placeholderTextColor={colors.mutedForeground}
-                className='rounded-xl border border-border bg-muted px-3 py-2.5 font-sans text-base text-foreground'
+                className='rounded-[32px] border border-border bg-background px-3.5 py-3 font-sans text-base text-foreground'
               />
             </View>
 
@@ -142,15 +142,15 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
                 placeholder='0.00'
                 keyboardType='numeric'
                 placeholderTextColor={colors.mutedForeground}
-                className='rounded-xl border border-border bg-muted px-3 py-2.5 font-sans text-base text-foreground'
+                className='rounded-[32px] border border-border bg-background px-3.5 py-3 font-sans text-base text-foreground'
               />
             </View>
 
             <Pressable
               onPress={handleExecuteSend}
-              className='mt-3 flex-row items-center justify-center gap-1.5 rounded-full bg-primary py-3 active:opacity-80'
+              className='mt-3 flex-row items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-3 active:opacity-80'
             >
-              <Text className='font-sans-semibold text-[15px] text-primary-foreground'>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'>
                 Confirm & Send Payout
               </Text>
             </Pressable>

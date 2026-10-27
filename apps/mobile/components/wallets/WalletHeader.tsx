@@ -66,7 +66,7 @@ export function WalletHeader({
             haptics.selection();
             onOpenSend();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-transparent bg-primary py-2.5 active:opacity-80'
+          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-primary px-3.5 py-2.5 active:opacity-80'
         >
           <Icon
             name='arrow-up'
@@ -81,7 +81,7 @@ export function WalletHeader({
             haptics.selection();
             onOpenDeposit();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-border bg-muted py-2.5 active:opacity-80'
+          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-muted px-3.5 py-2.5 active:opacity-80'
         >
           <Icon
             name='arrow-down-left'
@@ -96,7 +96,7 @@ export function WalletHeader({
             haptics.selection();
             onOpenConvert();
           }}
-          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full border border-border bg-muted py-2.5 active:opacity-80'
+          className='flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-muted px-3.5 py-2.5 active:opacity-80'
         >
           <Icon
             name='swap'

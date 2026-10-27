@@ -50,7 +50,7 @@ export default function LoginScreen() {
     }
     if (signIn.status !== 'complete') {
       haptics.impact();
-      setError('This account requires an authentication step Finora does not support yet.');
+      setError('This account needs a sign-in step Finora does not support yet.');
       return;
     }
 

@@ -1,12 +1,12 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
-import { ThinkingOrb } from '@mhaadi/thinking-orbs-native';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
   useAudioRecorderState,
+  type RecordingOptions,
 } from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,17 +16,19 @@ import {
   View,
   AppState,
   Platform,
-  ActionSheetIOS,
-  Alert,
   Keyboard,
   Pressable,
   ScrollView,
   TextInput,
   type TextInputProps,
 } from 'react-native';
+import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
+import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -36,6 +38,7 @@ import {
   type FinoraTagSuggestion,
 } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
+import { startLiveTranscription, type LiveTranscriptionSession } from '@/lib/live-transcription';
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
 import { ensureMediaLibraryPermission } from '@/lib/permissions';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
@@ -45,6 +48,36 @@ import {
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
 } from './attachment';
+import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
+
+/* ------------------------------------------------------------------ */
+/* Composer notices — in-app pill replacing native error alerts         */
+/* ------------------------------------------------------------------ */
+
+const noticeListeners = new Set<(message: string | null) => void>();
+
+/** Show a transient pill inside the composer (auto-dismisses). */
+function showComposerNotice(message: string) {
+  noticeListeners.forEach((emit) => emit(message));
+}
+
+function useComposerNotice() {
+  const [notice, setNotice] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const emit = (message: string | null) => {
+      setNotice(message);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (message) timerRef.current = setTimeout(() => setNotice(null), 3200);
+    };
+    noticeListeners.add(emit);
+    return () => {
+      noticeListeners.delete(emit);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+  return notice;
+}
 
 const COMPOSER_ATTACHMENT_COMPONENTS = {
   Image: ComposerImageAttachment,
@@ -75,9 +108,10 @@ function AttachButton() {
       });
       haptics.success();
     } catch (error) {
-      Alert.alert(
-        'Could not attach file',
-        error instanceof Error ? error.message : 'Please try again.',
+      showComposerNotice(
+        error instanceof Error
+          ? `Could not attach file · ${error.message}`
+          : 'Could not attach file',
       );
     }
   };
@@ -143,7 +177,14 @@ function AttachButton() {
     }
   };
 
-  const handlePress = () => {
+  const ATTACHMENT_ACTIONS = [
+    { key: 'photo', label: 'Photo library', icon: 'image' as const },
+    { key: 'document', label: 'Choose document', icon: 'file' as const },
+  ] as const;
+
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  const openAttachmentPicker = () => {
     haptics.selection();
     // Settle keyboard layout before the system picker takes over.
     Keyboard.dismiss();
@@ -153,45 +194,70 @@ function AttachButton() {
       return;
     }
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Photo Library', 'Choose Document'],
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) void handleNativePickImage();
-          else if (buttonIndex === 2) void handleNativePickDocument();
-        },
-      );
-      return;
-    }
+    setPickerVisible(true);
+  };
 
-    Alert.alert('Add Attachment', 'Choose attachment type', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Photo', onPress: () => void handleNativePickImage() },
-      { text: 'Document', onPress: () => void handleNativePickDocument() },
-    ]);
+  const pick = (action: (typeof ATTACHMENT_ACTIONS)[number]['key']) => {
+    setPickerVisible(false);
+    haptics.selection();
+    if (action === 'photo') void handleNativePickImage();
+    else void handleNativePickDocument();
   };
 
   return (
-    <Pressable
-      accessibilityLabel='Attach file or photo'
-      hitSlop={8}
-      onPress={handlePress}
-      className='h-[38px] w-[38px] items-center justify-center'
-      style={({ pressed }) => [
-        {
-          backgroundColor: pressed ? colors.muted : 'transparent',
-        },
-      ]}
-    >
-      <Icon
-        name='attach'
-        size={20}
-        color={colors.mutedForeground}
-      />
-    </Pressable>
+    <>
+      <Pressable
+        accessibilityLabel='Attach file or photo'
+        hitSlop={8}
+        onPress={openAttachmentPicker}
+        className='h-[38px] w-[38px] items-center justify-center rounded-full'
+        style={({ pressed }) => [
+          {
+            backgroundColor: pressed ? colors.muted : 'transparent',
+          },
+        ]}
+      >
+        <Icon
+          name='attach'
+          size={20}
+          color={colors.mutedForeground}
+        />
+      </Pressable>
+
+      <SheetModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        style={{ paddingHorizontal: 20, gap: 3 }}
+      >
+        <Text className='mb-2 mt-1 font-sans-semibold text-lg text-foreground'>Attach</Text>
+        {ATTACHMENT_ACTIONS.map((action) => (
+          <Pressable
+            key={action.key}
+            accessibilityRole='button'
+            onPress={() => pick(action.key)}
+            className='min-h-[52px] flex-row items-center gap-3 bg-muted px-4'
+            style={({ pressed }) => [{ borderRadius: Radius.md, opacity: pressed ? 0.8 : 1 }]}
+          >
+            <Icon
+              name={action.icon}
+              size={18}
+              color={colors.foreground}
+            />
+            <Text className='font-sans-semibold text-[16px] text-foreground'>{action.label}</Text>
+          </Pressable>
+        ))}
+        <Pressable
+          accessibilityRole='button'
+          onPress={() => setPickerVisible(false)}
+          className='mt-2 min-h-[46px] items-center justify-center rounded-full bg-muted'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
+        >
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-muted-foreground'>
+            Cancel
+          </Text>
+        </Pressable>
+      </SheetModal>
+    </>
   );
 }
 
@@ -207,7 +273,7 @@ function ScanButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      className='h-[38px] w-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center rounded-full'
       style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
     >
       <Icon
@@ -226,9 +292,32 @@ const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
 const TRAILING_SILENCE_TIMEOUT_MS = 2_500;
 const VOICE_ACTIVITY_THRESHOLD_DB = -42;
 const VOICE_ACTIVITY_SAMPLES_REQUIRED = 2;
-const VOICE_RECORDING_OPTIONS = {
+const VOICE_RECORDING_OPTIONS: RecordingOptions = {
   ...RecordingPresets.HIGH_QUALITY,
   isMeteringEnabled: true,
+  // ADTS AAC on both platforms: raw frames can be tailed out of the file and
+  // streamed to the live transcription WebSocket while the recorder runs.
+  extension: '.aac',
+  numberOfChannels: 1,
+  android: { ...RecordingPresets.HIGH_QUALITY.android, outputFormat: 'aac_adts' },
+};
+
+// expo-audio metering is dB (about -160..0). Speech sits between -42 and -8,
+// so a -50..-6 window maps a full quiet-to-loud swing onto 0..1.
+const METERING_FLOOR_DB = -50;
+const METERING_RANGE_DB = 44;
+
+// Lobes are the reference aurora palette (green, sky, violet, rose) — vivid
+// on both themes. The core is the hot line at the bottom edge: near-white
+// teal on dark to read as the bright centre; a soft tint on light where a
+// strong core would smear into a dark band.
+const VOICE_BLOOM_LIGHT: VoiceBloomPalette = {
+  core: '#CCFBF1',
+  lobes: ['#22C55E', '#38BDF8', '#A855F7', '#F43F5E'],
+};
+const VOICE_BLOOM_DARK: VoiceBloomPalette = {
+  core: '#D8FFF6',
+  lobes: ['#22C55E', '#38BDF8', '#A855F7', '#F43F5E'],
 };
 
 function useVoiceComposer() {
@@ -237,9 +326,7 @@ function useVoiceComposer() {
   const recorder = useAudioRecorder(VOICE_RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 200);
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-  const [speechActive, setSpeechActive] = useState(false);
   const voiceStateRef = useRef<VoiceState>('idle');
-  const speechActiveRef = useRef(false);
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const draftBeforeRecordingRef = useRef('');
@@ -248,6 +335,21 @@ function useVoiceComposer() {
   const voiceActivitySamplesRef = useRef(0);
   const lastVoiceActivityAtRef = useRef(0);
   const stopRecordingRef = useRef<(discard?: boolean) => Promise<void>>(() => Promise.resolve());
+  const liveSessionRef = useRef<LiveTranscriptionSession | null>(null);
+  const liveFinalsRef = useRef('');
+  const [preview, setPreview] = useState('');
+
+  // Smoothed 0–1 mic level for the glow, animated on the UI thread.
+  const level = useSharedValue(0);
+  useEffect(() => {
+    const metering = recorderState.metering;
+    if (voiceState !== 'recording' || typeof metering !== 'number') {
+      level.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.quad) });
+      return;
+    }
+    const normalized = Math.min(1, Math.max(0, (metering - METERING_FLOOR_DB) / METERING_RANGE_DB));
+    level.value = withTiming(normalized, { duration: 170, easing: Easing.out(Easing.quad) });
+  }, [level, recorderState.durationMillis, recorderState.metering, voiceState]);
 
   voiceStateRef.current = voiceState;
 
@@ -262,18 +364,30 @@ function useVoiceComposer() {
     if (mountedRef.current) setVoiceState(next);
   };
 
-  const updateSpeechActive = (next: boolean) => {
-    if (speechActiveRef.current === next) return;
-    speechActiveRef.current = next;
-    if (mountedRef.current) setSpeechActive(next);
+  // Live previews append committed phrases and swap the interim partial:
+  // "finals + current partial" is what the user reads while speaking.
+  const resetLivePreview = () => {
+    liveFinalsRef.current = '';
+    setPreview('');
+  };
+  const setLivePartial = (text: string) => {
+    const finals = liveFinalsRef.current;
+    setPreview(finals ? `${finals} ${text}` : text);
   };
 
   const stopRecording = async (discard = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
-    updateSpeechActive(false);
     updateVoiceState(discard ? 'idle' : 'transcribing');
     clearStopTimer();
+
+    const live = liveSessionRef.current;
+    liveSessionRef.current = null;
+    if (live) {
+      // Flush the tail before closing so the preview sees everything spoken
+      // right up to the press; cancel discards unstreamed bytes.
+      await live.stop(!discard);
+    }
 
     let uri: string | null = null;
     try {
@@ -286,7 +400,7 @@ function useVoiceComposer() {
         return;
       }
 
-      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4';
+      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
       const result = await transcribeRecording(uri, contentType, getToken);
       if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
@@ -298,9 +412,10 @@ function useVoiceComposer() {
     } catch (error) {
       if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
         haptics.error();
-        Alert.alert(
-          'Could not transcribe',
-          error instanceof Error ? error.message : 'Please try recording again.',
+        showComposerNotice(
+          error instanceof Error
+            ? `Could not transcribe · ${error.message}`
+            : 'Could not transcribe · try recording again',
         );
       }
     } finally {
@@ -328,13 +443,11 @@ function useVoiceComposer() {
       lastVoiceActivityAtRef.current = now;
       if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
         speechDetectedRef.current = true;
-        updateSpeechActive(true);
       }
       return;
     }
 
     voiceActivitySamplesRef.current = 0;
-    updateSpeechActive(false);
     if (!speechDetectedRef.current) {
       if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
         void stopRecordingRef.current(true);
@@ -351,6 +464,7 @@ function useVoiceComposer() {
     return () => {
       mountedRef.current = false;
       clearStopTimer();
+      void liveSessionRef.current?.stop(false);
       if (voiceStateRef.current === 'recording') {
         void recorder.stop().then(() => deleteRecording(recorder.uri));
       }
@@ -363,7 +477,6 @@ function useVoiceComposer() {
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
     speechDetectedRef.current = false;
-    updateSpeechActive(false);
     voiceActivitySamplesRef.current = 0;
     lastVoiceActivityAtRef.current = 0;
     updateVoiceState('requesting_permission');
@@ -372,10 +485,7 @@ function useVoiceComposer() {
     try {
       const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          'Microphone access needed',
-          'Allow microphone access in Settings to dictate messages to Finora.',
-        );
+        showComposerNotice('Allow microphone access in Settings to dictate messages');
         return;
       }
       if (voiceSessionRef.current !== sessionId) return;
@@ -395,14 +505,40 @@ function useVoiceComposer() {
         () => void stopRecording(false),
         MAX_RECORDING_SECONDS * 1000,
       );
+
+      // Stream the growing recording into the live transcript feed for the
+      // on-device preview. Failures here degrade to no preview only; the
+      // one-shot transcription after stop stays authoritative.
+      resetLivePreview();
+      const liveUri = recorder.uri;
+      if (liveUri) {
+        void startLiveTranscription(liveUri, getToken, {
+          onTranscript: (text, isFinal) => {
+            if (voiceSessionRef.current !== sessionId) return;
+            if (isFinal) liveFinalsRef.current = `${liveFinalsRef.current} ${text}`.trim();
+            setLivePartial(isFinal ? '' : text);
+          },
+          onError: (error) => {
+            console.warn('[voice:live]', error);
+          },
+        })
+          .then((session) => {
+            if (voiceSessionRef.current !== sessionId) void session.stop(false);
+            else liveSessionRef.current = session;
+          })
+          .catch((error) => {
+            console.warn('[voice:live]', error);
+          });
+      }
     } catch (error) {
       if (voiceSessionRef.current === sessionId || voiceStateRef.current === 'idle') {
         await setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
       }
       if (voiceSessionRef.current === sessionId) {
-        Alert.alert(
-          'Could not start recording',
-          error instanceof Error ? error.message : 'Please try again.',
+        showComposerNotice(
+          error instanceof Error
+            ? `Could not start recording · ${error.message}`
+            : 'Could not start recording',
         );
       }
     } finally {
@@ -415,26 +551,31 @@ function useVoiceComposer() {
     }
   };
 
-  const handleOrbPress = () => {
+  const cancelVoice = () => {
+    haptics.selection();
+    // Voice never touches the composer text until a transcript lands, so
+    // restoring the pre-recording draft is "bring back composer empty" for
+    // the everyday case and keeps an existing draft safe.
+    aui.thread.composer().setText(draftBeforeRecordingRef.current);
+    resetLivePreview();
     if (voiceStateRef.current === 'recording') {
-      haptics.light();
-      void stopRecording(false);
-      return;
-    }
-    if (voiceStateRef.current === 'requesting_permission') {
-      haptics.selection();
+      void stopRecording(true);
+    } else {
       voiceSessionRef.current += 1;
-      updateVoiceState('idle');
-      return;
-    }
-    if (voiceStateRef.current === 'transcribing') {
-      haptics.selection();
-      voiceSessionRef.current += 1;
+      const live = liveSessionRef.current;
+      liveSessionRef.current = null;
+      void live?.stop(false);
       updateVoiceState('idle');
     }
   };
 
-  return { voiceState, speechActive, startRecording, handleOrbPress };
+  const acceptVoice = () => {
+    if (voiceStateRef.current !== 'recording') return;
+    haptics.light();
+    void stopRecording(false);
+  };
+
+  return { voiceState, level, preview, startRecording, cancelVoice, acceptVoice };
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -444,7 +585,7 @@ function MicButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel='Dictate message'
       hitSlop={8}
       onPress={onPress}
-      className='h-[38px] w-[38px] items-center justify-center'
+      className='h-[38px] w-[38px] items-center justify-center rounded-full'
       style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
     >
       <Icon
@@ -456,58 +597,9 @@ function MicButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function PrimaryComposerAction({ onStartVoice }: { onStartVoice: () => void }) {
+function PrimaryComposerAction({ onPressMic }: { onPressMic: () => void }) {
   const canSend = useAuiState((s) => s.thread.composer.canSend);
-  return canSend ? <SendButton /> : <MicButton onPress={onStartVoice} />;
-}
-
-function VoiceComposer({
-  state,
-  speechActive,
-  onPress,
-}: {
-  state: VoiceState;
-  speechActive: boolean;
-  onPress: () => void;
-}) {
-  const { isDark } = useTheme();
-  const label =
-    state === 'recording'
-      ? 'Listening. Tap to stop and transcribe.'
-      : state === 'transcribing'
-        ? 'Transcribing. Tap to cancel.'
-        : 'Starting voice input. Tap to cancel.';
-
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole='button'
-      onPress={onPress}
-      className='h-20 w-[38%] min-w-[104px] max-w-36 items-center justify-center self-center rounded-[22px] border border-border bg-composer p-2'
-      style={({ pressed }) => [
-        {
-          opacity: pressed ? 0.72 : 1,
-        },
-      ]}
-    >
-      <View pointerEvents='none'>
-        <ThinkingOrb
-          state={
-            state === 'recording'
-              ? 'listening'
-              : state === 'transcribing'
-                ? 'solving'
-                : 'connecting'
-          }
-          size={64}
-          speed={state === 'requesting_permission' ? 1.2 : 1.5}
-          paused={state === 'recording' && !speechActive}
-          theme={isDark ? 'dark' : 'light'}
-          accessibilityLabel={label}
-        />
-      </View>
-    </Pressable>
-  );
+  return canSend ? <SendButton /> : <MicButton onPress={onPressMic} />;
 }
 
 function SendButton() {
@@ -559,8 +651,8 @@ function CancelButton() {
  */
 type ComposerInputHandle = {
   blur: () => void;
+  focus: () => void;
 };
-
 const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
   function ComposerInput(props, ref) {
     const { colors, isDark } = useTheme();
@@ -577,7 +669,14 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
     const inputRef = useRef<TextInput>(null);
     const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
 
-    useImperativeHandle(ref, () => ({ blur: () => inputRef.current?.blur() }), []);
+    useImperativeHandle(
+      ref,
+      () => ({
+        blur: () => inputRef.current?.blur(),
+        focus: () => inputRef.current?.focus(),
+      }),
+      [],
+    );
 
     useEffect(() => {
       if (nativeTextRef.current === storeText) return;
@@ -682,7 +781,10 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
                 accessibilityLabel={`Select ${item.title}`}
                 onPress={() => selectSlashCommand(item.command)}
                 className='min-h-[54px] flex-row items-center gap-3 px-2 py-1.5'
-                style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+                style={({ pressed }) => [
+                  styles.mentionRow,
+                  pressed && { backgroundColor: colors.muted },
+                ]}
               >
                 <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
                   <Icon
@@ -721,10 +823,13 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
                   accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
                   onPress={() => selectTag(profile)}
                   className='min-h-[50px] flex-row items-center gap-2.5 px-2 py-1.5'
-                  style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+                  style={({ pressed }) => [
+                    styles.mentionRow,
+                    pressed && { backgroundColor: colors.muted },
+                  ]}
                 >
                   <View
-                    className='w-[34px] h-[34px] rounded-[17px] items-center justify-center'
+                    className='w-9 h-9 rounded-full items-center justify-center'
                     style={[{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}
                   >
                     <Text className='font-sans-semibold text-white text-[13px]'>
@@ -772,10 +877,13 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
 );
 
 export function Composer() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const notice = useComposerNotice();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, speechActive, startRecording, handleOrbPress } = useVoiceComposer();
+  const { voiceState, level, preview, startRecording, cancelVoice, acceptVoice } =
+    useVoiceComposer();
+  const insets = useSafeAreaInsets();
   const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
   const composerText = useAuiState((s) => s.thread.composer.text);
   const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
@@ -794,19 +902,108 @@ export function Composer() {
     return () => subscription.remove();
   }, []);
 
+  const handleMicPress = () => {
+    if (voiceState === 'idle') {
+      inputRef.current?.blur();
+      Keyboard.dismiss();
+      void startRecording();
+    } else if (voiceState === 'recording') {
+      acceptVoice();
+    } else {
+      cancelVoice();
+    }
+  };
+
   return (
     <View
       className='w-full self-center px-3 pt-2'
       style={[styles.container]}
     >
-      {voiceState !== 'idle' ? (
-        <VoiceComposer
-          state={voiceState}
-          speechActive={speechActive}
-          onPress={handleOrbPress}
-        />
-      ) : (
+      {notice ? (
         <View
+          className='mb-2 self-center rounded-full bg-foreground px-4 py-2.5'
+          style={{ maxWidth: '92%' }}
+        >
+          <Text
+            numberOfLines={2}
+            className='text-center font-sans-medium text-[13px] text-background'
+          >
+            {notice}
+          </Text>
+        </View>
+      ) : null}
+      {voiceState !== 'idle' ? (
+        <>
+          {/* Glow renders first so the transcript and controls draw over it. */}
+          <VoiceScreenBloom
+            level={level}
+            processing={voiceState === 'transcribing'}
+            bottomBleed={insets.bottom + 14}
+            colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
+            additive={isDark}
+          />
+          <View className='h-[128px] w-full items-center justify-end'>
+            <View className='min-h-[56px] w-full items-center justify-end pb-3'>
+              {preview ? (
+                <Text
+                  numberOfLines={3}
+                  className='text-center font-sans-medium text-[17px] text-foreground'
+                >
+                  {preview}
+                </Text>
+              ) : null}
+            </View>
+            <View className='mb-2 flex-row items-center justify-end gap-6'>
+              <Pressable
+                accessibilityLabel='Cancel voice input'
+                accessibilityRole='button'
+                onPress={cancelVoice}
+                className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                style={({ pressed }) => [
+                  { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
+                ]}
+              >
+                <Icon
+                  name='remove'
+                  size={20}
+                  color={colors.foreground}
+                />
+              </Pressable>
+              {voiceState === 'recording' ? (
+                <Pressable
+                  accessibilityLabel='Finish voice input'
+                  accessibilityRole='button'
+                  onPress={acceptVoice}
+                  className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                  style={({ pressed }) => [
+                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
+                  ]}
+                >
+                  <Icon
+                    name='mic'
+                    size={20}
+                    color={colors.primary}
+                  />
+                </Pressable>
+              ) : null}
+              {voiceState === 'transcribing' ? (
+                <View
+                  className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                  style={[{ backgroundColor: colors.composer, opacity: 0.95 }]}
+                >
+                  <LoadingIcon
+                    color={colors.mutedForeground}
+                    size={20}
+                  />
+                </View>
+              ) : null}
+            </View>
+          </View>
+        </>
+      ) : (
+        <Pressable
+          accessible={false}
+          onPress={() => inputRef.current?.focus()}
           className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
           style={[styles.shell]}
         >
@@ -869,28 +1066,23 @@ export function Composer() {
                   inputRef.current?.blur();
                   Keyboard.dismiss();
                 }}
-                className='h-[38px] min-w-12 items-center justify-center rounded-full px-2'
+                className='h-[38px] min-w-12 items-center justify-center rounded-full px-3.5'
                 style={({ pressed }) => [
-                  { backgroundColor: pressed ? colors.muted : 'transparent' },
+                  styles.doneButton,
+                  { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
                 ]}
               >
-                <Text className='font-sans-semibold text-[14px] text-foreground'>Done</Text>
+                <Text className='font-sans-semibold text-[14px] text-background'>Done</Text>
               </Pressable>
             ) : null}
             <AuiIf condition={(s) => !s.thread.isRunning}>
-              <PrimaryComposerAction
-                onStartVoice={() => {
-                  inputRef.current?.blur();
-                  Keyboard.dismiss();
-                  void startRecording();
-                }}
-              />
+              <PrimaryComposerAction onPressMic={handleMicPress} />
             </AuiIf>
             <AuiIf condition={(s) => s.thread.isRunning}>
               <CancelButton />
             </AuiIf>
           </View>
-        </View>
+        </Pressable>
       )}
     </View>
   );
@@ -909,7 +1101,8 @@ const styles = {
     fontSize: 17,
     lineHeight: 22,
     minHeight: 28,
-    maxHeight: 132,
+    // Four lines of 22px + top/bottom padding.
+    maxHeight: 96,
     paddingHorizontal: 10,
     paddingTop: 6,
     paddingBottom: 2,
@@ -941,9 +1134,5 @@ const styles = {
   },
   doneButton: {
     borderRadius: Radius.pill,
-  },
-  voiceShell: {
-    ...Rounded,
-    borderRadius: Radius.lg,
   },
 } as const;

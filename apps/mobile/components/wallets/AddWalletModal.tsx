@@ -55,7 +55,7 @@ export function AddWalletModal({ visible, onClose }: AddWalletModalProps) {
               haptics.selection();
               onClose();
             }}
-            className='flex-row items-center gap-3 rounded-xl bg-muted p-3'
+            className='flex-row items-center gap-3 rounded-[18px] bg-muted p-3'
           >
             <CurrencyIcon
               currency={item.code}

@@ -26,13 +26,19 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
       <AuthCanvas colors={colors} />
       <KeyboardAvoidingView
         className='flex-1'
+        // RN docs recipe: padding on iOS, height on Android. The footer sits
+        // pinned below the scroll, so the shrink/pad actually lifts it above
+        // the keyboard instead of just clipping scroll content.
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerClassName='grow px-6'
           contentContainerStyle={{
+            // Inline styles only: contentContainerClassName is not applied reliably
+            // under NativeWind 5 preview, which dropped the auth padding/flex growth.
+            flexGrow: 1,
+            paddingHorizontal: 24,
             paddingTop: insets.top + 8,
-            paddingBottom: Math.max(insets.bottom, 16) + 24,
+            paddingBottom: footer ? 8 : Math.max(insets.bottom, 16) + 24,
           }}
           keyboardShouldPersistTaps='handled'
           showsVerticalScrollIndicator={false}
@@ -61,8 +67,15 @@ export function AuthShell({ children, showBack = false, footer }: AuthShellProps
           </View>
 
           <View className='grow justify-center gap-[22px] py-3'>{children}</View>
-          {footer ? <View className='w-full gap-3 pt-4'>{footer}</View> : null}
         </ScrollView>
+        {footer ? (
+          <View
+            className='w-full gap-3 px-6 pt-4'
+            style={{ paddingBottom: Math.max(insets.bottom, 16) + 12 }}
+          >
+            {footer}
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
     </View>
   );

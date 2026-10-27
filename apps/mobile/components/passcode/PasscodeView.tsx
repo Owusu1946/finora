@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -51,6 +51,8 @@ export function PasscodeView({
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** One-shot: fire the device biometric prompt immediately on unlock. */
+  const autoPromptedRef = useRef(false);
 
   const shakeX = useSharedValue(0);
   const submittingRef = useRef(false);
@@ -196,6 +198,16 @@ export function PasscodeView({
       submittingRef.current = false;
     }
   };
+
+  // If biometrics are enabled, the prompt should pop first — reaching for the
+  // keypad button should never be the default path into the app. One-shot per
+  // mount; the keypad button stays for retries after a cancel.
+  useEffect(() => {
+    if (mode !== 'enter' || !biometricAvailable) return;
+    if (autoPromptedRef.current) return;
+    autoPromptedRef.current = true;
+    void handleBiometricUnlock();
+  }, [biometricAvailable]);
 
   return (
     <View

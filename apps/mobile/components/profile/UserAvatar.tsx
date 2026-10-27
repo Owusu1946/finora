@@ -12,8 +12,9 @@ type UserAvatarProps = {
   displayName: string;
   foregroundColor: string;
   imageUrl?: string | null;
-  /** Bump when the underlying OAuth avatar changes so expo-image refetches the same URL. */
+  /** OAuth profile image; rendered only for business accounts. */
   imageVersion?: string | null;
+  /** Bump when the underlying OAuth avatar changes so expo-image refetches the same URL. */
   seed: string;
   size: number;
 };
@@ -35,7 +36,9 @@ export function UserAvatar({
     width: size,
   };
 
-  if (!imageUrl && accountType === 'personal') {
+  // Personal accounts always render the generative Navii avatar; the OAuth
+  // profile image is reserved for business accounts.
+  if (accountType === 'personal') {
     return (
       <View
         className='overflow-hidden'

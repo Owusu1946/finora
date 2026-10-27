@@ -11,6 +11,9 @@ import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
+// When the remaining content fits in this many px, treat the list as at the
+// bottom and hide the floating chevron — otherwise it overlaps the last
+// message's text while a few px of padding still keep the list "unscrolled".
 const SCROLL_THRESHOLD = 120;
 
 /**
@@ -76,19 +79,19 @@ export function ScrollToBottomButton({
           onPress();
         }}
         accessibilityLabel='Scroll to bottom'
-        className='h-14 w-14 items-center justify-center rounded-full shadow-md'
+        className='h-10 w-10 items-center justify-center rounded-full shadow-md'
         style={({ pressed }) => [
           styles.button,
           {
-            backgroundColor: colors.card,
+            backgroundColor: colors.foreground,
             transform: [{ scale: pressed ? 0.92 : 1 }],
           },
         ]}
       >
         <Icon
           name='arrow-down'
-          size={22}
-          color={colors.foreground}
+          size={18}
+          color={colors.background}
         />
       </Pressable>
     </Animated.View>
@@ -103,8 +106,8 @@ const styles = {
     zIndex: 10,
   },
   button: {
-    width: 56,
-    height: 56,
+    width: 40,
+    height: 40,
     borderRadius: 999,
     borderWidth: 0,
     alignItems: 'center',

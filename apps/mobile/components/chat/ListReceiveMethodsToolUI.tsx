@@ -38,7 +38,7 @@ function EmptyCard() {
         Receive methods unavailable
       </Text>
       <Text className='font-sans text-[12px] text-muted-foreground'>
-        No supported receiving details were returned for this request.
+        No receiving details for this request yet — try another currency.
       </Text>
     </View>
   );

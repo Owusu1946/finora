@@ -15,6 +15,7 @@ import type { IconName } from '@/components/ui/icon-mappings';
 import type { TranslationKey } from '@/lib/i18n';
 
 import { AccountBadge } from '@/components/shell/account-badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
@@ -112,6 +113,20 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     tabForPathname(pathname, buildNavTabs(isBusinessAccount())),
   );
   const navigateOnce = usePressGuard();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string | null } | null>(
+    null,
+  );
+
+  const requestThreadDelete = useCallback(
+    (target: { id: string; title: string | null }) => setDeleteTarget(target),
+    [],
+  );
+  const cancelThreadDelete = useCallback(() => setDeleteTarget(null), []);
+  const confirmThreadDelete = useCallback(() => {
+    if (!deleteTarget) return;
+    aui.threads.item({ id: deleteTarget.id }).delete();
+    setDeleteTarget(null);
+  }, [aui, deleteTarget]);
 
   useEffect(() => {
     if (drawerStatus === 'closed') {
@@ -156,10 +171,13 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
         index={index}
         archived={false}
       >
-        <ThreadListItem onSelect={selectThread} />
+        <ThreadListItem
+          onSelect={selectThread}
+          onRequestDelete={requestThreadDelete}
+        />
       </ThreadListItemByIndexProvider>
     ),
-    [selectThread],
+    [selectThread, requestThreadDelete],
   );
 
   return (
@@ -303,6 +321,20 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           );
         })}
       </View>
+
+      <ConfirmDialog
+        visible={deleteTarget !== null}
+        title='Delete chat?'
+        body={
+          deleteTarget
+            ? `"${deleteTarget.title ?? 'New chat'}" is deleted from your account and can't be undone.`
+            : "This chat is deleted from your account and can't be undone."
+        }
+        confirmLabel='Delete'
+        cancelLabel='Cancel'
+        onConfirm={confirmThreadDelete}
+        onCancel={cancelThreadDelete}
+      />
     </View>
   );
 }

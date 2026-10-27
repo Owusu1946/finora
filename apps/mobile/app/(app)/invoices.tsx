@@ -230,7 +230,7 @@ export default function InvoicesScreen() {
                   ),
                 );
             }}
-            className='min-h-[46px] items-center justify-center rounded-[10px] bg-foreground'
+            className='min-h-[46px] items-center justify-center rounded-full bg-foreground'
           >
             <Text className='font-sans-semibold text-background'>Apply</Text>
           </Pressable>

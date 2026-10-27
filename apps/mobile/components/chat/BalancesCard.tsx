@@ -46,7 +46,7 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
   };
   return (
     <View
-      className='my-2 w-full overflow-hidden border border-border bg-card'
+      className='my-2 w-full overflow-hidden border border-border bg-composer'
       style={styles.card}
     >
       <View className='flex-row items-start gap-3 px-4 pb-4 pt-4'>
@@ -54,7 +54,7 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
           <Text className='font-sans-medium text-[12px] uppercase text-muted-foreground'>
             Portfolio balance
           </Text>
-          <Text className='font-sans-semibold text-[30px] text-foreground'>
+          <Text className='font-sans-semibold text-[27px] tracking-[-0.6px] text-foreground'>
             {hidden
               ? '$******'
               : `$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -79,7 +79,8 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
           />
         </Pressable>
       </View>
-      <View className='border-t border-border px-4'>
+      <View className='h-px mx-4 bg-border' />
+      <View className='px-4'>
         {wallets.map((wallet, index) => (
           <View
             key={wallet.id}
@@ -104,11 +105,11 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
               <View className='items-end gap-0.5'>
                 <Text
                   numberOfLines={1}
-                  className='font-sans-semibold text-[16px] text-foreground'
+                  className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'
                 >
                   {amount(wallet.symbol, wallet.balance, hidden)}
                 </Text>
-                <Text className='font-sans text-[12px] text-muted-foreground'>
+                <Text className='font-sans text-[12px] tabular-nums text-muted-foreground'>
                   {hidden
                     ? 'USD ******'
                     : `USD $${wallet.usdEquivalent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -119,7 +120,7 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
               <Pressable
                 accessibilityLabel={`Receive ${wallet.currency}`}
                 onPress={() => prompt(receivePrompt(wallet.currency))}
-                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full'
+                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-3'
                 style={{ flex: 1, backgroundColor: colors.muted }}
               >
                 <Icon
@@ -137,7 +138,7 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
               <Pressable
                 accessibilityLabel={`Send ${wallet.currency}`}
                 onPress={() => prompt(`Send money from my ${wallet.currency} wallet`)}
-                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full active:opacity-85'
+                className='h-9 flex-1 flex-row items-center justify-center gap-1.5 rounded-full px-3 active:opacity-85'
                 style={{ flex: 1, backgroundColor: colors.primary }}
               >
                 <Icon
@@ -159,4 +160,4 @@ export function BalancesCard({ wallets, totalUsd }: BalancesCardProps) {
     </View>
   );
 }
-const styles = { card: { borderRadius: Radius.lg } };
+const styles = { card: { borderRadius: Radius.card } };

@@ -66,7 +66,7 @@ export function AmountFundingStep({
           onCustomAmount(t);
           onAmount(null);
         }}
-        placeholder={`Custom amount (${payoutCurrency})`}
+        placeholder={`Or enter an amount (${payoutCurrency})`}
         placeholderTextColor={colors.mutedForeground}
         keyboardType='decimal-pad'
         className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
@@ -94,10 +94,12 @@ export function AmountFundingStep({
       <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          className='flex-1 min-h-[46px] border items-center justify-center'
-          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+            Back
+          </Text>
         </Pressable>
         <Pressable
           disabled={effective == null}
@@ -106,7 +108,7 @@ export function AmountFundingStep({
             if (amount == null) onAmount(effective);
             onContinue();
           }}
-          className='flex-[1.4] min-h-[46px] items-center justify-center'
+          className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-40'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -116,7 +118,7 @@ export function AmountFundingStep({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='text-[16px] font-semibold'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
           >
             Continue
           </Text>
@@ -128,12 +130,6 @@ export function AmountFundingStep({
 
 const styles = {
   input: {
-    borderRadius: Radius.composer,
-  },
-  navBtn: {
-    borderRadius: Radius.composer,
-  },
-  navBtnPrimary: {
     borderRadius: Radius.composer,
   },
 };

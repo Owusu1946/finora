@@ -599,6 +599,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 20,
     borderRadius: Radius.pill,
   },
   primaryBtnText: {

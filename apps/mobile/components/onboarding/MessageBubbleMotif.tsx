@@ -17,7 +17,7 @@ type MessageBubbleMotifProps = {
   isDark: boolean;
 };
 
-/** Chat-bubble outline that draws in on Beat 1 (Speak). */
+/** Chat-bubble outline that draws in on Beat 1 (Speak) and fades out after. */
 export function MessageBubbleMotif({ progress, cx, cy, colors, isDark }: MessageBubbleMotifProps) {
   const w = 150;
   const h = 88;

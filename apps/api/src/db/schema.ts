@@ -115,6 +115,7 @@ export const aiChats = pgTable(
     title: text('title'),
     titleStatus: aiChatTitleStatusEnum('title_status').notNull().default('pending'),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     activeStreamId: text('active_stream_id'),
     activeStreamStartedAt: timestamp('active_stream_started_at', { withTimezone: true }),
     activeStreamResumable: boolean('active_stream_resumable').notNull().default(false),

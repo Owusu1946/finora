@@ -40,42 +40,40 @@ export function FxQuoteStep({
         subtitle='Indicative rate · finalised at settlement'
       />
       <View
-        className='border p-3.5 gap-2.5 bg-background border-border'
+        className='border p-4 gap-3 bg-background border-border'
         style={[styles.card]}
       >
         <Row
           label='You send'
           value={formatPaymentAmount(amount, quote.from)}
-          colors={colors}
         />
         <Row
           label='Fee'
           value={formatPaymentAmount(quote.fee, quote.from)}
-          colors={colors}
         />
         <Row
           label='Rate'
           value={`1 ${quote.from} = ${quote.rate} ${quote.to}`}
-          colors={colors}
         />
         <Row
           label='Recipient gets'
           value={formatPaymentAmount(quote.convertedAmount, quote.to)}
-          colors={colors}
           emphasize
         />
       </View>
       <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          className='flex-1 min-h-[46px] border items-center justify-center'
-          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+            Back
+          </Text>
         </Pressable>
         <Pressable
           onPress={onContinue}
-          className='flex-[1.4] min-h-[46px] items-center justify-center'
+          className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-40'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -85,7 +83,7 @@ export function FxQuoteStep({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='text-[16px] font-semibold'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
           >
             Review payment
           </Text>
@@ -95,29 +93,16 @@ export function FxQuoteStep({
   );
 }
 
-function Row({
-  label,
-  value,
-  colors: _colors,
-  emphasize,
-}: {
-  label: string;
-  value: string;
-  colors: { mutedForeground: string; foreground: string };
-  emphasize?: boolean;
-}) {
+function Row({ label, value, emphasize }: { label: string; value: string; emphasize?: boolean }) {
   return (
     <View className='flex-row justify-between items-center gap-3'>
-      <Text className='text-[14px] font-medium text-muted-foreground'>{label}</Text>
+      <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
       <Text
-        className='text-[15px] tracking-[-0.2px] text-foreground'
-        style={[
-          {
-            fontWeight: emphasize ? '700' : '600',
-            fontFamily: 'DMSans_400Regular',
-            fontSize: emphasize ? 17 : 14,
-          },
-        ]}
+        className={
+          emphasize
+            ? 'font-sans-semibold text-[17px] tracking-[-0.3px] tabular-nums text-foreground'
+            : 'font-sans-semibold text-[16px] tracking-[-0.2px] tabular-nums text-foreground'
+        }
       >
         {value}
       </Text>
@@ -128,11 +113,5 @@ function Row({
 const styles = {
   card: {
     borderRadius: Radius.lg,
-  },
-  navBtn: {
-    borderRadius: Radius.composer,
-  },
-  navBtnPrimary: {
-    borderRadius: Radius.composer,
   },
 };

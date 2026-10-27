@@ -59,7 +59,7 @@ export const ListEmployeesToolUI = makeAssistantToolUI<Record<string, never>, Li
 
     return (
       <View
-        className='my-1.5 border p-4 gap-3 border-border bg-composer'
+        className='my-1.5 border p-4 gap-3.5 border-border bg-composer'
         style={[styles.card]}
       >
         <Text className='font-sans-semibold text-[13px] text-muted-foreground'>
@@ -79,7 +79,7 @@ export const ListEmployeesToolUI = makeAssistantToolUI<Record<string, never>, Li
                 {employee.role} · {employee.destination.label}
               </Text>
             </View>
-            <Text className='font-sans-semibold text-[14px] text-foreground'>
+            <Text className='font-sans-medium text-[16px] tracking-[-0.2px] tabular-nums text-foreground'>
               {formatPaymentAmount(employee.salary, employee.currency)}
             </Text>
           </View>

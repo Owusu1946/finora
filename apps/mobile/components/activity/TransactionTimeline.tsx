@@ -35,10 +35,11 @@ export function TransactionTimeline({ steps }: { steps: TransactionTimelineStep[
             key={step.id}
             className='flex-row gap-3'
           >
-            <View className='w-[22px] items-center'>
+            <View className='w-[18px] items-center'>
               <View
-                className='h-[22px] w-[22px] items-center justify-center rounded-full border'
+                className='h-[18px] w-[18px] items-center justify-center rounded-full'
                 style={{
+                  borderWidth: 1.5,
                   borderColor: accent,
                   backgroundColor: done || failed ? accent : 'transparent',
                 }}

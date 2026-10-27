@@ -82,7 +82,7 @@ export function CreateVirtualCardWizard({
   return (
     <View
       className={
-        step === 'issued' ? 'my-2.5 w-full' : 'my-2 gap-3 border border-border bg-composer p-3.5'
+        step === 'issued' ? 'my-2.5 w-full' : 'my-2 gap-4 border border-border bg-composer p-5'
       }
       style={step === 'issued' ? undefined : styles.shell}
     >
@@ -99,9 +99,9 @@ export function CreateVirtualCardWizard({
           }
           subtitle={
             step === 'review'
-              ? 'USD card · confirm with your passcode to issue.'
+              ? 'Confirm with your passcode to issue.'
               : step === 'limit'
-                ? 'Virtual cards are issued in USD.'
+                ? 'Cards are issued in USD.'
                 : undefined
           }
         />
@@ -129,16 +129,18 @@ export function CreateVirtualCardWizard({
               setCustomLabel(t);
               setLabel('');
             }}
-            placeholder='Custom label'
+            placeholder='Or type your own label'
             placeholderTextColor={colors.mutedForeground}
-            className='font-sans text-[16px] border px-3 py-3 text-foreground border-border'
+            className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
             style={[styles.input]}
           />
-          <PrimaryButton
-            label='Continue'
-            disabled={!resolvedLabel}
-            onPress={() => setStep('limit')}
-          />
+          <View className='flex-row'>
+            <PrimaryButton
+              label='Continue'
+              disabled={!resolvedLabel}
+              onPress={() => setStep('limit')}
+            />
+          </View>
         </View>
       ) : null}
 
@@ -165,9 +167,9 @@ export function CreateVirtualCardWizard({
               setSpendLimit(null);
             }}
             keyboardType='decimal-pad'
-            placeholder='Custom USD limit'
+            placeholder='Or set your own USD limit'
             placeholderTextColor={colors.mutedForeground}
-            className='font-sans text-[16px] border px-3 py-3 text-foreground border-border'
+            className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
             style={[styles.input]}
           />
           <View className='flex-row gap-2'>
@@ -187,7 +189,7 @@ export function CreateVirtualCardWizard({
       {step === 'review' && resolvedLimit ? (
         <View className='gap-3'>
           <View
-            className='border p-3 gap-2.5 border-border'
+            className='border p-4 gap-3 bg-background border-border'
             style={[styles.review]}
           >
             <Row
@@ -216,10 +218,12 @@ export function CreateVirtualCardWizard({
           </View>
           {onCancelled ? (
             <Pressable
+              accessibilityRole='button'
+              accessibilityLabel='Cancel'
               onPress={onCancelled}
-              className='items-center py-1'
+              className='items-center justify-center rounded-full px-4 py-2 self-center active:opacity-75'
             >
-              <Text className='font-sans text-[14px] text-muted-foreground'>Cancel</Text>
+              <Text className='font-sans-medium text-[14px] text-muted-foreground'>Cancel</Text>
             </Pressable>
           ) : null}
         </View>
@@ -227,7 +231,7 @@ export function CreateVirtualCardWizard({
 
       {step === 'issued' && issued ? (
         <View className='w-[100%] gap-3'>
-          <View className='w-11 h-11 rounded-[22px] items-center justify-center bg-foreground'>
+          <View className='w-11 h-11 rounded-full items-center justify-center bg-foreground'>
             <Icon
               name='check'
               size={24}
@@ -239,9 +243,8 @@ export function CreateVirtualCardWizard({
             <Text className='font-sans-semibold text-[18px] tracking-[-0.3px] text-foreground'>
               Request confirmed
             </Text>
-            <Text className='font-sans text-[14px] leading-[20px] mb-1 text-muted-foreground'>
-              We’re issuing your {issued.label} card. You’ll receive its card details as soon as
-              they’re ready.
+            <Text className='font-sans-medium text-[14px] leading-[20px] mb-1 text-muted-foreground'>
+              Issuing your {issued.label} card. Details land here as soon as they’re ready.
             </Text>
           </View>
         </View>
@@ -255,8 +258,8 @@ export function CreateVirtualCardWizard({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <View className='flex-row justify-between gap-3'>
-      <Text className='font-sans text-[14px] text-muted-foreground'>{label}</Text>
-      <Text className='font-sans-semibold text-[14px] text-foreground'>{value}</Text>
+      <Text className='font-sans-medium text-[13px] text-muted-foreground'>{label}</Text>
+      <Text className='font-sans-medium text-[16px] tabular-nums text-foreground'>{value}</Text>
     </View>
   );
 }
@@ -279,7 +282,7 @@ function PrimaryButton({
         haptics.selection();
         onPress();
       }}
-      className='flex-1 py-3 items-center'
+      className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-50'
       style={[
         styles.primary,
         {
@@ -289,7 +292,7 @@ function PrimaryButton({
       ]}
     >
       <Text
-        className='font-sans-semibold text-[15px]'
+        className='font-sans-semibold text-[16px] tracking-[-0.2px] text-primary-foreground'
         style={[{ color: disabled ? colors.mutedForeground : colors.primaryForeground }]}
       >
         {label}
@@ -305,10 +308,12 @@ function SecondaryButton({ label, onPress }: { label: string; onPress: () => voi
         haptics.selection();
         onPress();
       }}
-      className='border py-3 px-4 items-center justify-center border-border'
+      className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
       style={[styles.secondary]}
     >
-      <Text className='font-sans-medium text-[15px] text-foreground'>{label}</Text>
+      <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -318,7 +323,7 @@ const styles = {
     borderRadius: Radius.card,
   },
   input: {
-    borderRadius: Radius.md,
+    borderRadius: Radius.composer,
   },
   primary: {
     borderRadius: Radius.pill,

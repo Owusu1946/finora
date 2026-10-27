@@ -90,7 +90,7 @@ function IntegrationCard({
           <Pressable
             disabled={busy}
             onPress={onDisconnect}
-            className='min-h-[46px] items-center justify-center rounded-[32px] border border-border px-3'
+            className='min-h-[46px] items-center justify-center rounded-full bg-muted px-3'
             style={({ pressed }) => ({ opacity: pressed || busy ? 0.7 : 1 })}
           >
             <Text className='font-sans-semibold text-[15px] text-foreground'>Disconnect</Text>
@@ -100,7 +100,7 @@ function IntegrationCard({
         <Pressable
           disabled={busy}
           onPress={onConnect}
-          className='mt-1 min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+          className='mt-1 min-h-[46px] items-center justify-center rounded-full bg-foreground px-3'
           style={({ pressed }) => ({ opacity: pressed || busy ? 0.85 : 1 })}
         >
           <Text className='font-sans-semibold text-[15px] text-background'>
@@ -428,7 +428,7 @@ export default function IntegrationsScreen() {
                 aui.composer.setText('Find unpaid invoices from suppliers');
                 aui.composer.send();
               }}
-              className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+              className='min-h-[46px] items-center justify-center rounded-full bg-foreground px-3'
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
               <Text className='font-sans-semibold text-[15px] text-background'>Review in chat</Text>
@@ -447,7 +447,7 @@ export default function IntegrationsScreen() {
                   .finally(() => setBusyKey(null));
               }}
               disabled={busyKey === 'gmail'}
-              className='min-h-[46px] items-center justify-center rounded-[32px] border border-border px-3'
+              className='min-h-[46px] items-center justify-center rounded-full bg-muted px-3'
               style={({ pressed }) => ({ opacity: pressed || busyKey === 'gmail' ? 0.7 : 1 })}
             >
               <Text className='font-sans-semibold text-[15px] text-foreground'>Sync now</Text>
@@ -506,7 +506,7 @@ export default function IntegrationsScreen() {
                 aui.composer.setText('What’s due on my calendar this week?');
                 aui.composer.send();
               }}
-              className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+              className='min-h-[46px] items-center justify-center rounded-full bg-foreground px-3'
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
               <Text className='font-sans-semibold text-[15px] text-background'>Ask in chat</Text>
@@ -525,7 +525,7 @@ export default function IntegrationsScreen() {
                   .finally(() => setBusyKey(null));
               }}
               disabled={busyKey === 'calendar'}
-              className='min-h-[46px] items-center justify-center rounded-[32px] border border-border px-3'
+              className='min-h-[46px] items-center justify-center rounded-full bg-muted px-3'
               style={({ pressed }) => ({ opacity: pressed || busyKey === 'calendar' ? 0.7 : 1 })}
             >
               <Text className='font-sans-semibold text-[15px] text-foreground'>Sync now</Text>
@@ -562,7 +562,7 @@ export default function IntegrationsScreen() {
                 aui.composer.setText('Show payment requests from my SMS inbox');
                 aui.composer.send();
               }}
-              className='min-h-[46px] items-center justify-center rounded-[32px] bg-foreground px-3'
+              className='min-h-[46px] items-center justify-center rounded-full bg-foreground px-3'
               style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
             >
               <Text className='font-sans-semibold text-[15px] text-background'>Ask in chat</Text>
