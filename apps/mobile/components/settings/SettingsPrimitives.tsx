@@ -286,7 +286,10 @@ export function SettingsSwitchRow({
             }
           }}
         >
-          <Toggle value={optimisticValue} disabled={disabled} />
+          <Toggle
+            value={optimisticValue}
+            disabled={disabled}
+          />
         </Pressable>
       }
     />

@@ -109,7 +109,9 @@ function AttachButton() {
       haptics.success();
     } catch (error) {
       showComposerNotice(
-        error instanceof Error ? `Could not attach file · ${error.message}` : 'Could not attach file',
+        error instanceof Error
+          ? `Could not attach file · ${error.message}`
+          : 'Could not attach file',
       );
     }
   };
@@ -175,10 +177,10 @@ function AttachButton() {
     }
   };
 
-const ATTACHMENT_ACTIONS = [
-  { key: 'photo', label: 'Photo library', icon: 'image' as const },
-  { key: 'document', label: 'Choose document', icon: 'file' as const },
-] as const;
+  const ATTACHMENT_ACTIONS = [
+    { key: 'photo', label: 'Photo library', icon: 'image' as const },
+    { key: 'document', label: 'Choose document', icon: 'file' as const },
+  ] as const;
 
   const [pickerVisible, setPickerVisible] = useState(false);
 
@@ -234,18 +236,14 @@ const ATTACHMENT_ACTIONS = [
             accessibilityRole='button'
             onPress={() => pick(action.key)}
             className='min-h-[52px] flex-row items-center gap-3 bg-muted px-4'
-            style={({ pressed }) => [
-              { borderRadius: Radius.md, opacity: pressed ? 0.8 : 1 },
-            ]}
+            style={({ pressed }) => [{ borderRadius: Radius.md, opacity: pressed ? 0.8 : 1 }]}
           >
             <Icon
               name={action.icon}
               size={18}
               color={colors.foreground}
             />
-            <Text className='font-sans-semibold text-[16px] text-foreground'>
-              {action.label}
-            </Text>
+            <Text className='font-sans-semibold text-[16px] text-foreground'>{action.label}</Text>
           </Pressable>
         ))}
         <Pressable
