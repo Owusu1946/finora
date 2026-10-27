@@ -74,14 +74,6 @@ const TAP_WEIGHT = 1 / (2 * TAP_PAIRS + 1);
 /* Shader sources                                                      */
 /* ------------------------------------------------------------------ */
 
-function makeEffect(source: string) {
-  const result = Skia.RuntimeEffect.Make(source);
-  if (!result) {
-    throw new Error('progressive-blur: shader failed to compile');
-  }
-  return result;
-}
-
 /**
  * Variable sigma along one axis, falloff = 1 - smoothstep(t) then ^1.5:
  * flat near the edge (the blur saturates, like native materials), and both
@@ -114,8 +106,17 @@ ${taps}
 // Inner pass blurs horizontally first; the outer pass then blurs vertically.
 // The empty child-shader name binds the previous filter's output (Skia auto-
 // binds a single child when the chain ends with no explicit name).
-const HorizontalEffect = makeEffect(makeAxisShader('x'));
-const VerticalEffect = makeEffect(makeAxisShader('y'));
+function effectFor(source: string) {
+  try {
+    return Skia.RuntimeEffect.Make(source);
+  } catch (error) {
+    console.error('[progressive-blur] shader compile failed:', error);
+    return null;
+  }
+}
+
+const HorizontalEffect = effectFor(makeAxisShader('x'));
+const VerticalEffect = effectFor(makeAxisShader('y'));
 
 /* ------------------------------------------------------------------ */
 /* Color helper                                                        */
@@ -159,6 +160,17 @@ export function ProgressiveBlur({
   const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
   const h = measuredHeight ?? height;
   const span = reach ?? h;
+
+  // Devices that cannot compile the runtime effect fall back to a plain
+  // tinted surface instead of an unreadable transparent header.
+  if (!HorizontalEffect || !VerticalEffect) {
+    return (
+      <View
+        pointerEvents='none'
+        style={[style, { backgroundColor: tint ?? 'transparent', height: h }]}
+      />
+    );
+  }
 
   return (
     <View
