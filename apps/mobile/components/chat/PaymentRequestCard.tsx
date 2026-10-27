@@ -260,7 +260,7 @@ export function PaymentRequestWizard({
       <View className='flex-row gap-2'>
         <Pressable
           onPress={goBack}
-          className='flex-1 min-h-[46px] rounded-full bg-muted items-center justify-center'
+          className='flex-1 min-h-[46px] rounded-full bg-muted items-center justify-center px-3.5'
           style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
           <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -270,7 +270,7 @@ export function PaymentRequestWizard({
         <Pressable
           disabled={!canContinue}
           onPress={goNext}
-          className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center'
+          className='flex-[1.4] min-h-[46px] rounded-full items-center justify-center px-3.5'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,

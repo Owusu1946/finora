@@ -464,7 +464,7 @@ function SentHero({
       className='items-center gap-2 pt-2 pb-1'
       style={[{ opacity, transform: [{ scale }] }]}
     >
-      <View className='w-16 h-16 rounded-[32px] items-center justify-center mb-1 bg-muted'>
+      <View className='w-16 h-16 rounded-full items-center justify-center mb-1 bg-muted'>
         <Icon
           name='check'
           size={28}

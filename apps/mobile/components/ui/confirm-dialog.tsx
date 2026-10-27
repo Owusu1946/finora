@@ -139,7 +139,7 @@ export function ConfirmDialog({
               accessibilityRole='button'
               accessibilityLabel={cancelLabel}
               onPress={onCancel}
-              className='min-h-[42px] flex-1 items-center justify-center rounded-full bg-muted active:bg-border'
+              className='min-h-[42px] flex-1 items-center justify-center rounded-full bg-muted px-3.5 active:bg-border'
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
                 {cancelLabel}
@@ -149,7 +149,7 @@ export function ConfirmDialog({
               accessibilityRole='button'
               accessibilityLabel={confirmLabel}
               onPress={confirm}
-              className='min-h-[42px] flex-1 items-center justify-center rounded-full bg-destructive active:opacity-80'
+              className='min-h-[42px] flex-1 items-center justify-center rounded-full bg-destructive px-3.5 active:opacity-80'
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-destructive-foreground'>
                 {confirmLabel}

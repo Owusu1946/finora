@@ -781,7 +781,10 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
                 accessibilityLabel={`Select ${item.title}`}
                 onPress={() => selectSlashCommand(item.command)}
                 className='min-h-[54px] flex-row items-center gap-3 px-2 py-1.5'
-                style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+                style={({ pressed }) => [
+                  styles.mentionRow,
+                  pressed && { backgroundColor: colors.muted },
+                ]}
               >
                 <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
                   <Icon
@@ -820,7 +823,10 @@ const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
                   accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
                   onPress={() => selectTag(profile)}
                   className='min-h-[50px] flex-row items-center gap-2.5 px-2 py-1.5'
-                  style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+                  style={({ pressed }) => [
+                    styles.mentionRow,
+                    pressed && { backgroundColor: colors.muted },
+                  ]}
                 >
                   <View
                     className='w-9 h-9 rounded-full items-center justify-center'

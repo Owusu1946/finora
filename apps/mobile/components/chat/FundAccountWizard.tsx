@@ -555,7 +555,7 @@ function NavBack({ onBack }: { onBack: () => void }) {
   return (
     <Pressable
       onPress={onBack}
-      className='min-h-11 items-center justify-center rounded-full bg-muted'
+      className='min-h-11 items-center justify-center rounded-full bg-muted px-4'
       style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
     >
       <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>Back</Text>

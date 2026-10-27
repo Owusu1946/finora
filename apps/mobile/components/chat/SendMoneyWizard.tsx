@@ -442,7 +442,7 @@ export function SendMoneyWizard({
           {step === 'rail' ? (
             <Pressable
               onPress={() => goBackFrom('rail')}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
               style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
@@ -452,7 +452,7 @@ export function SendMoneyWizard({
           ) : (
             <Pressable
               onPress={onCancel}
-              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-3.5'
               style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
               <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>

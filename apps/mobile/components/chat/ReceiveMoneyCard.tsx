@@ -391,7 +391,7 @@ export function ReceiveMoneyCard({ methods, initialMethodId }: ReceiveMoneyCardP
             <View className='flex-row gap-2 w-[100%] mt-1'>
               <Pressable
                 onPress={shareQr}
-                className='min-h-[46px] flex-row items-center justify-center gap-2'
+                className='min-h-[46px] flex-row items-center justify-center gap-2 px-4'
                 style={({ pressed }) => [
                   styles.primaryBtn,
                   {

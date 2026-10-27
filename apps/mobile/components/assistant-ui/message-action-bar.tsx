@@ -36,8 +36,7 @@ function FeedbackButton({ type }: { type: 'positive' | 'negative' }) {
     <Pressable
       accessibilityLabel={isPositive ? 'Helpful response' : 'Unhelpful response'}
       onPress={handlePress}
-      className='p-1.5'
-      style={({ pressed }) => [pressed && { backgroundColor: colors.muted }]}
+      style={({ pressed }) => [styles.button, pressed && { backgroundColor: colors.muted }]}
     >
       <Icon
         name={isPositive ? 'thumb-up' : 'thumb-down'}

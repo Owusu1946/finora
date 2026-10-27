@@ -234,7 +234,7 @@ export default function ApprovalDetailScreen() {
           {status === 'sent' ? (
             <Pressable
               onPress={openTransaction}
-              className='min-h-[46px] items-center justify-center bg-muted'
+              className='min-h-[46px] items-center justify-center px-4 bg-muted'
               style={({ pressed }) => ({
                 borderRadius: Radius.pill,
                 opacity: pressed ? 0.75 : 1,
@@ -252,7 +252,7 @@ export default function ApprovalDetailScreen() {
                 haptics.selection();
                 router.back();
               }}
-              className='min-h-[46px] items-center justify-center bg-muted'
+              className='min-h-[46px] items-center justify-center px-4 bg-muted'
               style={({ pressed }) => ({
                 borderRadius: Radius.pill,
                 opacity: pressed ? 0.75 : 1,
