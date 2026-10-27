@@ -17,7 +17,6 @@ import { PurposeCodeStep } from '@/components/chat/send/PurposeCodeStep';
 import { RailStep } from '@/components/chat/send/RailStep';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 import {
   CRYPTO_CORRIDOR,
@@ -176,7 +175,6 @@ export function SendMoneyWizard({
   /** Called when user wants to leave confirm and edit (optional) */
   onEdit?: () => void;
 }) {
-  const { colors } = useTheme();
   const [step, setStep] = useState<Step>(() => initialStep(seed));
   const [countryQuery, setCountryQuery] = useState('');
   const [country, setCountry] = useState<string | null>(
@@ -327,7 +325,7 @@ export function SendMoneyWizard({
           }}
           className='py-1 px-1'
         >
-          <Text className='text-[14px] font-medium text-muted-foreground'>← Edit details</Text>
+          <Text className='font-sans-medium text-[14px] text-muted-foreground'>← Edit details</Text>
         </Pressable>
       </View>
     );
@@ -335,7 +333,7 @@ export function SendMoneyWizard({
 
   return (
     <View
-      className='my-2 border p-3.5 gap-3 max-w-[420px] self-stretch bg-composer border-border'
+      className='my-2 border p-4 gap-3.5 max-w-[420px] self-stretch bg-composer border-border'
       style={[styles.card]}
     >
       {step === 'country' ? (
@@ -439,18 +437,22 @@ export function SendMoneyWizard({
           {step === 'rail' ? (
             <Pressable
               onPress={() => goBackFrom('rail')}
-              className='flex-1 min-h-[46px] border items-center justify-center'
-              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Back
+              </Text>
             </Pressable>
           ) : (
             <Pressable
               onPress={onCancel}
-              className='flex-1 min-h-[46px] border items-center justify-center'
-              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text className='text-[16px] font-semibold text-foreground'>Cancel</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Cancel
+              </Text>
             </Pressable>
           )}
         </View>
@@ -461,9 +463,6 @@ export function SendMoneyWizard({
 
 const styles = {
   card: {
-    borderRadius: Radius.lg,
-  },
-  navBtn: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.card,
   },
 };

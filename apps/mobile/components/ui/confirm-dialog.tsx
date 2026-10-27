@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { AppText as Text } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { haptics } from '@/lib/haptics';
 
 /** Same dimming feel as the bottom sheet. */
@@ -121,8 +122,8 @@ export function ConfirmDialog({
         </Animated.View>
 
         <Animated.View
-          className='w-full max-w-[320px] items-center rounded-[22px] border border-border bg-card px-5 pb-4 pt-5'
-          style={cardStyle}
+          className='w-full max-w-[320px] items-center border border-border bg-card px-5 pb-4 pt-5'
+          style={[cardStyle, styles.card]}
         >
           <Text className='text-center font-sans-semibold text-[17px] tracking-[-0.3px] text-foreground'>
             {title}
@@ -138,17 +139,21 @@ export function ConfirmDialog({
               accessibilityRole='button'
               accessibilityLabel={cancelLabel}
               onPress={onCancel}
-              className='min-h-[42px] flex-1 items-center justify-center rounded-lg bg-muted active:bg-border'
+              className='min-h-[42px] flex-1 items-center justify-center rounded-full bg-muted active:bg-border'
             >
-              <Text className='font-sans-semibold text-sm text-foreground'>{cancelLabel}</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                {cancelLabel}
+              </Text>
             </Pressable>
             <Pressable
               accessibilityRole='button'
               accessibilityLabel={confirmLabel}
               onPress={confirm}
-              className='min-h-[42px] flex-1 items-center justify-center rounded-lg bg-destructive active:opacity-80'
+              className='min-h-[42px] flex-1 items-center justify-center rounded-full bg-destructive active:opacity-80'
             >
-              <Text className='font-sans-semibold text-sm text-white'>{confirmLabel}</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-destructive-foreground'>
+                {confirmLabel}
+              </Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -156,3 +161,9 @@ export function ConfirmDialog({
     </Modal>
   );
 }
+
+const styles = {
+  card: {
+    borderRadius: Radius.lg,
+  },
+};

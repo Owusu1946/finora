@@ -2,7 +2,6 @@ import { Pressable, View } from 'react-native';
 
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { AppText as Text } from '@/components/ui/text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { PURPOSE_CODE_LABELS, PURPOSE_CODES, type PurposeCode } from '@/lib/send-corridors';
 
@@ -44,15 +43,17 @@ export function PurposeCodeStep({
       <View className='flex-row gap-2.5 mt-1'>
         <Pressable
           onPress={onBack}
-          className='flex-1 min-h-[46px] border items-center justify-center'
-          style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+          className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
         >
-          <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+            Back
+          </Text>
         </Pressable>
         <Pressable
           disabled={!purposeCode}
           onPress={onContinue}
-          className='flex-[1.4] min-h-[46px] items-center justify-center'
+          className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full'
           style={({ pressed }) => [
             {
               backgroundColor: colors.primary,
@@ -62,7 +63,7 @@ export function PurposeCodeStep({
         >
           <Text
             style={{ color: colors.primaryForeground }}
-            className='text-[16px] font-semibold'
+            className='font-sans-semibold text-[16px] tracking-[-0.2px]'
           >
             Continue
           </Text>
@@ -71,12 +72,3 @@ export function PurposeCodeStep({
     </View>
   );
 }
-
-const _styles = {
-  navBtn: {
-    borderRadius: Radius.composer,
-  },
-  navBtnPrimary: {
-    borderRadius: Radius.composer,
-  },
-};

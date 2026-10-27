@@ -68,7 +68,7 @@ export function WizardStepHeader({
         {Array.from({ length: total }, (_, i) => (
           <View
             key={i}
-            className='h-1.5 rounded-[3px]'
+            className='h-1.5 rounded-full'
             style={[
               {
                 backgroundColor: i < step ? colors.foreground : colors.border,

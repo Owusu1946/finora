@@ -166,7 +166,7 @@ export function FundAccountWizard({
 
   return (
     <View
-      className='my-2 border p-3.5 gap-3 max-w-[420px] self-stretch bg-composer border-border'
+      className='my-2 border p-4 gap-3.5 max-w-[420px] self-stretch bg-composer border-border'
       style={[styles.card]}
     >
       {step === 'source' ? (
@@ -212,7 +212,7 @@ export function FundAccountWizard({
                       setStep('details');
                     }
                   }}
-                  className='flex-row items-center gap-3 p-3 border'
+                  className='flex-row items-center gap-3 p-4 border'
                   style={({ pressed }) => [
                     {
                       borderColor: colors.border,
@@ -221,7 +221,7 @@ export function FundAccountWizard({
                     },
                   ]}
                 >
-                  <View className='w-9 h-9 rounded-[18px] items-center justify-center bg-muted'>
+                  <View className='w-9 h-9 rounded-full items-center justify-center bg-muted'>
                     <Icon
                       name={icon}
                       size={16}
@@ -229,8 +229,10 @@ export function FundAccountWizard({
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text className='text-[16px] font-semibold text-foreground'>{copy.label}</Text>
-                    <Text className='text-[13px] font-medium mt-0.5 leading-[16px] text-muted-foreground'>
+                    <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                      {copy.label}
+                    </Text>
+                    <Text className='font-sans-medium text-[13px] mt-0.5 leading-[16px] text-muted-foreground'>
                       {copy.blurb}
                     </Text>
                   </View>
@@ -239,7 +241,7 @@ export function FundAccountWizard({
             })}
           </View>
           <Pressable onPress={onCancelled}>
-            <Text className='text-center font-semibold text-[15px] text-muted-foreground'>
+            <Text className='text-center font-sans-medium text-[15px] text-muted-foreground'>
               Cancel
             </Text>
           </Pressable>
@@ -277,10 +279,7 @@ export function FundAccountWizard({
               />
             ))}
           </View>
-          <NavBack
-            colors={colors}
-            onBack={() => setStep('source')}
-          />
+          <NavBack onBack={() => setStep('source')} />
         </View>
       ) : null}
 
@@ -293,7 +292,7 @@ export function FundAccountWizard({
             subtitle={method.subtitle}
           />
           <View
-            className='self-center p-2.5'
+            className='self-center p-4'
             style={[styles.qrWrap, { backgroundColor: isDark ? '#fff' : colors.background }]}
           >
             <MockQrCode
@@ -316,16 +315,16 @@ export function FundAccountWizard({
               return (
                 <View
                   key={key}
-                  className='flex-row items-center gap-2.5 border px-3 py-2.5 border-border'
+                  className='flex-row items-center gap-2.5 border p-4 border-border'
                   style={[styles.field]}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text className='text-[12px] font-semibold mb-0.5 text-muted-foreground'>
+                    <Text className='font-sans-medium text-[13px] mb-0.5 text-muted-foreground'>
                       {field.label}
                     </Text>
                     <Text
                       selectable
-                      className='text-[15px] font-medium text-foreground'
+                      className='font-sans-medium text-[16px] tabular-nums text-foreground'
                     >
                       {field.value}
                     </Text>
@@ -334,7 +333,7 @@ export function FundAccountWizard({
                     <Pressable
                       hitSlop={8}
                       onPress={() => void copyValue(field.value, key)}
-                      className='w-[34px] h-[34px] rounded-[17px] items-center justify-center bg-muted'
+                      className='w-[34px] h-[34px] rounded-full items-center justify-center bg-muted'
                     >
                       <Icon
                         name={copied ? 'check' : 'copy'}
@@ -347,17 +346,19 @@ export function FundAccountWizard({
               );
             })}
           </View>
-          <Text className='text-[13px] font-medium leading-[17px] text-muted-foreground'>
+          <Text className='font-sans-medium text-[13px] leading-[17px] text-muted-foreground'>
             Send from your {source === 'crypto' ? 'wallet' : 'bank or app'} using these details.
             We’ll credit you when it lands.
           </Text>
           <View className='flex-row gap-2.5'>
             <Pressable
               onPress={() => void shareMethod(method)}
-              className='flex-1 min-h-[46px] border items-center justify-center'
-              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text className='text-[16px] font-semibold text-foreground'>Share</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Share
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -365,21 +366,20 @@ export function FundAccountWizard({
                 setAmount(null);
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center'
+              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
                 { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
               ]}
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='text-[16px] font-semibold'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
               >
                 I’ve sent it
               </Text>
             </Pressable>
           </View>
           <NavBack
-            colors={colors}
             onBack={() =>
               setStep(
                 (source === 'bank' || source === 'crypto') && !seed.currency && !seed.methodId
@@ -455,10 +455,12 @@ export function FundAccountWizard({
           <View className='flex-row gap-2.5'>
             <Pressable
               onPress={() => setStep('source')}
-              className='flex-1 min-h-[46px] border items-center justify-center'
-              style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+              className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted'
+              style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text className='text-[16px] font-semibold text-foreground'>Back</Text>
+              <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>
+                Back
+              </Text>
             </Pressable>
             <Pressable
               disabled={
@@ -475,7 +477,7 @@ export function FundAccountWizard({
                 }
                 setStep('waiting');
               }}
-              className='flex-[1.4] min-h-[46px] items-center justify-center'
+              className='flex-[1.4] min-h-[46px] items-center justify-center rounded-full'
               style={({ pressed }) => [
                 {
                   backgroundColor: colors.primary,
@@ -491,7 +493,7 @@ export function FundAccountWizard({
             >
               <Text
                 style={{ color: colors.primaryForeground }}
-                className='text-[16px] font-semibold'
+                className='font-sans-semibold text-[16px] tracking-[-0.2px]'
               >
                 Send prompt
               </Text>
@@ -509,12 +511,12 @@ export function FundAccountWizard({
             subtitle={
               source === 'momo_pull'
                 ? `Check ${network} on ${phone} and approve the charge`
-                : `Watching ${method?.currency ?? ''} · usually lands in seconds to a day`
+                : `${method?.currency ?? ''} credit · usually lands in seconds to a day`
             }
           />
           <View className='items-center gap-3 py-6'>
             <LoadingIcon color={colors.foreground} />
-            <Text className='text-[14px] font-medium text-muted-foreground'>
+            <Text className='font-sans-medium text-[14px] text-muted-foreground'>
               {source === 'momo_pull' ? 'Collection pending…' : 'Listening for an inbound credit…'}
             </Text>
           </View>
@@ -523,7 +525,7 @@ export function FundAccountWizard({
 
       {step === 'credited' && method && creditAmount != null ? (
         <View className='gap-3'>
-          <View className='w-12 h-12 rounded-[24px] items-center justify-center self-center bg-muted'>
+          <View className='w-12 h-12 rounded-full items-center justify-center self-center bg-muted'>
             <Icon
               name='check'
               size={22}
@@ -536,11 +538,11 @@ export function FundAccountWizard({
           <Text className='font-sans-semibold text-center text-[29px] tracking-[-0.5px] text-foreground'>
             {formatPaymentAmount(creditAmount, method.currency)}
           </Text>
-          <Text className='text-[13px] font-medium leading-[17px] text-muted-foreground'>
+          <Text className='font-sans-medium text-[13px] leading-[17px] text-muted-foreground'>
             Added to your {method.currency} wallet
             {transactionId ? ` · ${transactionId}` : ''}
           </Text>
-          <Text className='text-[13px] font-medium leading-[17px] text-muted-foreground'>
+          <Text className='font-sans-medium text-[13px] leading-[17px] text-muted-foreground'>
             You can send, convert, or hold it — say “send …” when you’re ready.
           </Text>
         </View>
@@ -549,30 +551,21 @@ export function FundAccountWizard({
   );
 }
 
-function NavBack({
-  colors,
-  onBack,
-}: {
-  colors: { border: string; foreground: string };
-  onBack: () => void;
-}) {
+function NavBack({ onBack }: { onBack: () => void }) {
   return (
     <Pressable
       onPress={onBack}
-      className='min-h-10 border items-center justify-center'
-      style={({ pressed }) => [{ borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+      className='min-h-11 items-center justify-center rounded-full bg-muted'
+      style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
     >
-      <Text className='font-semibold text-[15px] text-foreground'>Back</Text>
+      <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-foreground'>Back</Text>
     </Pressable>
   );
 }
 
 const styles = {
   card: {
-    borderRadius: Radius.lg,
-  },
-  sourceRow: {
-    borderRadius: Radius.composer,
+    borderRadius: Radius.card,
   },
   qrWrap: {
     borderRadius: Radius.lg,
@@ -580,16 +573,7 @@ const styles = {
   field: {
     borderRadius: Radius.composer,
   },
-  primaryBtn: {
-    borderRadius: Radius.composer,
-  },
-  secondaryBtn: {
-    borderRadius: Radius.composer,
-  },
   input: {
-    borderRadius: Radius.composer,
-  },
-  backOnly: {
     borderRadius: Radius.composer,
   },
 };

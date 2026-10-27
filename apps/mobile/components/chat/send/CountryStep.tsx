@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { CurrencyIcon } from '@/components/ui/currency-icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { SEND_CORRIDORS } from '@/lib/send-corridors';
 
@@ -51,7 +52,8 @@ export function CountryStep({
         onChangeText={onQueryChange}
         placeholder='Search countries'
         placeholderTextColor={colors.mutedForeground}
-        className='font-sans-medium border rounded-[12px] px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
+        className='font-sans-medium border px-3 py-2.5 text-[16px] text-foreground border-border bg-background'
+        style={[styles.input]}
       />
       {!q ? (
         <>
@@ -112,3 +114,9 @@ export function CountryStep({
     </View>
   );
 }
+
+const styles = {
+  input: {
+    borderRadius: Radius.composer,
+  },
+};
