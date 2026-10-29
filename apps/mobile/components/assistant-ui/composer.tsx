@@ -255,14 +255,19 @@ function AttachButton() {
     setPickerVisible(true);
   };
 
+  // Runs once the attach sheet has fully closed; iOS won't present a picker or
+  // another sheet over one that is still animating away.
+  const afterPickerClosedRef = useRef<(() => void) | null>(null);
+
   const pick = (action: (typeof ATTACHMENT_ACTIONS)[number]['key']) => {
-    setPickerVisible(false);
     haptics.selection();
-    if (action === 'camera') {
-      // iOS can't present a sheet while the attach sheet is still dismissing.
-      setTimeout(() => setCameraVisible(true), 350);
-    } else if (action === 'photo') void handleNativePickImage();
-    else void handleNativePickDocument();
+    afterPickerClosedRef.current =
+      action === 'camera'
+        ? () => setCameraVisible(true)
+        : action === 'photo'
+          ? () => void handleNativePickImage()
+          : () => void handleNativePickDocument();
+    setPickerVisible(false);
   };
 
   return (
@@ -288,6 +293,11 @@ function AttachButton() {
       <SheetModal
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
+        onDismissed={() => {
+          const next = afterPickerClosedRef.current;
+          afterPickerClosedRef.current = null;
+          next?.();
+        }}
         style={{ paddingHorizontal: 20, gap: 3 }}
       >
         <Text className='mb-2 mt-1 font-sans-semibold text-lg text-foreground'>Attach</Text>
