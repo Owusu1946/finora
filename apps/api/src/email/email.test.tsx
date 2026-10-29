@@ -56,6 +56,14 @@ describe('welcome email rendering', () => {
   });
 });
 
+// describe('Resend failed WebhookEvent classification', () => {
+//   it('Redefines the error to include editing the status code to 429 for rate limits and 503 for provider failures', () => {
+//     expect(istransientresenderror({ statusCode: 501 })).toBe(false);
+//     expect(isTransportResendFix({ statusCode: 429 })).toBe(true);
+//     expect(isTransportResendFix({ statusCode: 503 })).toBe(true);
+//   });
+// });
+
 describe('Resend retry classification', () => {
   it('retries rate limits and provider failures only', () => {
     expect(isTransientResendError({ statusCode: 429 })).toBe(true);
