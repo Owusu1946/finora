@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Finora uses the camera to scan payment QR codes.",
+        "NSCameraUsageDescription": "Finora uses the camera to scan payment QR codes and to take photos of receipts and documents you attach to chat.",
         "NSFaceIDUsageDescription": "Finora uses Face ID to unlock your account and approve transactions."
       },
       "associatedDomains": ["applinks:pay.finora.app"]
@@ -62,7 +62,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Finora to scan payment QR codes.",
+          "cameraPermission": "Allow Finora to scan payment QR codes and take photos you attach to chat.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
