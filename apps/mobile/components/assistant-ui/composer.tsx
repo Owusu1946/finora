@@ -45,6 +45,7 @@ import {
   transcribeRecording,
   TranscriptionApiError,
 } from '@/lib/transcription-api';
+import { loadVoiceKeyterms } from '@/lib/voice-keyterms';
 
 import type { AttachAction } from './attach-menu.types';
 
@@ -420,6 +421,8 @@ function useVoiceComposer() {
   const failedTakeRef = useRef<FailedTake | null>(null);
   const [retrying, setRetrying] = useState(false);
   const retryingRef = useRef(false);
+  /** Keyterms for the current take, reused by the upload fallback and retries. */
+  const keytermsRef = useRef<string[]>([]);
   /** 0 while speaking; climbs to 1 as a pause runs out and auto-finish nears. */
   const [autoStopProgress, setAutoStopProgress] = useState(0);
 
@@ -490,7 +493,12 @@ function useVoiceComposer() {
     setRetrying(true);
     haptics.selection();
     try {
-      const result = await transcribeRecording(take.uri, VOICE_CONTENT_TYPE, getToken);
+      const result = await transcribeRecording(
+        take.uri,
+        VOICE_CONTENT_TYPE,
+        getToken,
+        keytermsRef.current,
+      );
       setFailedTake(null);
       const transcript = result.transcript.trim();
       if (transcript && mountedRef.current) {
@@ -549,7 +557,12 @@ function useVoiceComposer() {
         return;
       }
 
-      const result = await transcribeRecording(uri, VOICE_CONTENT_TYPE, getToken);
+      const result = await transcribeRecording(
+        uri,
+        VOICE_CONTENT_TYPE,
+        getToken,
+        keytermsRef.current,
+      );
       if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
       const transcript = result.transcript.trim();
@@ -640,6 +653,8 @@ function useVoiceComposer() {
     setAutoStopProgress(0);
     // A new take replaces any failed one waiting for a retry.
     discardFailedTake();
+    // Load in parallel with permission and recorder setup; never block recording on it.
+    const keytermsPromise = loadVoiceKeyterms().catch(() => [] as string[]);
     const sessionId = voiceSessionRef.current + 1;
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
@@ -680,16 +695,24 @@ function useVoiceComposer() {
       resetLivePreview();
       const liveUri = recorder.uri;
       if (liveUri) {
-        void startLiveTranscription(liveUri, getToken, {
-          onTranscript: (text, isFinal) => {
-            if (voiceSessionRef.current !== sessionId) return;
-            if (isFinal) liveFinalsRef.current = `${liveFinalsRef.current} ${text}`.trim();
-            setLivePartial(isFinal ? '' : text);
+        const keyterms = await keytermsPromise;
+        keytermsRef.current = keyterms;
+        if (voiceSessionRef.current !== sessionId) return;
+        void startLiveTranscription(
+          liveUri,
+          getToken,
+          {
+            onTranscript: (text, isFinal) => {
+              if (voiceSessionRef.current !== sessionId) return;
+              if (isFinal) liveFinalsRef.current = `${liveFinalsRef.current} ${text}`.trim();
+              setLivePartial(isFinal ? '' : text);
+            },
+            onError: (error) => {
+              console.warn('[voice:live]', error);
+            },
           },
-          onError: (error) => {
-            console.warn('[voice:live]', error);
-          },
-        })
+          keyterms,
+        )
           .then((session) => {
             if (voiceSessionRef.current !== sessionId) void session.stop(false);
             else liveSessionRef.current = session;

@@ -30,7 +30,12 @@ function safelyDelete(recording: File) {
  * Transcribes a recording. The file is deleted only on success, so a failed
  * take can be retried; callers delete it with `deleteRecording` when done.
  */
-export async function transcribeRecording(uri: string, contentType: string, getToken: GetToken) {
+export async function transcribeRecording(
+  uri: string,
+  contentType: string,
+  getToken: GetToken,
+  keyterms: string[] = [],
+) {
   const recording = new File(uri);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS);
@@ -62,7 +67,10 @@ export async function transcribeRecording(uri: string, contentType: string, getT
       );
     }
 
-    const response = await fetch(`${apiUrl}/v1/transcriptions`, {
+    const query = new URLSearchParams();
+    for (const term of keyterms) query.append('keyterm', term);
+    const search = query.toString();
+    const response = await fetch(`${apiUrl}/v1/transcriptions${search ? `?${search}` : ''}`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

@@ -49,6 +49,8 @@ export async function startLiveTranscription(
   recordingUri: string,
   getToken: GetToken,
   handlers: LiveTranscriptionHandlers,
+  /** Names and money words to prime recognition with (Deepgram keyterm prompting). */
+  keyterms: string[] = [],
 ): Promise<LiveTranscriptionSession> {
   const apiUrl = getApiUrl();
   if (!apiUrl) throw new Error('API URL is not configured.');
@@ -71,6 +73,7 @@ export async function startLiveTranscription(
     interim_results: 'true',
     endpointing: '700',
   });
+  for (const term of keyterms) params.append('keyterm', term);
   const headers = { Authorization: `Bearer ${grant.token}` };
 
   // RN's WebSocket takes extra headers through its third constructor arg,
