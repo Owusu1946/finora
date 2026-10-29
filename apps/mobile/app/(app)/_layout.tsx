@@ -3,9 +3,10 @@ import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer, useDrawerStatus } from 'expo-router/drawer';
 import { DrawerActions, useHeaderHeight } from 'expo-router/react-navigation';
 import { useEffect, useRef } from 'react';
-import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HeaderGlassButton, HeaderGlassSurface } from '@/components/navigation/header-glass-button';
 import { AccountBadge, HeaderTitleWithAccount } from '@/components/shell/account-badge';
 import { ThreadListDrawer } from '@/components/thread-list/ThreadListDrawer';
 import { Icon } from '@/components/ui/icon';
@@ -33,109 +34,64 @@ function HeaderBlurBackground() {
 function NewChatButton() {
   const aui = useAui();
   const router = useRouter();
-  const { colors } = useTheme();
   const navigateOnce = usePressGuard();
 
   return (
-    <Pressable
-      accessibilityLabel='New chat'
-      hitSlop={6}
+    <HeaderGlassButton
+      icon='compose'
+      label='New chat'
       onPress={() => {
         haptics.selection();
         aui.threads.switchToNewThread();
         navigateOnce(() => router.push('/'));
       }}
-      className='size-8 items-center justify-center rounded-full active:opacity-70'
-    >
-      <Icon
-        name='compose'
-        size={20}
-        color={colors.foreground}
-      />
-    </Pressable>
+    />
   );
 }
 
 function ScanHeaderButton() {
   const router = useRouter();
-  const { colors } = useTheme();
   const navigateOnce = usePressGuard();
 
   return (
-    <Pressable
-      accessibilityLabel='Scan QR to pay'
-      hitSlop={6}
+    <HeaderGlassButton
+      icon='qr'
+      label='Scan QR to pay'
       onPress={() => {
         haptics.selection();
         navigateOnce(() => router.push('/scan'));
       }}
-      className='size-8 items-center justify-center rounded-full active:opacity-70'
-    >
-      <Icon
-        name='qr'
-        size={20}
-        color={colors.foreground}
-      />
-    </Pressable>
+    />
   );
 }
 
 function DrawerTrigger() {
   const navigation = useNavigation();
-  const { colors } = useTheme();
   const drawerStatus = useDrawerStatus();
   const navigateOnce = usePressGuard();
 
   if (drawerStatus === 'open') return null;
 
   return (
-    <Pressable
-      accessibilityLabel='Open menu'
-      hitSlop={8}
-      onPress={() => {
-        haptics.selection();
-        navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
-      }}
-      className='size-10 items-center justify-center rounded-full active:opacity-75'
-      style={{
-        backgroundColor: colors.card,
-        borderColor: colors.border,
-        borderWidth: StyleSheet.hairlineWidth,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-      }}
-    >
-      <Icon
-        name='menu'
-        size={22}
-        color={colors.foreground}
+    <HeaderGlassSurface>
+      <HeaderGlassButton
+        icon='menu'
+        label='Open menu'
+        onPress={() => {
+          haptics.selection();
+          navigateOnce(() => navigation.dispatch(DrawerActions.openDrawer()));
+        }}
       />
-    </Pressable>
+    </HeaderGlassSurface>
   );
 }
 
 function ChatHeaderRight() {
-  const { colors } = useTheme();
   return (
-    <View
-      className='h-10 flex-row items-center rounded-full px-1'
-      style={{
-        backgroundColor: colors.card,
-        borderColor: colors.border,
-        borderWidth: StyleSheet.hairlineWidth,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-      }}
-    >
+    <HeaderGlassSurface>
       <NewChatButton />
-      <View
-        style={{
-          width: StyleSheet.hairlineWidth,
-          height: 16,
-          backgroundColor: colors.border,
-          marginHorizontal: 1,
-        }}
-      />
       <ScanHeaderButton />
-    </View>
+    </HeaderGlassSurface>
   );
 }
 
