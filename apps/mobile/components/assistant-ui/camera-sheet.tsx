@@ -143,6 +143,8 @@ export function CameraSheet({
       onClose={close}
       showHandle={false}
       detents={[{ fraction: 0.7 }]}
+      edgeToEdge
+      backgroundColor='#000000'
       style={styles.sheet}
     >
       {visible && permission?.granted ? (
