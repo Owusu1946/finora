@@ -280,6 +280,9 @@ function AttachButton() {
     <>
       <MenuView
         actions={attachmentActions}
+        // Fixed size: the native host otherwise collapses until it measures, and
+        // the scan button slides under the attach icon.
+        style={{ width: 38, height: 38 }}
         colorScheme={isDark ? 'dark' : 'light'}
         onOpenMenu={haptics.selection}
         onPressAction={({ nativeEvent }) => handleAttachAction(nativeEvent.event)}
