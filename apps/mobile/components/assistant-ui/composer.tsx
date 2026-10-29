@@ -40,7 +40,6 @@ import {
 import { haptics } from '@/lib/haptics';
 import { startLiveTranscription, type LiveTranscriptionSession } from '@/lib/live-transcription';
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
-import { ensureMediaLibraryPermission } from '@/lib/permissions';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
 
 import {
@@ -178,11 +177,7 @@ function AttachButton() {
   };
 
   const handleNativePickImage = async () => {
-    const hasPermission = await ensureMediaLibraryPermission(
-      'Allow photo access in Settings to attach images.',
-    );
-    if (!hasPermission) return;
-
+    // The system photo picker runs out of process and needs no photo permission.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
