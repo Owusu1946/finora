@@ -1,5 +1,6 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
+import { MenuView, type MenuAction } from '@expo/ui/community/menu';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -28,7 +29,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
-import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -130,7 +130,7 @@ const TAG_ACCENT = {
 } as const;
 
 function AttachButton() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const aui = useAui();
   const { getToken } = useAuth();
 
@@ -228,101 +228,71 @@ function AttachButton() {
     );
   };
 
-  const ATTACHMENT_ACTIONS = [
-    { key: 'camera', label: 'Take photo', icon: 'camera' as const },
-    { key: 'photo', label: 'Photo library', icon: 'image' as const },
-    { key: 'document', label: 'Choose document', icon: 'file' as const },
-  ] as const;
-
-  const [pickerVisible, setPickerVisible] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
 
-  const openAttachmentPicker = () => {
+  const ios = process.env.EXPO_OS === 'ios';
+  const attachmentActions: MenuAction[] = [
+    { id: 'camera', title: 'Take photo', image: ios ? 'camera' : undefined },
+    { id: 'photo', title: 'Photo library', image: ios ? 'photo.on.rectangle' : undefined },
+    { id: 'document', title: 'Choose document', image: ios ? 'doc' : undefined },
+  ];
+
+  // A native picker rejects if it can't open; show it in the composer instead of throwing.
+  const runPicker = (pick: () => Promise<void>) => {
+    void pick().catch(() => showComposerNotice('Could not open the picker. Try again.'));
+  };
+
+  // The native menu isn't a presented screen, so pickers open immediately from here.
+  const handleAttachAction = (action: string) => {
     haptics.selection();
-    // Settle keyboard layout before the system picker takes over.
     Keyboard.dismiss();
-
-    if (Platform.OS === 'web' || typeof document !== 'undefined') {
-      openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
-      return;
-    }
-
-    setPickerVisible(true);
+    if (action === 'camera') setCameraVisible(true);
+    else if (action === 'photo') runPicker(handleNativePickImage);
+    else if (action === 'document') runPicker(handleNativePickDocument);
   };
 
-  // Runs once the attach sheet has fully closed; iOS won't present a picker or
-  // another sheet over one that is still animating away.
-  const afterPickerClosedRef = useRef<(() => void) | null>(null);
+  const attachIcon = (
+    <Icon
+      name='attach'
+      size={20}
+      color={colors.mutedForeground}
+    />
+  );
 
-  const pick = (action: (typeof ATTACHMENT_ACTIONS)[number]['key']) => {
-    haptics.selection();
-    afterPickerClosedRef.current =
-      action === 'camera'
-        ? () => setCameraVisible(true)
-        : action === 'photo'
-          ? () => void handleNativePickImage()
-          : () => void handleNativePickDocument();
-    setPickerVisible(false);
-  };
-
-  return (
-    <>
+  if (Platform.OS === 'web' || typeof document !== 'undefined') {
+    return (
       <Pressable
         accessibilityLabel='Attach file or photo'
         hitSlop={8}
-        onPress={openAttachmentPicker}
-        className='h-[38px] w-[38px] items-center justify-center rounded-full'
-        style={({ pressed }) => [
-          {
-            backgroundColor: pressed ? colors.muted : 'transparent',
-          },
-        ]}
-      >
-        <Icon
-          name='attach'
-          size={20}
-          color={colors.mutedForeground}
-        />
-      </Pressable>
-
-      <SheetModal
-        visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        onDismissed={() => {
-          const next = afterPickerClosedRef.current;
-          afterPickerClosedRef.current = null;
-          next?.();
+        onPress={() => {
+          haptics.selection();
+          openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
         }}
-        style={{ paddingHorizontal: 20, gap: 3 }}
+        className='h-[38px] w-[38px] items-center justify-center rounded-full'
+        style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
       >
-        <Text className='mb-2 mt-1 font-sans-semibold text-lg text-foreground'>Attach</Text>
-        {ATTACHMENT_ACTIONS.map((action) => (
-          <Pressable
-            key={action.key}
-            accessibilityRole='button'
-            onPress={() => pick(action.key)}
-            className='min-h-[52px] flex-row items-center gap-3 bg-muted px-4'
-            style={({ pressed }) => [{ borderRadius: Radius.md, opacity: pressed ? 0.8 : 1 }]}
-          >
-            <Icon
-              name={action.icon}
-              size={18}
-              color={colors.foreground}
-            />
-            <Text className='font-sans-semibold text-[16px] text-foreground'>{action.label}</Text>
-          </Pressable>
-        ))}
-        <Pressable
+        {attachIcon}
+      </Pressable>
+    );
+  }
+
+  return (
+    <>
+      <MenuView
+        actions={attachmentActions}
+        colorScheme={isDark ? 'dark' : 'light'}
+        onOpenMenu={haptics.selection}
+        onPressAction={({ nativeEvent }) => handleAttachAction(nativeEvent.event)}
+      >
+        <View
+          accessible
           accessibilityRole='button'
-          onPress={() => setPickerVisible(false)}
-          className='mt-2 min-h-[46px] items-center justify-center rounded-full bg-muted'
-          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
+          accessibilityLabel='Attach file or photo'
+          className='h-[38px] w-[38px] items-center justify-center rounded-full'
         >
-          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-muted-foreground'>
-            Cancel
-          </Text>
-        </Pressable>
-      </SheetModal>
+          {attachIcon}
+        </View>
+      </MenuView>
 
       <CameraSheet
         visible={cameraVisible}
