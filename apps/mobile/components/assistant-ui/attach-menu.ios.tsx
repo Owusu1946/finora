@@ -27,7 +27,12 @@ export function AttachMenu({ size, onSelect, children }: AttachMenuProps) {
       <Menu
         label={
           <RNHostView>
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            {/* Claim the React Native touch so it doesn't bubble to the composer's
+                tap-to-focus shell; SwiftUI still opens the menu natively. */}
+            <View
+              onStartShouldSetResponder={() => true}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+            >
               {children}
             </View>
           </RNHostView>
