@@ -8,7 +8,7 @@ call WeWire directly.
 ## Repository layout
 
 ```text
-apps/mobile  Expo SDK 54 React Native app
+apps/mobile  Expo SDK 57 React Native app
 apps/web     Next.js marketing site and public assets
 apps/api     Hono API, Neon/Postgres, Clerk webhooks, queues, Resend
 apps/mcp     Cloudflare MCP server

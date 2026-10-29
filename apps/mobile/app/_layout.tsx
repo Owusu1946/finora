@@ -14,10 +14,18 @@ import {
   DMSans_600SemiBold,
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
-import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { useFonts } from 'expo-font';
-import { Redirect, Stack, useSegments, type Href } from 'expo-router';
+import {
+  DarkTheme,
+  DefaultTheme,
+  Redirect,
+  Stack,
+  ThemeProvider,
+  useSegments,
+  type Href,
+  type Theme,
+} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

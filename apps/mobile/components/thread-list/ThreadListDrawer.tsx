@@ -1,11 +1,10 @@
-import type { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { type DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer';
 
 import {
   ThreadListPrimitive,
   ThreadListItemByIndexProvider,
   useAui,
 } from '@assistant-ui/react-native';
-import { useDrawerStatus } from '@react-navigation/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Pressable } from 'react-native';

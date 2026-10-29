@@ -1,6 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
 import { useAuth, useUser } from '@clerk/expo';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';

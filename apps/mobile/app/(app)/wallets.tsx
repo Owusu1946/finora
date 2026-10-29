@@ -1,4 +1,4 @@
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
