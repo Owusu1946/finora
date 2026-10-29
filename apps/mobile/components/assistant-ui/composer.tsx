@@ -47,6 +47,7 @@ import {
   ComposerImageAttachment,
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
+  ComposerPendingImage,
 } from './attachment';
 import { CameraSheet, type CapturedPhoto } from './camera-sheet';
 import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
@@ -78,6 +79,42 @@ function useComposerNotice() {
     };
   }, []);
   return notice;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pending image uploads — shown instantly while the upload runs        */
+/* ------------------------------------------------------------------ */
+
+type PendingUpload = { id: string; uri: string };
+
+let pendingUploads: PendingUpload[] = [];
+const pendingUploadListeners = new Set<(uploads: PendingUpload[]) => void>();
+
+function setPendingUploads(next: PendingUpload[]) {
+  pendingUploads = next;
+  pendingUploadListeners.forEach((emit) => emit(next));
+}
+
+/** Show a local preview in the composer until `upload` settles. */
+async function withPendingUpload(uri: string, upload: () => Promise<void>) {
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  setPendingUploads([...pendingUploads, { id, uri }]);
+  try {
+    await upload();
+  } finally {
+    setPendingUploads(pendingUploads.filter((item) => item.id !== id));
+  }
+}
+
+function usePendingUploads() {
+  const [uploads, setUploads] = useState(pendingUploads);
+  useEffect(() => {
+    pendingUploadListeners.add(setUploads);
+    return () => {
+      pendingUploadListeners.delete(setUploads);
+    };
+  }, []);
+  return uploads;
 }
 
 const COMPOSER_ATTACHMENT_COMPONENTS = {
@@ -150,14 +187,18 @@ function AttachButton() {
 
     if (result.canceled || !result.assets?.length) return;
 
-    for (const asset of result.assets) {
-      await addUploadedAttachment({
-        uri: asset.uri,
-        name: asset.fileName || `image_${Date.now()}.jpg`,
-        contentType: asset.mimeType || 'image/jpeg',
-        size: asset.fileSize,
-      });
-    }
+    await Promise.all(
+      result.assets.map((asset) =>
+        withPendingUpload(asset.uri, () =>
+          addUploadedAttachment({
+            uri: asset.uri,
+            name: asset.fileName || `image_${Date.now()}.jpg`,
+            contentType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          }),
+        ),
+      ),
+    );
   };
 
   const handleNativePickDocument = async () => {
@@ -179,11 +220,13 @@ function AttachButton() {
   };
 
   const handleCapturedPhoto = (photo: CapturedPhoto) => {
-    void addUploadedAttachment({
-      uri: photo.uri,
-      name: `photo_${Date.now()}.jpg`,
-      contentType: 'image/jpeg',
-    });
+    void withPendingUpload(photo.uri, () =>
+      addUploadedAttachment({
+        uri: photo.uri,
+        name: `photo_${Date.now()}.jpg`,
+        contentType: 'image/jpeg',
+      }),
+    );
   };
 
   const ATTACHMENT_ACTIONS = [
@@ -619,13 +662,16 @@ function MicButton({ onPress }: { onPress: () => void }) {
 
 function PrimaryComposerAction({ onPressMic }: { onPressMic: () => void }) {
   const canSend = useAuiState((s) => s.thread.composer.canSend);
-  return canSend ? <SendButton /> : <MicButton onPress={onPressMic} />;
+  const uploading = usePendingUploads().length > 0;
+  return canSend || uploading ? <SendButton /> : <MicButton onPress={onPressMic} />;
 }
 
 function SendButton() {
   const { colors } = useTheme();
   const runtimeCanSend = useAuiState((s) => s.thread.composer.canSend);
-  const canSend = runtimeCanSend;
+  // Hold sends until in-flight photos land so they aren't dropped.
+  const uploading = usePendingUploads().length > 0;
+  const canSend = runtimeCanSend && !uploading;
 
   return (
     <ComposerPrimitive.Send
@@ -904,7 +950,9 @@ export function Composer() {
   const { voiceState, level, preview, startRecording, cancelVoice, acceptVoice } =
     useVoiceComposer();
   const insets = useSafeAreaInsets();
-  const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
+  const pending = usePendingUploads();
+  const hasAttachments =
+    useAuiState((s) => s.thread.composer.attachments.length > 0) || pending.length > 0;
   const composerText = useAuiState((s) => s.thread.composer.text);
   const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
     .exec(composerText)?.[1]
@@ -1060,6 +1108,12 @@ export function Composer() {
               keyboardShouldPersistTaps='handled'
             >
               <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+              {pending.map((item) => (
+                <ComposerPendingImage
+                  key={item.id}
+                  uri={item.uri}
+                />
+              ))}
             </ScrollView>
           ) : null}
 
