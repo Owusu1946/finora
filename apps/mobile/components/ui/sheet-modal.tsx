@@ -1,13 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -19,6 +11,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { SheetModalProps } from './sheet-modal.types';
+
+export type { SheetDetent, SheetModalProps } from './sheet-modal.types';
+
 const OPEN_MS = 280;
 const CLOSE_MS = 220;
 const DISMISS_DISTANCE = 110;
@@ -27,18 +23,7 @@ const DISMISS_VELOCITY = 900;
 const DIM_OPACITY = 0.4;
 const SHEET_SLIDE = 640;
 
-type SheetModalProps = {
-  visible: boolean;
-  onClose: () => void;
-  children: ReactNode;
-  /** Styles for the sheet panel (not the scrim). */
-  style?: StyleProp<ViewStyle>;
-  showHandle?: boolean;
-  keyboardAvoiding?: boolean;
-  /** Dim strength 0–1. Default 0.4 */
-  dimOpacity?: number;
-};
-
+/** JS fallback sheet for web; iOS and Android use native sheets. */
 export function SheetModal({
   visible,
   onClose,
