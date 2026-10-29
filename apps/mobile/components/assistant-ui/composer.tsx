@@ -370,7 +370,9 @@ function useVoiceComposer() {
   const speechDetectedRef = useRef(false);
   const voiceActivitySamplesRef = useRef(0);
   const lastVoiceActivityAtRef = useRef(0);
-  const stopRecordingRef = useRef<(discard?: boolean) => Promise<void>>(() => Promise.resolve());
+  const stopRecordingRef = useRef<(discard?: boolean, send?: boolean) => Promise<void>>(() =>
+    Promise.resolve(),
+  );
   const liveSessionRef = useRef<LiveTranscriptionSession | null>(null);
   const liveFinalsRef = useRef('');
   const livePartialRef = useRef('');
@@ -416,13 +418,16 @@ function useVoiceComposer() {
   const liveTranscript = () =>
     [liveFinalsRef.current, livePartialRef.current].filter(Boolean).join(' ').trim();
 
-  const insertTranscript = (transcript: string) => {
+  const insertTranscript = (transcript: string, send: boolean) => {
     const existing = draftBeforeRecordingRef.current.trimEnd();
-    aui.thread.composer().setText(existing ? `${existing} ${transcript}` : transcript);
+    const composer = aui.thread.composer();
+    composer.setText(existing ? `${existing} ${transcript}` : transcript);
     haptics.success();
+    // Keep the text as a draft while photos are still uploading so they aren't dropped.
+    if (send && pendingUploads.length === 0) composer.send();
   };
 
-  const stopRecording = async (discard = false) => {
+  const stopRecording = async (discard = false, send = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
     updateVoiceState(discard ? 'idle' : 'transcribing');
@@ -452,7 +457,9 @@ function useVoiceComposer() {
       const liveText = liveTranscript();
       if (liveText) {
         deleteRecording(uri);
-        if (mountedRef.current && voiceSessionRef.current === sessionId) insertTranscript(liveText);
+        if (mountedRef.current && voiceSessionRef.current === sessionId) {
+          insertTranscript(liveText, send);
+        }
         return;
       }
 
@@ -462,7 +469,7 @@ function useVoiceComposer() {
 
       const transcript = result.transcript.trim();
       if (!transcript) return;
-      insertTranscript(transcript);
+      insertTranscript(transcript, send);
     } catch (error) {
       if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
         haptics.error();
@@ -623,10 +630,11 @@ function useVoiceComposer() {
     }
   };
 
-  const acceptVoice = () => {
+  /** Finish the take: `send` also sends the message; otherwise it lands in the draft. */
+  const acceptVoice = (send = false) => {
     if (voiceStateRef.current !== 'recording') return;
     haptics.light();
-    void stopRecording(false);
+    void stopRecording(false, send);
   };
 
   return { voiceState, level, preview, startRecording, cancelVoice, acceptVoice };
@@ -1029,21 +1037,38 @@ export function Composer() {
                 />
               </Pressable>
               {voiceState === 'recording' ? (
-                <Pressable
-                  accessibilityLabel='Finish voice input'
-                  accessibilityRole='button'
-                  onPress={acceptVoice}
-                  className='h-12 w-12 items-center justify-center rounded-full border border-border'
-                  style={({ pressed }) => [
-                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
-                  ]}
-                >
-                  <Icon
-                    name='mic'
-                    size={20}
-                    color={colors.primary}
-                  />
-                </Pressable>
+                <>
+                  <Pressable
+                    accessibilityLabel='Insert transcript'
+                    accessibilityRole='button'
+                    onPress={() => acceptVoice(false)}
+                    className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                    style={({ pressed }) => [
+                      { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
+                    ]}
+                  >
+                    <Icon
+                      name='check'
+                      size={20}
+                      color={colors.foreground}
+                    />
+                  </Pressable>
+                  <Pressable
+                    accessibilityLabel='Send voice message'
+                    accessibilityRole='button'
+                    onPress={() => acceptVoice(true)}
+                    className='h-12 w-12 items-center justify-center rounded-full'
+                    style={({ pressed }) => [
+                      { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+                    ]}
+                  >
+                    <Icon
+                      name='send'
+                      size={18}
+                      color={colors.primaryForeground}
+                    />
+                  </Pressable>
+                </>
               ) : null}
               {voiceState === 'transcribing' ? (
                 <View
