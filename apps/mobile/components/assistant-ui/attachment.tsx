@@ -120,14 +120,15 @@ export function ComposerImageAttachment() {
         )}
       </View>
       <AttachmentPrimitive.Remove
+        accessibilityLabel='Remove photo'
         onPressIn={haptics.light}
         style={styles.imageRemoveBadge}
         hitSlop={6}
       >
         <Icon
-          name='close-circle'
-          size={18}
-          color={colors.foreground}
+          name='remove'
+          size={12}
+          color='#ffffff'
         />
       </AttachmentPrimitive.Remove>
     </AttachmentPrimitive.Root>
@@ -267,15 +268,16 @@ const styles = {
   },
   imageRemoveBadge: {
     position: 'absolute',
-    top: -6,
-    right: -6,
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: Radius.pill,
-    backgroundColor: '#000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   chip: {
     flexDirection: 'row',
