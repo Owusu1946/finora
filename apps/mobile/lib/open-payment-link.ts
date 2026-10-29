@@ -1,4 +1,4 @@
-import type { Router } from 'expo-router';
+import type { ImperativeRouter } from 'expo-router';
 
 import * as Linking from 'expo-linking';
 
@@ -36,7 +36,7 @@ type Nav = {
 export function startPaymentFromLink(
   preparationId: string,
   aui: ThreadSender,
-  router: Nav | Router,
+  router: Nav | ImperativeRouter,
 ) {
   const https = createPaymentHttpsLink(preparationId);
   const parsed = parsePaymentQr(https) ?? parsePaymentQr(`finora://pay/r/${preparationId}`);
