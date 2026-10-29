@@ -19,4 +19,8 @@ export type SheetModalProps = {
    * content.
    */
   detents?: SheetDetent[];
+  /** Let content run under the bottom safe area (e.g. a full-bleed camera). */
+  edgeToEdge?: boolean;
+  /** Paint the sheet surface itself instead of the system material. */
+  backgroundColor?: string;
 };

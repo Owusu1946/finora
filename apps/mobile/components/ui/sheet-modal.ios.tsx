@@ -1,7 +1,9 @@
 import { Host } from '@expo/ui';
 import { BottomSheet, Group, RNHostView } from '@expo/ui/swift-ui';
 import {
+  ignoreSafeArea,
   preferredColorScheme,
+  presentationBackground,
   presentationDetents,
   presentationDragIndicator,
 } from '@expo/ui/swift-ui/modifiers';
@@ -23,6 +25,8 @@ export function SheetModal({
   style,
   showHandle = true,
   detents,
+  edgeToEdge = false,
+  backgroundColor,
 }: SheetModalProps) {
   const insets = useSafeAreaInsets();
   const { isDark } = useTheme();
@@ -45,12 +49,17 @@ export function SheetModal({
             presentationDragIndicator(showHandle ? 'visible' : 'hidden'),
             preferredColorScheme(isDark ? 'dark' : 'light'),
             ...(detents ? [presentationDetents(detents)] : []),
+            ...(backgroundColor ? [presentationBackground(backgroundColor)] : []),
+            ...(edgeToEdge ? [ignoreSafeArea({ regions: 'container', edges: 'bottom' })] : []),
           ]}
         >
           <RNHostView matchContents={fit}>
             <View
               style={[
-                { paddingTop: showHandle ? 20 : 12, paddingBottom: Math.max(insets.bottom, 16) },
+                {
+                  paddingTop: showHandle ? 20 : 12,
+                  paddingBottom: edgeToEdge ? 0 : Math.max(insets.bottom, 16),
+                },
                 fit ? null : { flex: 1 },
                 style,
               ]}

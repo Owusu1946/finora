@@ -24,6 +24,8 @@ export function SheetModal({
   showHandle = true,
   dimOpacity = 0.4,
   detents,
+  edgeToEdge = false,
+  backgroundColor,
 }: SheetModalProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -39,14 +41,14 @@ export function SheetModal({
         onDismiss={onClose}
         showDragIndicator={showHandle}
         snapPoints={detents?.map(toSnapPoint)}
-        containerColor={colors.card}
+        containerColor={backgroundColor ?? colors.card}
         contentColor={colors.foreground}
         scrimColor={`rgba(0, 0, 0, ${dimOpacity})`}
       >
         <RNHostView matchContents={fit}>
           <View
             style={[
-              { paddingBottom: Math.max(insets.bottom, 16) },
+              { paddingBottom: edgeToEdge ? 0 : Math.max(insets.bottom, 16) },
               fit ? null : { flex: 1 },
               style,
             ]}
