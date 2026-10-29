@@ -9,8 +9,8 @@ import type { IconProps } from '@/components/ui/icon-mappings';
 import { Icon } from '@/components/ui/icon';
 import { useTheme } from '@/hooks/use-theme';
 
-const BUTTON_SIZE = 40;
-const ICON_SIZE = 20;
+const BUTTON_SIZE = 48;
+const ICON_SIZE = 24;
 
 const liquidGlass = process.env.EXPO_OS === 'ios' && isLiquidGlassAvailable();
 
