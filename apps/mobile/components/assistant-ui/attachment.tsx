@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
@@ -55,6 +56,29 @@ function useAttachmentPreview() {
 /**
  * Image Attachment in Composer (Thumbnail with delete badge)
  */
+/** Local preview shown in the composer while an image is still uploading. */
+export function ComposerPendingImage({ uri }: { uri: string }) {
+  return (
+    <View
+      accessibilityLabel='Uploading photo'
+      className='h-16 w-16 overflow-hidden rounded-[18px] border border-border bg-muted'
+      style={styles.imageChip}
+    >
+      <ExpoImage
+        source={{ uri }}
+        style={styles.imagePreview}
+        contentFit='cover'
+      />
+      <View className='absolute inset-0 items-center justify-center bg-black/35'>
+        <LoadingIcon
+          color='#ffffff'
+          size={18}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function ComposerImageAttachment() {
   const { colors } = useTheme();
   const { imageUri } = useAttachmentPreview();
