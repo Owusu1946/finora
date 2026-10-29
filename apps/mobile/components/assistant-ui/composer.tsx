@@ -48,6 +48,7 @@ import {
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
 } from './attachment';
+import { CameraSheet, type CapturedPhoto } from './camera-sheet';
 import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
 
 /* ------------------------------------------------------------------ */
@@ -177,12 +178,22 @@ function AttachButton() {
     }
   };
 
+  const handleCapturedPhoto = (photo: CapturedPhoto) => {
+    void addUploadedAttachment({
+      uri: photo.uri,
+      name: `photo_${Date.now()}.jpg`,
+      contentType: 'image/jpeg',
+    });
+  };
+
   const ATTACHMENT_ACTIONS = [
+    { key: 'camera', label: 'Take photo', icon: 'camera' as const },
     { key: 'photo', label: 'Photo library', icon: 'image' as const },
     { key: 'document', label: 'Choose document', icon: 'file' as const },
   ] as const;
 
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [cameraVisible, setCameraVisible] = useState(false);
 
   const openAttachmentPicker = () => {
     haptics.selection();
@@ -200,7 +211,10 @@ function AttachButton() {
   const pick = (action: (typeof ATTACHMENT_ACTIONS)[number]['key']) => {
     setPickerVisible(false);
     haptics.selection();
-    if (action === 'photo') void handleNativePickImage();
+    if (action === 'camera') {
+      // iOS can't present a sheet while the attach sheet is still dismissing.
+      setTimeout(() => setCameraVisible(true), 350);
+    } else if (action === 'photo') void handleNativePickImage();
     else void handleNativePickDocument();
   };
 
@@ -257,6 +271,12 @@ function AttachButton() {
           </Text>
         </Pressable>
       </SheetModal>
+
+      <CameraSheet
+        visible={cameraVisible}
+        onClose={() => setCameraVisible(false)}
+        onCapture={handleCapturedPhoto}
+      />
     </>
   );
 }
