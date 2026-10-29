@@ -370,6 +370,7 @@ function useVoiceComposer() {
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const draftBeforeRecordingRef = useRef('');
+  const [draftBeforeRecording, setDraftBeforeRecording] = useState('');
   const voiceSessionRef = useRef(0);
   const speechDetectedRef = useRef(false);
   const voiceActivitySamplesRef = useRef(0);
@@ -556,6 +557,7 @@ function useVoiceComposer() {
     const sessionId = voiceSessionRef.current + 1;
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+    setDraftBeforeRecording(draftBeforeRecordingRef.current.trim());
     speechDetectedRef.current = false;
     voiceActivitySamplesRef.current = 0;
     lastVoiceActivityAtRef.current = 0;
@@ -660,6 +662,7 @@ function useVoiceComposer() {
     voiceState,
     level,
     preview,
+    draftBeforeRecording,
     autoStopProgress: voiceState === 'recording' ? autoStopProgress : 0,
     startRecording,
     cancelVoice,
@@ -1003,8 +1006,16 @@ export function Composer() {
   const notice = useComposerNotice();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, level, preview, autoStopProgress, startRecording, cancelVoice, acceptVoice } =
-    useVoiceComposer();
+  const {
+    voiceState,
+    level,
+    preview,
+    draftBeforeRecording,
+    autoStopProgress,
+    startRecording,
+    cancelVoice,
+    acceptVoice,
+  } = useVoiceComposer();
   const insets = useSafeAreaInsets();
   const pending = usePendingUploads();
   const hasAttachments =
@@ -1066,8 +1077,18 @@ export function Composer() {
             colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
             additive={isDark}
           />
-          <View className='h-[128px] w-full items-center justify-end'>
-            <View className='min-h-[56px] w-full items-center justify-end pb-3'>
+          <View className='min-h-[128px] w-full items-center justify-end'>
+            <View className='min-h-[56px] w-full items-center justify-end gap-1 pb-3'>
+              {draftBeforeRecording ? (
+                // The new words are appended to this draft; show its end, faded.
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode='head'
+                  className='text-center font-sans-medium text-[15px] text-muted-foreground opacity-70'
+                >
+                  {draftBeforeRecording}
+                </Text>
+              ) : null}
               {preview ? (
                 <Text
                   numberOfLines={3}
@@ -1075,7 +1096,14 @@ export function Composer() {
                 >
                   {preview}
                 </Text>
-              ) : null}
+              ) : (
+                <Text
+                  accessibilityLiveRegion='polite'
+                  className='text-center font-sans-medium text-[17px] text-muted-foreground'
+                >
+                  {voiceState === 'transcribing' ? 'Transcribing…' : 'Listening…'}
+                </Text>
+              )}
             </View>
             <View className='mb-2 flex-row items-center justify-end gap-6'>
               <Pressable
