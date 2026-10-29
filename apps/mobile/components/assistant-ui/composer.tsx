@@ -275,6 +275,7 @@ function AttachButton() {
     <>
       <AttachMenu
         size={38}
+        label='Attach file or photo'
         onSelect={handleAttachAction}
       >
         <View

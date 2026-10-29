@@ -11,7 +11,11 @@ export function AttachMenu({ size, onSelect, children }: AttachMenuProps) {
   const { isDark } = useTheme();
 
   return (
-    <View style={{ width: size, height: size }}>
+    // Claim the React Native touch so it never reaches the composer's tap-to-focus shell.
+    <View
+      onStartShouldSetResponder={() => true}
+      style={{ width: size, height: size }}
+    >
       <MenuView
         actions={ATTACH_ACTIONS}
         colorScheme={isDark ? 'dark' : 'light'}
