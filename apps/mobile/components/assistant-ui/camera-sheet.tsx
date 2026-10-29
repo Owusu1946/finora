@@ -3,6 +3,7 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 
@@ -112,6 +113,8 @@ export function CameraSheet({
   const [controlsOpen, setControlsOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  // Keep the controls clear of the home indicator now the camera runs to the edge.
+  const barBottom = Math.max(useSafeAreaInsets().bottom, 16) + 8;
 
   const close = () => {
     setControlsOpen(false);
@@ -139,92 +142,89 @@ export function CameraSheet({
       visible={visible}
       onClose={close}
       showHandle={false}
-      detents={[{ fraction: 0.62 }]}
+      detents={[{ fraction: 0.7 }]}
       style={styles.sheet}
     >
-      <View style={styles.card}>
-        {visible && permission?.granted ? (
-          <CameraView
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            facing={facing}
-            flash={flash}
-            animateShutter
-            onCameraReady={() => setReady(true)}
-          />
-        ) : null}
+      {visible && permission?.granted ? (
+        <CameraView
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          facing={facing}
+          flash={flash}
+          animateShutter
+          onCameraReady={() => setReady(true)}
+        />
+      ) : null}
 
-        {permission && !permission.granted ? (
-          <PermissionPrompt
-            canAskAgain={permission.canAskAgain}
-            onRequest={() => void requestPermission()}
-          />
-        ) : null}
+      {permission && !permission.granted ? (
+        <PermissionPrompt
+          canAskAgain={permission.canAskAgain}
+          onRequest={() => void requestPermission()}
+        />
+      ) : null}
 
-        {controlsOpen ? (
-          <Animated.View
-            entering={FadeInDown.duration(180)}
-            exiting={FadeOutDown.duration(140)}
-            style={styles.controlStack}
-          >
-            <CameraControl
-              icon={flash === 'on' ? 'flash' : 'flash-off'}
-              label={flash === 'on' ? 'Turn flash off' : 'Turn flash on'}
-              onPress={() => setFlash((value) => (value === 'on' ? 'off' : 'on'))}
-            />
-            <CameraControl
-              icon='camera-flip'
-              label='Flip camera'
-              onPress={() => setFacing((value) => (value === 'back' ? 'front' : 'back'))}
-            />
-          </Animated.View>
-        ) : null}
-
-        <View style={styles.bottomBar}>
+      {controlsOpen ? (
+        <Animated.View
+          entering={FadeInDown.duration(180)}
+          exiting={FadeOutDown.duration(140)}
+          style={[
+            styles.controlStack,
+            { bottom: barBottom + SHUTTER_SIZE / 2 + CONTROL_SIZE / 2 + 12 },
+          ]}
+        >
           <CameraControl
-            icon='chevron-left'
-            label='Close camera'
-            onPress={close}
+            icon={flash === 'on' ? 'flash' : 'flash-off'}
+            label={flash === 'on' ? 'Turn flash off' : 'Turn flash on'}
+            onPress={() => setFlash((value) => (value === 'on' ? 'off' : 'on'))}
           />
-          <Pressable
-            accessibilityRole='button'
-            accessibilityLabel='Take photo'
-            disabled={!ready || capturing}
-            onPress={() => void capture()}
-            style={[styles.shutterRing, { opacity: ready ? 1 : 0.5 }]}
-          >
-            {({ pressed }) => (
-              <View style={[styles.shutter, { transform: [{ scale: pressed ? 0.92 : 1 }] }]} />
-            )}
-          </Pressable>
           <CameraControl
-            icon={controlsOpen ? 'remove' : 'more'}
-            label={controlsOpen ? 'Hide camera options' : 'Camera options'}
-            onPress={() => setControlsOpen((open) => !open)}
+            icon='camera-flip'
+            label='Flip camera'
+            onPress={() => setFacing((value) => (value === 'back' ? 'front' : 'back'))}
           />
-        </View>
+        </Animated.View>
+      ) : null}
+
+      <View style={[styles.bottomBar, { bottom: barBottom }]}>
+        <CameraControl
+          icon='chevron-left'
+          label='Close camera'
+          onPress={close}
+        />
+        <Pressable
+          accessibilityRole='button'
+          accessibilityLabel='Take photo'
+          disabled={!ready || capturing}
+          onPress={() => void capture()}
+          style={[styles.shutterRing, { opacity: ready ? 1 : 0.5 }]}
+        >
+          {({ pressed }) => (
+            <View style={[styles.shutter, { transform: [{ scale: pressed ? 0.92 : 1 }] }]} />
+          )}
+        </Pressable>
+        <CameraControl
+          icon={controlsOpen ? 'remove' : 'more'}
+          label={controlsOpen ? 'Hide camera options' : 'Camera options'}
+          onPress={() => setControlsOpen((open) => !open)}
+        />
       </View>
     </SheetModal>
   );
 }
 
 const styles = StyleSheet.create({
+  // Edge to edge: the native sheet's own rounded corners clip the camera.
   sheet: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
-  },
-  card: {
-    flex: 1,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
     overflow: 'hidden',
-    borderRadius: 40,
-    borderCurve: 'continuous',
     backgroundColor: '#000000',
   },
   bottomBar: {
     position: 'absolute',
     left: 20,
     right: 20,
-    bottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -232,7 +232,6 @@ const styles = StyleSheet.create({
   controlStack: {
     position: 'absolute',
     right: 20,
-    bottom: 20 + SHUTTER_SIZE / 2 + CONTROL_SIZE / 2 + 12,
     gap: 12,
   },
   control: {
