@@ -54,10 +54,10 @@ importers:
         version: 4.0.7
       '@clerk/backend':
         specifier: ^3.16.9
-        version: 3.16.9(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
+        version: 3.16.9(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@clerk/hono':
         specifier: ^0.1.70
-        version: 0.1.70(hono@4.13.3)(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
+        version: 0.1.70(hono@4.13.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@finora/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -83,17 +83,20 @@ importers:
         specifier: 1.12.1
         version: 1.12.1
       react:
-        specifier: 19.1.0
-        version: 19.1.0
+        specifier: 19.2.3
+        version: 19.2.3
+      react-dom:
+        specifier: 19.2.3
+        version: 19.2.3(react@19.2.3)
       react-email:
         specifier: ^6.9.2
-        version: 6.9.2(bufferutil@4.1.0)(react-dom@19.2.3(react@19.1.0))(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6)
+        version: 6.9.2(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@10.2.2)(utf-8-validate@6.0.6)
       redis:
         specifier: 6.2.1
         version: 6.2.1(@opentelemetry/api@1.9.0)
       resend:
         specifier: ^6.21.0
-        version: 6.21.0(@react-email/render@2.1.0(react-dom@19.2.3(react@19.1.0))(react@19.1.0))
+        version: 6.21.0(@react-email/render@2.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
       resumable-stream:
         specifier: 2.2.12
         version: 2.2.12
@@ -7647,10 +7650,6 @@ packages:
       '@types/react':
         optional: true
 
-  react@19.1.0:
-    resolution: {integrity: sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==}
-    engines: {node: '>=0.10.0'}
-
   react@19.2.3:
     resolution: {integrity: sha512-Ku/hhYbVjOQnXDZFv2+RibmLFGwFdeeKHFcOTlrt7xplBnya5OGn/hIRDsqDiSUcfORsDC7MPxwork8jBwsIWA==}
     engines: {node: '>=0.10.0'}
@@ -9462,9 +9461,9 @@ snapshots:
       - react
       - react-dom
 
-  '@clerk/backend@3.16.9(react-dom@19.2.3(react@19.1.0))(react@19.1.0)':
+  '@clerk/backend@3.16.9(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@clerk/shared': 4.29.2(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
+      '@clerk/shared': 4.29.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       standardwebhooks: 1.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -9538,10 +9537,10 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@clerk/hono@0.1.70(hono@4.13.3)(react-dom@19.2.3(react@19.1.0))(react@19.1.0)':
+  '@clerk/hono@0.1.70(hono@4.13.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@clerk/backend': 3.16.9(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
-      '@clerk/shared': 4.29.2(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
+      '@clerk/backend': 3.16.9(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@clerk/shared': 4.29.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       hono: 4.13.3
     transitivePeerDependencies:
       - react
@@ -9553,16 +9552,6 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       tslib: 2.8.1
-
-  '@clerk/shared@4.29.2(react-dom@19.2.3(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      '@tanstack/query-core': 5.101.4
-      dequal: 2.0.3
-      glob-to-regexp: 0.4.1
-      js-cookie: 3.0.7
-    optionalDependencies:
-      react: 19.1.0
-      react-dom: 19.2.3(react@19.1.0)
 
   '@clerk/shared@4.29.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -11225,14 +11214,14 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
-  '@react-email/render@2.1.0(react-dom@19.2.3(react@19.1.0))(react@19.1.0)':
+  '@react-email/render@2.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       entities: 4.5.0
       html-to-text: 9.0.5
       html5parser: 3.0.0
       prettier: 3.9.6
-      react: 19.1.0
-      react-dom: 19.2.3(react@19.1.0)
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
 
   '@react-native-async-storage/async-storage@1.24.0(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6))(@types/react@19.2.18)(bufferutil@4.1.0)(react@19.2.3)(supports-color@10.2.2)(utf-8-validate@6.0.6))':
     dependencies:
@@ -16450,11 +16439,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  react-dom@19.2.3(react@19.1.0):
-    dependencies:
-      react: 19.1.0
-      scheduler: 0.27.0
-
   react-dom@19.2.3(react@19.2.3):
     dependencies:
       react: 19.2.3
@@ -16465,11 +16449,11 @@ snapshots:
       react: 19.2.8
       scheduler: 0.27.0
 
-  react-email@6.9.2(bufferutil@4.1.0)(react-dom@19.2.3(react@19.1.0))(react@19.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6):
+  react-email@6.9.2(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@10.2.2)(utf-8-validate@6.0.6):
     dependencies:
       '@babel/parser': 7.29.2
       '@babel/traverse': 7.29.0(supports-color@10.2.2)
-      '@react-email/render': 2.1.0(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
+      '@react-email/render': 2.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       chokidar: 4.0.3
       commander: 13.1.0
       conf: 15.1.0
@@ -16486,8 +16470,8 @@ snapshots:
       picospinner: 3.1.2
       prismjs: 1.30.0
       prompts: 2.4.2
-      react: 19.1.0
-      react-dom: 19.2.3(react@19.1.0)
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
       socket.io: 4.8.3(bufferutil@4.1.0)(supports-color@10.2.2)(utf-8-validate@6.0.6)
       tailwindcss: 4.3.3
       tsconfig-paths: 4.2.0
@@ -16719,8 +16703,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
-  react@19.1.0: {}
-
   react@19.2.3: {}
 
   react@19.2.8: {}
@@ -16797,12 +16779,12 @@ snapshots:
 
   require-main-filename@2.0.0: {}
 
-  resend@6.21.0(@react-email/render@2.1.0(react-dom@19.2.3(react@19.1.0))(react@19.1.0)):
+  resend@6.21.0(@react-email/render@2.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)):
     dependencies:
       postal-mime: 2.7.5
       standardwebhooks: 1.0.0
     optionalDependencies:
-      '@react-email/render': 2.1.0(react-dom@19.2.3(react@19.1.0))(react@19.1.0)
+      '@react-email/render': 2.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
 
   resolve-from@4.0.0: {}
 
