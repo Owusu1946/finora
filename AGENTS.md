@@ -27,9 +27,9 @@ The web app may use a different React version from mobile. Keep `react` and `rea
 
 ## Expo
 
-The mobile app uses Expo SDK 54. Read the exact versioned docs at https://docs.expo.dev/versions/v54.0.0/ before writing any mobile code.
+The mobile app uses Expo SDK 57. Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any mobile code.
 
-While the app remains on Expo SDK 54, keep `react` and `react-dom` pinned to `19.1.0` in both `apps/mobile/package.json` and the root `package.json`. The root dependencies provide the exact runtime used by `scripts/link-mobile-deps.mjs`, which junctions `react` / `react-dom` / `react-native` into `apps/mobile/node_modules` after `pnpm install` so Metro does not hit an invalid-hook / duplicate-React error. Web may use its own React version; do not reintroduce workspace-wide React overrides.
+While the app remains on Expo SDK 57, keep `react` and `react-dom` pinned to `19.2.3` in both `apps/mobile/package.json` and the root `package.json`. The root dependencies provide the exact runtime used by `scripts/link-mobile-deps.mjs`, which junctions `react` / `react-dom` / `react-native` into `apps/mobile/node_modules` after `pnpm install` so Metro does not hit an invalid-hook / duplicate-React error. Web may use its own React version; do not reintroduce workspace-wide React overrides.
 
 Mobile UI uses NativeWind v5 + `@assistant-ui/react-native` (not the web `@assistant-ui/react` package).
 

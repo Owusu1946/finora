@@ -1,6 +1,6 @@
-import { useHeaderHeight } from '@react-navigation/elements';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 

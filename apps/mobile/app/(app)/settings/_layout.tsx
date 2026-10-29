@@ -1,7 +1,6 @@
 import { useAui } from '@assistant-ui/react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { DrawerActions } from '@react-navigation/native';
 import { Stack, useNavigation, useRouter } from 'expo-router';
+import { DrawerActions, useHeaderHeight } from 'expo-router/react-navigation';
 import { StyleSheet, Pressable } from 'react-native';
 
 import { HeaderTitleWithAccount } from '@/components/shell/account-badge';
