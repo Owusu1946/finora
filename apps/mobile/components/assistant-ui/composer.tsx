@@ -1,6 +1,5 @@
 import { useAui, useAuiState, AuiIf, ComposerPrimitive } from '@assistant-ui/react-native';
 import { useAuth } from '@clerk/expo';
-import { MenuView, type MenuAction } from '@expo/ui/community/menu';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -42,6 +41,9 @@ import { startLiveTranscription, type LiveTranscriptionSession } from '@/lib/liv
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
 import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
 
+import type { AttachAction } from './attach-menu.types';
+
+import { AttachMenu } from './attach-menu';
 import {
   ComposerImageAttachment,
   ComposerDocumentAttachment,
@@ -130,7 +132,7 @@ const TAG_ACCENT = {
 } as const;
 
 function AttachButton() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const aui = useAui();
   const { getToken } = useAuth();
 
@@ -230,20 +232,13 @@ function AttachButton() {
 
   const [cameraVisible, setCameraVisible] = useState(false);
 
-  const ios = process.env.EXPO_OS === 'ios';
-  const attachmentActions: MenuAction[] = [
-    { id: 'camera', title: 'Take photo', image: ios ? 'camera' : undefined },
-    { id: 'photo', title: 'Photo library', image: ios ? 'photo.on.rectangle' : undefined },
-    { id: 'document', title: 'Choose document', image: ios ? 'doc' : undefined },
-  ];
-
   // A native picker rejects if it can't open; show it in the composer instead of throwing.
   const runPicker = (pick: () => Promise<void>) => {
     void pick().catch(() => showComposerNotice('Could not open the picker. Try again.'));
   };
 
   // The native menu isn't a presented screen, so pickers open immediately from here.
-  const handleAttachAction = (action: string) => {
+  const handleAttachAction = (action: AttachAction) => {
     haptics.selection();
     Keyboard.dismiss();
     if (action === 'camera') setCameraVisible(true);
@@ -278,14 +273,9 @@ function AttachButton() {
 
   return (
     <>
-      <MenuView
-        actions={attachmentActions}
-        // Fixed size: the native host otherwise collapses until it measures, and
-        // the scan button slides under the attach icon.
-        style={{ width: 38, height: 38 }}
-        colorScheme={isDark ? 'dark' : 'light'}
-        onOpenMenu={haptics.selection}
-        onPressAction={({ nativeEvent }) => handleAttachAction(nativeEvent.event)}
+      <AttachMenu
+        size={38}
+        onSelect={handleAttachAction}
       >
         <View
           accessible
@@ -295,7 +285,7 @@ function AttachButton() {
         >
           {attachIcon}
         </View>
-      </MenuView>
+      </AttachMenu>
 
       <CameraSheet
         visible={cameraVisible}
