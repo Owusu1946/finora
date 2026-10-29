@@ -40,7 +40,11 @@ import {
 import { haptics } from '@/lib/haptics';
 import { startLiveTranscription, type LiveTranscriptionSession } from '@/lib/live-transcription';
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
-import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
+import {
+  deleteRecording,
+  transcribeRecording,
+  TranscriptionApiError,
+} from '@/lib/transcription-api';
 
 import type { AttachAction } from './attach-menu.types';
 
@@ -324,6 +328,36 @@ function ScanButton() {
 
 type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing';
 
+/** A recording whose transcription failed but can be retried from the same audio. */
+type FailedTake = { uri: string; message: string; send: boolean };
+
+const VOICE_CONTENT_TYPE = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
+
+/** Human copy for a failed transcription, and whether retrying the same audio can help. */
+function describeTranscriptionError(error: unknown) {
+  if (error instanceof TranscriptionApiError) {
+    if (error.code === 'network') {
+      return { message: "No connection. Retry when you're back online.", retryable: true };
+    }
+    if (error.code === 'timeout') {
+      return { message: 'That took too long to transcribe.', retryable: true };
+    }
+    if (error.code === 'unauthorized') {
+      return { message: 'Your session expired. Sign in again.', retryable: false };
+    }
+    if (error.reason === 'speech_not_detected') {
+      return { message: "Didn't catch any words. Try again.", retryable: false };
+    }
+    if (error.reason === 'audio_too_large') {
+      return { message: 'That recording is too long. Try a shorter message.', retryable: false };
+    }
+    if (error.reason === 'empty_audio') {
+      return { message: 'The recording was empty. Try again.', retryable: false };
+    }
+  }
+  return { message: "Couldn't transcribe that.", retryable: true };
+}
+
 const MAX_RECORDING_SECONDS = 45;
 const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
 // Long enough for a pause while reading out an amount or account number.
@@ -382,6 +416,10 @@ function useVoiceComposer() {
   const liveFinalsRef = useRef('');
   const livePartialRef = useRef('');
   const [preview, setPreview] = useState('');
+  const [failedTake, setFailedTakeState] = useState<FailedTake | null>(null);
+  const failedTakeRef = useRef<FailedTake | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const retryingRef = useRef(false);
   /** 0 while speaking; climbs to 1 as a pause runs out and auto-finish nears. */
   const [autoStopProgress, setAutoStopProgress] = useState(0);
 
@@ -434,6 +472,47 @@ function useVoiceComposer() {
     if (send && pendingUploads.length === 0) composer.send();
   };
 
+  const setFailedTake = (take: FailedTake | null) => {
+    failedTakeRef.current = take;
+    if (mountedRef.current) setFailedTakeState(take);
+  };
+
+  /** Drop the failed take and its audio file. */
+  const discardFailedTake = () => {
+    deleteRecording(failedTakeRef.current?.uri ?? null);
+    setFailedTake(null);
+  };
+
+  const retryFailedTake = async () => {
+    const take = failedTakeRef.current;
+    if (!take || retryingRef.current) return;
+    retryingRef.current = true;
+    setRetrying(true);
+    haptics.selection();
+    try {
+      const result = await transcribeRecording(take.uri, VOICE_CONTENT_TYPE, getToken);
+      setFailedTake(null);
+      const transcript = result.transcript.trim();
+      if (transcript && mountedRef.current) {
+        // Append to whatever is in the composer now; it may have changed since the take.
+        draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+        insertTranscript(transcript, take.send);
+      }
+    } catch (error) {
+      haptics.error();
+      const { message, retryable } = describeTranscriptionError(error);
+      if (retryable) {
+        setFailedTake({ ...take, message });
+      } else {
+        discardFailedTake();
+        showComposerNotice(message);
+      }
+    } finally {
+      retryingRef.current = false;
+      if (mountedRef.current) setRetrying(false);
+    }
+  };
+
   const stopRecording = async (discard = false, send = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
@@ -470,21 +549,25 @@ function useVoiceComposer() {
         return;
       }
 
-      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
-      const result = await transcribeRecording(uri, contentType, getToken);
+      const result = await transcribeRecording(uri, VOICE_CONTENT_TYPE, getToken);
       if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
       const transcript = result.transcript.trim();
       if (!transcript) return;
       insertTranscript(transcript, send);
     } catch (error) {
-      if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
+      const current = !discard && mountedRef.current && voiceSessionRef.current === sessionId;
+      const { message, retryable } = describeTranscriptionError(error);
+      if (current && retryable && uri) {
+        // Keep the audio so the user can retry without speaking again.
         haptics.error();
-        showComposerNotice(
-          error instanceof Error
-            ? `Could not transcribe · ${error.message}`
-            : 'Could not transcribe · try recording again',
-        );
+        setFailedTake({ uri, message, send });
+      } else {
+        deleteRecording(uri);
+        if (current) {
+          haptics.error();
+          showComposerNotice(message);
+        }
       }
     } finally {
       if (voiceSessionRef.current === sessionId) updateVoiceState('idle');
@@ -545,6 +628,7 @@ function useVoiceComposer() {
       mountedRef.current = false;
       clearStopTimer();
       void liveSessionRef.current?.stop(false);
+      deleteRecording(failedTakeRef.current?.uri ?? null);
       if (voiceStateRef.current === 'recording') {
         void recorder.stop().then(() => deleteRecording(recorder.uri));
       }
@@ -554,6 +638,8 @@ function useVoiceComposer() {
   const startRecording = async () => {
     if (voiceStateRef.current !== 'idle') return;
     setAutoStopProgress(0);
+    // A new take replaces any failed one waiting for a retry.
+    discardFailedTake();
     const sessionId = voiceSessionRef.current + 1;
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
@@ -664,6 +750,10 @@ function useVoiceComposer() {
     preview,
     draftBeforeRecording,
     autoStopProgress: voiceState === 'recording' ? autoStopProgress : 0,
+    failedTake,
+    retrying,
+    retryFailedTake,
+    discardFailedTake,
     startRecording,
     cancelVoice,
     acceptVoice,
@@ -1012,6 +1102,10 @@ export function Composer() {
     preview,
     draftBeforeRecording,
     autoStopProgress,
+    failedTake,
+    retrying,
+    retryFailedTake,
+    discardFailedTake,
     startRecording,
     cancelVoice,
     acceptVoice,
@@ -1065,6 +1159,48 @@ export function Composer() {
           >
             {notice}
           </Text>
+        </View>
+      ) : null}
+      {failedTake && voiceState === 'idle' ? (
+        <View
+          className='mb-2 flex-row items-center gap-2 self-center rounded-full bg-foreground py-1.5 pl-4 pr-1.5'
+          style={{ maxWidth: '92%' }}
+        >
+          <Text
+            numberOfLines={2}
+            className='shrink font-sans-medium text-[13px] text-background'
+          >
+            {failedTake.message}
+          </Text>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel='Retry transcription'
+            disabled={retrying}
+            onPress={() => void retryFailedTake()}
+            className='h-8 min-w-[64px] items-center justify-center rounded-full bg-background px-3'
+          >
+            {retrying ? (
+              <LoadingIcon
+                color={colors.foreground}
+                size={14}
+              />
+            ) : (
+              <Text className='font-sans-semibold text-[13px] text-foreground'>Retry</Text>
+            )}
+          </Pressable>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel='Dismiss failed recording'
+            hitSlop={6}
+            onPress={discardFailedTake}
+            className='h-8 w-8 items-center justify-center'
+          >
+            <Icon
+              name='remove'
+              size={14}
+              color={colors.background}
+            />
+          </Pressable>
         </View>
       ) : null}
       {voiceState !== 'idle' ? (
