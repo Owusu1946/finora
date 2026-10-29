@@ -1,20 +1,18 @@
 import { CameraView, useCameraPermissions, type CameraType } from 'expo-camera';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import type { IconName } from '@/components/ui/icon-mappings';
 
 import { Icon } from '@/components/ui/icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { haptics } from '@/lib/haptics';
 
-const CONTROL_SIZE = 48;
+import { CameraControl } from './camera-control';
+import { CAMERA_CONTROL_SIZE } from './camera-control.types';
+
 const SHUTTER_SIZE = 78;
-const liquidGlass = process.env.EXPO_OS === 'ios' && isLiquidGlassAvailable();
 
 /** Longest edge we capture at: sharp enough for receipts, small enough to upload fast. */
 const MAX_PHOTO_EDGE = 2048;
@@ -33,50 +31,6 @@ function pickPictureSize(sizes: string[]) {
     if (!best || width * height > best.area) best = { size, area: width * height };
   }
   return best?.size;
-}
-
-/** Round glass control that sits on top of the live camera feed. */
-function CameraControl({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: IconName;
-  label: string;
-  onPress: () => void;
-}) {
-  const content = (
-    <Pressable
-      accessibilityRole='button'
-      accessibilityLabel={label}
-      hitSlop={6}
-      onPress={() => {
-        haptics.selection();
-        onPress();
-      }}
-      style={styles.controlPressable}
-    >
-      <Icon
-        name={icon}
-        size={20}
-        color='#ffffff'
-      />
-    </Pressable>
-  );
-
-  if (liquidGlass) {
-    return (
-      <GlassView
-        isInteractive
-        glassEffectStyle='clear'
-        colorScheme='dark'
-        style={styles.control}
-      >
-        {content}
-      </GlassView>
-    );
-  }
-  return <View style={[styles.control, styles.controlFallback]}>{content}</View>;
 }
 
 function PermissionPrompt({
@@ -196,16 +150,16 @@ export function CameraSheet({
           exiting={FadeOutDown.duration(140)}
           style={[
             styles.controlStack,
-            { bottom: barBottom + SHUTTER_SIZE / 2 + CONTROL_SIZE / 2 + 12 },
+            { bottom: barBottom + SHUTTER_SIZE / 2 + CAMERA_CONTROL_SIZE / 2 + 12 },
           ]}
         >
           <CameraControl
-            icon={flash === 'on' ? 'flash' : 'flash-off'}
+            kind={flash === 'on' ? 'flash-on' : 'flash-off'}
             label={flash === 'on' ? 'Turn flash off' : 'Turn flash on'}
             onPress={() => setFlash((value) => (value === 'on' ? 'off' : 'on'))}
           />
           <CameraControl
-            icon='camera-flip'
+            kind='flip'
             label='Flip camera'
             onPress={() => setFacing((value) => (value === 'back' ? 'front' : 'back'))}
           />
@@ -214,7 +168,7 @@ export function CameraSheet({
 
       <View style={[styles.bottomBar, { bottom: barBottom }]}>
         <CameraControl
-          icon='chevron-left'
+          kind='back'
           label='Close camera'
           onPress={close}
         />
@@ -230,7 +184,7 @@ export function CameraSheet({
           )}
         </Pressable>
         <CameraControl
-          icon={controlsOpen ? 'remove' : 'more'}
+          kind={controlsOpen ? 'close' : 'more'}
           label={controlsOpen ? 'Hide camera options' : 'Camera options'}
           onPress={() => setControlsOpen((open) => !open)}
         />
@@ -260,22 +214,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     gap: 12,
-  },
-  control: {
-    width: CONTROL_SIZE,
-    height: CONTROL_SIZE,
-    borderRadius: CONTROL_SIZE / 2,
-    overflow: 'hidden',
-  },
-  controlFallback: {
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-    borderColor: 'rgba(255, 255, 255, 0.35)',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  controlPressable: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   shutterRing: {
     width: SHUTTER_SIZE,
