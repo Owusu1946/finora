@@ -1,6 +1,6 @@
 import { Host } from '@expo/ui';
 import { Button, Menu, type ButtonProps } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, frame, labelStyle } from '@expo/ui/swift-ui/modifiers';
+import { font, foregroundStyle, frame, labelStyle, tint } from '@expo/ui/swift-ui/modifiers';
 import { View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -39,6 +39,8 @@ export function AttachMenu({ size, label, onSelect }: AttachMenuProps) {
             labelStyle('iconOnly'),
             font({ size: 20, weight: 'regular' }),
             foregroundStyle(colors.mutedForeground),
+            // Menu triggers use the accent tint (blue) unless overridden.
+            tint(colors.mutedForeground),
             frame({ width: size, height: size }),
           ]}
         >
