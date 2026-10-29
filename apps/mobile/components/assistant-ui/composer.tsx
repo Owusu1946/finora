@@ -373,6 +373,7 @@ function useVoiceComposer() {
   const stopRecordingRef = useRef<(discard?: boolean) => Promise<void>>(() => Promise.resolve());
   const liveSessionRef = useRef<LiveTranscriptionSession | null>(null);
   const liveFinalsRef = useRef('');
+  const livePartialRef = useRef('');
   const [preview, setPreview] = useState('');
 
   // Smoothed 0–1 mic level for the glow, animated on the UI thread.
@@ -404,11 +405,21 @@ function useVoiceComposer() {
   // "finals + current partial" is what the user reads while speaking.
   const resetLivePreview = () => {
     liveFinalsRef.current = '';
+    livePartialRef.current = '';
     setPreview('');
   };
   const setLivePartial = (text: string) => {
+    livePartialRef.current = text;
     const finals = liveFinalsRef.current;
     setPreview(finals ? `${finals} ${text}` : text);
+  };
+  const liveTranscript = () =>
+    [liveFinalsRef.current, livePartialRef.current].filter(Boolean).join(' ').trim();
+
+  const insertTranscript = (transcript: string) => {
+    const existing = draftBeforeRecordingRef.current.trimEnd();
+    aui.thread.composer().setText(existing ? `${existing} ${transcript}` : transcript);
+    haptics.success();
   };
 
   const stopRecording = async (discard = false) => {
@@ -436,15 +447,22 @@ function useVoiceComposer() {
         return;
       }
 
+      // The live feed has already transcribed the take; use it right away and
+      // only upload the recording when the live feed produced nothing.
+      const liveText = liveTranscript();
+      if (liveText) {
+        deleteRecording(uri);
+        if (mountedRef.current && voiceSessionRef.current === sessionId) insertTranscript(liveText);
+        return;
+      }
+
       const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
       const result = await transcribeRecording(uri, contentType, getToken);
       if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
       const transcript = result.transcript.trim();
       if (!transcript) return;
-      const existing = draftBeforeRecordingRef.current.trimEnd();
-      aui.thread.composer().setText(existing ? `${existing} ${transcript}` : transcript);
-      haptics.success();
+      insertTranscript(transcript);
     } catch (error) {
       if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
         haptics.error();
