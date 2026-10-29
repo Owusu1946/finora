@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
@@ -325,7 +326,10 @@ type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing
 
 const MAX_RECORDING_SECONDS = 45;
 const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
-const TRAILING_SILENCE_TIMEOUT_MS = 2_500;
+// Long enough for a pause while reading out an amount or account number.
+const TRAILING_SILENCE_TIMEOUT_MS = 3_500;
+/** Silence before the auto-finish countdown ring starts showing. */
+const AUTO_STOP_RING_DELAY_MS = 1_000;
 const VOICE_ACTIVITY_THRESHOLD_DB = -42;
 const VOICE_ACTIVITY_SAMPLES_REQUIRED = 2;
 const VOICE_RECORDING_OPTIONS: RecordingOptions = {
@@ -377,6 +381,8 @@ function useVoiceComposer() {
   const liveFinalsRef = useRef('');
   const livePartialRef = useRef('');
   const [preview, setPreview] = useState('');
+  /** 0 while speaking; climbs to 1 as a pause runs out and auto-finish nears. */
+  const [autoStopProgress, setAutoStopProgress] = useState(0);
 
   // Smoothed 0–1 mic level for the glow, animated on the UI thread.
   const level = useSharedValue(0);
@@ -502,6 +508,7 @@ function useVoiceComposer() {
     if (recorderState.metering >= VOICE_ACTIVITY_THRESHOLD_DB) {
       voiceActivitySamplesRef.current += 1;
       lastVoiceActivityAtRef.current = now;
+      setAutoStopProgress(0);
       if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
         speechDetectedRef.current = true;
       }
@@ -511,14 +518,25 @@ function useVoiceComposer() {
     voiceActivitySamplesRef.current = 0;
     if (!speechDetectedRef.current) {
       if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
+        showComposerNotice("Didn't catch anything. Tap the mic to try again.");
         void stopRecordingRef.current(true);
       }
       return;
     }
 
-    if (now - lastVoiceActivityAtRef.current >= TRAILING_SILENCE_TIMEOUT_MS) {
+    const silentFor = now - lastVoiceActivityAtRef.current;
+    if (silentFor >= TRAILING_SILENCE_TIMEOUT_MS) {
+      setAutoStopProgress(0);
       void stopRecordingRef.current(false);
+      return;
     }
+    setAutoStopProgress(
+      Math.max(
+        0,
+        (silentFor - AUTO_STOP_RING_DELAY_MS) /
+          (TRAILING_SILENCE_TIMEOUT_MS - AUTO_STOP_RING_DELAY_MS),
+      ),
+    );
   }, [recorderState.durationMillis, recorderState.metering, voiceState]);
 
   useEffect(() => {
@@ -534,6 +552,7 @@ function useVoiceComposer() {
 
   const startRecording = async () => {
     if (voiceStateRef.current !== 'idle') return;
+    setAutoStopProgress(0);
     const sessionId = voiceSessionRef.current + 1;
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
@@ -637,7 +656,45 @@ function useVoiceComposer() {
     void stopRecording(false, send);
   };
 
-  return { voiceState, level, preview, startRecording, cancelVoice, acceptVoice };
+  return {
+    voiceState,
+    level,
+    preview,
+    autoStopProgress: voiceState === 'recording' ? autoStopProgress : 0,
+    startRecording,
+    cancelVoice,
+    acceptVoice,
+  };
+}
+
+const RING_SIZE = 56;
+const RING_STROKE = 2;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+/** Shrinking ring around the finish button while a pause counts down to auto-finish. */
+function AutoStopRing({ progress, color }: { progress: number; color: string }) {
+  if (progress <= 0) return null;
+  return (
+    <Svg
+      pointerEvents='none'
+      width={RING_SIZE}
+      height={RING_SIZE}
+      style={{ position: 'absolute', top: -4, left: -4, transform: [{ rotate: '-90deg' }] }}
+    >
+      <Circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_RADIUS}
+        stroke={color}
+        strokeWidth={RING_STROKE}
+        strokeLinecap='round'
+        fill='none'
+        strokeDasharray={RING_CIRCUMFERENCE}
+        strokeDashoffset={RING_CIRCUMFERENCE * Math.min(1, progress)}
+      />
+    </Svg>
+  );
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -946,7 +1003,7 @@ export function Composer() {
   const notice = useComposerNotice();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, level, preview, startRecording, cancelVoice, acceptVoice } =
+  const { voiceState, level, preview, autoStopProgress, startRecording, cancelVoice, acceptVoice } =
     useVoiceComposer();
   const insets = useSafeAreaInsets();
   const pending = usePendingUploads();
@@ -1038,21 +1095,27 @@ export function Composer() {
               </Pressable>
               {voiceState === 'recording' ? (
                 <>
-                  <Pressable
-                    accessibilityLabel='Insert transcript'
-                    accessibilityRole='button'
-                    onPress={() => acceptVoice(false)}
-                    className='h-12 w-12 items-center justify-center rounded-full border border-border'
-                    style={({ pressed }) => [
-                      { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
-                    ]}
-                  >
-                    <Icon
-                      name='check'
-                      size={20}
+                  <View>
+                    <AutoStopRing
+                      progress={autoStopProgress}
                       color={colors.foreground}
                     />
-                  </Pressable>
+                    <Pressable
+                      accessibilityLabel='Insert transcript'
+                      accessibilityRole='button'
+                      onPress={() => acceptVoice(false)}
+                      className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                      style={({ pressed }) => [
+                        { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
+                      ]}
+                    >
+                      <Icon
+                        name='check'
+                        size={20}
+                        color={colors.foreground}
+                      />
+                    </Pressable>
+                  </View>
                   <Pressable
                     accessibilityLabel='Send voice message'
                     accessibilityRole='button'
