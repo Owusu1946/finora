@@ -48,6 +48,7 @@ import {
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
   ComposerPendingImage,
+  registerAttachmentPreview,
 } from './attachment';
 import { CameraSheet, type CapturedPhoto } from './camera-sheet';
 import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
@@ -137,6 +138,9 @@ function AttachButton() {
   const addUploadedAttachment = async (source: Parameters<typeof uploadPayrollAttachment>[0]) => {
     try {
       const uploaded = await uploadPayrollAttachment(source, getToken);
+      if ('uri' in source && uploaded.contentType.startsWith('image/')) {
+        registerAttachmentPreview(uploaded.attachmentId, source.uri);
+      }
       await aui.composer.addAttachment({
         id: uploaded.attachmentId,
         name: uploaded.name,

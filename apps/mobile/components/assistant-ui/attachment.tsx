@@ -9,6 +9,14 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
 
+/** On-device image URIs for uploaded attachments, keyed by attachment id. */
+const localPreviews = new Map<string, string>();
+
+/** Keep showing the local image after upload; the message only carries the file reference. */
+export function registerAttachmentPreview(attachmentId: string, uri: string) {
+  localPreviews.set(attachmentId, uri);
+}
+
 function useAttachmentPreview() {
   const attachment = useAuiState((s) => s.attachment);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -16,6 +24,12 @@ function useAttachmentPreview() {
   useEffect(() => {
     if (!attachment) {
       setImageUri(null);
+      return;
+    }
+
+    const localUri = localPreviews.get(attachment.id);
+    if (localUri) {
+      setImageUri(localUri);
       return;
     }
 
