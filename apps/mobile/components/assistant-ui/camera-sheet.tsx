@@ -16,7 +16,24 @@ const CONTROL_SIZE = 48;
 const SHUTTER_SIZE = 78;
 const liquidGlass = process.env.EXPO_OS === 'ios' && isLiquidGlassAvailable();
 
+/** Longest edge we capture at: sharp enough for receipts, small enough to upload fast. */
+const MAX_PHOTO_EDGE = 2048;
+
 export type CapturedPhoto = { uri: string; width: number; height: number };
+
+/** Largest supported `WxH` picture size whose longest edge fits `MAX_PHOTO_EDGE`. */
+function pickPictureSize(sizes: string[]) {
+  let best: { size: string; area: number } | null = null;
+  for (const size of sizes) {
+    const match = /^(\d+)x(\d+)$/.exec(size);
+    if (!match) continue;
+    const width = Number(match[1]);
+    const height = Number(match[2]);
+    if (Math.max(width, height) > MAX_PHOTO_EDGE) continue;
+    if (!best || width * height > best.area) best = { size, area: width * height };
+  }
+  return best?.size;
+}
 
 /** Round glass control that sits on top of the live camera feed. */
 function CameraControl({
@@ -113,6 +130,7 @@ export function CameraSheet({
   const [controlsOpen, setControlsOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [pictureSize, setPictureSize] = useState<string>();
   // Keep the controls clear of the home indicator now the camera runs to the edge.
   const barBottom = Math.max(useSafeAreaInsets().bottom, 16) + 8;
 
@@ -127,7 +145,7 @@ export function CameraSheet({
     setCapturing(true);
     haptics.impact();
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
       if (photo?.uri) {
         close();
         onCapture({ uri: photo.uri, width: photo.width, height: photo.height });
@@ -154,7 +172,14 @@ export function CameraSheet({
           facing={facing}
           flash={flash}
           animateShutter
-          onCameraReady={() => setReady(true)}
+          pictureSize={pictureSize}
+          onCameraReady={() => {
+            setReady(true);
+            void cameraRef.current
+              ?.getAvailablePictureSizesAsync()
+              .then((sizes) => setPictureSize(pickPictureSize(sizes)))
+              .catch(() => undefined);
+          }}
         />
       ) : null}
 
