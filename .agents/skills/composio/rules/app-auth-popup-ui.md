@@ -21,6 +21,7 @@ Use this pattern when you want to open Composio auth links in a popup window and
 ## Why Use a Dedicated Callback Page
 
 Always route popup completion to a dedicated page like `/auth/composio/callback` to:
+
 - show clear success/failure states
 - provide a stable URL shape for parameter parsing
 - prevent exposing auth-link query params in unrelated pages
@@ -33,7 +34,7 @@ Use a helper that opens the popup, polls URL params, and closes automatically wh
 ```typescript
 export const initiateComposioAuthFlow = (
   url: string,
-  successParam: string = 'status'
+  successParam: string = 'status',
 ): Promise<Record<string, string>> => {
   const width = 600;
   const height = 840;
@@ -44,7 +45,7 @@ export const initiateComposioAuthFlow = (
     const popup = window.open(
       url,
       'composio-auth-popup',
-      `width=${width},height=${height},left=${leftPosition},top=${topPosition}`
+      `width=${width},height=${height},left=${leftPosition},top=${topPosition}`,
     );
 
     if (!popup) {
@@ -100,37 +101,31 @@ export const initiateComposioAuthFlow = (
 ## Dedicated Callback Page
 
 Create a small callback page in your app to handle the end state:
+
 - show "Connection successful" or "Connection failed"
 - optionally show a "You can close this window" fallback
 - keep query params intact so parent polling can read them
 
 Example route path:
+
 - `https://your-app.com/auth/composio/callback`
 
 ## Example Integration with `connectedAccounts.link()` or `session.authorize()`
 
 ```typescript
 // in the backend
-const connectionRequest = await composio.connectedAccounts.link(
-  userId,
-  authConfigId,
-  { callbackUrl: 'https://your-app.com/auth/composio/callback' }
-);
+const connectionRequest = await composio.connectedAccounts.link(userId, authConfigId, {
+  callbackUrl: 'https://your-app.com/auth/composio/callback',
+});
 
 // in the frontend
-const params = await initiateComposioAuthFlow(
-  connectionRequest.redirectUrl,
-  'status'
-);
+const params = await initiateComposioAuthFlow(connectionRequest.redirectUrl, 'status');
 ```
 
 You can also destructure all returned query params directly:
 
 ```typescript
-const { status, connected_account_id } = await initiateComposioAuthFlow(
-  authLink,
-  'status'
-);
+const { status, connected_account_id } = await initiateComposioAuthFlow(authLink, 'status');
 ```
 
 ## Best Practices
@@ -141,4 +136,3 @@ const { status, connected_account_id } = await initiateComposioAuthFlow(
 - Always clear interval on every exit path
 - Reject immediately if popup cannot be opened
 - Use a stable callback URL path across environments
-

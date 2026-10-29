@@ -8,6 +8,7 @@ tags: [tools, versions, stability, production, pinning]
 # Tool Version Management
 
 > **⚠️ CRITICAL:** Never assume or make up toolkit names or version numbers. Always verify before using:
+>
 > - Use `composio manage toolkits list` / `composio manage toolkits info "..."` to discover toolkits (CLI) or `composio.toolkits.get()` (SDK)
 > - Use `composio manage toolkits info "..."` to view available versions (CLI) or `composio.toolkits.get('toolkit_name')` (SDK) or check the [dashboard](https://platform.composio.dev)
 > - Using non-existent toolkit slugs or versions will cause runtime errors
@@ -38,15 +39,18 @@ const result = await composio.tools.execute('GITHUB_GET_ISSUES', {
 ```
 
 **Pros:**
+
 - Clear version visibility at execution point
 - Different versions for different tools
 - Easy to update individual tool versions
 
 **Cons:**
+
 - Repetitive if executing same tool multiple times
 - Version scattered across codebase
 
 **Use when:**
+
 - One-off tool executions
 - Testing different tool versions
 - Tool versions need to differ within the same app
@@ -60,8 +64,8 @@ const composio = new Composio({
   toolkitVersions: {
     github: '12082025_00',
     slack: '10082025_01',
-    gmail: '15082025_02'
-  }
+    gmail: '15082025_02',
+  },
 });
 
 // Execute without version parameter - uses pinned version from config
@@ -73,16 +77,19 @@ const result = await composio.tools.execute('GITHUB_GET_ISSUES', {
 ```
 
 **Pros:**
+
 - Centralized version management
 - Clean execution calls
 - Easy to update all tools from a toolkit
 - Best for production environments
 
 **Cons:**
+
 - All tools from a toolkit use the same version
 - Requires initialization configuration
 
 **Use when:**
+
 - Building production applications
 - Managing multiple tools from the same toolkit
 - Want centralized version control
@@ -100,17 +107,20 @@ const result = await composio.tools.execute('GITHUB_GET_ISSUES', {
 ```
 
 **⚠️ Warning:** This bypasses version validation and uses `'latest'` version. Can lead to:
+
 - Unexpected behavior when tool schemas change
 - Argument mismatches in production
 - Runtime errors when tools are updated
 - Workflow breakage without notice
 
 **Only use for:**
+
 - Development and testing
 - Prototyping
 - When you explicitly want to test latest versions
 
 **NEVER use in:**
+
 - Production environments
 - Critical workflows
 - User-facing applications
@@ -120,6 +130,7 @@ const result = await composio.tools.execute('GITHUB_GET_ISSUES', {
 Versions follow the format: `DDMMYYYY_XX`
 
 Examples:
+
 - `12082025_00` - August 12, 2025, revision 00
 - `10082025_01` - August 10, 2025, revision 01
 - `15082025_02` - August 15, 2025, revision 02
@@ -150,6 +161,7 @@ console.log('Slack versions:', slackToolkit.versions);
 ### Method 2: Check Dashboard
 
 View versions and changelog on the [Composio dashboard](https://platform.composio.dev):
+
 - Navigate to Toolkits section
 - Select the specific toolkit (e.g., GitHub, Gmail, Slack)
 - View available versions and their changes
@@ -159,6 +171,7 @@ View versions and changelog on the [Composio dashboard](https://platform.composi
 Once you've found available versions, choose a specific version to test, then pin it in your configuration:
 
 **Step 1: List available versions**
+
 ```typescript
 const githubToolkit = await composio.toolkits.get('github');
 console.log('Available versions:', githubToolkit.versions);
@@ -166,23 +179,25 @@ console.log('Available versions:', githubToolkit.versions);
 ```
 
 **Step 2: Choose and test a specific version**
+
 ```typescript
 // Test with a specific version from the list
 const composio = new Composio({
   toolkitVersions: {
     github: '12082025_00', // Choose a specific version to test
-  }
+  },
 });
 ```
 
 **Step 3: Pin the tested version in production**
+
 ```typescript
 // After testing, pin the version in your production config
 const composio = new Composio({
   toolkitVersions: {
-    github: '12082025_00',  // Pinned version that you've tested
-    slack: '10082025_01',   // Pinned version that you've tested
-  }
+    github: '12082025_00', // Pinned version that you've tested
+    slack: '10082025_01', // Pinned version that you've tested
+  },
 });
 ```
 
@@ -201,7 +216,7 @@ Then initialize Composio without specifying `toolkitVersions`:
 
 ```typescript
 const composio = new Composio({
-  apiKey: 'your-api-key'
+  apiKey: 'your-api-key',
   // Will automatically use environment variables
 });
 ```
@@ -209,25 +224,27 @@ const composio = new Composio({
 ### IMPORTANT: Don't Auto-Use Latest Version
 
 ❌ **DON'T DO THIS:**
+
 ```typescript
 // This defeats the purpose of version pinning!
 const githubToolkit = await composio.toolkits.get('github');
 const composio = new Composio({
   toolkitVersions: {
     github: githubToolkit.latestVersion, // Always uses latest - no pinning!
-  }
+  },
 });
 
 // Never use made-up version numbers either!
 const composio = new Composio({
   toolkitVersions: {
     github: '01012025_00', // Random version - might not exist!
-    slack: '25122024_99',  // Made up version - will fail!
-  }
+    slack: '25122024_99', // Made up version - will fail!
+  },
 });
 ```
 
 ✅ **DO THIS:**
+
 ```typescript
 // 1. List available versions to find valid options
 const githubToolkit = await composio.toolkits.get('github');
@@ -237,13 +254,14 @@ console.log('Available versions:', githubToolkit.versions);
 // 3. Pin that tested version in your code or environment variables
 const composio = new Composio({
   toolkitVersions: {
-    github: '12082025_00',  // Specific tested version
-    slack: '10082025_01',   // Specific tested version
-  }
+    github: '12082025_00', // Specific tested version
+    slack: '10082025_01', // Specific tested version
+  },
 });
 ```
 
 **Why this matters:**
+
 - Automatically using `latestVersion` means your app always uses the newest version, defeating the purpose of pinning
 - Version pinning is about locking to a specific, tested version for stability
 - When you're ready to upgrade, you explicitly choose and test a new version before deploying
@@ -253,14 +271,16 @@ const composio = new Composio({
 When updating tool versions:
 
 1. **Test in development first**
+
    ```typescript
    // Dev environment
    const devComposio = new Composio({
-     toolkitVersions: { github: '20082025_00' } // New version
+     toolkitVersions: { github: '20082025_00' }, // New version
    });
    ```
 
 2. **Validate schema changes**
+
    ```typescript
    const oldTool = await composio.tools.get('default', 'GITHUB_GET_ISSUES');
    const newTool = await composio.tools.get('default', 'GITHUB_GET_ISSUES');
@@ -276,7 +296,7 @@ When updating tool versions:
    ```typescript
    // Production environment
    const prodComposio = new Composio({
-     toolkitVersions: { github: '20082025_00' } // Deploy new version
+     toolkitVersions: { github: '20082025_00' }, // Deploy new version
    });
    ```
 
@@ -303,11 +323,11 @@ const toolkitVersions = {
   production: {
     github: '10082025_00', // Older stable version
     slack: '08082025_00',
-  }
+  },
 };
 
 const composio = new Composio({
-  toolkitVersions: toolkitVersions[process.env.NODE_ENV]
+  toolkitVersions: toolkitVersions[process.env.NODE_ENV],
 });
 ```
 
@@ -316,7 +336,7 @@ const composio = new Composio({
 ```typescript
 // Use global config version by default
 const composio = new Composio({
-  toolkitVersions: { github: '12082025_00' }
+  toolkitVersions: { github: '12082025_00' },
 });
 
 // Override for specific execution

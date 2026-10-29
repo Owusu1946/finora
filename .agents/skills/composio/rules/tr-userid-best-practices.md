@@ -15,7 +15,7 @@ User IDs are the **foundation of Composio's data isolation**. They determine whi
 // DON'T: Use 'default' in production multi-user apps
 async function handleUserRequest(req: Request) {
   const session = await composio.create('default', {
-    toolkits: ['gmail', 'slack']
+    toolkits: ['gmail', 'slack'],
   });
 
   // ❌ All users share the same session
@@ -43,7 +43,7 @@ async def handle_user_request(req):
 // DON'T: Use email addresses as user IDs
 async function handleUserRequest(req: Request) {
   const session = await composio.create(req.user.email, {
-    toolkits: ['github']
+    toolkits: ['github'],
   });
 
   // ❌ Emails can change
@@ -60,7 +60,7 @@ import { Composio } from '@composio/core';
 import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 async function handleUserRequest(req: Request) {
@@ -69,7 +69,7 @@ async function handleUserRequest(req: Request) {
 
   // Create isolated session for this user
   const session = await composio.create(userId, {
-    toolkits: ['gmail', 'slack']
+    toolkits: ['gmail', 'slack'],
   });
 
   const tools = await session.tools();
@@ -116,14 +116,14 @@ import { Composio } from '@composio/core';
 import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 async function handleClerkUser(userId: string) {
   // Using Clerk user ID
   // e.g., "user_2abc123def456"
   const session = await composio.create(userId, {
-    toolkits: ['github']
+    toolkits: ['github'],
   });
 
   return session;
@@ -133,7 +133,7 @@ async function handleAuth0User(userId: string) {
   // Using Auth0 user ID
   // e.g., "auth0|507f1f77bcf86cd799439011"
   const session = await composio.create(userId, {
-    toolkits: ['gmail']
+    toolkits: ['gmail'],
   });
 
   return session;
@@ -143,7 +143,7 @@ async function handleSupabaseUser(userId: string) {
   // Using Supabase user UUID
   // e.g., "d7f8b0c1-1234-5678-9abc-def012345678"
   const session = await composio.create(userId, {
-    toolkits: ['slack']
+    toolkits: ['slack'],
   });
 
   return session;
@@ -193,7 +193,7 @@ import { Composio } from '@composio/core';
 import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 // When apps are connected at organization level (not individual users)
@@ -203,7 +203,7 @@ async function handleOrgLevelApp(req: Request) {
 
   const session = await composio.create(organizationId, {
     toolkits: ['slack', 'github'], // Org-wide tools
-    manageConnections: true
+    manageConnections: true,
   });
 
   // All users in the organization share these connections
@@ -216,7 +216,7 @@ async function handleOrgLevelApp(req: Request) {
 async function createWorkspaceSession(workspaceId: string) {
   // Workspace ID as user ID
   const session = await composio.create(`workspace_${workspaceId}`, {
-    toolkits: ['slack', 'notion', 'linear']
+    toolkits: ['slack', 'notion', 'linear'],
   });
 
   return session;
@@ -261,36 +261,40 @@ async def create_workspace_session(workspace_id: str):
 The `'default'` user ID should **ONLY** be used in these scenarios:
 
 ### ✅ Development and Testing
+
 ```typescript
 // Testing locally
 const session = await composio.create('default', {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 ```
 
 ### ✅ Single-User Applications
+
 ```typescript
 // Personal automation script
 // Only YOU use this app
 const session = await composio.create('default', {
-  toolkits: ['github', 'notion']
+  toolkits: ['github', 'notion'],
 });
 ```
 
 ### ✅ Demos and Prototypes
+
 ```typescript
 // Quick demo for investors
 const session = await composio.create('default', {
-  toolkits: ['hackernews']
+  toolkits: ['hackernews'],
 });
 ```
 
 ### ❌ NEVER in Production Multi-User Apps
+
 ```typescript
 // Production API serving multiple users
 // ❌ DON'T DO THIS
 const session = await composio.create('default', {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 ```
 
@@ -299,11 +303,13 @@ const session = await composio.create('default', {
 ### 1. **Use Stable, Immutable Identifiers**
 
 ✅ **Good:**
+
 - Database primary keys (UUIDs)
 - Auth provider user IDs
 - Immutable user identifiers
 
 ❌ **Bad:**
+
 - Email addresses (can change)
 - Usernames (can be modified)
 - Phone numbers (can change)
@@ -362,7 +368,7 @@ const userId = `app_${appId}_user_${user.id}`;
 // e.g., "app_saas123_user_550e8400"
 
 const session = await composio.create(userId, {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 
 // Each app instance gets isolated connections
@@ -381,7 +387,7 @@ async function handleRequest(req: Request) {
   // Use same ID for direct tool execution
   await composio.tools.execute('GMAIL_SEND_EMAIL', {
     userId: userId,
-    arguments: { to: 'user@example.com', subject: 'Test' }
+    arguments: { to: 'user@example.com', subject: 'Test' },
   });
 
   // Use same ID for connected accounts
@@ -392,25 +398,27 @@ async function handleRequest(req: Request) {
 ## Security Implications
 
 ### ⚠️ User ID Leakage
+
 ```typescript
 // ❌ DON'T: Expose user IDs to client
 app.get('/api/session', (req, res) => {
   res.json({
     sessionId: session.sessionId,
-    userId: req.user.id // ❌ Sensitive information
+    userId: req.user.id, // ❌ Sensitive information
   });
 });
 
 // ✅ DO: Keep user IDs server-side only
 app.get('/api/session', (req, res) => {
   res.json({
-    sessionId: session.sessionId
+    sessionId: session.sessionId,
     // Don't send userId to client
   });
 });
 ```
 
 ### ⚠️ User ID Validation
+
 ```typescript
 // ✅ Always validate user IDs match authenticated user
 app.post('/api/agent/:userId', authenticateUser, async (req, res) => {
@@ -429,33 +437,36 @@ app.post('/api/agent/:userId', authenticateUser, async (req, res) => {
 ## Common Patterns
 
 ### Pattern 1: User-Level Isolation (Most Common)
+
 ```typescript
 // Each user has their own connections
 // Use user ID from your database/auth system
 const session = await composio.create(req.user.id, {
-  toolkits: ['gmail', 'github']
+  toolkits: ['gmail', 'github'],
 });
 ```
 
 ### Pattern 2: Organization-Level Sharing
+
 ```typescript
 // All org members share connections
 // Use organization ID
 const session = await composio.create(req.user.organizationId, {
-  toolkits: ['slack', 'notion']
+  toolkits: ['slack', 'notion'],
 });
 ```
 
 ### Pattern 3: Hybrid (User + Org)
+
 ```typescript
 // Personal tools use user ID
 const personalSession = await composio.create(req.user.id, {
-  toolkits: ['gmail'] // Personal Gmail
+  toolkits: ['gmail'], // Personal Gmail
 });
 
 // Team tools use org ID
 const teamSession = await composio.create(req.user.organizationId, {
-  toolkits: ['slack', 'jira'] // Team Slack/Jira
+  toolkits: ['slack', 'jira'], // Team Slack/Jira
 });
 ```
 

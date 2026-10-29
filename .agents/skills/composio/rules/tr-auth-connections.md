@@ -15,7 +15,7 @@ The `manageConnections` setting determines how Tool Router handles missing toolk
 // DON'T: Disable connections in interactive applications
 const session = await composio.create('user_123', {
   toolkits: ['gmail'],
-  manageConnections: false // Tools will FAIL if user not connected!
+  manageConnections: false, // Tools will FAIL if user not connected!
 });
 
 // When agent tries to use Gmail:
@@ -46,14 +46,14 @@ const composio = new Composio();
 
 // Option 1: Use default (manageConnections: true)
 const session1 = await composio.create('user_123', {
-  toolkits: ['gmail', 'slack']
+  toolkits: ['gmail', 'slack'],
   // manageConnections defaults to true
 });
 
 // Option 2: Explicitly enable with boolean
 const session2 = await composio.create('user_123', {
   toolkits: ['gmail'],
-  manageConnections: true // Agent can prompt for auth
+  manageConnections: true, // Agent can prompt for auth
 });
 
 // How it works:
@@ -103,8 +103,8 @@ const session = await composio.create('user_123', {
   manageConnections: {
     enable: true, // Allow in-chat authentication
     callbackUrl: 'https://your-app.com/auth/callback', // Custom OAuth callback
-    waitForConnections: true // Wait for user to complete auth before proceeding
-  }
+    waitForConnections: true, // Wait for user to complete auth before proceeding
+  },
 });
 
 // With waitForConnections: true
@@ -142,16 +142,19 @@ manageConnections: boolean | {
 ## When to Use Each Setting
 
 **`manageConnections: true` (Default)**
+
 - Interactive chat applications
 - User can authenticate on-demand
 - Flexible, user-friendly experience
 
 **`manageConnections: { waitForConnections: true }`**
+
 - Workflows requiring connections upfront
 - Onboarding flows
 - Critical operations needing guaranteed access
 
 **`manageConnections: false`**
+
 - Backend automation (no user interaction)
 - Pre-connected accounts only
 - System-to-system integrations

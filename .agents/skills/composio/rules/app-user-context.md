@@ -14,6 +14,7 @@ Every Composio operation requires a `userId` parameter for security and data iso
 `default` refers to your project's default account.
 
 **Only use 'default' for:**
+
 - Testing and development
 - Single-user applications
 - Internal tools with no external users
@@ -57,6 +58,7 @@ const userId = user.email; // "user@example.com"
 ```
 
 **Only use when:**
+
 - Email is guaranteed immutable
 - No other unique identifier available
 - SSO requires email-based identification
@@ -78,6 +80,7 @@ await composio.tools.execute('SLACK_SEND_MESSAGE', {
 ```
 
 **Use organization IDs when:**
+
 - Team/org tools (Slack, MS Teams, Jira)
 - Enterprise apps with IT admin connections
 - Shared resources across users
@@ -207,7 +210,7 @@ const accounts = await composio.connectedAccounts.list({
 });
 
 console.log(`User ${userId} has ${accounts.items.length} accounts`);
-accounts.items.forEach(account => {
+accounts.items.forEach((account) => {
   console.log(`- ${account.toolkit.slug}: ${account.status}`);
 });
 ```

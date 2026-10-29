@@ -19,11 +19,9 @@ Connected accounts store authentication tokens for external services. Use the `c
 Use `link()` for most flows. Composio handles security, OAuth, and form rendering.
 
 ```typescript
-const connectionRequest = await composio.connectedAccounts.link(
-  'user_123',
-  'auth_config_123',
-  { callbackUrl: 'https://your-app.com/callback' }
-);
+const connectionRequest = await composio.connectedAccounts.link('user_123', 'auth_config_123', {
+  callbackUrl: 'https://your-app.com/callback',
+});
 
 // Redirect user to authentication page
 window.location.href = connectionRequest.redirectUrl;
@@ -36,8 +34,8 @@ const account = await connectionRequest.waitForConnection();
 
 While building popup-based authentication flows using Composio links, follow [Building Popup Connection UI](./app-auth-popup-ui.md).
 
-
 **Why use link():**
+
 - Handles OAuth security and form UI
 - Works with 200+ services
 - Whitelabel with your app name/logo (Project Settings on dashboard)
@@ -49,32 +47,26 @@ Only use when building custom auth interfaces:
 
 ```typescript
 // API Key (custom form)
-const connection = await composio.connectedAccounts.initiate(
-  'user_123',
-  'auth_config_456',
-  {
-    config: AuthScheme.ApiKey({ api_key: apiKey }),
-  }
-);
+const connection = await composio.connectedAccounts.initiate('user_123', 'auth_config_456', {
+  config: AuthScheme.ApiKey({ api_key: apiKey }),
+});
 
 // OAuth with extra params (Zendesk, PostHog, etc.)
-const connection = await composio.connectedAccounts.initiate(
-  'user_123',
-  'zendesk_config',
-  {
-    config: AuthScheme.OAuth2({ subdomain: "your_subdomain" })
-  }
-);
+const connection = await composio.connectedAccounts.initiate('user_123', 'zendesk_config', {
+  config: AuthScheme.OAuth2({ subdomain: 'your_subdomain' }),
+});
 window.location.href = connection.redirectUrl;
 ```
 
 **AuthScheme helpers:**
+
 - `AuthScheme.OAuth2({ subdomain: 'example' })`
 - `AuthScheme.ApiKey({ api_key: 'key123' })`
 - `AuthScheme.Basic({ username: 'user', password: 'pass' })`
 - `AuthScheme.BearerToken({ token: 'token123' })`
 
 **Use initiate() only when:**
+
 - Building custom authentication UI
 - Handling credentials directly in backend
 - OAuth requires extra parameters before redirect
@@ -97,19 +89,19 @@ const githubAccounts = await composio.connectedAccounts.list({
 
 // Filter by status
 const activeAccounts = await composio.connectedAccounts.list({
-  statuses: ['ACTIVE']
+  statuses: ['ACTIVE'],
 });
 
 // Filter by auth config
 const configAccounts = await composio.connectedAccounts.list({
-  authConfigIds: ['auth_config_123']
+  authConfigIds: ['auth_config_123'],
 });
 
 // Combine filters
 const filtered = await composio.connectedAccounts.list({
   userIds: ['user_123'],
   toolkitSlugs: ['github', 'slack'],
-  statuses: ['ACTIVE']
+  statuses: ['ACTIVE'],
 });
 
 // Get specific account
@@ -117,6 +109,7 @@ const account = await composio.connectedAccounts.get('conn_abc123');
 ```
 
 **Available filters:**
+
 - `userIds` - Filter by user IDs
 - `toolkitSlugs` - Filter by toolkit slugs
 - `statuses` - Filter by connection statuses (see below for values)
@@ -157,6 +150,7 @@ const account = await composio.connectedAccounts.waitForConnection('conn_123', 1
 ```
 
 **Errors:**
+
 - `ComposioConnectedAccountNotFoundError` - Account doesn't exist
 - `ConnectionRequestFailedError` - Connection failed/expired
 - `ConnectionRequestTimeoutError` - Timeout exceeded
@@ -168,21 +162,16 @@ const account = await composio.connectedAccounts.waitForConnection('conn_123', 1
 ```typescript
 // Create connection
 async function connectUser(userId, authConfigId) {
-  const request = await composio.connectedAccounts.link(
-    userId,
-    authConfigId,
-    { callbackUrl: 'https://app.com/callback' }
-  );
+  const request = await composio.connectedAccounts.link(userId, authConfigId, {
+    callbackUrl: 'https://app.com/callback',
+  });
   return { redirectUrl: request.redirectUrl };
 }
 
 // Handle callback
 async function handleCallback(connectionId) {
   try {
-    const account = await composio.connectedAccounts.waitForConnection(
-      connectionId,
-      180000
-    );
+    const account = await composio.connectedAccounts.waitForConnection(connectionId, 180000);
     return { success: true, account };
   } catch (error) {
     if (error.name === 'ConnectionRequestTimeoutError') {
@@ -200,7 +189,7 @@ async function handleCallback(connectionId) {
 async function getUserActiveConnections(userId) {
   const accounts = await composio.connectedAccounts.list({
     userIds: [userId],
-    statuses: ['ACTIVE']
+    statuses: ['ACTIVE'],
   });
   return accounts.items;
 }
@@ -209,7 +198,7 @@ async function getUserActiveConnections(userId) {
 async function getUserConnectionsByStatus(userId) {
   const accounts = await composio.connectedAccounts.list({
     userIds: [userId],
-    statuses: ['ACTIVE', 'EXPIRED', 'FAILED']
+    statuses: ['ACTIVE', 'EXPIRED', 'FAILED'],
   });
   return accounts.items;
 }
@@ -218,13 +207,14 @@ async function isToolkitConnected(userId, toolkit) {
   const accounts = await composio.connectedAccounts.list({
     userIds: [userId],
     toolkitSlugs: [toolkit],
-    statuses: ['ACTIVE']
+    statuses: ['ACTIVE'],
   });
   return accounts.items.length > 0;
 }
 ```
 
 **Available statuses:**
+
 - `INITIALIZING` - Connection being set up
 - `INITIATED` - Connection initiated, awaiting completion
 - `ACTIVE` - Connection active and ready to use

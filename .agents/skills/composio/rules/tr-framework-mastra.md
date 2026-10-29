@@ -28,14 +28,14 @@ import { MastraProvider } from '@composio/mastra';
 
 const composio = new Composio({
   apiKey: process.env.COMPOSIO_API_KEY,
-  provider: new MastraProvider()
+  provider: new MastraProvider(),
 });
 
 async function createAgent(userId: string, message: string) {
   // Create Tool Router session
   const session = await composio.create(userId, {
     toolkits: ['gmail', 'slack'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   const tools = await session.tools();
@@ -45,7 +45,7 @@ async function createAgent(userId: string, message: string) {
     name: 'Assistant',
     instructions: `You have access to Gmail and Slack tools to assist the user with their query`,
     model: openai('gpt-5.2'),
-    tools: tools
+    tools: tools,
   });
 
   return await agent.generate([{ role: 'user', content: message }]);
@@ -53,6 +53,7 @@ async function createAgent(userId: string, message: string) {
 ```
 
 **Key Points:**
+
 - Create new sessions per request/conversation
 - Use `session.tools()` for native Mastra tools
 - Import `Composio` from `@composio/core` and `MastraProvider` from `@composio/mastra`
@@ -71,14 +72,14 @@ import { MastraProvider } from '@composio/mastra';
 
 const composio = new Composio({
   apiKey: process.env.COMPOSIO_API_KEY,
-  provider: new MastraProvider()
+  provider: new MastraProvider(),
 });
 
 async function createAgentWithMcp(userId: string, message: string) {
   // 1. Create Tool Router session
   const session = await composio.create(userId, {
     toolkits: ['gmail', 'slack'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   // 2. Create MCP client with session URL and headers
@@ -88,10 +89,10 @@ async function createAgentWithMcp(userId: string, message: string) {
       composio: {
         url: session.mcp.url,
         requestInit: {
-          headers: session.mcp.headers
-        }
-      }
-    }
+          headers: session.mcp.headers,
+        },
+      },
+    },
   });
 
   // 3. Get tools via MCPClient
@@ -102,7 +103,7 @@ async function createAgentWithMcp(userId: string, message: string) {
     name: 'MCP Assistant',
     instructions: 'You have access to Composio tools via MCP.',
     model: openai('gpt-5.2'),
-    tools: tools
+    tools: tools,
   });
 
   return await agent.generate([{ role: 'user', content: message }]);
@@ -110,12 +111,13 @@ async function createAgentWithMcp(userId: string, message: string) {
 ```
 
 **For dynamic toolsets (multi-tenant):**
+
 ```typescript
 // Create agent without tools in constructor
 const agent = new Agent({
   id: 'dynamic-agent',
   model: openai('gpt-5.2'),
-  instructions: 'You help users with tasks.'
+  instructions: 'You help users with tasks.',
 });
 
 // Pass toolsets per request
@@ -128,7 +130,7 @@ const response = await agent.generate(message, { toolsets });
 ```typescript
 // ❌ Don't bypass Tool Router sessions
 const mcpClient = new MCPClient({
-  servers: { composio: { url: 'https://mcp.composio.dev' } }
+  servers: { composio: { url: 'https://mcp.composio.dev' } },
 });
 
 // ❌ Don't use non-existent methods
@@ -143,27 +145,31 @@ const cachedTools = await session.tools();
 const composio = new Composio({ apiKey: key }); // Missing provider
 
 // ❌ Don't use string format for model
-model: 'openai/gpt-5.2' // Wrong - use openai('gpt-5.2')
+model: 'openai/gpt-5.2'; // Wrong - use openai('gpt-5.2')
 ```
 
 ## Key Principles
 
 **Native Tools:**
+
 - Use `session.tools()` - best performance, type-safe
 - Recommended for most use cases
 
 **MCP Tools:**
+
 - Use `session.mcp.url` + `MCPClient` + `listTools()`/`listToolsets()`
 - Only when MCP protocol compliance is required
 - Still uses Tool Router sessions
 
 **Session Management:**
+
 - Always create sessions via `composio.create()`
 - Create new sessions per request/conversation
 - Don't cache tools or sessions across users
 - Use `manageConnections: true`
 
 **Setup:**
+
 - Import `Composio` from `@composio/core`
 - Import `MastraProvider` from `@composio/mastra`
 - Use `openai('gpt-5.2')` from `@ai-sdk/openai`
@@ -171,11 +177,11 @@ model: 'openai/gpt-5.2' // Wrong - use openai('gpt-5.2')
 
 ## When to Use
 
-| Use Case | Approach | Method |
-|----------|----------|--------|
-| Most scenarios | Native Tools | `session.tools()` |
-| MCP protocol required | MCP Tools | MCP client + `listTools()` |
-| Multi-tenant dynamic auth | MCP Tools | MCP client + `listToolsets()` |
+| Use Case                  | Approach     | Method                        |
+| ------------------------- | ------------ | ----------------------------- |
+| Most scenarios            | Native Tools | `session.tools()`             |
+| MCP protocol required     | MCP Tools    | MCP client + `listTools()`    |
+| Multi-tenant dynamic auth | MCP Tools    | MCP client + `listToolsets()` |
 
 ## Reference
 

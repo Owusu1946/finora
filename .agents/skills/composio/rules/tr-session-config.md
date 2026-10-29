@@ -10,6 +10,7 @@ tags: [tool-router, configuration, toolkits, tools, session]
 Tool Router sessions support rich configuration for fine-grained control over toolkit and tool access.
 
 > **⚠️ IMPORTANT:** Do NOT make up or guess toolkit or tool names. Always verify slugs before using them:
+>
 > - Use `composio manage toolkits list` / `composio manage toolkits info "..."` to discover and view toolkit details (CLI)
 > - Use `composio manage tools list --toolkits "..."` / `composio manage tools info "..."` to discover and view tool schemas (CLI)
 > - Use `composio.tools.get()` to discover tools programmatically (SDK)
@@ -27,7 +28,7 @@ const session = await composio.create('user_123', {
 // DON'T: Mix incompatible configuration patterns
 const session = await composio.create('user_123', {
   toolkits: { enable: ['gmail'] },
-  toolkits: ['slack']  // This will override the first one!
+  toolkits: ['slack'], // This will override the first one!
 });
 ```
 
@@ -49,17 +50,17 @@ const composio = new Composio();
 
 // Simple toolkit list
 const session = await composio.create('user_123', {
-  toolkits: ['gmail', 'slack', 'github']
+  toolkits: ['gmail', 'slack', 'github'],
 });
 
 // Explicit enable
 const session2 = await composio.create('user_123', {
-  toolkits: { enable: ['gmail', 'slack'] }
+  toolkits: { enable: ['gmail', 'slack'] },
 });
 
 // Disable specific toolkits (enable all others)
 const session3 = await composio.create('user_123', {
-  toolkits: { disable: ['calendar'] }
+  toolkits: { disable: ['calendar'] },
 });
 ```
 
@@ -94,9 +95,9 @@ const session = await composio.create('user_123', {
 
     // Or use enable/disable
     slack: {
-      disable: ['SLACK_DELETE_MESSAGE'] // Safety: prevent deletions
-    }
-  }
+      disable: ['SLACK_DELETE_MESSAGE'], // Safety: prevent deletions
+    },
+  },
 });
 ```
 
@@ -129,9 +130,9 @@ const session = await composio.create('user_123', {
   // Override tags per toolkit
   tools: {
     github: {
-      tags: ['readOnlyHint', 'idempotentHint']
-    }
-  }
+      tags: ['readOnlyHint', 'idempotentHint'],
+    },
+  },
 });
 ```
 

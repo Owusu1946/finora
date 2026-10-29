@@ -15,7 +15,7 @@ Use `session.authorize()` to explicitly control when users authenticate toolkits
 // DON'T: Mix auto and manual auth without clear purpose
 const session = await composio.create('user_123', {
   toolkits: ['gmail'],
-  manageConnections: true // Agent handles auth
+  manageConnections: true, // Agent handles auth
 });
 
 // Then immediately force manual auth (redundant)
@@ -46,7 +46,7 @@ const composio = new Composio();
 
 // Step 1: Create session for onboarding
 const session = await composio.create('user_123', {
-  toolkits: ['gmail', 'slack']
+  toolkits: ['gmail', 'slack'],
 });
 
 // Step 2: Explicitly connect required toolkits during onboarding
@@ -55,7 +55,7 @@ async function onboardUser() {
 
   for (const toolkit of requiredToolkits) {
     const connectionRequest = await session.authorize(toolkit, {
-      callbackUrl: 'https://your-app.com/onboarding/callback'
+      callbackUrl: 'https://your-app.com/onboarding/callback',
     });
 
     console.log(`Connect ${toolkit}:`, connectionRequest.redirectUrl);
@@ -106,12 +106,12 @@ async def onboard_user():
 // DO: Manual auth for connection management in settings
 async function settingsPageHandler(userId: string, toolkit: string) {
   const session = await composio.create(userId, {
-    toolkits: [toolkit]
+    toolkits: [toolkit],
   });
 
   // User clicked "Connect" button in settings
   const connectionRequest = await session.authorize(toolkit, {
-    callbackUrl: 'https://your-app.com/settings/callback'
+    callbackUrl: 'https://your-app.com/settings/callback',
   });
 
   // Redirect user to OAuth flow
@@ -140,12 +140,14 @@ async def settings_page_handler(user_id: str, toolkit: str):
 ## When to Use Manual Authorization
 
 **Use `session.authorize()` for:**
+
 - **Onboarding flows**: Connect required toolkits before user can proceed
 - **Settings pages**: User explicitly manages connections via UI
 - **Pre-authentication**: Ensure critical connections exist before starting workflows
 - **Re-authorization**: Handle expired or revoked connections
 
 **Use `manageConnections: true` (auto) for:**
+
 - **Interactive agents**: Let agent prompt for auth when needed
 - **Flexible workflows**: User may or may not have connections
 - **Just-in-time auth**: Only authenticate when toolkit is actually used

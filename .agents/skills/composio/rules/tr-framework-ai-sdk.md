@@ -28,14 +28,14 @@ import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
   apiKey: process.env.COMPOSIO_API_KEY,
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 async function runAgent(userId: string, prompt: string) {
   // Create Tool Router session
   const session = await composio.create(userId, {
     toolkits: ['gmail', 'slack'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   const tools = await session.tools();
@@ -45,7 +45,7 @@ async function runAgent(userId: string, prompt: string) {
     model: openai('gpt-5.2'),
     tools: tools,
     maxSteps: 5,
-    prompt: prompt
+    prompt: prompt,
   });
 
   return result.text;
@@ -53,18 +53,20 @@ async function runAgent(userId: string, prompt: string) {
 ```
 
 **For streaming:**
+
 ```typescript
 const stream = await streamText({
   model: openai('gpt-5.2'),
   tools: await session.tools(),
   maxSteps: 5,
-  prompt: prompt
+  prompt: prompt,
 });
 
 return stream.toDataStreamResponse();
 ```
 
 **Key Points:**
+
 - Create new sessions per request/conversation
 - Use `session.tools()` with `VercelProvider`
 - Always set `maxSteps` for multi-step tool calling
@@ -83,14 +85,14 @@ import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
   apiKey: process.env.COMPOSIO_API_KEY,
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 async function runAgentWithMcp(userId: string, prompt: string) {
   // 1. Create Tool Router session
   const session = await composio.create(userId, {
     toolkits: ['gmail', 'slack'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   // 2. Create MCP client with HTTP transport
@@ -98,8 +100,8 @@ async function runAgentWithMcp(userId: string, prompt: string) {
     transport: {
       type: 'http',
       url: session.mcp.url,
-      headers: session.mcp.headers
-    }
+      headers: session.mcp.headers,
+    },
   });
 
   // 3. Get tools and use with generateText
@@ -109,7 +111,7 @@ async function runAgentWithMcp(userId: string, prompt: string) {
     model: openai('gpt-5.2'),
     tools: tools,
     maxSteps: 5,
-    prompt: prompt
+    prompt: prompt,
   });
 
   return result.text;
@@ -119,6 +121,7 @@ async function runAgentWithMcp(userId: string, prompt: string) {
 ## ✅ Correct - React Integration
 
 **API Route (app/api/chat/route.ts):**
+
 ```typescript
 import { openai } from '@ai-sdk/openai';
 import { streamText } from 'ai';
@@ -127,7 +130,7 @@ import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
   apiKey: process.env.COMPOSIO_API_KEY,
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 export async function POST(req: Request) {
@@ -135,14 +138,14 @@ export async function POST(req: Request) {
 
   const session = await composio.create(userId, {
     toolkits: ['gmail', 'slack'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   const stream = await streamText({
     model: openai('gpt-5.2'),
     tools: await session.tools(),
     maxSteps: 5,
-    messages: messages
+    messages: messages,
   });
 
   return stream.toDataStreamResponse();
@@ -150,6 +153,7 @@ export async function POST(req: Request) {
 ```
 
 **Client Component:**
+
 ```typescript
 'use client';
 import { useChat } from 'ai/react';
@@ -179,19 +183,19 @@ const composio = new Composio({ apiKey: key }); // Missing provider
 
 // ❌ Don't bypass Tool Router for MCP
 const client = await createMCPClient({
-  transport: { type: 'http', url: 'https://mcp.composio.dev' }
+  transport: { type: 'http', url: 'https://mcp.composio.dev' },
 });
 
 // ❌ Don't use stdio transport in production
 const client = await createMCPClient({
-  transport: { type: 'stdio', command: 'npx', args: ['@composio/mcp'] }
+  transport: { type: 'stdio', command: 'npx', args: ['@composio/mcp'] },
 });
 // Use HTTP transport instead
 
 // ❌ Don't forget maxSteps
 await generateText({
   model: openai('gpt-5.2'),
-  tools: tools
+  tools: tools,
   // Missing maxSteps - stops after first tool call
 });
 
@@ -203,33 +207,37 @@ const cachedTools = await session.tools();
 ## Key Principles
 
 **Native Tools:**
+
 - Use `session.tools()` with `VercelProvider`
 - Works with `generateText` and `streamText`
 - Best for most use cases
 
 **MCP Tools:**
+
 - Use `createMCPClient` with HTTP transport
 - Get tools via `client.getTools()`
 - Use `session.mcp.url` and `session.mcp.headers`
 - Only when MCP protocol compliance is required
 
 **Session Management:**
+
 - Always create sessions via `composio.create()`
 - Create new sessions per request/conversation
 - Don't cache tools or sessions across users
 
 **Multi-Step Agents:**
+
 - Always set `maxSteps` for multi-step tool calling
 - Use `onStepFinish` callback to monitor execution
 
 ## When to Use
 
-| Use Case | Approach | Method |
-|----------|----------|--------|
-| Most scenarios | Native Tools | `session.tools()` with VercelProvider |
-| MCP protocol required | MCP Tools | `createMCPClient` + `getTools()` |
-| React apps | Native Tools | `useChat` with API route |
-| Type-safe MCP | MCP with schemas | Explicit tool definitions |
+| Use Case              | Approach         | Method                                |
+| --------------------- | ---------------- | ------------------------------------- |
+| Most scenarios        | Native Tools     | `session.tools()` with VercelProvider |
+| MCP protocol required | MCP Tools        | `createMCPClient` + `getTools()`      |
+| React apps            | Native Tools     | `useChat` with API route              |
+| Type-safe MCP         | MCP with schemas | Explicit tool definitions             |
 
 ## Reference
 

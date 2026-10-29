@@ -8,10 +8,12 @@ tags: [custom-tools, extensibility, authentication, zod, development]
 # Creating Custom Tools
 
 Create your own tools that integrate with Composio:
+
 - **Standalone tools** - No external authentication required
 - **Toolkit-based tools** - Use toolkit credentials for API requests
 
 > **⚠️ IMPORTANT:** When creating toolkit-based tools, do NOT make up or guess toolkit slugs. Always verify:
+>
 > - Use `composio manage toolkits list` to discover and `composio manage toolkits info "..."` to view toolkit details and auth schemes (CLI)
 > - Use `composio.toolkits.get()` to discover toolkits programmatically (SDK)
 >
@@ -129,11 +131,14 @@ inputParams: z.object({
   tags: z.array(z.string()).describe('Tags'),
 
   // Nested object
-  metadata: z.object({
-    key: z.string(),
-    value: z.string(),
-  }).optional().describe('Metadata'),
-})
+  metadata: z
+    .object({
+      key: z.string(),
+      value: z.string(),
+    })
+    .optional()
+    .describe('Metadata'),
+});
 ```
 
 **Always use `.describe()`** - helps AI understand parameter purpose.
@@ -162,7 +167,7 @@ execute: async (input, connectionConfig, executeToolRequest) => {
       },
     ],
   });
-}
+};
 ```
 
 ## Executing Custom Tools
@@ -208,7 +213,7 @@ execute: async (input) => {
       successful: false,
     };
   }
-}
+};
 ```
 
 ## Key Points

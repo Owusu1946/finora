@@ -12,12 +12,14 @@ Use `subscribe()` to listen to trigger events in **development only**. For produ
 ## Development vs Production
 
 **Development (subscribe):**
+
 - Real-time event listening in CLI/local development
 - Simple callback function
 - No webhook URLs needed
 - **Do NOT use in production**
 
 **Production (webhooks):**
+
 - Scalable webhook delivery
 - Reliable event processing
 - Use `listenToTriggers()` with Express/HTTP server
@@ -50,7 +52,7 @@ await composio.triggers.subscribe(
   (event) => {
     console.log('Gmail message:', event.payload);
   },
-  { triggerSlugs: ['GMAIL_NEW_GMAIL_MESSAGE'] }
+  { triggerSlugs: ['GMAIL_NEW_GMAIL_MESSAGE'] },
 );
 
 // Filter by user ID
@@ -58,7 +60,7 @@ await composio.triggers.subscribe(
   (event) => {
     console.log('Event for user_123:', event.payload);
   },
-  { userIds: ['user_123'] }
+  { userIds: ['user_123'] },
 );
 
 // Filter by connected account
@@ -66,7 +68,7 @@ await composio.triggers.subscribe(
   (event) => {
     console.log('Event from specific account:', event.payload);
   },
-  { connectedAccountIds: ['conn_abc123'] }
+  { connectedAccountIds: ['conn_abc123'] },
 );
 
 // Combine filters
@@ -77,8 +79,8 @@ await composio.triggers.subscribe(
   {
     triggerSlugs: ['SLACK_NEW_MESSAGE'],
     userIds: ['user_123'],
-    connectedAccountIds: ['conn_def456']
-  }
+    connectedAccountIds: ['conn_def456'],
+  },
 );
 ```
 
@@ -86,9 +88,9 @@ await composio.triggers.subscribe(
 
 ```typescript
 interface TriggerEvent {
-  triggerSlug: string;           // 'GMAIL_NEW_GMAIL_MESSAGE'
-  userId: string;                // 'user_123'
-  connectedAccountId: string;    // 'conn_abc123'
+  triggerSlug: string; // 'GMAIL_NEW_GMAIL_MESSAGE'
+  userId: string; // 'user_123'
+  connectedAccountId: string; // 'conn_abc123'
   payload: {
     // Trigger-specific data
     // Example for Gmail:
@@ -142,6 +144,7 @@ devMode();
 ## Migration to Production
 
 Development (subscribe):
+
 ```typescript
 // Development only
 await composio.triggers.subscribe((event) => {
@@ -150,6 +153,7 @@ await composio.triggers.subscribe((event) => {
 ```
 
 Production (webhooks):
+
 ```typescript
 // Production ready
 import express from 'express';

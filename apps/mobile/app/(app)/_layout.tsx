@@ -1,7 +1,7 @@
 import { useAui } from '@assistant-ui/react-native';
-import { DrawerActions, useHeaderHeight } from 'expo-router/react-navigation';
 import { useNavigation, usePathname, useRouter } from 'expo-router';
 import { Drawer, useDrawerStatus } from 'expo-router/drawer';
+import { DrawerActions, useHeaderHeight } from 'expo-router/react-navigation';
 import { useEffect, useRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

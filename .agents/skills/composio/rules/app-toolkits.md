@@ -27,6 +27,7 @@ console.log(all.length); // Number of toolkits
 ```
 
 **Toolkit properties:**
+
 - `name`, `slug` - Display name and identifier
 - `meta` - toolsCount, triggersCount, createdAt, updatedAt
 - `authConfigDetails` - Available auth schemes and required fields
@@ -40,11 +41,11 @@ All available filters for `toolkits.get()`:
 
 ```typescript
 const toolkits = await composio.toolkits.get({
-  category: 'developer-tools',           // Filter by category ID
-  managedBy: 'composio',                // 'all' | 'composio' | 'project'
-  sortBy: 'usage',                      // 'usage' | 'alphabetically'
-  limit: 10,                            // Results per page
-  cursor: 'next_page_cursor',           // Pagination
+  category: 'developer-tools', // Filter by category ID
+  managedBy: 'composio', // 'all' | 'composio' | 'project'
+  sortBy: 'usage', // 'usage' | 'alphabetically'
+  limit: 10, // Results per page
+  cursor: 'next_page_cursor', // Pagination
 });
 ```
 
@@ -85,17 +86,12 @@ Find fields needed to create custom auth config:
 
 ```typescript
 // All fields for GitHub OAuth2
-const fields = await composio.toolkits.getAuthConfigCreationFields(
-  'github',
-  'OAUTH2'
-);
+const fields = await composio.toolkits.getAuthConfigCreationFields('github', 'OAUTH2');
 
 // Only required fields
-const required = await composio.toolkits.getAuthConfigCreationFields(
-  'github',
-  'OAUTH2',
-  { requiredOnly: true }
-);
+const required = await composio.toolkits.getAuthConfigCreationFields('github', 'OAUTH2', {
+  requiredOnly: true,
+});
 
 console.log(fields);
 // [
@@ -110,17 +106,12 @@ console.log(fields);
 Find fields needed when calling `initiate()` with custom auth:
 
 ```typescript
-const fields = await composio.toolkits.getConnectedAccountInitiationFields(
-  'zendesk',
-  'OAUTH2'
-);
+const fields = await composio.toolkits.getConnectedAccountInitiationFields('zendesk', 'OAUTH2');
 
 // Only required fields
-const required = await composio.toolkits.getConnectedAccountInitiationFields(
-  'zendesk',
-  'OAUTH2',
-  { requiredOnly: true }
-);
+const required = await composio.toolkits.getConnectedAccountInitiationFields('zendesk', 'OAUTH2', {
+  requiredOnly: true,
+});
 
 console.log(fields);
 // [
@@ -136,10 +127,10 @@ console.log(fields);
 
 ```typescript
 const toolkits = await composio.toolkits.get({
-  sortBy: 'alphabetically'
+  sortBy: 'alphabetically',
 });
 
-const toolkitOptions = toolkits.items.map(tk => ({
+const toolkitOptions = toolkits.items.map((tk) => ({
   value: tk.slug,
   label: tk.name,
   toolCount: tk.meta.toolsCount,
@@ -151,10 +142,7 @@ const toolkitOptions = toolkits.items.map(tk => ({
 
 ```typescript
 async function needsExtraParams(toolkit: string, authScheme: string) {
-  const fields = await composio.toolkits.getConnectedAccountInitiationFields(
-    toolkit,
-    authScheme
-  );
+  const fields = await composio.toolkits.getConnectedAccountInitiationFields(toolkit, authScheme);
   return fields.length > 0;
 }
 

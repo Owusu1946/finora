@@ -11,10 +11,10 @@ Tool Router works with any AI framework through two methods: **Native Tools** (r
 
 ## Integration Methods
 
-| Method | Pros | Cons | When to Use |
-|--------|------|------|-------------|
-| **Native Tools** | ✅ Faster execution<br>✅ Full control with modifiers<br>✅ No MCP overhead | ❌ Framework lock-in | Single framework, production apps |
-| **MCP** | ✅ Framework independent<br>✅ Works with any MCP client<br>✅ Easy framework switching | ⚠️ Slower (extra API roundtrip)<br>⚠️ Less control | Multi-framework, prototyping |
+| Method           | Pros                                                                                    | Cons                                               | When to Use                       |
+| ---------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------- | --------------------------------- |
+| **Native Tools** | ✅ Faster execution<br>✅ Full control with modifiers<br>✅ No MCP overhead             | ❌ Framework lock-in                               | Single framework, production apps |
+| **MCP**          | ✅ Framework independent<br>✅ Works with any MCP client<br>✅ Easy framework switching | ⚠️ Slower (extra API roundtrip)<br>⚠️ Less control | Multi-framework, prototyping      |
 
 ## MCP Headers Configuration
 
@@ -45,6 +45,7 @@ When configuring MCP clients (like Claude Desktop), you need to provide the Comp
 ```
 
 **Where to find your Composio API key:**
+
 - Login to [Composio Platform](https://platform.composio.dev)
 - Select your project
 - Navigate to Settings to find your API keys
@@ -67,7 +68,7 @@ const composio = new Composio({ provider: new VercelProvider() });
 // ❌ Tools not scoped per user
 // ❌ All users share same tools
 const tools = await composio.tools.get('default', {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 ```
 
@@ -98,14 +99,14 @@ import { streamText } from 'ai';
 
 // Initialize Composio with Vercel provider
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 async function runAgent(userId: string, prompt: string) {
   // Create isolated session for user
   const session = await composio.create(userId, {
     toolkits: ['gmail'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   // Get native Vercel-formatted tools
@@ -116,7 +117,7 @@ async function runAgent(userId: string, prompt: string) {
     model: openai('gpt-5.2'),
     prompt,
     tools,
-    maxSteps: 10
+    maxSteps: 10,
   });
 
   // ✅ Fast execution (no MCP overhead)
@@ -184,7 +185,7 @@ async function runAgentMCP(userId: string, prompt: string) {
   // Create session (MCP URL only, no provider needed)
   const session = await composio.create(userId, {
     toolkits: ['gmail'],
-    manageConnections: true
+    manageConnections: true,
   });
 
   // Create MCP client
@@ -192,8 +193,8 @@ async function runAgentMCP(userId: string, prompt: string) {
     transport: {
       type: 'http',
       url: session.mcp.url,
-      headers: session.mcp.headers
-    }
+      headers: session.mcp.headers,
+    },
   });
 
   // Get tools from MCP server
@@ -204,7 +205,7 @@ async function runAgentMCP(userId: string, prompt: string) {
     model: openai('gpt-5.2'),
     prompt,
     tools,
-    maxSteps: 10
+    maxSteps: 10,
   });
 
   // ✅ Framework independent
@@ -228,13 +229,13 @@ import { OpenAIAgentsProvider } from '@composio/openai-agents';
 import { Agent, run } from '@openai/agents';
 
 const composio = new Composio({
-  provider: new OpenAIAgentsProvider()
+  provider: new OpenAIAgentsProvider(),
 });
 
 async function createAssistant(userId: string) {
   // Create session with native tools
   const session = await composio.create(userId, {
-    toolkits: ['gmail', 'slack']
+    toolkits: ['gmail', 'slack'],
   });
 
   // Get native OpenAI Agents formatted tools
@@ -245,7 +246,7 @@ async function createAssistant(userId: string) {
     name: 'Personal Assistant',
     model: 'gpt-5.2',
     instructions: 'You are a helpful assistant. Use tools to help users.',
-    tools
+    tools,
   });
 
   // ✅ Fast execution
@@ -312,7 +313,7 @@ const composio = new Composio();
 async function createAssistantMCP(userId: string) {
   // Create session
   const { mcp } = await composio.create(userId, {
-    toolkits: ['gmail']
+    toolkits: ['gmail'],
   });
 
   // Create agent with MCP tool
@@ -324,9 +325,9 @@ async function createAssistantMCP(userId: string) {
       hostedMcpTool({
         serverLabel: 'composio',
         serverUrl: mcp.url,
-        headers: mcp.headers
-      })
-    ]
+        headers: mcp.headers,
+      }),
+    ],
   });
 
   // ✅ Framework independent
@@ -391,7 +392,7 @@ const composio = new Composio();
 async function createLangChainAgent(userId: string) {
   // Create session
   const session = await composio.create(userId, {
-    toolkits: ['gmail']
+    toolkits: ['gmail'],
   });
 
   // Create MCP client
@@ -399,8 +400,8 @@ async function createLangChainAgent(userId: string) {
     composio: {
       transport: 'http',
       url: session.mcp.url,
-      headers: session.mcp.headers
-    }
+      headers: session.mcp.headers,
+    },
   });
 
   // Get tools
@@ -413,7 +414,7 @@ async function createLangChainAgent(userId: string) {
     name: 'Gmail Assistant',
     systemPrompt: 'You help users manage their Gmail.',
     model: llm,
-    tools
+    tools,
   });
 
   return agent;
@@ -421,7 +422,7 @@ async function createLangChainAgent(userId: string) {
 
 const agent = await createLangChainAgent('user_123');
 const result = await agent.invoke({
-  messages: [{ role: 'user', content: 'Fetch my last email' }]
+  messages: [{ role: 'user', content: 'Fetch my last email' }],
 });
 console.log(result);
 ```
@@ -477,13 +478,13 @@ import { Composio } from '@composio/core';
 import { ClaudeAgentSDKProvider } from '@composio/claude-agent-sdk';
 
 const composio = new Composio({
-  provider: new ClaudeAgentSDKProvider()
+  provider: new ClaudeAgentSDKProvider(),
 });
 
 async function runClaudeAgent(userId: string, prompt: string) {
   // Create session with native tools
   const session = await composio.create(userId, {
-    toolkits: ['gmail']
+    toolkits: ['gmail'],
   });
 
   // Get native Claude tools format
@@ -495,8 +496,8 @@ async function runClaudeAgent(userId: string, prompt: string) {
     options: {
       model: 'claude-sonnet-4-5-20250929',
       permissionMode: 'bypassPermissions',
-      tools
-    }
+      tools,
+    },
   });
 
   for await (const event of stream) {
@@ -549,7 +550,7 @@ const composio = new Composio();
 async function runClaudeAgentMCP(userId: string, prompt: string) {
   // Create session
   const session = await composio.create(userId, {
-    toolkits: ['gmail']
+    toolkits: ['gmail'],
   });
 
   // Query with MCP server
@@ -562,10 +563,10 @@ async function runClaudeAgentMCP(userId: string, prompt: string) {
         composio: {
           type: 'http',
           url: session.mcp.url,
-          headers: session.mcp.headers
-        }
-      }
-    }
+          headers: session.mcp.headers,
+        },
+      },
+    },
   });
 
   for await (const event of stream) {
@@ -662,12 +663,12 @@ import { VercelProvider } from '@composio/vercel';
 import { SessionExecuteMetaModifiers } from '@composio/core';
 
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 async function getToolsWithLogging(userId: string) {
   const session = await composio.create(userId, {
-    toolkits: ['gmail']
+    toolkits: ['gmail'],
   });
 
   // Add modifiers for logging
@@ -681,7 +682,7 @@ async function getToolsWithLogging(userId: string) {
       console.log(`[${sessionId}] Completed ${toolSlug}`);
       console.log('Success:', result.successful);
       return result;
-    }
+    },
   };
 
   // Get tools with modifiers
@@ -732,13 +733,13 @@ async def get_tools_with_logging(user_id: str):
 
 ## Framework Comparison
 
-| Framework | Native Tools | MCP | Provider Package | Best For |
-|-----------|--------------|-----|------------------|----------|
-| **Vercel AI SDK** | ✅ | ✅ | `@composio/vercel` | Modern web apps, streaming |
-| **OpenAI Agents SDK** | ✅ | ✅ | `@composio/openai-agents` | Production agents |
-| **LangChain** | ❌ | ✅ | N/A (MCP only) | Complex chains, memory |
-| **Claude Agent SDK** | ✅ | ✅ | `@composio/claude-agent-sdk` | Claude-specific features |
-| **CrewAI** | ❌ | ✅ | N/A (MCP only) | Multi-agent teams |
+| Framework             | Native Tools | MCP | Provider Package             | Best For                   |
+| --------------------- | ------------ | --- | ---------------------------- | -------------------------- |
+| **Vercel AI SDK**     | ✅           | ✅  | `@composio/vercel`           | Modern web apps, streaming |
+| **OpenAI Agents SDK** | ✅           | ✅  | `@composio/openai-agents`    | Production agents          |
+| **LangChain**         | ❌           | ✅  | N/A (MCP only)               | Complex chains, memory     |
+| **Claude Agent SDK**  | ✅           | ✅  | `@composio/claude-agent-sdk` | Claude-specific features   |
+| **CrewAI**            | ❌           | ✅  | N/A (MCP only)               | Multi-agent teams          |
 
 ## Pattern: Framework Switching
 
@@ -749,18 +750,18 @@ const session = await composio.create('user_123', { toolkits: ['gmail'] });
 
 // Use with Vercel AI SDK
 const client1 = await createMCPClient({
-  transport: { type: 'http', url: session.mcp.url, headers: session.mcp.headers }
+  transport: { type: 'http', url: session.mcp.url, headers: session.mcp.headers },
 });
 
 // Use with LangChain
 const client2 = new MultiServerMCPClient({
-  composio: { transport: 'http', url: session.mcp.url, headers: session.mcp.headers }
+  composio: { transport: 'http', url: session.mcp.url, headers: session.mcp.headers },
 });
 
 // Use with OpenAI Agents
 const client3 = hostedMcpTool({
   serverUrl: session.mcp.url,
-  headers: session.mcp.headers
+  headers: session.mcp.headers,
 });
 
 // ✅ Same tools, different frameworks
@@ -770,31 +771,37 @@ const client3 = hostedMcpTool({
 ## Best Practices
 
 ### 1. **Choose Native Tools When Available**
+
 - Faster execution (no MCP overhead)
 - Better performance for production
 - Full control with modifiers
 
 ### 2. **Use MCP for Flexibility**
+
 - When using multiple frameworks
 - During prototyping phase
 - When native tools unavailable
 
 ### 3. **Always Create User Sessions**
+
 - Never share sessions across users
 - Use proper user IDs (not 'default')
 - Isolate tools per user
 
 ### 4. **Enable Connection Management**
+
 - Set `manageConnections: true`
 - Let agent handle authentication
 - Better user experience
 
 ### 5. **Add Logging with Modifiers**
+
 - Use beforeExecute/afterExecute
 - Track tool execution
 - Debug agent behavior
 
 ### 6. **Handle Streaming Properly**
+
 - Use framework's streaming APIs
 - Process events as they arrive
 - Better UX for long operations

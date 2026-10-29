@@ -30,7 +30,7 @@ const tools = await composio.tools.get(
 
       return schema;
     },
-  }
+  },
 );
 ```
 
@@ -55,11 +55,12 @@ const result = await composio.tools.execute(
 
       return params;
     },
-  }
+  },
 );
 ```
 
 **Common uses:**
+
 - Parameter validation and normalization
 - Adding default values
 - Logging and tracing
@@ -87,11 +88,12 @@ const result = await composio.tools.execute(
 
       return result;
     },
-  }
+  },
 );
 ```
 
 **Common uses:**
+
 - Filtering sensitive data
 - Data transformation and formatting
 - Adding metadata
@@ -103,7 +105,7 @@ const result = await composio.tools.execute(
 ```typescript
 const filterSensitive = ({ result }) => {
   if (result.successful) {
-    ['token', 'secret', 'password', 'api_key'].forEach(field => {
+    ['token', 'secret', 'password', 'api_key'].forEach((field) => {
       delete result.data[field];
     });
   }

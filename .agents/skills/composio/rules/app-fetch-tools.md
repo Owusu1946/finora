@@ -10,6 +10,7 @@ tags: [tools, fetch, discovery, apps, providers]
 When building applications (non-agent workflows), use direct tool fetching methods to discover and retrieve tools from Composio.
 
 > **⚠️ IMPORTANT:** Do NOT make up or guess tool or toolkit names. Always verify slugs before using them:
+>
 > - Use `composio manage toolkits list` / `composio manage toolkits info "..."` and `composio manage tools list --toolkits "..."` / `composio manage tools info "..."` (CLI)
 > - Use `composio.tools.get()` to discover available tools programmatically (SDK)
 >
@@ -25,20 +26,22 @@ When building applications (non-agent workflows), use direct tool fetching metho
 Use `tools.get()` when you're using Composio with a provider like OpenAI, Vercel AI SDK, or LangChain. This method wraps tools in the format expected by your provider.
 
 **Get tools from a toolkit:**
+
 ```typescript
 // Get important tools only (auto-applies important filter)
 const importantGithubTools = await composio.tools.get('default', {
-  toolkits: ['github']
+  toolkits: ['github'],
 });
 
 // Get a limited number of tools (does NOT auto-apply important filter)
 const githubTools = await composio.tools.get('default', {
   toolkits: ['github'],
-  limit: 10
+  limit: 10,
 });
 ```
 
 **Get a specific tool by slug:**
+
 ```typescript
 const tool = await composio.tools.get('default', 'GITHUB_GET_REPO');
 ```
@@ -46,6 +49,7 @@ const tool = await composio.tools.get('default', 'GITHUB_GET_REPO');
 ### 2. tools.getRawComposioTools() - For Standalone Applications & UIs
 
 Use `getRawComposioTools()` for standalone applications and building UIs. This method returns raw tool metadata without provider-specific wrapping, making it ideal for:
+
 - Building tool selection UIs
 - Creating tool catalogs or documentation
 - Direct tool execution workflows (without providers)
@@ -54,18 +58,18 @@ Use `getRawComposioTools()` for standalone applications and building UIs. This m
 ```typescript
 // Get important tools (auto-applies important filter)
 const importantTools = await composio.tools.getRawComposioTools({
-  toolkits: ['github']
+  toolkits: ['github'],
 });
 
 // Get specific tools by slug
 const specificTools = await composio.tools.getRawComposioTools({
-  tools: ['GITHUB_GET_REPOS', 'SLACK_SEND_MESSAGE']
+  tools: ['GITHUB_GET_REPOS', 'SLACK_SEND_MESSAGE'],
 });
 
 // Get limited tools (does NOT auto-apply important)
 const limitedTools = await composio.tools.getRawComposioTools({
   toolkits: ['slack'],
-  limit: 5
+  limit: 5,
 });
 ```
 
@@ -74,9 +78,11 @@ const limitedTools = await composio.tools.getRawComposioTools({
 The `important` filter auto-applies to show only the most commonly used tools.
 
 **Auto-applies when:**
+
 - Only `toolkits` filter is provided (no other filters)
 
 **Does NOT auto-apply when:**
+
 - `limit` is specified
 - `search` is used
 - `tools` (specific slugs) are provided
@@ -117,13 +123,17 @@ Available filters for both `tools.get()` and `tools.getRawComposioTools()`:
 Customize tool schemas at fetch time:
 
 ```typescript
-const customizedTools = await composio.tools.get('default', {
-  toolkits: ['github']
-}, {
-  modifySchema: ({ toolSlug, toolkitSlug, schema }) => {
-    return { ...schema, description: 'Custom description' };
-  }
-});
+const customizedTools = await composio.tools.get(
+  'default',
+  {
+    toolkits: ['github'],
+  },
+  {
+    modifySchema: ({ toolSlug, toolkitSlug, schema }) => {
+      return { ...schema, description: 'Custom description' };
+    },
+  },
+);
 ```
 
 ## Best Practices
@@ -155,16 +165,16 @@ console.log('Description:', githubToolkit.description);
 // Step 2: Discover all available tools in the toolkit
 const allGithubTools = await composio.tools.get('default', {
   toolkits: ['github'],
-  limit: 100 // Adjust based on your needs
+  limit: 100, // Adjust based on your needs
 });
 
 console.log('\nAvailable tools:');
-allGithubTools.forEach(tool => {
+allGithubTools.forEach((tool) => {
   console.log(`- ${tool.name}: ${tool.description}`);
 });
 
 // Step 3: Find the tool you need
-const repoTool = allGithubTools.find(t => t.name === 'GITHUB_GET_REPO');
+const repoTool = allGithubTools.find((t) => t.name === 'GITHUB_GET_REPO');
 if (!repoTool) {
   throw new Error('Tool not found');
 }
@@ -173,7 +183,7 @@ if (!repoTool) {
 const result = await composio.tools.execute('GITHUB_GET_REPO', {
   userId: 'user_123',
   arguments: { owner: 'composio', repo: 'sdk' },
-  version: '12082025_00' // ✅ Pinned version string for stability
+  version: '12082025_00', // ✅ Pinned version string for stability
 });
 ```
 
@@ -214,17 +224,18 @@ result = composio.tools.execute(
 
 ```typescript
 // DON'T: Guess or make up tool names
-const result = await composio.tools.execute('GITHUB_GET_REPOSITORY', { // ❌ Wrong name
+const result = await composio.tools.execute('GITHUB_GET_REPOSITORY', {
+  // ❌ Wrong name
   userId: 'user_123',
   arguments: { repo: 'sdk' },
-  version: '12082025_00'
+  version: '12082025_00',
 });
 
 // DON'T: Use hardcoded versions without checking
 const result = await composio.tools.execute('GITHUB_GET_REPO', {
   userId: 'user_123',
   arguments: { owner: 'composio', repo: 'sdk' },
-  version: '12082025_00' // ❌ This might be outdated, use `composio manage toolkits info "github"` to get the latest version
+  version: '12082025_00', // ❌ This might be outdated, use `composio manage toolkits info "github"` to get the latest version
 });
 ```
 
@@ -255,16 +266,16 @@ console.log('Available versions:', toolkit.versions);
 
 const tools = await composio.tools.get('default', {
   toolkits: ['github'],
-  limit: 100
+  limit: 100,
 });
 
 // DO: Use discovered tool names and pin to a specific version string
-const toolName = tools.find(t => t.description.includes('repository'))?.name;
+const toolName = tools.find((t) => t.description.includes('repository'))?.name;
 if (toolName) {
   const result = await composio.tools.execute(toolName, {
     userId: 'user_123',
     arguments: { owner: 'composio', repo: 'sdk' },
-    version: '12082025_00' // ✅ Pinned version string for stability
+    version: '12082025_00', // ✅ Pinned version string for stability
   });
 }
 ```

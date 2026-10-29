@@ -63,11 +63,11 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```typescript
 // DON'T: Never hardcode API keys in your code
 const composio = new Composio({
-  apiKey: 'sk_composio_abc123xyz' // ❌ Security risk!
+  apiKey: 'sk_composio_abc123xyz', // ❌ Security risk!
 });
 
 const openai = new OpenAI({
-  apiKey: 'sk-proj-abc123' // ❌ Will be exposed in version control
+  apiKey: 'sk-proj-abc123', // ❌ Will be exposed in version control
 });
 ```
 
@@ -86,11 +86,11 @@ import { Composio } from '@composio/core';
 import { OpenAI } from 'openai';
 
 const composio = new Composio({
-  apiKey: process.env.COMPOSIO_API_KEY // ✅ Secure
+  apiKey: process.env.COMPOSIO_API_KEY, // ✅ Secure
 });
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY // ✅ Secure
+  apiKey: process.env.OPENAI_API_KEY, // ✅ Secure
 });
 ```
 
@@ -156,6 +156,7 @@ load_dotenv()
 ## Security Best Practices
 
 1. **Never commit `.env` files** - Add `.env` to your `.gitignore`:
+
    ```
    # .gitignore
    .env
@@ -184,7 +185,7 @@ After setting up your API keys, verify they work:
 import { Composio } from '@composio/core';
 
 const composio = new Composio({
-  apiKey: process.env.COMPOSIO_API_KEY
+  apiKey: process.env.COMPOSIO_API_KEY,
 });
 
 // Test the connection

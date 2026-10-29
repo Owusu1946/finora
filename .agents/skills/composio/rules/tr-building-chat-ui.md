@@ -23,7 +23,7 @@ Build chat applications with Tool Router using **Vercel AI SDK**, create **sessi
 ```typescript
 // DON'T: Reuse sessions without proper configuration
 const globalSession = await composio.create('default', {
-  toolkits: ['gmail'] // Hard-coded toolkits
+  toolkits: ['gmail'], // Hard-coded toolkits
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -51,7 +51,7 @@ app.post('/api/chat', async (req, res) => {
   // Create new session for this message
   const session = await composio.create(userId, {
     toolkits: selectedToolkits, // User-selected toolkits
-    manageConnections: true
+    manageConnections: true,
   });
 
   const tools = await session.tools();
@@ -60,7 +60,7 @@ app.post('/api/chat', async (req, res) => {
     model: openai('gpt-5.2'),
     messages: [{ role: 'user', content: message }],
     tools,
-    maxSteps: 10
+    maxSteps: 10,
   });
 
   return stream.toDataStreamResponse();
@@ -82,13 +82,15 @@ app.post('/api/toolkits', async (req, res) => {
   const session = await composio.create(userId);
   const toolkits = await session.toolkits();
 
-  res.json(toolkits.items.map(tk => ({
-    slug: tk.slug,
-    name: tk.name,
-    description: tk.description,
-    logo: tk.logo,
-    isConnected: tk.connectedAccounts.length > 0
-  })));
+  res.json(
+    toolkits.items.map((tk) => ({
+      slug: tk.slug,
+      name: tk.name,
+      description: tk.description,
+      logo: tk.logo,
+      isConnected: tk.connectedAccounts.length > 0,
+    })),
+  );
 });
 ```
 
@@ -137,11 +139,11 @@ app.post('/api/connect', async (req, res) => {
   const { userId, toolkitSlug } = req.body;
 
   const session = await composio.create(userId, {
-    toolkits: [toolkitSlug]
+    toolkits: [toolkitSlug],
   });
 
   const auth = await session.authorize(toolkitSlug, {
-    callbackUrl: `${process.env.APP_URL}/auth/callback`
+    callbackUrl: `${process.env.APP_URL}/auth/callback`,
   });
 
   res.json({ redirectUrl: auth.redirectUrl });
@@ -200,8 +202,8 @@ const session2 = await composio.create('user_123', { toolkits: ['gmail', 'slack'
 const session = await composio.create('user_123', {
   toolkits: ['gmail'],
   connectedAccounts: {
-    gmail: 'conn_specific_account_id' // Use specific account
-  }
+    gmail: 'conn_specific_account_id', // Use specific account
+  },
 });
 ```
 
@@ -212,8 +214,8 @@ const session = await composio.create('user_123', {
 const session = await composio.create('user_123', {
   toolkits: ['gmail'],
   authConfig: {
-    gmail: 'auth_config_custom_id' // Use custom auth config
-  }
+    gmail: 'auth_config_custom_id', // Use custom auth config
+  },
 });
 ```
 
@@ -233,7 +235,7 @@ export async function POST(req: Request) {
 
   const session = await composio.create(userId, {
     toolkits: selectedToolkits,
-    manageConnections: true
+    manageConnections: true,
   });
 
   const tools = await session.tools();
@@ -242,7 +244,7 @@ export async function POST(req: Request) {
     model: openai('gpt-5.2'),
     messages,
     tools,
-    maxSteps: 10
+    maxSteps: 10,
   });
 
   return result.toDataStreamResponse();
@@ -294,7 +296,7 @@ For custom workflows, you can manually fetch and execute tools instead of using 
 // Fetch raw tool metadata
 const tools = await composio.tools.getRawComposioTools({
   toolkits: ['gmail', 'slack'],
-  important: true
+  important: true,
 });
 ```
 
@@ -305,7 +307,7 @@ const tools = await composio.tools.getRawComposioTools({
 const result = await composio.tools.execute('GMAIL_SEND_EMAIL', {
   userId: 'user_123',
   arguments: { to: 'test@example.com', subject: 'Hello' },
-  version: '15082025_00' // Version REQUIRED for manual execution
+  version: '15082025_00', // Version REQUIRED for manual execution
 });
 
 if (!result.successful) {
@@ -315,10 +317,10 @@ if (!result.successful) {
 
 ### When to Use Manual Approach
 
-| Use Case | Recommended Approach |
-|----------|---------------------|
-| Chat UIs, agents, streaming | ✅ `session.tools()` |
-| Custom workflows, catalogs | ✅ Manual fetch/execute |
+| Use Case                    | Recommended Approach    |
+| --------------------------- | ----------------------- |
+| Chat UIs, agents, streaming | ✅ `session.tools()`    |
+| Custom workflows, catalogs  | ✅ Manual fetch/execute |
 
 **Reference:** See [Fetching Tools](./app-fetch-tools.md) and [Tool Execution](./app-execute-tools.md) for detailed manual operation guides.
 

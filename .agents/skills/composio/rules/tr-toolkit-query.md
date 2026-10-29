@@ -17,7 +17,7 @@ async function showToolkits(session) {
   // Just show toolkit names with no status
   const toolkits = ['Gmail', 'Slack', 'GitHub'];
 
-  return toolkits.items.map(name => ({
+  return toolkits.items.map((name) => ({
     name,
     // Missing: connection status, auth button, etc.
   }));
@@ -43,21 +43,21 @@ import { Composio } from '@composio/core';
 const composio = new Composio();
 const session = await composio.create('user_123', {
   toolkits: ['gmail', 'slack', 'github'],
-  manageConnections: true // Agent handles auth automatically
+  manageConnections: true, // Agent handles auth automatically
 });
 
 // Get connection states for building UI
 const { items } = await session.toolkits();
 
 // Build connection management UI
-const connectionUI = items.map(toolkit => ({
+const connectionUI = items.map((toolkit) => ({
   slug: toolkit.slug,
   name: toolkit.name,
   logo: toolkit.logo,
   isConnected: toolkit.connection?.isActive || false,
   status: toolkit.connection?.connectedAccount?.status,
   // Show "Connect" button if not connected
-  needsAuth: !toolkit.connection?.isActive && !toolkit.isNoAuth
+  needsAuth: !toolkit.connection?.isActive && !toolkit.isNoAuth,
 }));
 
 console.log('Connection Status:', connectionUI);
@@ -99,20 +99,20 @@ print(f"Connection Status: {connection_ui}")
 
 ```typescript
 interface ToolkitConnectionState {
-  slug: string;              // 'gmail'
-  name: string;              // 'Gmail'
-  logo?: string;             // 'https://...'
-  isNoAuth: boolean;         // true if no auth needed
+  slug: string; // 'gmail'
+  name: string; // 'Gmail'
+  logo?: string; // 'https://...'
+  isNoAuth: boolean; // true if no auth needed
   connection: {
-    isActive: boolean;       // Is connection active?
+    isActive: boolean; // Is connection active?
     authConfig?: {
-      id: string;            // Auth config ID
-      mode: string;          // 'OAUTH2', 'API_KEY', etc.
+      id: string; // Auth config ID
+      mode: string; // 'OAUTH2', 'API_KEY', etc.
       isComposioManaged: boolean;
     };
     connectedAccount?: {
-      id: string;            // Connected account ID
-      status: string;        // 'ACTIVE', 'INVALID', etc.
+      id: string; // Connected account ID
+      status: string; // 'ACTIVE', 'INVALID', etc.
     };
   };
 }

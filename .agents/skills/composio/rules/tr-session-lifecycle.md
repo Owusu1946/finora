@@ -22,7 +22,7 @@ class AgentService {
 
     if (!session) {
       session = await composio.create(userId, {
-        toolkits: ['gmail', 'slack']
+        toolkits: ['gmail', 'slack'],
       });
       this.sessionCache.set(userId, session);
     }
@@ -66,18 +66,14 @@ import { Composio } from '@composio/core';
 import { VercelProvider } from '@composio/vercel';
 
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
-async function handleUserMessage(
-  userId: string,
-  message: string,
-  config: { toolkits: string[] }
-) {
+async function handleUserMessage(userId: string, message: string, config: { toolkits: string[] }) {
   // Create new session for this message
   const session = await composio.create(userId, {
     toolkits: config.toolkits,
-    manageConnections: true
+    manageConnections: true,
   });
 
   const tools = await session.tools();
@@ -137,12 +133,12 @@ await handle_user_message("user_123", "Send a slack message", {"toolkits": ["sla
 async function handleConversation(
   userId: string,
   conversationId: string,
-  config: { toolkits: string[] }
+  config: { toolkits: string[] },
 ) {
   // Create ONE session for this conversation/thread
   const session = await composio.create(userId, {
     toolkits: config.toolkits,
-    manageConnections: true
+    manageConnections: true,
   });
 
   const tools = await session.tools();
@@ -192,17 +188,19 @@ async def handle_conversation(
 ### ✅ Always Create New Session When:
 
 1. **Configuration Changes**
+
    ```typescript
    // User connects new toolkit
    if (userConnectedSlack) {
      // Create new session with updated toolkits
      const session = await composio.create(userId, {
-       toolkits: ['gmail', 'slack'] // Added slack
+       toolkits: ['gmail', 'slack'], // Added slack
      });
    }
    ```
 
 2. **Connected Accounts Change**
+
    ```typescript
    // User disconnected and reconnected Gmail
    const session = await composio.create(userId, {
@@ -212,14 +210,15 @@ async def handle_conversation(
    ```
 
 3. **Different Toolkit Requirements**
+
    ```typescript
    // Message needs different toolkits
    const emailSession = await composio.create(userId, {
-     toolkits: ['gmail']
+     toolkits: ['gmail'],
    });
 
    const codeSession = await composio.create(userId, {
-     toolkits: ['github', 'linear']
+     toolkits: ['github', 'linear'],
    });
    ```
 
@@ -242,10 +241,11 @@ async def handle_conversation(
 ## Benefits of Short-Lived Sessions
 
 ### 1. **Clean Log Grouping**
+
 ```typescript
 // All tool executions in one session are grouped together
 const session = await composio.create(userId, {
-  toolkits: ['gmail', 'slack']
+  toolkits: ['gmail', 'slack'],
 });
 
 // These executions are grouped under session.sessionId
@@ -257,10 +257,11 @@ console.log(`View logs: /sessions/${session.sessionId}`);
 ```
 
 ### 2. **Fresh Configuration**
+
 ```typescript
 // Always get latest toolkit connections and auth states
 const session = await composio.create(userId, {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 
 // ✅ Uses current connected account
@@ -269,6 +270,7 @@ const session = await composio.create(userId, {
 ```
 
 ### 3. **Easier Debugging**
+
 ```typescript
 // Session ID becomes your debug trace ID
 console.log(`Processing message in session ${session.sessionId}`);
@@ -282,6 +284,7 @@ console.log(`Processing message in session ${session.sessionId}`);
 ```
 
 ### 4. **Simplified Error Tracking**
+
 ```typescript
 try {
   const session = await composio.create(userId, config);
@@ -291,7 +294,7 @@ try {
   logger.error('Agent failed', {
     sessionId: session.sessionId,
     userId,
-    error
+    error,
   });
 }
 ```
@@ -300,22 +303,18 @@ try {
 
 ```typescript
 // Recommended pattern for most applications
-export async function handleAgentRequest(
-  userId: string,
-  message: string,
-  toolkits: string[]
-) {
+export async function handleAgentRequest(userId: string, message: string, toolkits: string[]) {
   // 1. Create fresh session
   const session = await composio.create(userId, {
     toolkits,
-    manageConnections: true
+    manageConnections: true,
   });
 
   // 2. Log session start
   logger.info('Session started', {
     sessionId: session.sessionId,
     userId,
-    toolkits
+    toolkits,
   });
 
   try {
@@ -325,7 +324,7 @@ export async function handleAgentRequest(
 
     // 4. Log session completion
     logger.info('Session completed', {
-      sessionId: session.sessionId
+      sessionId: session.sessionId,
     });
 
     return response;
@@ -333,7 +332,7 @@ export async function handleAgentRequest(
     // 5. Log session error
     logger.error('Session failed', {
       sessionId: session.sessionId,
-      error
+      error,
     });
     throw error;
   }
@@ -352,7 +351,7 @@ export class ConversationSession {
     this.session = await composio.create(userId, config);
 
     logger.info('Conversation session started', {
-      sessionId: this.session.sessionId
+      sessionId: this.session.sessionId,
     });
   }
 
@@ -364,7 +363,7 @@ export class ConversationSession {
 
   async end() {
     logger.info('Conversation session ended', {
-      sessionId: this.session.sessionId
+      sessionId: this.session.sessionId,
     });
   }
 }

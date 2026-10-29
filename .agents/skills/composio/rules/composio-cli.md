@@ -32,9 +32,11 @@ composio upgrade
 **Agent login (no direct browser access)**: For agents that cannot open a browser for the user, use a two-step flow:
 
 1. **Get login URL and session key** — Print login URL and JSON (jq-parseable) then exit without opening browser or waiting:
+
    ```bash
    composio login --no-wait | jq
    ```
+
    Share the login URL with the agent's user to complete login in their browser.
 
 2. **Complete login with session key** — Use the `cli_key` from the previous output to check if the user has logged in:
@@ -76,7 +78,9 @@ This opens an OAuth flow or prompts for credentials. Only needed once per app. B
 composio execute GMAIL_SEND_EMAIL --data '{"recipient_email":"you@example.com","subject":"Hello","body":"Test"}'
 composio execute GITHUB_CREATE_AN_ISSUE --data '{"owner":"acme","repo":"my-repo","title":"Bug report"}'
 ```
+
 To see a tool's input parameters before executing:
+
 ```bash
 composio execute GMAIL_SEND_EMAIL --help
 ```
@@ -187,6 +191,7 @@ composio manage logs tools "log_abc123"
 # Monitor trigger events
 composio manage logs triggers
 ```
+
 ---
 
 ## jq Examples

@@ -31,6 +31,7 @@ app.listen(3000);
 ```
 
 **What it does:**
+
 - Creates `/composio/triggers` endpoint
 - Verifies webhook signatures automatically
 - Parses and validates payloads
@@ -47,11 +48,7 @@ app.post('/custom/webhook', express.raw({ type: 'application/json' }), (req, res
   const signature = req.headers['x-composio-signature'];
   const payload = req.body;
 
-  const isValid = verifyWebhookSignature(
-    payload,
-    signature,
-    process.env.COMPOSIO_WEBHOOK_SECRET
-  );
+  const isValid = verifyWebhookSignature(payload, signature, process.env.COMPOSIO_WEBHOOK_SECRET);
 
   if (!isValid) {
     return res.status(401).json({ error: 'Invalid signature' });
@@ -141,6 +138,7 @@ Set webhook URL in Composio dashboard:
 3. Set URL: `https://your-app.com/composio/triggers`
 
 **Requirements:**
+
 - HTTPS URL (publicly accessible)
 - Respond with 200 OK within 30 seconds
 - Handle concurrent requests
@@ -166,14 +164,17 @@ ngrok http 3000
 ## Common Issues
 
 **401 Unauthorized:**
+
 - Invalid signature - check webhook secret
 - Wrong secret - verify environment variable
 
 **Timeout:**
+
 - Processing > 30 seconds - move to background queue
 - Return 200 OK immediately
 
 **Duplicates:**
+
 - Webhooks may deliver multiple times
 - Use webhookId for idempotency
 
@@ -198,7 +199,7 @@ await composio.triggers.listenToTriggers(app, async (event) => {
       case 'GMAIL_NEW_GMAIL_MESSAGE':
         await sendNotification(event.userId, {
           title: 'New Email',
-          body: event.payload.subject
+          body: event.payload.subject,
         });
         break;
     }

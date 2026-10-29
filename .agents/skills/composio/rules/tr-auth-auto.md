@@ -15,7 +15,7 @@ Enable `manageConnections` to allow users to authenticate toolkits on-demand dur
 // DON'T: Disable connection management for interactive apps
 const session = await composio.create('user_123', {
   toolkits: ['gmail'],
-  manageConnections: false // User can't authenticate!
+  manageConnections: false, // User can't authenticate!
 });
 
 // Agent tries to use Gmail but user isn't connected
@@ -43,7 +43,7 @@ import { Composio } from '@composio/core';
 const composio = new Composio();
 const session = await composio.create('user_123', {
   toolkits: ['gmail', 'slack'],
-  manageConnections: true // Users can authenticate in chat
+  manageConnections: true, // Users can authenticate in chat
 });
 
 // When agent needs Gmail and user isn't connected:
@@ -79,8 +79,8 @@ const session = await composio.create('user_123', {
   toolkits: ['gmail'],
   manageConnections: {
     enable: true,
-    callbackUrl: 'https://your-app.com/auth/callback'
-  }
+    callbackUrl: 'https://your-app.com/auth/callback',
+  },
 });
 ```
 

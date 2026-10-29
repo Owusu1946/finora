@@ -12,6 +12,7 @@ Always create isolated Tool Router sessions per user to ensure proper data isola
 > 📖 **Before you begin:** Make sure you have set up your API keys. See [Setting Up API Keys](./setup-api-keys.md) for instructions.
 
 > **⚠️ IMPORTANT:** Do NOT make up or guess toolkit names. Always verify toolkit slugs before using them:
+>
 > - Use `composio manage toolkits list` to discover and `composio manage toolkits info "..."` to view toolkit details (CLI)
 > - Use `composio.toolkits.get()` to discover toolkits programmatically (SDK)
 >
@@ -22,7 +23,7 @@ Always create isolated Tool Router sessions per user to ensure proper data isola
 ```typescript
 // DON'T: Using shared session for multiple users
 const sharedSession = await composio.create('default', {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 // All users share the same session - security risk!
 ```
@@ -46,7 +47,7 @@ const composio = new Composio();
 
 // Each user gets their own isolated session
 const session = await composio.create('user_123', {
-  toolkits: ['gmail', 'slack']
+  toolkits: ['gmail', 'slack'],
 });
 
 console.log('Session ID:', session.sessionId);

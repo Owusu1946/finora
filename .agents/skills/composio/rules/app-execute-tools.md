@@ -23,6 +23,7 @@ const result = await composio.tools.execute('GITHUB_GET_ISSUES', {
 ## Discovering Available Tools
 
 > **⚠️ IMPORTANT:** Do NOT make up or guess tool or toolkit names/versions. Always verify slugs before using them:
+>
 > - Use `composio manage tools list --toolkits "..."` to discover and `composio manage tools info "..."` to view tool schema (CLI)
 > - Use `composio.tools.get()` to discover available tools programmatically (SDK)
 >
@@ -32,10 +33,13 @@ const result = await composio.tools.execute('GITHUB_GET_ISSUES', {
 // Get all available tools in a toolkit
 const githubTools = await composio.tools.get('default', {
   toolkits: ['github'],
-  limit: 100 // Set appropriate limit
+  limit: 100, // Set appropriate limit
 });
 
-console.log('Available GitHub tools:', githubTools.map(t => t.name));
+console.log(
+  'Available GitHub tools:',
+  githubTools.map((t) => t.name),
+);
 ```
 
 ```python
@@ -88,6 +92,7 @@ result = composio.tools.execute(
 ```
 
 **Why version pinning is required:**
+
 - Tool argument schemas can change between versions
 - Using `'latest'` in workflows can cause runtime errors when tools are updated
 - Pinned versions ensure workflow stability and predictability
@@ -129,8 +134,8 @@ const result = await composio.tools.execute(
         ...params,
         arguments: {
           ...params.arguments,
-          per_page: 100 // Add default parameter
-        }
+          per_page: 100, // Add default parameter
+        },
       };
     },
     afterExecute: ({ toolSlug, toolkitSlug, result }) => {
@@ -138,10 +143,10 @@ const result = await composio.tools.execute(
       console.log('Completed:', toolSlug);
       return {
         ...result,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     },
-  }
+  },
 );
 ```
 
@@ -149,9 +154,9 @@ const result = await composio.tools.execute(
 
 ```typescript
 interface ToolExecuteResponse {
-  data: any;           // Tool-specific response data
-  error: string | null;  // Error message if execution failed
-  successful: boolean;   // Whether execution succeeded
+  data: any; // Tool-specific response data
+  error: string | null; // Error message if execution failed
+  successful: boolean; // Whether execution succeeded
 }
 ```
 

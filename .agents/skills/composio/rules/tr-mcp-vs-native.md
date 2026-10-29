@@ -15,11 +15,11 @@ Tool Router supports two approaches: **Native tools (recommended)** for performa
 // DON'T: Use MCP when you need logging, modifiers, or performance
 const composio = new Composio(); // No provider
 const { mcp } = await composio.create('user_123', {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 
 const client = await createMCPClient({
-  transport: { type: 'http', url: mcp.url }
+  transport: { type: 'http', url: mcp.url },
 });
 
 // ❌ No control over tool execution
@@ -49,11 +49,11 @@ import { VercelProvider } from '@composio/vercel';
 
 // Add provider for native tools
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 const session = await composio.create('user_123', {
-  toolkits: ['gmail', 'slack']
+  toolkits: ['gmail', 'slack'],
 });
 
 // ✅ Direct tool execution (no MCP overhead)
@@ -92,11 +92,11 @@ import { VercelProvider } from '@composio/vercel';
 import { SessionExecuteMetaModifiers } from '@composio/core';
 
 const composio = new Composio({
-  provider: new VercelProvider()
+  provider: new VercelProvider(),
 });
 
 const session = await composio.create('user_123', {
-  toolkits: ['gmail']
+  toolkits: ['gmail'],
 });
 
 // Add modifiers for logging during execution
@@ -110,7 +110,7 @@ const modifiers: SessionExecuteMetaModifiers = {
     console.log(`[${sessionId}] Completed ${toolSlug}`);
     console.log('Success:', result.successful);
     return result;
-  }
+  },
 };
 
 const tools = await session.tools(modifiers);
@@ -130,7 +130,7 @@ const advancedModifiers: SessionExecuteMetaModifiers = {
     analytics.track('tool_execution_started', {
       tool: toolSlug,
       session: sessionId,
-      params
+      params,
     });
 
     // Validate parameters
@@ -145,7 +145,7 @@ const advancedModifiers: SessionExecuteMetaModifiers = {
     analytics.track('tool_execution_completed', {
       tool: toolSlug,
       session: sessionId,
-      success: result.successful
+      success: result.successful,
     });
 
     // Handle errors
@@ -163,7 +163,7 @@ const advancedModifiers: SessionExecuteMetaModifiers = {
       delete schema.parameters.properties.bcc;
     }
     return schema;
-  }
+  },
 };
 ```
 
@@ -202,18 +202,19 @@ tools = session.tools(
 
 ## Performance Comparison
 
-| Feature | Native Tools | MCP |
-|---------|-------------|-----|
-| Execution Speed | **Fast** (direct) | Slower (extra HTTP calls) |
-| API Overhead | **Minimal** | Additional MCP server roundtrips |
-| Modifier Support | **✅ Full support** | ❌ Not available |
-| Logging & Telemetry | **✅ beforeExecute/afterExecute** | ❌ Limited visibility |
-| Schema Customization | **✅ modifySchema** | ❌ Not available |
-| Framework Lock-in | Yes (provider-specific) | No (universal) |
+| Feature              | Native Tools                      | MCP                              |
+| -------------------- | --------------------------------- | -------------------------------- |
+| Execution Speed      | **Fast** (direct)                 | Slower (extra HTTP calls)        |
+| API Overhead         | **Minimal**                       | Additional MCP server roundtrips |
+| Modifier Support     | **✅ Full support**               | ❌ Not available                 |
+| Logging & Telemetry  | **✅ beforeExecute/afterExecute** | ❌ Limited visibility            |
+| Schema Customization | **✅ modifySchema**               | ❌ Not available                 |
+| Framework Lock-in    | Yes (provider-specific)           | No (universal)                   |
 
 ## When to Use Each
 
 ### ✅ Use Native Tools (Recommended) When:
+
 - **Performance matters**: Direct execution, no MCP overhead
 - **Need logging**: Track tool execution, parameters, results
 - **Need control**: Validate inputs, transform outputs, handle errors
@@ -221,6 +222,7 @@ tools = session.tools(
 - **Single framework**: You're committed to one AI framework
 
 ### Use MCP Only When:
+
 - **Multiple frameworks**: Switching between Claude, Vercel AI, LangChain
 - **Framework flexibility**: Not committed to one provider yet
 - **Prototyping**: Quick testing across different AI tools

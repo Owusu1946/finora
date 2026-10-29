@@ -16,6 +16,7 @@ Auth configs define how authentication works for a toolkit. They specify the aut
 ## When to Use the SDK
 
 Use these methods when you need to:
+
 - Programmatically create auth configs for multi-tenant applications
 - Dynamically manage auth configs based on user actions
 - Automate auth config creation in CI/CD pipelines
@@ -75,7 +76,7 @@ const authConfig = await composio.authConfigs.create('slack', {
   credentials: {
     client_id: 'your_client_id',
     client_secret: 'your_client_secret',
-  }
+  },
 });
 ```
 
@@ -90,7 +91,7 @@ const authConfig = await composio.authConfigs.create('openai', {
   authScheme: 'API_KEY',
   credentials: {
     api_key: 'your_api_key',
-  }
+  },
 });
 ```
 
@@ -104,7 +105,7 @@ const updated = await composio.authConfigs.update('auth_config_123', {
   credentials: {
     client_id: 'new_client_id',
     client_secret: 'new_client_secret',
-  }
+  },
 });
 ```
 
@@ -113,7 +114,7 @@ const updated = await composio.authConfigs.update('auth_config_123', {
 ```typescript
 const updated = await composio.authConfigs.update('auth_config_456', {
   type: 'default',
-  scopes: 'read:user,repo'
+  scopes: 'read:user,repo',
 });
 ```
 
@@ -122,10 +123,10 @@ const updated = await composio.authConfigs.update('auth_config_456', {
 ```typescript
 const restricted = await composio.authConfigs.update('auth_config_789', {
   type: 'custom',
-  credentials: { /* ... */ },
+  credentials: {/* ... */},
   toolAccessConfig: {
-    toolsAvailableForExecution: ['SLACK_SEND_MESSAGE', 'SLACK_GET_CHANNEL']
-  }
+    toolsAvailableForExecution: ['SLACK_SEND_MESSAGE', 'SLACK_GET_CHANNEL'],
+  },
 });
 ```
 
@@ -159,6 +160,7 @@ await composio.authConfigs.delete('auth_config_123');
 ### Create Parameters
 
 **For `use_composio_managed_auth`:**
+
 - `type`: `'use_composio_managed_auth'`
 - `name` (optional): Display name
 - `credentials` (optional): Object with `scopes` field
@@ -166,6 +168,7 @@ await composio.authConfigs.delete('auth_config_123');
 - `isEnabledForToolRouter` (optional): Enable for Tool Router
 
 **For `use_custom_auth`:**
+
 - `type`: `'use_custom_auth'`
 - `authScheme`: `'OAUTH2'`, `'API_KEY'`, `'BASIC_AUTH'`, etc.
 - `name` (optional): Display name
@@ -176,6 +179,7 @@ await composio.authConfigs.delete('auth_config_123');
 ### Update Parameters
 
 **For custom type:**
+
 ```typescript
 {
   type: 'custom',
@@ -187,6 +191,7 @@ await composio.authConfigs.delete('auth_config_123');
 ```
 
 **For default type:**
+
 ```typescript
 {
   type: 'default',

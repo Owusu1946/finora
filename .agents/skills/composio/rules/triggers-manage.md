@@ -20,6 +20,7 @@ await composio.triggers.enable('trigger_id_123');
 ```
 
 **Use cases:**
+
 - **Disable:** Pause events temporarily, user disconnects account, billing issues
 - **Enable:** Resume after resolving issues, user reconnects account
 
@@ -30,12 +31,13 @@ await composio.triggers.enable('trigger_id_123');
 await composio.triggers.update('trigger_id_123', {
   triggerConfig: {
     labelIds: 'SENT', // Changed from 'INBOX'
-    interval: 120     // Changed from 60
-  }
+    interval: 120, // Changed from 60
+  },
 });
 ```
 
 **Updateable fields:**
+
 - `triggerConfig` - Trigger-specific configuration
 - Cannot change trigger slug or connected account
 
@@ -55,36 +57,37 @@ const triggers = await composio.triggers.getActiveTriggers();
 
 // By trigger slug
 const gmailTriggers = await composio.triggers.getActiveTriggers({
-  triggerSlugs: ['GMAIL_NEW_GMAIL_MESSAGE']
+  triggerSlugs: ['GMAIL_NEW_GMAIL_MESSAGE'],
 });
 
 // By user
 const userTriggers = await composio.triggers.getActiveTriggers({
-  userIds: ['user_123']
+  userIds: ['user_123'],
 });
 
 // By connected account
 const accountTriggers = await composio.triggers.getActiveTriggers({
-  connectedAccountIds: ['conn_abc123']
+  connectedAccountIds: ['conn_abc123'],
 });
 
 // By status
 const enabled = await composio.triggers.getActiveTriggers({
-  status: 'enabled'
+  status: 'enabled',
 });
 const disabled = await composio.triggers.getActiveTriggers({
-  status: 'disabled'
+  status: 'disabled',
 });
 
 // Combine filters
 const filtered = await composio.triggers.getActiveTriggers({
   triggerSlugs: ['SLACK_NEW_MESSAGE'],
   userIds: ['user_123'],
-  status: 'enabled'
+  status: 'enabled',
 });
 ```
 
 **Response includes:**
+
 - `triggerId` - Unique ID
 - `triggerSlug` - Trigger type
 - `userId` - User ID
@@ -99,9 +102,9 @@ const filtered = await composio.triggers.getActiveTriggers({
 // Get specific trigger
 const trigger = await composio.triggers.getTriggerById('trigger_id_123');
 
-console.log(trigger.status);                // 'enabled'
-console.log(trigger.triggerSlug);           // 'GMAIL_NEW_GMAIL_MESSAGE'
-console.log(trigger.config.triggerConfig);  // { labelIds: 'INBOX', ... }
+console.log(trigger.status); // 'enabled'
+console.log(trigger.triggerSlug); // 'GMAIL_NEW_GMAIL_MESSAGE'
+console.log(trigger.config.triggerConfig); // { labelIds: 'INBOX', ... }
 ```
 
 ## Common Patterns
@@ -112,7 +115,7 @@ console.log(trigger.config.triggerConfig);  // { labelIds: 'INBOX', ... }
 async function pauseUserTriggers(userId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
     userIds: [userId],
-    status: 'enabled'
+    status: 'enabled',
   });
 
   for (const trigger of triggers.items) {
@@ -127,7 +130,7 @@ async function pauseUserTriggers(userId: string) {
 async function resumeUserTriggers(userId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
     userIds: [userId],
-    status: 'disabled'
+    status: 'disabled',
   });
 
   for (const trigger of triggers.items) {
@@ -141,7 +144,7 @@ async function resumeUserTriggers(userId: string) {
 ```typescript
 async function cleanupTriggers(connectedAccountId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
-    connectedAccountIds: [connectedAccountId]
+    connectedAccountIds: [connectedAccountId],
   });
 
   for (const trigger of triggers.items) {
@@ -156,15 +159,15 @@ async function cleanupTriggers(connectedAccountId: string) {
 async function updateGmailInterval(userId: string, newInterval: number) {
   const triggers = await composio.triggers.getActiveTriggers({
     userIds: [userId],
-    triggerSlugs: ['GMAIL_NEW_GMAIL_MESSAGE']
+    triggerSlugs: ['GMAIL_NEW_GMAIL_MESSAGE'],
   });
 
   for (const trigger of triggers.items) {
     await composio.triggers.update(trigger.triggerId, {
       triggerConfig: {
         ...trigger.config.triggerConfig,
-        interval: newInterval
-      }
+        interval: newInterval,
+      },
     });
   }
 }
@@ -188,13 +191,13 @@ async function isTriggerActive(triggerId: string): Promise<boolean> {
 ```typescript
 async function getUserTriggerCount(userId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
-    userIds: [userId]
+    userIds: [userId],
   });
 
   return {
     total: triggers.items.length,
-    enabled: triggers.items.filter(t => t.status === 'enabled').length,
-    disabled: triggers.items.filter(t => t.status === 'disabled').length
+    enabled: triggers.items.filter((t) => t.status === 'enabled').length,
+    disabled: triggers.items.filter((t) => t.status === 'disabled').length,
   };
 }
 ```
@@ -208,7 +211,7 @@ async function getUserTriggerCount(userId: string) {
 async function handleAccountDisconnect(accountId: string) {
   // Option 1: Disable triggers (can resume later)
   const triggers = await composio.triggers.getActiveTriggers({
-    connectedAccountIds: [accountId]
+    connectedAccountIds: [accountId],
   });
   for (const trigger of triggers.items) {
     await composio.triggers.disable(trigger.triggerId);
@@ -228,7 +231,7 @@ async function handleAccountDisconnect(accountId: string) {
 async function handleAccountReconnect(accountId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
     connectedAccountIds: [accountId],
-    status: 'disabled'
+    status: 'disabled',
   });
 
   for (const trigger of triggers.items) {
@@ -244,7 +247,7 @@ async function handleAccountReconnect(accountId: string) {
 async function handleDowngrade(userId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
     userIds: [userId],
-    triggerSlugs: ['NON_ESSENTIAL_TRIGGER']
+    triggerSlugs: ['NON_ESSENTIAL_TRIGGER'],
   });
 
   for (const trigger of triggers.items) {
@@ -256,7 +259,7 @@ async function handleDowngrade(userId: string) {
 async function handleUpgrade(userId: string) {
   const triggers = await composio.triggers.getActiveTriggers({
     userIds: [userId],
-    status: 'disabled'
+    status: 'disabled',
   });
 
   for (const trigger of triggers.items) {

@@ -1,6 +1,6 @@
 import { ThreadPrimitive } from '@assistant-ui/react-native';
-import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useIsFocused } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useEffect, useState } from 'react';
 import {
   View,
