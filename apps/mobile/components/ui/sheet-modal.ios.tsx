@@ -21,6 +21,7 @@ import type { SheetModalProps } from './sheet-modal.types';
 export function SheetModal({
   visible,
   onClose,
+  onDismissed,
   children,
   style,
   showHandle = true,
@@ -43,6 +44,7 @@ export function SheetModal({
           if (!presented) onClose();
         }}
         fitToContents={fit}
+        onDismiss={onDismissed}
       >
         <Group
           modifiers={[

@@ -27,6 +27,7 @@ const SHEET_SLIDE = 640;
 export function SheetModal({
   visible,
   onClose,
+  onDismissed,
   children,
   style,
   showHandle = true,
@@ -40,6 +41,8 @@ export function SheetModal({
   const closeSourceRef = useRef<'none' | 'gesture' | 'prop'>('none');
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const onDismissedRef = useRef(onDismissed);
+  onDismissedRef.current = onDismissed;
 
   const translateY = useSharedValue(SHEET_SLIDE);
   const scrim = useSharedValue(0);
@@ -51,6 +54,7 @@ export function SheetModal({
     closingRef.current = false;
     setMounted(false);
     if (source === 'gesture') onCloseRef.current();
+    onDismissedRef.current?.();
   };
 
   const animateOpen = () => {

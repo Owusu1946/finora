@@ -1,4 +1,5 @@
 import { BottomSheet, Host, RNHostView, type SnapPoint } from '@expo/ui';
+import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +20,7 @@ function toSnapPoint(detent: SheetDetent): SnapPoint {
 export function SheetModal({
   visible,
   onClose,
+  onDismissed,
   children,
   style,
   showHandle = true,
@@ -30,6 +32,15 @@ export function SheetModal({
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const fit = !detents;
+  const wasVisible = useRef(visible);
+  const onDismissedRef = useRef(onDismissed);
+  onDismissedRef.current = onDismissed;
+
+  // Android can launch pickers over a closing sheet, so report as soon as it hides.
+  useEffect(() => {
+    if (wasVisible.current && !visible) onDismissedRef.current?.();
+    wasVisible.current = visible;
+  }, [visible]);
 
   return (
     <Host

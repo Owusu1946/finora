@@ -7,6 +7,11 @@ export type SheetDetent = 'medium' | 'large' | { fraction: number } | { height: 
 export type SheetModalProps = {
   visible: boolean;
   onClose: () => void;
+  /**
+   * Called once the sheet has fully closed. Present follow-up screens (pickers,
+   * other sheets) from here; iOS can't present while a sheet is dismissing.
+   */
+  onDismissed?: () => void;
   children: ReactNode;
   /** Styles for the sheet content (not the scrim). */
   style?: StyleProp<ViewStyle>;
