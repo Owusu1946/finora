@@ -275,7 +275,7 @@ export function createChatAgentTools(
   return {
     create_virtual_card: tool({
       description:
-        'Start a prepaid USD virtual card when the user asks for one, e.g. "a card for Netflix with $50". Pass the label and the USD amount to load when given. This only opens card setup in the app, where the user picks the funding account (bank, mobile money, or WeWire wallet), sees the $1 issue fee, and confirms with their passcode. It never issues or funds a card; never say the card was created.',
+        'Start a prepaid USD virtual card when the user asks for one, e.g. "a card for Netflix with $50". Always pass label (what it pays for) and spendLimit (the USD amount to load) whenever the user states them, so setup skips straight to review; only omit what the user did not say. This only opens card setup in the app, where the user picks the funding account (bank, mobile money, or WeWire wallet), sees the $1 issue fee, and confirms with their passcode. It never issues or funds a card; never say the card was created.',
       inputSchema: zodSchema(CreateVirtualCardToolInputSchema),
       execute: async (input) => ({
         status: 'pending' as const,

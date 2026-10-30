@@ -60,13 +60,21 @@ export type UpdateVirtualCardRequest = z.infer<typeof UpdateVirtualCardRequestSc
 
 /** Chat tool: open card setup in the app (the app picks funding and confirms). */
 export const CreateVirtualCardToolInputSchema = z.object({
-  label: z.string().trim().min(1).max(40).optional().describe('What the card is for, e.g. Netflix'),
+  label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .optional()
+    .describe('Short name for what the card pays for, e.g. "Netflix" or "Subscription"'),
   spendLimit: z
     .number()
     .positive()
     .max(MAX_VIRTUAL_CARD_LIMIT)
     .optional()
-    .describe('USD amount to load onto the prepaid card'),
+    .describe(
+      'USD amount to load onto the prepaid card. Always set it when the user mentions any amount, e.g. "my $20 sub" -> 20.',
+    ),
 });
 
 export const ListVirtualCardsToolInputSchema = z.object({
