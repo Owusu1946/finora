@@ -1,7 +1,7 @@
 import { getClerkInstance } from '@clerk/expo';
 import {
-  VirtualCardListResponseSchema,
   VirtualCardResponseSchema,
+  VirtualCardSchema,
   type UpdateVirtualCardRequest,
 } from '@finora/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -161,6 +161,20 @@ function replaceCached(card: VirtualCard) {
     : [card, ...cachedCards];
 }
 
+/** Validate each card on its own, so one malformed card can't blank the whole list. */
+function parseCardList(payload: unknown): VirtualCard[] {
+  const items =
+    typeof payload === 'object' && payload !== null && 'cards' in payload ? payload.cards : null;
+  if (!Array.isArray(items)) throw new VirtualCardError("Couldn't load your cards.");
+  const cards: VirtualCard[] = [];
+  for (const item of items) {
+    const parsed = VirtualCardSchema.safeParse(item);
+    if (parsed.success) cards.push(parsed.data);
+    else if (__DEV__) console.warn('[cards] skipped an invalid card', parsed.error.issues);
+  }
+  return cards;
+}
+
 /**
  * The user's cards plus a user-facing error when they couldn't be loaded, so a
  * screen can tell "no cards" from "couldn't load". Falls back to the last list.
@@ -168,7 +182,7 @@ function replaceCached(card: VirtualCard) {
 export async function loadVirtualCards(): Promise<{ cards: VirtualCard[]; error: string | null }> {
   await clearLegacyCards();
   try {
-    const { cards } = VirtualCardListResponseSchema.parse(await cardsRequest(''));
+    const cards = parseCardList(await cardsRequest(''));
     cachedCards = cards;
     return { cards, error: null };
   } catch (error) {
