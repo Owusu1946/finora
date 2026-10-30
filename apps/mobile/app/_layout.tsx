@@ -37,6 +37,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { VirtualCardIssuedPopup } from '@/components/cards/VirtualCardIssuedPopup';
+import { ConnectFallbackToolUIs } from '@/components/chat/ConnectFallbackToolUIs';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
@@ -321,6 +322,7 @@ function FinoraRuntimeContent({
       <GetVirtualCardToolUI />
       <SuggestAppConnectionToolUI />
       <DraftWhatsAppMessageToolUI />
+      <ConnectFallbackToolUIs />
       <SearchWebToolUI />
       <SearchProductsToolUI />
       <ResearchWebToolUI />
