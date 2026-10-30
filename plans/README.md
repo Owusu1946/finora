@@ -15,6 +15,7 @@ STOP conditions, and update the status row when complete.
 | 005  | Remove client-side virtual-card credentials                 | P1       | L      | 003        | TODO     |
 | 006  | Align mobile dependencies and project skills                | P2       | M      | 001        | COMPLETE |
 | 007  | Wire live WeWire APIs into the Finora platform              | P1       | XL     | none       | TODO     |
+| 008  | Fix the auth flow (onboarding, gates, lock screen, tags)    | P1       | L      | 002 (item 3) | TODO     |
 
 ## Dependency notes
 
