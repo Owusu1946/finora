@@ -19,7 +19,7 @@ import {
   listUserAutomationActivity,
   updateAutomation,
 } from '../db/automation-store';
-import { listActiveAutomations } from '../db/automation-store';
+import { listActiveAutomationsForUser } from '../db/automation-store';
 import { createDb } from '../db/client';
 
 export const automations = new Hono<AppEnv>();
@@ -54,9 +54,8 @@ automations.post('/events/balance', async (c) => {
     return c.json({ message: 'currency and numeric balance are required.' }, 400);
   }
   const db = createDb(c.get('env').DATABASE_URL);
-  const rows = (await listActiveAutomations(db)).filter(
+  const rows = (await listActiveAutomationsForUser(db, c.get('auth').userId)).filter(
     (row) =>
-      row.clerkUserId === c.get('auth').userId &&
       row.trigger.type === 'balance_threshold' &&
       row.trigger.config.currency === body.currency &&
       (!row.trigger.config.walletId || row.trigger.config.walletId === body.walletId),
