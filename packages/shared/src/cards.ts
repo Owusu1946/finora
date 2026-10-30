@@ -57,3 +57,23 @@ export const UpdateVirtualCardRequestSchema = z
     message: 'At least one card field is required.',
   });
 export type UpdateVirtualCardRequest = z.infer<typeof UpdateVirtualCardRequestSchema>;
+
+/** Chat tool: open card setup in the app (the app picks funding and confirms). */
+export const CreateVirtualCardToolInputSchema = z.object({
+  label: z.string().trim().min(1).max(40).optional().describe('What the card is for, e.g. Netflix'),
+  spendLimit: z
+    .number()
+    .positive()
+    .max(MAX_VIRTUAL_CARD_LIMIT)
+    .optional()
+    .describe('USD amount to load onto the prepaid card'),
+});
+
+export const ListVirtualCardsToolInputSchema = z.object({
+  status: z.enum(['active', 'frozen', 'all']).optional(),
+});
+
+export const GetVirtualCardToolInputSchema = z.object({
+  cardId: z.string().min(1).optional(),
+  label: z.string().trim().min(1).optional().describe('Card label to look up, e.g. Netflix'),
+});

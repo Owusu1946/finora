@@ -42,6 +42,7 @@ import {
 } from '../ai/resumable-stream';
 import { FINORA_SYSTEM_PROMPT } from '../ai/system-prompt';
 import { createChatAgentTools } from '../ai/tools';
+import { listUserCards } from '../cards/service';
 import { getChatContext } from '../db/chat-context-store';
 import {
   chatIsActive,
@@ -798,6 +799,7 @@ chat.post('/:id', async (c) => {
           }),
         },
         createExaClient(env.EXA_API_KEY),
+        { list: async () => (await listUserCards(env, userId)).cards },
       ),
       ...(explicitWebMode
         ? {
