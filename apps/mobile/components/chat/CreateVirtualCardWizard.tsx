@@ -9,9 +9,9 @@ import {
   useFundingWallets,
 } from '@/components/cards/CardFundingSource';
 import { formatCardAmount, type VirtualCard } from '@/components/cards/types';
+import { IssuedVirtualCard } from '@/components/chat/IssuedVirtualCard';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
-import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -281,26 +281,7 @@ export function CreateVirtualCardWizard({
         </View>
       ) : null}
 
-      {step === 'issued' && issued ? (
-        <View className='w-[100%] gap-3'>
-          <View className='w-11 h-11 rounded-full items-center justify-center bg-foreground'>
-            <Icon
-              name='check'
-              size={24}
-              color={colors.background}
-              weight='bold'
-            />
-          </View>
-          <View className='gap-0.5 px-1'>
-            <Text className='font-sans-semibold text-[18px] tracking-[-0.3px] text-foreground'>
-              Request confirmed
-            </Text>
-            <Text className='font-sans-medium text-[14px] leading-[20px] mb-1 text-muted-foreground'>
-              Issuing your {issued.label} card. Details land here as soon as they’re ready.
-            </Text>
-          </View>
-        </View>
-      ) : null}
+      {step === 'issued' && issued ? <IssuedVirtualCard card={issued} /> : null}
 
       {modal}
     </View>
