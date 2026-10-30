@@ -60,17 +60,15 @@ export function validMobileReturnUrl(value: string, environment: string) {
 /** The curated business apps with this user's connection status. */
 export async function listCuratedApps(composio: ComposioClient, userId: string) {
   const statuses = appStatuses(await composio.listConnectedAccounts(userId));
-  return CURATED_BUSINESS_APPS.map(
-    (app): BusinessApp => ({
-      slug: app.slug,
-      name: app.name,
-      logo: logoFor(app.slug),
-      description: app.description,
-      category: app.category,
-      status: statuses.get(app.slug) ?? 'disconnected',
-      connectable: true,
-    }),
-  );
+  return CURATED_BUSINESS_APPS.map((app): BusinessApp => ({
+    slug: app.slug,
+    name: app.name,
+    logo: logoFor(app.slug),
+    description: app.description,
+    category: app.category,
+    status: statuses.get(app.slug) ?? 'disconnected',
+    connectable: true,
+  }));
 }
 
 function toBusinessApp(toolkit: ComposioToolkit, statuses: ReturnType<typeof appStatuses>) {

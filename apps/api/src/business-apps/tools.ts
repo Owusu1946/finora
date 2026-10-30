@@ -98,7 +98,11 @@ export function createBusinessAppTools(context: BusinessAppsToolContext) {
     return composio.executeTool(schema, { userId, arguments: args });
   }
 
-  async function paymentsFrom(app: PaymentApp, since: Date, status: 'successful' | 'failed' | 'all') {
+  async function paymentsFrom(
+    app: PaymentApp,
+    since: Date,
+    status: 'successful' | 'failed' | 'all',
+  ) {
     if (app === 'paystack') {
       return paystackPayments(
         await run('PAYSTACK_LIST_TRANSACTIONS', {

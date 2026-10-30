@@ -1,7 +1,4 @@
-import {
-  ConnectBusinessAppRequestSchema,
-  SendWhatsAppMessageRequestSchema,
-} from '@finora/shared';
+import { ConnectBusinessAppRequestSchema, SendWhatsAppMessageRequestSchema } from '@finora/shared';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
@@ -37,11 +34,7 @@ businessApps.get('/', async (c) => {
   const composio = composioFor(c.get('env'));
   if (!composio) return c.json(unavailable, 503, NO_STORE);
   try {
-    return c.json(
-      { apps: await listCuratedApps(composio, c.get('auth').userId) },
-      200,
-      NO_STORE,
-    );
+    return c.json({ apps: await listCuratedApps(composio, c.get('auth').userId) }, 200, NO_STORE);
   } catch (error) {
     logComposioError('list', error);
     return c.json(providerFailed, 502, NO_STORE);

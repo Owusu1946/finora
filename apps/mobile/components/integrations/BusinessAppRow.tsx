@@ -7,7 +7,13 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 
-export function BusinessAppLogo({ app, size = 36 }: { app: Pick<BusinessApp, 'logo'>; size?: number }) {
+export function BusinessAppLogo({
+  app,
+  size = 36,
+}: {
+  app: Pick<BusinessApp, 'logo'>;
+  size?: number;
+}) {
   return (
     <View
       className='items-center justify-center overflow-hidden rounded-xl border border-border bg-white'

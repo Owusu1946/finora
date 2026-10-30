@@ -1,6 +1,5 @@
-import { BUSINESS_APP_CATEGORIES, type BusinessApp } from '@finora/shared';
-
 import { useAuth } from '@clerk/expo';
+import { BUSINESS_APP_CATEGORIES, type BusinessApp } from '@finora/shared';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Fragment, useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';

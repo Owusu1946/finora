@@ -1,8 +1,4 @@
-import type {
-  BusinessAppConnectionStatus,
-  BusinessBalance,
-  BusinessPayment,
-} from '@finora/shared';
+import type { BusinessAppConnectionStatus, BusinessBalance, BusinessPayment } from '@finora/shared';
 
 import type { ComposioConnectedAccount } from './composio';
 

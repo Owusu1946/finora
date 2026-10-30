@@ -58,7 +58,10 @@ function WhatsAppDraftCard({ toolCallId, draft }: { toolCallId: string; draft: D
       setSent(true);
     } catch (error) {
       haptics.error();
-      Alert.alert("Couldn't send on WhatsApp", error instanceof Error ? error.message : 'Try again.');
+      Alert.alert(
+        "Couldn't send on WhatsApp",
+        error instanceof Error ? error.message : 'Try again.',
+      );
     } finally {
       setBusy(false);
     }

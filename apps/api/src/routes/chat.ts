@@ -757,63 +757,42 @@ chat.post('/:id', async (c) => {
       messages: await convertToModelMessages(compactedMessages),
       tools: {
         ...createChatAgentTools(
-        {
-          status: () => getGmailStatus(db, userId),
-          search: gmail.search,
-          message: gmail.message,
-        },
-        calendar,
-        drive,
-        {
-          inspectAttachment: (attachmentId) =>
-            inspectPayrollAttachment({
-              env: c.env,
-              apiEnv: env,
-              userId,
-              attachmentId,
-            }),
-          prepareImport: ({ importId, period, rowIds }) =>
-            preparePayrollImport({
-              databaseUrl: env.DATABASE_URL,
-              userId,
-              importId,
-              period,
-              rowIds,
-            }),
-          prepareEmployee: (input) =>
-            prepareImportedEmployeePayment({ databaseUrl: env.DATABASE_URL, userId, ...input }),
-          listImports: (input) => listPayrollImportsForChat(env.DATABASE_URL, userId, input),
-          proposeChanges: (input) => proposePayrollChanges(env.DATABASE_URL, userId, input),
-        },
-        {
-          remember: async (input) => {
-            const settings = await getMemorySettings(db, userId);
-            if (!settings.enabled) return { ok: false, errorCode: 'memory_disabled' };
-            const memory = await rememberUserMemory(db, userId, input, {
-              chatId: parsed.data.id,
-              messageId: latestMessageId,
-            });
-            c.executionCtx.waitUntil(
-              refreshMemoryEmbedding(db, env, userId, memory).catch((error) => {
-                console.error('[chat:memory-embedding-write]', {
-                  requestId,
-                  memoryId: memory.id,
-                  errorName: error instanceof Error ? error.name : typeof error,
-                });
+          {
+            status: () => getGmailStatus(db, userId),
+            search: gmail.search,
+            message: gmail.message,
+          },
+          calendar,
+          drive,
+          {
+            inspectAttachment: (attachmentId) =>
+              inspectPayrollAttachment({
+                env: c.env,
+                apiEnv: env,
+                userId,
+                attachmentId,
               }),
-            );
-            return { ok: true, memory: serializeMemory(memory) };
+            prepareImport: ({ importId, period, rowIds }) =>
+              preparePayrollImport({
+                databaseUrl: env.DATABASE_URL,
+                userId,
+                importId,
+                period,
+                rowIds,
+              }),
+            prepareEmployee: (input) =>
+              prepareImportedEmployeePayment({ databaseUrl: env.DATABASE_URL, userId, ...input }),
+            listImports: (input) => listPayrollImportsForChat(env.DATABASE_URL, userId, input),
+            proposeChanges: (input) => proposePayrollChanges(env.DATABASE_URL, userId, input),
           },
-          list: async (input) => {
-            const [settings, memories] = await Promise.all([
-              getMemorySettings(db, userId),
-              listUserMemories(db, userId, input),
-            ]);
-            return { enabled: settings.enabled, memories: memories.map(serializeMemory) };
-          },
-          update: async (input) => {
-            const memory = await updateUserMemory(db, userId, input);
-            if (memory) {
+          {
+            remember: async (input) => {
+              const settings = await getMemorySettings(db, userId);
+              if (!settings.enabled) return { ok: false, errorCode: 'memory_disabled' };
+              const memory = await rememberUserMemory(db, userId, input, {
+                chatId: parsed.data.id,
+                messageId: latestMessageId,
+              });
               c.executionCtx.waitUntil(
                 refreshMemoryEmbedding(db, env, userId, memory).catch((error) => {
                   console.error('[chat:memory-embedding-write]', {
@@ -823,18 +802,39 @@ chat.post('/:id', async (c) => {
                   });
                 }),
               );
-            }
-            return memory
-              ? { ok: true, memory: serializeMemory(memory) }
-              : { ok: false, errorCode: 'memory_not_found' };
+              return { ok: true, memory: serializeMemory(memory) };
+            },
+            list: async (input) => {
+              const [settings, memories] = await Promise.all([
+                getMemorySettings(db, userId),
+                listUserMemories(db, userId, input),
+              ]);
+              return { enabled: settings.enabled, memories: memories.map(serializeMemory) };
+            },
+            update: async (input) => {
+              const memory = await updateUserMemory(db, userId, input);
+              if (memory) {
+                c.executionCtx.waitUntil(
+                  refreshMemoryEmbedding(db, env, userId, memory).catch((error) => {
+                    console.error('[chat:memory-embedding-write]', {
+                      requestId,
+                      memoryId: memory.id,
+                      errorName: error instanceof Error ? error.name : typeof error,
+                    });
+                  }),
+                );
+              }
+              return memory
+                ? { ok: true, memory: serializeMemory(memory) }
+                : { ok: false, errorCode: 'memory_not_found' };
+            },
+            forget: async (id) => ({
+              ok: await forgetUserMemory(db, userId, id),
+              id,
+            }),
           },
-          forget: async (id) => ({
-            ok: await forgetUserMemory(db, userId, id),
-            id,
-          }),
-        },
-        createExaClient(env.EXA_API_KEY),
-        { list: async () => (await listUserCards(env, userId)).cards },
+          createExaClient(env.EXA_API_KEY),
+          { list: async () => (await listUserCards(env, userId)).cards },
         ),
         ...(composio && connectedApps
           ? createBusinessAppTools({ composio, userId, connected: connectedApps })

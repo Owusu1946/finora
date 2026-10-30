@@ -53,7 +53,10 @@ export function AppConnectCard({
       }
     } catch (error) {
       haptics.error();
-      Alert.alert(`Couldn't connect ${name}`, error instanceof Error ? error.message : 'Try again.');
+      Alert.alert(
+        `Couldn't connect ${name}`,
+        error instanceof Error ? error.message : 'Try again.',
+      );
     } finally {
       setBusy(false);
     }

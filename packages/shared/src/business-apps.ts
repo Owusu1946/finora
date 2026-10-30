@@ -40,7 +40,8 @@ export const CURATED_BUSINESS_APPS: CuratedBusinessApp[] = [
     slug: 'paystack',
     name: 'Paystack',
     category: 'get_paid',
-    description: 'Card, bank, and mobile money payments in Nigeria, Ghana, Kenya, and South Africa.',
+    description:
+      'Card, bank, and mobile money payments in Nigeria, Ghana, Kenya, and South Africa.',
     guide:
       'Source of truth for customer payments, settlements, refunds, disputes, subscriptions, and payment requests (Paystack invoices). Use get_business_payments and get_business_balances for sales and balances. For other reads try PAYSTACK_LIST_SETTLEMENTS, PAYSTACK_LIST_CUSTOMERS, PAYSTACK_LIST_PAYMENT_REQUESTS, PAYSTACK_LIST_REFUNDS, PAYSTACK_LIST_DISPUTES, or PAYSTACK_VERIFY_TRANSACTION.',
   },
@@ -104,7 +105,8 @@ export const CURATED_BUSINESS_APPS: CuratedBusinessApp[] = [
     name: 'Slack',
     category: 'messaging',
     description: 'Your team chat.',
-    guide: 'Where the team talks. Read channels and messages for context on payments and approvals.',
+    guide:
+      'Where the team talks. Read channels and messages for context on payments and approvals.',
   },
   {
     slug: 'googlesheets',
@@ -236,7 +238,9 @@ export const RunAppActionToolInputSchema = z.object({
   action: z
     .string()
     .regex(/^[A-Z0-9_]+$/)
-    .describe('Exact action name from find_app_actions or the app guide, e.g. QUICKBOOKS_LIST_INVOICES'),
+    .describe(
+      'Exact action name from find_app_actions or the app guide, e.g. QUICKBOOKS_LIST_INVOICES',
+    ),
   arguments: z
     .record(z.string(), z.unknown())
     .optional()

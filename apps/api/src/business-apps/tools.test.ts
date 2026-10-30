@@ -22,7 +22,10 @@ function setup(connected: string[], results: Record<string, unknown> = {}) {
       return schema(slug, !slug.includes('REFUND') && !slug.includes('SEND'));
     }),
     searchTools: vi.fn(async () => [
-      { ...schema('QUICKBOOKS_LIST_INVOICES'), input_parameters: { properties: { max_results: { type: 'integer' } } } },
+      {
+        ...schema('QUICKBOOKS_LIST_INVOICES'),
+        input_parameters: { properties: { max_results: { type: 'integer' } } },
+      },
       schema('QUICKBOOKS_CREATE_INVOICE', false),
     ]),
     executeTool: vi.fn(async (tool: Pick<ComposioTool, 'slug'>) => {
@@ -35,7 +38,11 @@ function setup(connected: string[], results: Record<string, unknown> = {}) {
   return { composio, tools };
 }
 
-async function run(tools: ReturnType<typeof setup>['tools'], name: keyof typeof tools, input: object) {
+async function run(
+  tools: ReturnType<typeof setup>['tools'],
+  name: keyof typeof tools,
+  input: object,
+) {
   const execute = tools[name].execute as unknown as (
     input: object,
     options: object,
@@ -49,13 +56,33 @@ describe('get_business_payments', () => {
       PAYSTACK_LIST_TRANSACTIONS: {
         data: {
           data: [
-            { id: 1, amount: 50_000, currency: 'GHS', status: 'success', paid_at: '2026-10-29T09:00:00Z' },
-            { id: 2, amount: 20_000, currency: 'GHS', status: 'success', paid_at: '2026-10-01T09:00:00Z' },
+            {
+              id: 1,
+              amount: 50_000,
+              currency: 'GHS',
+              status: 'success',
+              paid_at: '2026-10-29T09:00:00Z',
+            },
+            {
+              id: 2,
+              amount: 20_000,
+              currency: 'GHS',
+              status: 'success',
+              paid_at: '2026-10-01T09:00:00Z',
+            },
           ],
         },
       },
       FLUTTERWAVE_GET_ALL_TRANSACTIONS: {
-        data: [{ id: 9, amount: 1_000, currency: 'NGN', status: 'successful', created_at: '2026-10-30T08:00:00Z' }],
+        data: [
+          {
+            id: 9,
+            amount: 1_000,
+            currency: 'NGN',
+            status: 'successful',
+            created_at: '2026-10-30T08:00:00Z',
+          },
+        ],
       },
     });
 
@@ -80,7 +107,9 @@ describe('get_business_payments', () => {
   it('reports one failing app without hiding the others', async () => {
     const { tools } = setup(['paystack', 'stripe'], {
       PAYSTACK_LIST_TRANSACTIONS: new ComposioError('Invalid key', 502, 'tool_failed'),
-      STRIPE_LIST_CHARGES: { data: [{ id: 'ch_1', amount: 1_000, currency: 'usd', status: 'succeeded' }] },
+      STRIPE_LIST_CHARGES: {
+        data: [{ id: 'ch_1', amount: 1_000, currency: 'usd', status: 'succeeded' }],
+      },
     });
 
     const result = await run(tools, 'get_business_payments', {});
@@ -118,7 +147,10 @@ describe('get_business_balances', () => {
 describe('find_app_actions', () => {
   it('returns only read-only actions for a connected app', async () => {
     const { tools } = setup(['quickbooks']);
-    const result = await run(tools, 'find_app_actions', { app: 'quickbooks', query: 'unpaid invoices' });
+    const result = await run(tools, 'find_app_actions', {
+      app: 'quickbooks',
+      query: 'unpaid invoices',
+    });
     expect(result.actions).toEqual([
       {
         action: 'QUICKBOOKS_LIST_INVOICES',
@@ -130,9 +162,11 @@ describe('find_app_actions', () => {
 
   it('refuses apps the user has not connected', async () => {
     const { tools } = setup([]);
-    expect(await run(tools, 'find_app_actions', { app: 'quickbooks', query: 'invoices' })).toEqual(
-      { ok: false, errorCode: 'app_not_connected', app: 'quickbooks' },
-    );
+    expect(await run(tools, 'find_app_actions', { app: 'quickbooks', query: 'invoices' })).toEqual({
+      ok: false,
+      errorCode: 'app_not_connected',
+      app: 'quickbooks',
+    });
   });
 });
 
@@ -159,7 +193,9 @@ describe('run_app_action', () => {
 
   it('refuses actions in apps the user has not connected', async () => {
     const { composio, tools } = setup(['paystack']);
-    expect(await run(tools, 'run_app_action', { action: 'QUICKBOOKS_LIST_INVOICES' })).toMatchObject({
+    expect(
+      await run(tools, 'run_app_action', { action: 'QUICKBOOKS_LIST_INVOICES' }),
+    ).toMatchObject({
       ok: false,
       errorCode: 'app_not_connected',
     });
