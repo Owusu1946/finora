@@ -25,6 +25,9 @@ const TITLE_REQUEST_TIMEOUT_MS = 12_000;
 const NEW_CHAT_TITLE = 'New chat';
 const MAX_TITLE_WORDS = 6;
 const MAX_TITLE_LENGTH = 48;
+/** Characters revealed per typewriter step, and the delay between steps. */
+const TYPEWRITER_CHUNK = 2;
+const TYPEWRITER_STEP_MS = 24;
 
 type GetToken = () => Promise<string | null>;
 
@@ -173,8 +176,25 @@ async function generateTitle(
   }
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Streams a title into the drawer. The runtime updates the title per chunk,
+ * so a generated title types itself in; "New chat" appears at once.
+ */
 function titleAssistantStream(title: string) {
-  return createAssistantStream((controller) => controller.appendText(title)) as AssistantStream;
+  return createAssistantStream(async (controller) => {
+    if (title === NEW_CHAT_TITLE) {
+      controller.appendText(title);
+      return;
+    }
+    for (let index = 0; index < title.length; index += TYPEWRITER_CHUNK) {
+      controller.appendText(title.slice(index, index + TYPEWRITER_CHUNK));
+      await wait(TYPEWRITER_STEP_MS);
+    }
+  }) as AssistantStream;
 }
 
 async function readCachedThreads(userId: string): Promise<RemoteThreadMetadata[]> {
