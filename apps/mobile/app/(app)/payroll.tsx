@@ -18,6 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatPaymentAmount } from '@/components/chat/PaymentConfirmationCard';
+import { PayrollRunsSection } from '@/components/payroll/PayrollRunsSection';
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { SheetModal } from '@/components/ui/sheet-modal';
@@ -329,6 +330,7 @@ export default function PayrollScreen() {
                 </Text>
               </Pressable>
             ) : null}
+            {!selection ? <PayrollRunsSection /> : null}
           </View>
         }
         ListEmptyComponent={
