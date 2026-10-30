@@ -1,47 +1,48 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
-import { AppState } from 'react-native';
-
+import { getClerkInstance } from '@clerk/expo';
 import {
-  MOCK_VIRTUAL_CARDS,
-  type CreateVirtualCardInput,
-  type VirtualCard,
-  type VirtualCardNetwork,
-  type VirtualCardStatus,
+  VirtualCardListResponseSchema,
+  VirtualCardResponseSchema,
+  type UpdateVirtualCardRequest,
+} from '@finora/shared';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert, AppState } from 'react-native';
+
+import type {
+  CreateVirtualCardInput,
+  VirtualCard,
+  VirtualCardStatus,
 } from '@/components/cards/types';
 
+import { getApiUrl } from './api-url';
 import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
-import { serializeStorageMutation } from './storage-mutation';
 
-const BASE_KEY = 'finora.virtual-cards.v1';
+/**
+ * Virtual cards are issued by Lithic through the Finora API. Card numbers,
+ * CVV, and expiry come live from the API and are only kept in memory while the
+ * app runs; nothing card-sensitive is written to device storage.
+ */
+
+/** Pre-API releases saved cards (including card numbers) here; removed on first load. */
+const LEGACY_CARDS_KEY = 'finora.virtual-cards.v1';
 const BASE_UNREAD_KEY = 'finora.virtual-cards.unread.v1';
-const key = () => userStorageKey(BASE_KEY);
+const REQUEST_TIMEOUT_MS = 20_000;
 const unreadKey = () => userStorageKey(BASE_UNREAD_KEY);
 
-const memory = new Map<string, string>();
 const listeners = new Set<() => void>();
 const issuanceListeners = new Set<(card: VirtualCard) => void>();
+/** Last cards fetched for this session, shown when the API can't be reached. */
+let cachedCards: VirtualCard[] = [];
+let legacyCleared = false;
 
-async function getItem(key: string): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(key);
-  } catch {
-    return memory.get(key) ?? null;
-  }
-}
-
-async function setItem(key: string, value: string): Promise<void> {
-  if (!isUserStorageKeyWritable(key)) return;
-  memory.set(key, value);
-  try {
-    await AsyncStorage.setItem(key, value);
-  } catch {
-    // memory fallback
+export class VirtualCardError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'VirtualCardError';
   }
 }
 
 function notify() {
-  listeners.forEach((l) => l());
+  listeners.forEach((listener) => listener());
 }
 
 export function subscribeVirtualCards(listener: () => void): () => void {
@@ -55,12 +56,14 @@ export function subscribeVirtualCardIssuance(listener: (card: VirtualCard) => vo
 }
 
 export async function hasUnreadVirtualCards(): Promise<boolean> {
-  return (await getItem(unreadKey())) === '1';
+  return (await AsyncStorage.getItem(unreadKey()).catch(() => null)) === '1';
 }
 
 export async function clearUnreadVirtualCards(storageKey = unreadKey()): Promise<void> {
-  if ((await getItem(storageKey)) !== '1') return;
-  await setItem(storageKey, '0');
+  if ((await AsyncStorage.getItem(storageKey).catch(() => null)) !== '1') return;
+  if (isUserStorageKeyWritable(storageKey)) {
+    await AsyncStorage.setItem(storageKey, '0').catch(() => undefined);
+  }
   notify();
 }
 
@@ -69,51 +72,89 @@ async function publishIssuance(card: VirtualCard) {
     issuanceListeners.forEach((listener) => listener(card));
     return;
   }
-  await setItem(unreadKey(), '1');
-  notify();
-}
-
-async function persist(storageKey: string, cards: VirtualCard[]) {
-  await setItem(storageKey, JSON.stringify(cards));
-  notify();
-  return cards;
-}
-
-function randomDigits(n: number) {
-  let out = '';
-  for (let i = 0; i < n; i++) out += Math.floor(Math.random() * 10).toString();
-  return out;
-}
-
-function mockPan(network: VirtualCardNetwork) {
-  const prefix = network === 'mastercard' ? '555555' : '424242';
-  const body = randomDigits(10);
-  return `${prefix}${body}`.slice(0, 16);
-}
-
-function mockExpiry() {
-  const year = (new Date().getFullYear() % 100) + 3;
-  const month = String((new Date().getMonth() % 12) + 1).padStart(2, '0');
-  return `${month}/${String(year).padStart(2, '0')}`;
-}
-
-export async function listVirtualCards(storageKey = key()): Promise<VirtualCard[]> {
-  const raw = await getItem(storageKey);
-  if (!raw) {
-    await setItem(storageKey, JSON.stringify(MOCK_VIRTUAL_CARDS));
-    return [...MOCK_VIRTUAL_CARDS];
+  const storageKey = unreadKey();
+  if (isUserStorageKeyWritable(storageKey)) {
+    await AsyncStorage.setItem(storageKey, '1').catch(() => undefined);
   }
+  notify();
+}
+
+async function clearLegacyCards() {
+  if (legacyCleared) return;
+  legacyCleared = true;
+  await AsyncStorage.removeItem(userStorageKey(LEGACY_CARDS_KEY)).catch(() => undefined);
+}
+
+async function cardsRequest(path: string, init?: { method: string; body: unknown }) {
+  const apiUrl = getApiUrl();
+  if (!apiUrl) throw new VirtualCardError('Cards are unavailable right now.');
+  const token = await getClerkInstance().session?.getToken();
+  if (!token) throw new VirtualCardError('Your session is not ready. Try again.');
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const parsed = JSON.parse(raw) as VirtualCard[];
-    return Array.isArray(parsed) ? parsed : [...MOCK_VIRTUAL_CARDS];
-  } catch {
-    return [...MOCK_VIRTUAL_CARDS];
+    const response = await fetch(`${apiUrl}/v1/cards${path}`, {
+      method: init?.method ?? 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(init ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: init ? JSON.stringify(init.body) : undefined,
+      signal: controller.signal,
+    });
+    const payload: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      const message =
+        typeof payload === 'object' && payload !== null && 'message' in payload
+          ? String(payload.message)
+          : 'Something went wrong with your card. Try again.';
+      throw new VirtualCardError(message);
+    }
+    return payload;
+  } catch (error) {
+    if (error instanceof VirtualCardError) throw error;
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new VirtualCardError('The card service took too long. Try again.');
+    }
+    throw new VirtualCardError('Could not reach Finora. Check your connection.');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function replaceCached(card: VirtualCard) {
+  const exists = cachedCards.some((item) => item.id === card.id);
+  cachedCards = exists
+    ? cachedCards.map((item) => (item.id === card.id ? card : item))
+    : [card, ...cachedCards];
+}
+
+/** The user's cards; falls back to the last fetched list if the API can't be reached. */
+export async function listVirtualCards(): Promise<VirtualCard[]> {
+  await clearLegacyCards();
+  try {
+    const { cards } = VirtualCardListResponseSchema.parse(await cardsRequest(''));
+    cachedCards = cards;
+    return cards;
+  } catch (error) {
+    if (__DEV__) console.warn('[cards] list failed', error);
+    return cachedCards;
   }
 }
 
 export async function getVirtualCard(id: string): Promise<VirtualCard | null> {
-  const cards = await listVirtualCards();
-  return cards.find((c) => c.id === id) ?? null;
+  try {
+    const { card } = VirtualCardResponseSchema.parse(
+      await cardsRequest(`/${encodeURIComponent(id)}`),
+    );
+    replaceCached(card);
+    return card;
+  } catch (error) {
+    if (__DEV__) console.warn('[cards] get failed', error);
+    return cachedCards.find((card) => card.id === id) ?? null;
+  }
 }
 
 export async function findVirtualCardByLabel(query: string): Promise<VirtualCard | null> {
@@ -127,48 +168,48 @@ export async function findVirtualCardByLabel(query: string): Promise<VirtualCard
   );
 }
 
+/** Issues a USD card. Throws `VirtualCardError` with a user-facing message on failure. */
 export async function createVirtualCard(input: CreateVirtualCardInput): Promise<VirtualCard> {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const cards = await listVirtualCards(storageKey);
-    const network = input.network ?? (Math.random() > 0.5 ? 'visa' : 'mastercard');
-    const pan = mockPan(network);
-    const card: VirtualCard = {
-      id: `card_${Crypto.randomUUID()}`,
-      label: input.label.trim() || 'Virtual card',
-      last4: pan.slice(-4),
-      network,
-      currency: input.currency ?? 'USD',
-      status: 'active',
-      spendLimit: input.spendLimit,
-      spent: 0,
-      createdAt: new Date().toISOString(),
-      pan,
-      expiry: mockExpiry(),
-      cvv: randomDigits(3),
-    };
-    await persist(storageKey, [card, ...cards]);
-    await publishIssuance(card);
-    return card;
-  });
+  const { card } = VirtualCardResponseSchema.parse(
+    await cardsRequest('', {
+      method: 'POST',
+      body: {
+        label: input.label.trim() || 'Virtual card',
+        spendLimit: input.spendLimit,
+        currency: 'USD',
+      },
+    }),
+  );
+  replaceCached(card);
+  notify();
+  await publishIssuance(card);
+  return card;
 }
 
+/** Updates a card; shows a system alert and resolves null when it fails. */
 export async function updateVirtualCard(
   id: string,
-  patch: Partial<Pick<VirtualCard, 'status' | 'spendLimit' | 'label' | 'spent'>>,
+  patch: Partial<Pick<VirtualCard, 'status' | 'spendLimit' | 'label'>>,
 ): Promise<VirtualCard | null> {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const cards = await listVirtualCards(storageKey);
-    const idx = cards.findIndex((c) => c.id === id);
-    if (idx < 0) return null;
-    const next: VirtualCard = { ...cards[idx]!, ...patch };
-    await persist(
-      storageKey,
-      cards.map((c, i) => (i === idx ? next : c)),
+  const body: UpdateVirtualCardRequest = {
+    ...(patch.label !== undefined ? { label: patch.label } : {}),
+    ...(patch.spendLimit !== undefined ? { spendLimit: patch.spendLimit } : {}),
+    ...(patch.status !== undefined ? { status: patch.status } : {}),
+  };
+  try {
+    const { card } = VirtualCardResponseSchema.parse(
+      await cardsRequest(`/${encodeURIComponent(id)}`, { method: 'PATCH', body }),
     );
-    return next;
-  });
+    replaceCached(card);
+    notify();
+    return card;
+  } catch (error) {
+    Alert.alert(
+      "Couldn't update card",
+      error instanceof VirtualCardError ? error.message : 'Try again in a moment.',
+    );
+    return null;
+  }
 }
 
 export async function setVirtualCardStatus(
@@ -178,9 +219,9 @@ export async function setVirtualCardStatus(
   return updateVirtualCard(id, { status });
 }
 
+/** Forget this session's cards (sign-out / reset). Cards stay on the account. */
 export async function clearVirtualCards(): Promise<void> {
-  const cardsKey = key();
-  const unreadStorageKey = unreadKey();
-  await persist(cardsKey, []);
-  await clearUnreadVirtualCards(unreadStorageKey);
+  cachedCards = [];
+  await clearUnreadVirtualCards(unreadKey());
+  notify();
 }
