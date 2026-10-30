@@ -41,7 +41,10 @@ function destinationKind(payload: Record<string, unknown>) {
   return hint.includes('mobile') || hint.includes('momo') ? 'mobile_money' : 'bank_account';
 }
 
-function itemFromRow(payload: Record<string, unknown>, overrides?: { amount?: number; reference?: string }): NewItem {
+function itemFromRow(
+  payload: Record<string, unknown>,
+  overrides?: { amount?: number; reference?: string },
+): NewItem {
   return {
     rowId: String(payload.rowId ?? ''),
     employeeName: String(payload.employeeName ?? 'Employee'),
@@ -52,8 +55,7 @@ function itemFromRow(payload: Record<string, unknown>, overrides?: { amount?: nu
     destinationLabel: String(payload.rail ?? payload.destinationType ?? 'Payout destination'),
     destinationValue: String(payload.destination ?? ''),
     reference:
-      overrides?.reference ??
-      (payload.reference == null ? null : String(payload.reference)),
+      overrides?.reference ?? (payload.reference == null ? null : String(payload.reference)),
   };
 }
 

@@ -25,7 +25,8 @@ function runDetail(run: PayrollRun) {
     ? new Date(run.executedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
     : '';
   const people = run.items.length;
-  const who = run.kind === 'single' ? 'One-off payment' : `${people} ${people === 1 ? 'person' : 'people'}`;
+  const who =
+    run.kind === 'single' ? 'One-off payment' : `${people} ${people === 1 ? 'person' : 'people'}`;
   return [date, who, run.mode === 'demo' ? 'Demo' : null].filter(Boolean).join(' · ');
 }
 
@@ -78,7 +79,9 @@ export function PayrollRunsSection() {
                 >
                   {runTitle(run)}
                 </Text>
-                <Text className='font-sans text-[13px] text-muted-foreground'>{runDetail(run)}</Text>
+                <Text className='font-sans text-[13px] text-muted-foreground'>
+                  {runDetail(run)}
+                </Text>
               </View>
               <Text className='font-sans-semibold text-[15px] tabular-nums text-foreground'>
                 {formatPaymentAmount(run.total, run.currency)}

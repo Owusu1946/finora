@@ -85,7 +85,9 @@ export async function creditWallet(walletId: string, amount: number) {
   return serializeStorageMutation(storageKey, async () => {
     const wallets = await listWallets(storageKey);
     await saveWallets(
-      wallets.map((item) => (item.id === walletId ? withBalance(item, item.balance + amount) : item)),
+      wallets.map((item) =>
+        item.id === walletId ? withBalance(item, item.balance + amount) : item,
+      ),
       storageKey,
     );
   });

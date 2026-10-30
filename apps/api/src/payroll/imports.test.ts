@@ -72,7 +72,11 @@ describe('image extraction', () => {
 
   it('explains when images cannot be read', async () => {
     await expect(
-      extractPayrollRows({ bytes: new ArrayBuffer(4), fileName: 'x.png', contentType: 'image/png' }),
+      extractPayrollRows({
+        bytes: new ArrayBuffer(4),
+        fileName: 'x.png',
+        contentType: 'image/png',
+      }),
     ).rejects.toThrow('payroll_image_extraction_unavailable');
   });
 });

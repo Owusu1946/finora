@@ -157,7 +157,9 @@ function PayrollReviewCard({ importId, initial }: { importId: string; initial: R
               }}
               className='mt-1 min-h-11 items-center justify-center rounded-full bg-foreground px-4 active:opacity-85'
             >
-              <Text className='font-sans-semibold text-[15px] text-background'>Prepare payroll</Text>
+              <Text className='font-sans-semibold text-[15px] text-background'>
+                Prepare payroll
+              </Text>
             </Pressable>
           )
         ) : (
@@ -237,10 +239,11 @@ export const InspectPayrollAttachmentToolUI = makeAssistantToolUI<
   render: renderReview('Reading payroll…'),
 });
 
-export const DraftPayrollToolUI = makeAssistantToolUI<Record<string, unknown>, PayrollInspectionResponse>(
-  {
-    toolName: 'draft_payroll',
-    display: 'standalone',
-    render: renderReview('Building payroll…'),
-  },
-);
+export const DraftPayrollToolUI = makeAssistantToolUI<
+  Record<string, unknown>,
+  PayrollInspectionResponse
+>({
+  toolName: 'draft_payroll',
+  display: 'standalone',
+  render: renderReview('Building payroll…'),
+});

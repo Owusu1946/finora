@@ -23,12 +23,12 @@ import {
   summarizePayrollRows,
   validatePayrollRow,
 } from '../payroll/attachment-extractor';
-import { extractPayrollWithModel, savePayrollImport } from '../payroll/imports';
 import {
   applyPayrollChanges,
   cancelPayrollProposal,
   PayrollEditError,
 } from '../payroll/edit-service';
+import { extractPayrollWithModel, savePayrollImport } from '../payroll/imports';
 import {
   cancelPayrollRun,
   executePayrollRun,
@@ -647,7 +647,10 @@ payroll.post('/proposals/:id/cancel', async (c) => {
 
 function runError(error: unknown) {
   if (error instanceof PayrollPreparationError) {
-    return { body: { ...jsonError(error.code, error.status), ...error.details }, status: error.status };
+    return {
+      body: { ...jsonError(error.code, error.status), ...error.details },
+      status: error.status,
+    };
   }
   throw error;
 }
@@ -693,7 +696,11 @@ payroll.post('/runs/:id/execute', async (c) => {
 payroll.post('/runs/:id/cancel', async (c) => {
   try {
     return c.json({
-      run: await cancelPayrollRun(c.get('env').DATABASE_URL, c.get('auth').userId, c.req.param('id')),
+      run: await cancelPayrollRun(
+        c.get('env').DATABASE_URL,
+        c.get('auth').userId,
+        c.req.param('id'),
+      ),
     });
   } catch (error) {
     const { body, status } = runError(error);

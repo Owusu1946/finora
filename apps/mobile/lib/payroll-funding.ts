@@ -49,7 +49,9 @@ export async function payPayrollRun(getToken: GetToken, run: PayrollRun, walletI
   } catch (error) {
     await creditWallet(wallet.id, charged.amount);
     const code = error instanceof Error ? error.message : '';
-    throw new Error(ERROR_MESSAGES[code] ?? "Payroll couldn't be paid. Your balance wasn't changed.");
+    throw new Error(
+      ERROR_MESSAGES[code] ?? "Payroll couldn't be paid. Your balance wasn't changed.",
+    );
   }
 
   const people = paid.items.length;

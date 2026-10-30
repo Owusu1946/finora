@@ -57,7 +57,17 @@ export async function extractPayrollWithModel(
     maxRetries: 1,
   });
   return [
-    ['name', 'amount', 'currency', 'destination', 'destination type', 'rail', 'role', 'period', 'pay date'],
+    [
+      'name',
+      'amount',
+      'currency',
+      'destination',
+      'destination type',
+      'rail',
+      'role',
+      'period',
+      'pay date',
+    ],
     ...output.rows.map((row) => [
       row.name,
       row.amount ?? '',
@@ -121,20 +131,19 @@ export async function savePayrollImport(
     warnings: summary.warnings,
   } as const;
 
-  const insert = db
-    .insert(payrollImports)
-    .values({
-      clerkUserId: input.userId,
-      attachmentId: input.attachmentId,
-      sourceName: input.sourceName,
-      ...values,
-    });
-  const [saved] = await (input.attachmentId
-    ? insert.onConflictDoUpdate({
-        target: payrollImports.attachmentId,
-        set: { ...values, deletedAt: null, updatedAt: new Date() },
-      })
-    : insert
+  const insert = db.insert(payrollImports).values({
+    clerkUserId: input.userId,
+    attachmentId: input.attachmentId,
+    sourceName: input.sourceName,
+    ...values,
+  });
+  const [saved] = await (
+    input.attachmentId
+      ? insert.onConflictDoUpdate({
+          target: payrollImports.attachmentId,
+          set: { ...values, deletedAt: null, updatedAt: new Date() },
+        })
+      : insert
   ).returning({ id: payrollImports.id });
   if (!saved) throw new Error('payroll_import_persist_failed');
 

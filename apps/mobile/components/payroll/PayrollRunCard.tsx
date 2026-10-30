@@ -126,8 +126,7 @@ export function PayrollRunCard({ run: prepared }: { run: PayrollRun }) {
     }
   };
 
-  const paidWallet =
-    run.funding && wallets.find((item) => item.id === run.funding?.walletId)?.name;
+  const paidWallet = run.funding && wallets.find((item) => item.id === run.funding?.walletId)?.name;
 
   return (
     <>

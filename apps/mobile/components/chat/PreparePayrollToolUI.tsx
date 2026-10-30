@@ -39,13 +39,11 @@ function renderRun(label: string) {
   };
 }
 
-export const PreparePayrollToolUI = makeAssistantToolUI<Record<string, unknown>, PayrollRunResult>(
-  {
-    toolName: 'prepare_payroll',
-    display: 'standalone',
-    render: renderRun('Preparing payroll…'),
-  },
-);
+export const PreparePayrollToolUI = makeAssistantToolUI<Record<string, unknown>, PayrollRunResult>({
+  toolName: 'prepare_payroll',
+  display: 'standalone',
+  render: renderRun('Preparing payroll…'),
+});
 
 export const PrepareEmployeePaymentToolUI = makeAssistantToolUI<
   Record<string, unknown>,
