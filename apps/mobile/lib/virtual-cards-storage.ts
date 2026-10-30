@@ -276,6 +276,16 @@ export async function createVirtualCard(
   return card;
 }
 
+/** Adds `amount` USD to a prepaid card. Throws `VirtualCardError` on failure. */
+export async function topUpVirtualCard(id: string, amount: number): Promise<VirtualCard> {
+  const { card } = VirtualCardResponseSchema.parse(
+    await cardsRequest(`/${encodeURIComponent(id)}/top-up`, { method: 'POST', body: { amount } }),
+  );
+  replaceCached(card);
+  notify();
+  return card;
+}
+
 /** Updates a card; shows a system alert and resolves null when it fails. */
 export async function updateVirtualCard(
   id: string,

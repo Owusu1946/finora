@@ -108,16 +108,20 @@ export function CardFundingSource({
 export function CardFundingSummary({
   wallet,
   amountUsd,
+  verb = 'Load',
+  feeLabel = 'issue fee',
 }: {
   wallet: WalletItem | null;
   amountUsd: number;
+  verb?: string;
+  feeLabel?: string;
 }) {
   const total = cardFundingTotalUsd(amountUsd);
   return (
     <View className='gap-1'>
       <Text className='font-sans text-[13px] leading-[18px] text-muted-foreground'>
-        Load {formatCardAmount(amountUsd, 'USD')} +{' '}
-        {formatCardAmount(VIRTUAL_CARD_ISSUE_FEE_USD, 'USD')} issue fee ={' '}
+        {verb} {formatCardAmount(amountUsd, 'USD')} +{' '}
+        {formatCardAmount(VIRTUAL_CARD_ISSUE_FEE_USD, 'USD')} {feeLabel} ={' '}
         {formatCardAmount(total, 'USD')}
       </Text>
       {wallet && wallet.currency !== 'USD' ? (
