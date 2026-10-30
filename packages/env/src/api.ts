@@ -35,6 +35,8 @@ export function createApiEnv(runtimeEnv: RuntimeEnv) {
       /** Lithic card issuing. Sandbox keys work against the default base URL. */
       LITHIC_API_KEY: z.string().min(1).optional(),
       LITHIC_API_BASE_URL: z.url().default('https://sandbox.lithic.com'),
+      /** Composio, for business apps such as Paystack, QuickBooks, and WhatsApp. */
+      COMPOSIO_API_KEY: z.string().min(1).optional(),
     },
     runtimeEnv,
     emptyStringAsUndefined: true,

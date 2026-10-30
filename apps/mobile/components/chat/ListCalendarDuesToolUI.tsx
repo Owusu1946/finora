@@ -1,9 +1,11 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
+import { GOOGLE_CONNECT_OPTIONS } from '@finora/shared';
 import { View } from 'react-native';
 
 import type { CalendarMoneyEvent } from '@/lib/calendar-events-storage';
 
 import { CalendarEventCard } from '@/components/chat/CalendarEventCard';
+import { ConnectOptionsCard } from '@/components/chat/ConnectOptionsCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
@@ -46,14 +48,10 @@ export const ListCalendarDuesToolUI = makeAssistantToolUI<
 
     if (connected === false) {
       return (
-        <View
-          className='my-2 border p-4 border-border bg-composer'
-          style={[styles.empty]}
-        >
-          <Text className='font-sans-medium text-[15px] leading-[20px] text-muted-foreground'>
-            Google Calendar isn’t connected. Open Integrations to connect it, then ask again.
-          </Text>
-        </View>
+        <ConnectOptionsCard
+          options={[GOOGLE_CONNECT_OPTIONS.googlecalendar]}
+          reason='Connect Google Calendar so Finora can find rent, payroll, and bill due dates.'
+        />
       );
     }
 
