@@ -1,7 +1,9 @@
 import { getClerkInstance } from '@clerk/expo';
 import {
+  CardTransactionSchema,
   VirtualCardResponseSchema,
   VirtualCardSchema,
+  type CardTransaction,
   type UpdateVirtualCardRequest,
 } from '@finora/shared';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -209,6 +211,32 @@ export async function getVirtualCard(id: string): Promise<VirtualCard | null> {
   } catch (error) {
     if (__DEV__) console.warn('[cards] get failed', error);
     return cachedCards.find((card) => card.id === id) ?? null;
+  }
+}
+
+/** A card's recent purchases and refunds, newest first, or a user-facing error. */
+export async function listCardTransactions(
+  id: string,
+): Promise<{ transactions: CardTransaction[]; error: string | null }> {
+  try {
+    const payload = await cardsRequest(`/${encodeURIComponent(id)}/transactions`);
+    const items =
+      typeof payload === 'object' && payload !== null && 'transactions' in payload
+        ? payload.transactions
+        : null;
+    if (!Array.isArray(items)) throw new VirtualCardError("Couldn't load purchases.");
+    const transactions: CardTransaction[] = [];
+    for (const item of items) {
+      const parsed = CardTransactionSchema.safeParse(item);
+      if (parsed.success) transactions.push(parsed.data);
+    }
+    return { transactions, error: null };
+  } catch (error) {
+    if (__DEV__) console.warn('[cards] transactions failed', error);
+    return {
+      transactions: [],
+      error: error instanceof VirtualCardError ? error.message : "Couldn't load purchases.",
+    };
   }
 }
 
