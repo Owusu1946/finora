@@ -1,4 +1,6 @@
-import type { PayrollImportRow } from '@finora/shared';
+import type { ExecutePayrollRunRequest, PayrollImportRow } from '@finora/shared';
+
+import { PayrollRunListResponseSchema, PayrollRunResponseSchema } from '@finora/shared';
 
 import { fetch } from 'expo/fetch';
 
@@ -138,4 +140,38 @@ export async function cancelPayrollProposal(proposalId: string, getToken: GetTok
   return payrollRequest(`/proposals/${encodeURIComponent(proposalId)}/cancel`, getToken, {
     method: 'POST',
   });
+}
+
+export async function getPayrollRun(getToken: GetToken, runId: string) {
+  return PayrollRunResponseSchema.parse(
+    await payrollRequest(`/runs/${encodeURIComponent(runId)}`, getToken),
+  ).run;
+}
+
+/** Completed payroll runs, newest first. */
+export async function listPayrollRuns(getToken: GetToken) {
+  return PayrollRunListResponseSchema.parse(await payrollRequest('/runs', getToken)).runs;
+}
+
+/** Pays a prepared run after the user approved it with their passcode. */
+export async function executePayrollRun(
+  getToken: GetToken,
+  runId: string,
+  input: ExecutePayrollRunRequest,
+) {
+  return PayrollRunResponseSchema.parse(
+    await payrollRequest(`/runs/${encodeURIComponent(runId)}/execute`, getToken, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  ).run;
+}
+
+export async function cancelPayrollRun(getToken: GetToken, runId: string) {
+  return PayrollRunResponseSchema.parse(
+    await payrollRequest(`/runs/${encodeURIComponent(runId)}/cancel`, getToken, {
+      method: 'POST',
+      body: '{}',
+    }),
+  ).run;
 }
