@@ -321,7 +321,7 @@ export default function PayrollScreen() {
                 onPress={() => {
                   haptics.selection();
                   router.push('/');
-                  aui.composer.setText('Create a payroll from an attachment');
+                  aui.composer.setText('Create a payroll: ');
                 }}
                 className='mt-1 min-h-11 items-center justify-center rounded-full bg-foreground px-4'
               >
@@ -336,7 +336,7 @@ export default function PayrollScreen() {
         ListEmptyComponent={
           <View className='rounded-[26px] border border-border bg-composer p-4'>
             <Text className='text-muted-foreground'>
-              No payroll imports yet. Attach a payroll file in chat to create one.
+              No payroll yet. In chat, attach a spreadsheet, PDF, or photo, or just type who to pay.
             </Text>
           </View>
         }
