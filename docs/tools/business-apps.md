@@ -31,6 +31,10 @@ The model works by job, not by app:
 | Message a customer            | `draft_whatsapp_message` (draft only)                                                |
 | App needed but not connected  | `suggest_app_connection` (Connect card)                                              |
 
+## Missing apps
+
+Any tool that needs an app the user hasn't connected returns `connectOptions` (business apps, plus Gmail, Drive, and Calendar). The chat renders a Connect card from that result directly, so the card doesn't depend on the model making a second call. After connecting, Continue sends "I connected X. Go ahead." and the next turn picks up the new connection. Google apps use Finora's own OAuth; everything else goes through Composio.
+
 ## Safety rules
 
 - `run_app_action` runs only tools that Composio tags `readOnlyHint`, in apps the user has connected. The server checks both before every call, whatever the model asks for.
