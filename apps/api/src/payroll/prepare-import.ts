@@ -1,8 +1,9 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import type { ExecutePayrollRunRequest, PayrollRun } from '@finora/shared';
+
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 
 import { createDb } from '../db/client';
-import { payrollImportRows, payrollImports } from '../db/schema';
-import { createPreparation } from '../mock/store';
+import { payrollImportRows, payrollImports, payrollRunItems, payrollRuns } from '../db/schema';
 
 export class PayrollPreparationError extends Error {
   constructor(
@@ -10,7 +11,10 @@ export class PayrollPreparationError extends Error {
       | 'payroll_import_not_found'
       | 'payroll_import_blocked'
       | 'payroll_row_not_found'
-      | 'payroll_currency_mismatch',
+      | 'payroll_currency_mismatch'
+      | 'payroll_empty'
+      | 'payroll_run_not_found'
+      | 'payroll_run_not_pending',
     public readonly status: 404 | 409,
     public readonly details?: Record<string, unknown>,
   ) {
@@ -19,6 +23,119 @@ export class PayrollPreparationError extends Error {
   }
 }
 
+type RunRow = typeof payrollRuns.$inferSelect;
+type ItemRow = typeof payrollRunItems.$inferSelect;
+type NewItem = Omit<typeof payrollRunItems.$inferInsert, 'runId' | 'position'>;
+
+const toMinor = (amount: number) => Math.round(amount * 100);
+const fromMinor = (amount: number) => amount / 100;
+
+/** Shows only the last four characters of an account or phone number. */
+export function maskDestination(value: string) {
+  const compact = value.replace(/\s+/g, '');
+  return compact.length <= 4 ? compact : `•••• ${compact.slice(-4)}`;
+}
+
+function destinationKind(payload: Record<string, unknown>) {
+  const hint = `${payload.destinationType ?? ''} ${payload.rail ?? ''}`.toLowerCase();
+  return hint.includes('mobile') || hint.includes('momo') ? 'mobile_money' : 'bank_account';
+}
+
+function itemFromRow(payload: Record<string, unknown>, overrides?: { amount?: number; reference?: string }): NewItem {
+  return {
+    rowId: String(payload.rowId ?? ''),
+    employeeName: String(payload.employeeName ?? 'Employee'),
+    employeeId: payload.employeeId == null ? null : String(payload.employeeId),
+    role: payload.role == null ? null : String(payload.role),
+    amountMinor: toMinor(overrides?.amount ?? Number(payload.amount ?? 0)),
+    destinationKind: destinationKind(payload),
+    destinationLabel: String(payload.rail ?? payload.destinationType ?? 'Payout destination'),
+    destinationValue: String(payload.destination ?? ''),
+    reference:
+      overrides?.reference ??
+      (payload.reference == null ? null : String(payload.reference)),
+  };
+}
+
+export function toPayrollRun(run: RunRow, items: ItemRow[]): PayrollRun {
+  return {
+    id: run.id,
+    kind: run.kind,
+    importId: run.importId,
+    period: run.period,
+    currency: run.currency,
+    total: fromMinor(run.totalMinor),
+    status: run.status,
+    mode: run.mode,
+    funding:
+      run.fundingWalletId && run.fundingCurrency && run.fundingAmountMinor != null
+        ? {
+            walletId: run.fundingWalletId,
+            currency: run.fundingCurrency,
+            amount: fromMinor(run.fundingAmountMinor),
+          }
+        : null,
+    items: [...items]
+      .sort((a, b) => a.position - b.position)
+      .map((item) => ({
+        id: item.id,
+        employeeName: item.employeeName,
+        role: item.role,
+        amount: fromMinor(item.amountMinor),
+        destination: {
+          kind: item.destinationKind === 'mobile_money' ? 'mobile_money' : 'bank_account',
+          label: item.destinationLabel,
+          value: maskDestination(item.destinationValue),
+        },
+        reference: item.reference,
+        status: item.status,
+        failureReason: item.failureReason,
+      })),
+    createdAt: run.createdAt.toISOString(),
+    executedAt: run.executedAt?.toISOString() ?? null,
+  };
+}
+
+async function readyImport(databaseUrl: string, userId: string, importId: string) {
+  const db = createDb(databaseUrl);
+  const [payrollImport] = await db
+    .select()
+    .from(payrollImports)
+    .where(
+      and(
+        eq(payrollImports.id, importId),
+        eq(payrollImports.clerkUserId, userId),
+        isNull(payrollImports.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (!payrollImport) throw new PayrollPreparationError('payroll_import_not_found', 404);
+  if (payrollImport.status !== 'ready') {
+    throw new PayrollPreparationError('payroll_import_blocked', 409, {
+      blockingIssues: payrollImport.blockingIssues,
+    });
+  }
+  return { db, payrollImport };
+}
+
+async function insertRun(
+  db: ReturnType<typeof createDb>,
+  run: Omit<typeof payrollRuns.$inferInsert, 'totalMinor'>,
+  items: NewItem[],
+) {
+  if (items.length === 0) throw new PayrollPreparationError('payroll_empty', 409);
+  const [created] = await db
+    .insert(payrollRuns)
+    .values({ ...run, totalMinor: items.reduce((sum, item) => sum + item.amountMinor, 0) })
+    .returning();
+  const createdItems = await db
+    .insert(payrollRunItems)
+    .values(items.map((item, position) => ({ ...item, runId: created!.id, position })))
+    .returning();
+  return toPayrollRun(created!, createdItems);
+}
+
+/** Prepares a full or partial imported payroll as a run awaiting approval. */
 export async function preparePayrollImport(input: {
   databaseUrl: string;
   userId: string;
@@ -26,30 +143,12 @@ export async function preparePayrollImport(input: {
   period?: string;
   rowIds?: string[];
 }) {
-  const db = createDb(input.databaseUrl);
-  const [payrollImport] = await db
-    .select()
-    .from(payrollImports)
-    .where(
-      and(
-        eq(payrollImports.id, input.importId),
-        eq(payrollImports.clerkUserId, input.userId),
-        isNull(payrollImports.deletedAt),
-      ),
-    )
-    .limit(1);
-
-  if (!payrollImport) throw new PayrollPreparationError('payroll_import_not_found', 404);
-  if (payrollImport.status !== 'ready') {
-    throw new PayrollPreparationError('payroll_import_blocked', 409, {
-      blockingIssues: payrollImport.blockingIssues,
-    });
-  }
-
+  const { db, payrollImport } = await readyImport(input.databaseUrl, input.userId, input.importId);
   const importedRows = await db
     .select({ payload: payrollImportRows.payload })
     .from(payrollImportRows)
-    .where(eq(payrollImportRows.importId, payrollImport.id));
+    .where(eq(payrollImportRows.importId, payrollImport.id))
+    .orderBy(asc(payrollImportRows.createdAt));
 
   const selectedIds = input.rowIds ? new Set(input.rowIds) : null;
   const selectedRows = selectedIds
@@ -63,40 +162,27 @@ export async function preparePayrollImport(input: {
       String(payload.currency ?? payrollImport.currency ?? 'USD').toUpperCase(),
     ),
   );
-  if (currencies.size > 1) throw new PayrollPreparationError('payroll_currency_mismatch', 409);
+  // One currency per run; the user can run each currency separately.
+  if (currencies.size > 1) {
+    throw new PayrollPreparationError('payroll_currency_mismatch', 409, {
+      currencies: [...currencies],
+    });
+  }
 
-  const employees = selectedRows.map(({ payload }) => ({
-    id: String(payload.employeeId ?? payload.rowId ?? crypto.randomUUID()),
-    name: String(payload.employeeName ?? 'Employee'),
-    role: String(payload.role ?? 'Imported payroll'),
-    salary: Number(payload.amount ?? 0),
-    currency: String(payload.currency ?? payrollImport.currency ?? 'USD'),
-    destination: {
-      kind:
-        String(payload.destinationType ?? '')
-          .toLowerCase()
-          .includes('mobile') ||
-        String(payload.rail ?? '')
-          .toLowerCase()
-          .includes('momo')
-          ? 'mobile_money'
-          : 'bank_account',
-      label: String(payload.rail ?? payload.destinationType ?? 'Payout destination'),
-      value: String(payload.destination ?? ''),
+  return insertRun(
+    db,
+    {
+      clerkUserId: input.userId,
+      importId: payrollImport.id,
+      kind: 'payroll',
+      period: input.period ?? payrollImport.period,
+      currency: [...currencies][0] ?? 'USD',
     },
-    reference: payload.reference ?? null,
-    citations: payload.citations ?? [],
-  }));
-
-  return createPreparation('payroll', {
-    importId: payrollImport.id,
-    period: payrollImport.period ?? input.period,
-    employees,
-    total: employees.reduce((total, employee) => total + employee.salary, 0),
-    currency: employees[0]?.currency ?? payrollImport.currency ?? 'USD',
-  });
+    selectedRows.map(({ payload }) => itemFromRow(payload)),
+  );
 }
 
+/** Prepares one employee's payment (salary, bonus, or part) as a single-item run. */
 export async function prepareImportedEmployeePayment(input: {
   databaseUrl: string;
   userId: string;
@@ -106,23 +192,7 @@ export async function prepareImportedEmployeePayment(input: {
   currency?: string;
   reference?: string;
 }) {
-  const db = createDb(input.databaseUrl);
-  const [payrollImport] = await db
-    .select()
-    .from(payrollImports)
-    .where(
-      and(
-        eq(payrollImports.id, input.importId),
-        eq(payrollImports.clerkUserId, input.userId),
-        isNull(payrollImports.deletedAt),
-      ),
-    )
-    .limit(1);
-  if (!payrollImport) throw new PayrollPreparationError('payroll_import_not_found', 404);
-  if (payrollImport.status !== 'ready')
-    throw new PayrollPreparationError('payroll_import_blocked', 409, {
-      blockingIssues: payrollImport.blockingIssues,
-    });
+  const { db, payrollImport } = await readyImport(input.databaseUrl, input.userId, input.importId);
   const [stored] = await db
     .select({ payload: payrollImportRows.payload })
     .from(payrollImportRows)
@@ -134,45 +204,119 @@ export async function prepareImportedEmployeePayment(input: {
     )
     .limit(1);
   if (!stored) throw new PayrollPreparationError('payroll_row_not_found', 404);
-  const payload = stored.payload;
-  const employee = {
-    id: String(payload.employeeId ?? payload.rowId),
-    name: String(payload.employeeName ?? 'Employee'),
-    role: String(payload.role ?? 'Employee'),
-    salary: Number(payload.amount ?? 0),
-    currency: String(payload.currency ?? payrollImport.currency ?? 'USD').toUpperCase(),
-    destination: {
-      kind: String(payload.destinationType ?? '')
-        .toLowerCase()
-        .includes('mobile')
-        ? 'mobile_money'
-        : 'bank_account',
-      label: String(payload.rail ?? payload.destinationType ?? 'Payout destination'),
-      value: String(payload.destination ?? ''),
-    },
-  };
-  const storedCurrency = employee.currency;
-  const requestedCurrency = input.currency?.toUpperCase() ?? storedCurrency;
-  if (requestedCurrency !== storedCurrency)
+  const currency = String(stored.payload.currency ?? payrollImport.currency ?? 'USD').toUpperCase();
+  if (input.currency && input.currency.toUpperCase() !== currency) {
     throw new PayrollPreparationError('payroll_currency_mismatch', 409);
-  const amount = input.amount ?? employee.salary;
-  const memo = input.reference ?? String(payload.reference ?? `Salary · ${employee.name}`);
-  return {
-    ...createPreparation('payment', {
-      employeeId: employee.id,
+  }
+  const name = String(stored.payload.employeeName ?? 'Employee');
+  return insertRun(
+    db,
+    {
+      clerkUserId: input.userId,
       importId: payrollImport.id,
-      rowId: input.rowId,
-      recipientName: employee.name,
-      amount: { amount, currency: requestedCurrency },
-      destinationKind: employee.destination.kind,
-      destinationLabel: employee.destination.label,
-      destinationValue: employee.destination.value,
-      purposeCode: 'SALARY',
-      reference: memo,
-    }),
-    employee: { ...employee, salary: amount, currency: requestedCurrency },
-    amount,
-    currency: requestedCurrency,
-    memo,
-  };
+      kind: 'single',
+      period: payrollImport.period,
+      currency,
+    },
+    [
+      itemFromRow(stored.payload, {
+        amount: input.amount,
+        reference: input.reference ?? `Salary · ${name}`,
+      }),
+    ],
+  );
+}
+
+async function ownedRun(db: ReturnType<typeof createDb>, userId: string, runId: string) {
+  const [run] = await db
+    .select()
+    .from(payrollRuns)
+    .where(and(eq(payrollRuns.id, runId), eq(payrollRuns.clerkUserId, userId)))
+    .limit(1);
+  if (!run) throw new PayrollPreparationError('payroll_run_not_found', 404);
+  return run;
+}
+
+async function itemsFor(db: ReturnType<typeof createDb>, runId: string) {
+  return db.select().from(payrollRunItems).where(eq(payrollRunItems.runId, runId));
+}
+
+export async function getPayrollRun(databaseUrl: string, userId: string, runId: string) {
+  const db = createDb(databaseUrl);
+  const run = await ownedRun(db, userId, runId);
+  return toPayrollRun(run, await itemsFor(db, run.id));
+}
+
+export async function listPayrollRuns(databaseUrl: string, userId: string, limit = 20) {
+  const db = createDb(databaseUrl);
+  const runs = await db
+    .select()
+    .from(payrollRuns)
+    .where(and(eq(payrollRuns.clerkUserId, userId), eq(payrollRuns.status, 'completed')))
+    .orderBy(desc(payrollRuns.executedAt))
+    .limit(limit);
+  return Promise.all(runs.map(async (run) => toPayrollRun(run, await itemsFor(db, run.id))));
+}
+
+/**
+ * Executes a run the user approved with their passcode. Only a pending run
+ * executes, so a retried request can't pay twice. Payouts are simulated
+ * (`mode: demo`) until WeWire is live.
+ */
+export async function executePayrollRun(
+  databaseUrl: string,
+  userId: string,
+  runId: string,
+  funding: ExecutePayrollRunRequest,
+) {
+  const db = createDb(databaseUrl);
+  const now = new Date();
+  const [claimed] = await db
+    .update(payrollRuns)
+    .set({
+      status: 'completed',
+      fundingWalletId: funding.fundingWalletId,
+      fundingCurrency: funding.fundingCurrency.toUpperCase(),
+      fundingAmountMinor: toMinor(funding.fundingAmount),
+      approvedAt: now,
+      executedAt: now,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(payrollRuns.id, runId),
+        eq(payrollRuns.clerkUserId, userId),
+        eq(payrollRuns.status, 'pending_approval'),
+      ),
+    )
+    .returning();
+  if (!claimed) {
+    const run = await ownedRun(db, userId, runId);
+    throw new PayrollPreparationError('payroll_run_not_pending', 409, { status: run.status });
+  }
+  await db
+    .update(payrollRunItems)
+    .set({ status: 'sent', sentAt: now })
+    .where(eq(payrollRunItems.runId, runId));
+  return toPayrollRun(claimed, await itemsFor(db, runId));
+}
+
+export async function cancelPayrollRun(databaseUrl: string, userId: string, runId: string) {
+  const db = createDb(databaseUrl);
+  const [cancelled] = await db
+    .update(payrollRuns)
+    .set({ status: 'cancelled', updatedAt: new Date() })
+    .where(
+      and(
+        eq(payrollRuns.id, runId),
+        eq(payrollRuns.clerkUserId, userId),
+        eq(payrollRuns.status, 'pending_approval'),
+      ),
+    )
+    .returning();
+  if (!cancelled) {
+    const run = await ownedRun(db, userId, runId);
+    throw new PayrollPreparationError('payroll_run_not_pending', 409, { status: run.status });
+  }
+  return toPayrollRun(cancelled, await itemsFor(db, runId));
 }
