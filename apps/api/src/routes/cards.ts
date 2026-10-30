@@ -119,6 +119,27 @@ cards.post('/', async (c) => {
   return c.json({ card: toVirtualCard(row, issued, 0) }, 201, NO_STORE);
 });
 
+cards.get('/:id/transactions', async (c) => {
+  const env = c.get('env');
+  const lithic = lithicFor(env);
+  if (!lithic) return c.json(unavailable, 503, NO_STORE);
+
+  // Ownership check first: only the card's owner can read its purchases.
+  const row = await getVirtualCardRow(
+    createDb(env.DATABASE_URL),
+    c.get('auth').userId,
+    c.req.param('id'),
+  );
+  if (!row) return c.json({ error: 'card_not_found', message: 'Card not found.' }, 404, NO_STORE);
+  try {
+    const transactions = await lithic.listTransactions(row.providerCardToken);
+    return c.json({ transactions }, 200, NO_STORE);
+  } catch (error) {
+    providerError(error);
+    return c.json(providerFailed, 502, NO_STORE);
+  }
+});
+
 cards.patch('/:id', async (c) => {
   const env = c.get('env');
   const lithic = lithicFor(env);
