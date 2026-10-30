@@ -35,7 +35,11 @@ automations.get('/activity', async (c) => {
     { after, limit: 50 },
   );
   return c.json({
-    activity: activity.map((item) => ({ ...item, createdAt: item.createdAt.toISOString() })),
+    activity: activity.map(({ details, ...item }) => ({
+      ...item,
+      chatId: typeof details?.chatId === 'string' ? details.chatId : null,
+      createdAt: item.createdAt.toISOString(),
+    })),
   });
 });
 
@@ -168,13 +172,14 @@ automations.post('/:id/run', async (c) => {
   );
   if (!automation) return c.json({ message: 'Automation not found.' }, 404);
   if (automation.status !== 'active') return c.json({ message: 'Automation is paused.' }, 409);
-  const body = (await c.req.json().catch(() => ({}))) as { context?: Record<string, unknown> };
   const eventId = `manual:${automation.id}:${Date.now()}`;
+  // Run now: the user asked for it, so the trigger and conditions don't apply.
   await c.env.AUTOMATION_QUEUE.send({
     kind: 'evaluate',
     automationId: automation.id,
     eventId,
-    context: body.context ?? {},
+    forced: true,
+    context: {},
   } satisfies AutomationQueueMessage);
   return c.json({ queued: true, eventId }, 202);
 });
