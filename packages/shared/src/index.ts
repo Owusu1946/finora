@@ -1,5 +1,6 @@
 export * from './account';
 export * from './automations';
+export * from './business-apps';
 export * from './cards';
 export * from './chat';
 export * from './corridors';
