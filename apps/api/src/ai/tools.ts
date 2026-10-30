@@ -34,6 +34,8 @@ import {
   ProposePayrollChangesInputSchema,
   ListPayrollImportsInputSchema,
   ForgetMemoryInputSchema,
+  DraftPayrollInputSchema,
+  type DraftPayrollInput,
   GOOGLE_CONNECT_OPTIONS,
   ListMemoriesInputSchema,
   UpdateMemoryInputSchema,
@@ -54,6 +56,7 @@ import { v1 } from '../routes/v1';
 
 export const CHAT_AGENT_TOOL_NAMES = [
   'list_payroll_imports',
+  'draft_payroll',
   'propose_payroll_changes',
   'inspect_payroll_attachment',
   'search_drive_files',
@@ -227,6 +230,7 @@ function webToolFailure(error: unknown, fallback: string) {
 }
 type PayrollToolReader = {
   inspectAttachment: (attachmentId: string) => Promise<unknown>;
+  draft?: (input: DraftPayrollInput) => Promise<unknown>;
   prepareImport: (input: {
     importId: string;
     period?: string;
@@ -396,6 +400,15 @@ export function createChatAgentTools(
       inputSchema: zodSchema(ForgetMemoryInputSchema),
       execute: async ({ id }) =>
         memory?.forget(id) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    draft_payroll: tool({
+      description:
+        'Create a payroll from employees the user typed or said in chat, e.g. "pay Ama 2,000 GHS to MTN 0241234567 and Kofi 1,500 to GCB 1234567890". Put each person in rows exactly as given; use null for anything they did not say and never invent amounts, currencies, or account numbers. If one currency or network clearly applies to everyone, use it for each row. The result is the same review card as an uploaded file: flagged rows must be fixed before prepare_payroll.',
+      inputSchema: zodSchema(DraftPayrollInputSchema),
+      execute: async (input) => {
+        if (!payroll?.draft) throw new Error('payroll_unavailable');
+        return payroll.draft(input);
+      },
     }),
     list_payroll_imports: tool({
       description:
