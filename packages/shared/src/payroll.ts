@@ -53,7 +53,8 @@ export const PayrollImportRowSchema = z
 export const PayrollInspectionResponseSchema = z
   .object({
     ok: z.boolean(),
-    attachmentId: z.string().uuid(),
+    /** Absent for payroll typed in chat. */
+    attachmentId: z.string().uuid().optional(),
     importId: z.string().uuid().optional(),
     sourceName: boundedText(255).optional(),
     status: PayrollImportStatusSchema.optional(),
@@ -228,3 +229,30 @@ export const ExecutePayrollRunRequestSchema = z
   })
   .strict();
 export type ExecutePayrollRunRequest = z.infer<typeof ExecutePayrollRunRequestSchema>;
+
+/** One employee as the user typed or said it in chat. Missing details stay null. */
+export const DraftPayrollRowSchema = z
+  .object({
+    employeeName: boundedText(200),
+    amount: z.number().positive().nullable().describe('Null when the user did not say'),
+    currency: boundedText(12)
+      .nullable()
+      .describe('ISO code, e.g. GHS. Null when not stated and not clear from context'),
+    destination: boundedText(160)
+      .nullable()
+      .describe('Mobile money number or bank account number, exactly as given'),
+    destinationType: z.enum(['mobile_money', 'bank_account']).nullable(),
+    rail: boundedText(40).nullable().describe('Network or bank, e.g. MTN MoMo, GCB Bank'),
+    role: boundedText(160).nullable(),
+    reference: boundedText(140).nullable(),
+  })
+  .strict();
+
+/** Chat: turn employees the user typed or said into a payroll they can review. */
+export const DraftPayrollInputSchema = z
+  .object({
+    period: boundedText(80).nullable().describe('Pay period, e.g. "October 2026"'),
+    rows: z.array(DraftPayrollRowSchema).min(1).max(200),
+  })
+  .strict();
+export type DraftPayrollInput = z.infer<typeof DraftPayrollInputSchema>;
