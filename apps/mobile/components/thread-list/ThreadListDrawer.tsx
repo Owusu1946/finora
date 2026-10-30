@@ -6,14 +6,13 @@ import {
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { type DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { Alert, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 import type { TranslationKey } from '@/lib/i18n';
 
 import { AccountBadge } from '@/components/shell/account-badge';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
@@ -111,20 +110,29 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     tabForPathname(pathname, buildNavTabs(isBusinessAccount())),
   );
   const navigateOnce = usePressGuard();
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string | null } | null>(
-    null,
-  );
-
+  // Native destructive alert: the custom full-screen dialog could stay mounted
+  // invisibly after an interrupted close and swallow every tap.
   const requestThreadDelete = useCallback(
-    (target: { id: string; title: string | null }) => setDeleteTarget(target),
-    [],
+    (target: { id: string; title: string | null }) => {
+      haptics.light();
+      Alert.alert(
+        'Delete chat?',
+        `"${target.title ?? 'New chat'}" is deleted from your account and can't be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              haptics.error();
+              aui.threads.item({ id: target.id }).delete();
+            },
+          },
+        ],
+      );
+    },
+    [aui],
   );
-  const cancelThreadDelete = useCallback(() => setDeleteTarget(null), []);
-  const confirmThreadDelete = useCallback(() => {
-    if (!deleteTarget) return;
-    aui.threads.item({ id: deleteTarget.id }).delete();
-    setDeleteTarget(null);
-  }, [aui, deleteTarget]);
 
   useEffect(() => {
     if (drawerStatus === 'closed') {
@@ -319,20 +327,6 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           );
         })}
       </View>
-
-      <ConfirmDialog
-        visible={deleteTarget !== null}
-        title='Delete chat?'
-        body={
-          deleteTarget
-            ? `"${deleteTarget.title ?? 'New chat'}" is deleted from your account and can't be undone.`
-            : "This chat is deleted from your account and can't be undone."
-        }
-        confirmLabel='Delete'
-        cancelLabel='Cancel'
-        onConfirm={confirmThreadDelete}
-        onCancel={cancelThreadDelete}
-      />
     </View>
   );
 }
