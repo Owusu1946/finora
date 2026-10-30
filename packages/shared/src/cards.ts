@@ -58,6 +58,12 @@ export const UpdateVirtualCardRequestSchema = z
   });
 export type UpdateVirtualCardRequest = z.infer<typeof UpdateVirtualCardRequestSchema>;
 
+/** Add `amount` USD to a prepaid card's balance (its lifetime spend limit). */
+export const TopUpVirtualCardRequestSchema = z.object({
+  amount: z.number().positive().max(MAX_VIRTUAL_CARD_LIMIT),
+});
+export type TopUpVirtualCardRequest = z.infer<typeof TopUpVirtualCardRequestSchema>;
+
 /**
  * A purchase or refund on a card. `deducted` is what it took off the card's
  * balance in USD: positive for purchases, negative for refunds, and 0 for

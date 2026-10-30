@@ -1,4 +1,9 @@
-import { CreateVirtualCardRequestSchema, UpdateVirtualCardRequestSchema } from '@finora/shared';
+import {
+  CreateVirtualCardRequestSchema,
+  MAX_VIRTUAL_CARD_LIMIT,
+  TopUpVirtualCardRequestSchema,
+  UpdateVirtualCardRequestSchema,
+} from '@finora/shared';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
@@ -140,6 +145,51 @@ cards.get('/:id/transactions', async (c) => {
   }
 });
 
+cards.post('/:id/top-up', async (c) => {
+  const env = c.get('env');
+  const lithic = lithicFor(env);
+  if (!lithic) return c.json(unavailable, 503, NO_STORE);
+
+  const parsed = TopUpVirtualCardRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json({ error: 'invalid_request', message: 'Enter an amount to add.' }, 400, NO_STORE);
+  }
+  const row = await getVirtualCardRow(
+    createDb(env.DATABASE_URL),
+    c.get('auth').userId,
+    c.req.param('id'),
+  );
+  if (!row) return c.json({ error: 'card_not_found', message: 'Card not found.' }, 404, NO_STORE);
+  if (row.closedAt) {
+    return c.json(
+      { error: 'card_closed', message: 'This card is cancelled and cannot be topped up.' },
+      409,
+      NO_STORE,
+    );
+  }
+
+  try {
+    // Add to the issuer's current balance so a stale client can't overwrite it.
+    const current = await lithic.getCard(row.providerCardToken);
+    const nextCents = current.spend_limit + Math.round(parsed.data.amount * 100);
+    if (nextCents > MAX_VIRTUAL_CARD_LIMIT * 100) {
+      return c.json(
+        {
+          error: 'limit_exceeded',
+          message: `A card can hold up to $${MAX_VIRTUAL_CARD_LIMIT.toLocaleString('en-US')} in total.`,
+        },
+        400,
+        NO_STORE,
+      );
+    }
+    await lithic.updateCard(row.providerCardToken, { spendLimitCents: nextCents });
+    return c.json({ card: await loadCard(lithic, row) }, 200, NO_STORE);
+  } catch (error) {
+    providerError(error);
+    return c.json(providerFailed, 502, NO_STORE);
+  }
+});
+
 cards.patch('/:id', async (c) => {
   const env = c.get('env');
   const lithic = lithicFor(env);
@@ -165,6 +215,17 @@ cards.patch('/:id', async (c) => {
 
   const { label, spendLimit, status } = parsed.data;
   try {
+    // Cards are prepaid: balance only grows through a paid top-up, never by editing the limit.
+    if (spendLimit !== undefined) {
+      const current = await lithic.getCard(row.providerCardToken);
+      if (Math.round(spendLimit * 100) > current.spend_limit) {
+        return c.json(
+          { error: 'use_top_up', message: 'Add money to the card with a top-up.' },
+          400,
+          NO_STORE,
+        );
+      }
+    }
     await lithic.updateCard(row.providerCardToken, {
       memo: label,
       spendLimitCents: spendLimit === undefined ? undefined : Math.round(spendLimit * 100),
