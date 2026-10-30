@@ -180,7 +180,17 @@ export async function generateAndPersistChatTitle(options: {
 }) {
   const title = await generateChatTitle(options.ai, options.exchange);
   if (!title) return null;
-  if (await setGeneratedChatTitle(options.db, options.chatId, options.userId, title)) return title;
-  const stored = await getChatMetadata(options.db, options.chatId, options.userId);
+  return persistGeneratedChatTitle(options.db, options.chatId, options.userId, title);
+}
+
+/** Save a generated title; if another request saved one first, return that one. */
+export async function persistGeneratedChatTitle(
+  db: Database,
+  chatId: string,
+  userId: string,
+  title: string,
+) {
+  if (await setGeneratedChatTitle(db, chatId, userId, title)) return title;
+  const stored = await getChatMetadata(db, chatId, userId);
   return stored?.titleStatus === 'generated' && stored.title ? stored.title : null;
 }

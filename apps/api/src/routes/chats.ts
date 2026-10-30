@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import type { AppEnv } from '../app-env';
 
-import { fallbackChatTitle, generateAndPersistChatTitle } from '../ai/chat-title';
+import { fallbackChatTitle, generateChatTitle, persistGeneratedChatTitle } from '../ai/chat-title';
 import {
   deleteChat,
   ensureChat,
@@ -126,6 +126,20 @@ chats.post('/:id/title', async (c) => {
     return c.json({ message: 'This chat ID is unavailable.' }, 409);
   }
 
+  // Start the model now so it runs alongside the metadata read and fallback
+  // write instead of after them; titles are on the critical path for the drawer.
+  const generation = c.env.AI
+    ? generateChatTitle(c.env.AI, { message: body.data.message, reply: body.data.reply }).catch(
+        (error: unknown) => {
+          console.error('[chat:title]', {
+            errorName: error instanceof Error ? error.name : typeof error,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        },
+      )
+    : Promise.resolve(null);
+
   const existing = await getChatMetadata(db, id.data, userId);
   if (existing?.titleStatus === 'generated' && existing.title) {
     return c.json({ title: existing.title, titleStatus: 'generated' as const });
@@ -138,25 +152,13 @@ chats.post('/:id/title', async (c) => {
       parts: [{ type: 'text', text: body.data.message }],
     },
   ]);
-  await setFallbackChatTitle(db, id.data, userId, fallback);
-  if (!c.env.AI) return c.json({ title: fallback, titleStatus: 'fallback' as const });
-
-  // Workers AI answers in well under a second, so return the real title in this
-  // response instead of making the client wait for a list refresh.
-  try {
-    const title = await generateAndPersistChatTitle({
-      db,
-      ai: c.env.AI,
-      chatId: id.data,
-      userId,
-      exchange: { message: body.data.message, reply: body.data.reply },
-    });
+  const [generated] = await Promise.all([
+    generation,
+    setFallbackChatTitle(db, id.data, userId, fallback),
+  ]);
+  if (generated) {
+    const title = await persistGeneratedChatTitle(db, id.data, userId, generated);
     if (title) return c.json({ title, titleStatus: 'generated' as const });
-  } catch (error) {
-    console.error('[chat:title]', {
-      errorName: error instanceof Error ? error.name : typeof error,
-      errorMessage: error instanceof Error ? error.message : String(error),
-    });
   }
   // Small talk or a model failure: keep the fallback; the client retries on a later turn.
   return c.json({ title: fallback, titleStatus: 'fallback' as const });
