@@ -1,19 +1,22 @@
-import { useMemo, useState } from 'react';
+import { VIRTUAL_CARD_ISSUE_FEE_USD } from '@finora/shared';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
 import {
-  formatCardAmount,
-  type CreateVirtualCardInput,
-  type VirtualCard,
-} from '@/components/cards/types';
+  CardFundingSource,
+  CardFundingSummary,
+  defaultFundingWalletId,
+  useFundingWallets,
+} from '@/components/cards/CardFundingSource';
+import { formatCardAmount, type VirtualCard } from '@/components/cards/types';
 import { WizardChip, WizardStepHeader } from '@/components/chat/WizardChrome';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { canFundCard, cardFundingTotalUsd, fundAndIssueCard } from '@/lib/card-funding';
 import { haptics } from '@/lib/haptics';
-import { createVirtualCard, VirtualCardError } from '@/lib/virtual-cards-storage';
 
 export type CreateVirtualCardSeed = {
   label?: string;
@@ -58,29 +61,45 @@ export function CreateVirtualCardWizard({
   const resolvedLabel = label || customLabel.trim();
   const resolvedLimit =
     spendLimit ?? (customLimit.trim() ? Number(customLimit.replace(/,/g, '')) : null);
+  const wallets = useFundingWallets();
+  const [walletId, setWalletId] = useState<string | null>(null);
+  const fundingWallet = wallets.find((wallet) => wallet.id === walletId) ?? null;
+  const canIssue =
+    !!resolvedLimit &&
+    resolvedLimit > 0 &&
+    fundingWallet !== null &&
+    canFundCard(fundingWallet, resolvedLimit);
+
+  // Keep a funding account selected that can cover the card as the amount changes.
+  useEffect(() => {
+    if (!resolvedLimit || resolvedLimit <= 0) return;
+    if (fundingWallet && canFundCard(fundingWallet, resolvedLimit)) return;
+    setWalletId(defaultFundingWalletId(wallets, resolvedLimit));
+  }, [fundingWallet, resolvedLimit, wallets]);
 
   const issue = async () => {
-    if (!resolvedLabel || !resolvedLimit || resolvedLimit <= 0 || busy) return;
+    if (!resolvedLabel || !resolvedLimit || !canIssue || !walletId || busy) return;
     setBusy(true);
     const ok = await requestApproval();
     if (!ok) {
       setBusy(false);
       return;
     }
-    const input: CreateVirtualCardInput = {
-      label: resolvedLabel,
-      spendLimit: resolvedLimit,
-    };
     let card;
     try {
       // The wizard shows the issued card itself; skip the global "Card ready" popup.
-      card = await createVirtualCard(input, { announce: false });
+      card = await fundAndIssueCard({
+        label: resolvedLabel,
+        amountUsd: resolvedLimit,
+        walletId,
+        announce: false,
+      });
     } catch (error) {
       setBusy(false);
       haptics.error();
       Alert.alert(
         "Couldn't create card",
-        error instanceof VirtualCardError ? error.message : 'Try again in a moment.',
+        error instanceof Error ? error.message : 'Try again in a moment.',
       );
       return;
     }
@@ -213,8 +232,29 @@ export function CreateVirtualCardWizard({
               value='USD'
             />
             <Row
-              label='Limit'
+              label='Card balance'
               value={formatCardAmount(resolvedLimit, 'USD')}
+            />
+            <Row
+              label='Issue fee'
+              value={formatCardAmount(VIRTUAL_CARD_ISSUE_FEE_USD, 'USD')}
+            />
+            <Row
+              label='Total'
+              value={formatCardAmount(cardFundingTotalUsd(resolvedLimit), 'USD')}
+            />
+          </View>
+          <View className='gap-2'>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>Fund from</Text>
+            <CardFundingSource
+              wallets={wallets}
+              amountUsd={resolvedLimit}
+              selectedId={walletId}
+              onSelect={setWalletId}
+            />
+            <CardFundingSummary
+              wallet={fundingWallet}
+              amountUsd={resolvedLimit}
             />
           </View>
           <View className='flex-row gap-2'>
@@ -224,7 +264,7 @@ export function CreateVirtualCardWizard({
             />
             <PrimaryButton
               label={busy ? 'Issuing…' : 'Issue card'}
-              disabled={busy}
+              disabled={busy || !canIssue}
               onPress={() => void issue()}
             />
           </View>

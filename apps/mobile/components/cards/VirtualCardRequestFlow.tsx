@@ -1,15 +1,23 @@
+import { VIRTUAL_CARD_ISSUE_FEE_USD } from '@finora/shared';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import type { VirtualCardCurrency } from '@/components/cards/types';
 
+import {
+  CardFundingSource,
+  CardFundingSummary,
+  defaultFundingWalletId,
+  useFundingWallets,
+} from '@/components/cards/CardFundingSource';
+import { formatCardAmount } from '@/components/cards/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { canFundCard, cardFundingTotalUsd, fundAndIssueCard } from '@/lib/card-funding';
 import { haptics } from '@/lib/haptics';
-import { createVirtualCard, VirtualCardError } from '@/lib/virtual-cards-storage';
 
 type Currency = VirtualCardCurrency;
 type Purpose = 'Subscriptions' | 'Travel' | 'Online purchases' | 'Team spend';
@@ -103,31 +111,43 @@ export function VirtualCardRequestFlow() {
   const [limit, setLimit] = useState('500');
   const [busy, setBusy] = useState(false);
   const limitValue = Number(limit);
-  const canReview = Number.isSafeInteger(limitValue) && limitValue > 0;
+  const wallets = useFundingWallets();
+  const [walletId, setWalletId] = useState<string | null>(null);
+  const fundingWallet = wallets.find((wallet) => wallet.id === walletId) ?? null;
+  const canReview =
+    Number.isSafeInteger(limitValue) &&
+    limitValue > 0 &&
+    fundingWallet !== null &&
+    canFundCard(fundingWallet, limitValue);
+
+  // Keep a funding account selected that can cover the card as the amount changes.
+  useEffect(() => {
+    if (!Number.isSafeInteger(limitValue) || limitValue <= 0) return;
+    if (fundingWallet && canFundCard(fundingWallet, limitValue)) return;
+    setWalletId(defaultFundingWalletId(wallets, limitValue));
+  }, [fundingWallet, limitValue, wallets]);
 
   const submit = async () => {
     if (busy) return;
-    if (!Number.isSafeInteger(limitValue) || limitValue <= 0) return;
+    if (!canReview || !walletId) return;
     setBusy(true);
     try {
       const approved = await requestApproval();
       if (!approved) return;
       // This flow shows its own confirmation; skip the global "Card ready" popup.
-      await createVirtualCard(
-        {
-          label: purpose,
-          spendLimit: limitValue,
-          currency,
-        },
-        { announce: false },
-      );
+      await fundAndIssueCard({
+        label: purpose,
+        amountUsd: limitValue,
+        walletId,
+        announce: false,
+      });
       haptics.success();
       setStep('submitted');
     } catch (error) {
       haptics.error();
       Alert.alert(
         "Couldn't create card",
-        error instanceof VirtualCardError ? error.message : 'Try again in a moment.',
+        error instanceof Error ? error.message : 'Try again in a moment.',
       );
     } finally {
       setBusy(false);
@@ -217,9 +237,27 @@ export function VirtualCardRequestFlow() {
             <Text className='font-sans-semibold text-[15px] text-foreground'>{currency}</Text>
           </View>
           <View className='flex-row items-center justify-between'>
-            <Text className='font-sans text-[15px] text-muted-foreground'>Monthly limit</Text>
+            <Text className='font-sans text-[15px] text-muted-foreground'>Card balance</Text>
             <Text className='font-sans-semibold text-[15px] text-foreground'>
-              {currency} {limit}
+              {formatCardAmount(limitValue, 'USD')}
+            </Text>
+          </View>
+          <View className='flex-row items-center justify-between'>
+            <Text className='font-sans text-[15px] text-muted-foreground'>Issue fee</Text>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
+              {formatCardAmount(VIRTUAL_CARD_ISSUE_FEE_USD, 'USD')}
+            </Text>
+          </View>
+          <View className='flex-row items-center justify-between'>
+            <Text className='font-sans text-[15px] text-muted-foreground'>Funded from</Text>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
+              {fundingWallet?.name ?? '—'}
+            </Text>
+          </View>
+          <View className='flex-row items-center justify-between'>
+            <Text className='font-sans text-[15px] text-muted-foreground'>Total</Text>
+            <Text className='font-sans-semibold text-[15px] text-foreground'>
+              {formatCardAmount(cardFundingTotalUsd(limitValue), 'USD')}
             </Text>
           </View>
           <View className='flex-row items-start gap-2 border-t border-border pt-3.5'>
@@ -262,9 +300,7 @@ export function VirtualCardRequestFlow() {
             </View>
           </View>
           <View className='gap-2.5'>
-            <Text className='font-sans-semibold text-base text-foreground'>
-              Monthly spending limit
-            </Text>
+            <Text className='font-sans-semibold text-base text-foreground'>Amount to load</Text>
             <View
               className='min-h-[54px] flex-row items-center rounded-[32px] border border-border bg-background px-3.5'
               style={{ borderCurve: 'continuous' }}
@@ -279,6 +315,21 @@ export function VirtualCardRequestFlow() {
                 className='flex-1 py-0 font-sans-semibold text-[19px] text-foreground'
               />
             </View>
+          </View>
+          <View className='gap-2.5'>
+            <Text className='font-sans-semibold text-base text-foreground'>Fund from</Text>
+            <CardFundingSource
+              wallets={wallets}
+              amountUsd={limitValue > 0 ? limitValue : 0}
+              selectedId={walletId}
+              onSelect={setWalletId}
+            />
+            {limitValue > 0 ? (
+              <CardFundingSummary
+                wallet={fundingWallet}
+                amountUsd={limitValue}
+              />
+            ) : null}
           </View>
         </>
       )}
