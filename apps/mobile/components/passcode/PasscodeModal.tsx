@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -15,6 +15,8 @@ import { useBiometricUnlock } from '@/lib/biometrics';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
 import { useSettings } from '@/lib/settings-context';
+
+import { KeypadKey } from './keypad-key';
 
 export type PasscodeMode = 'setup' | 'confirm-setup' | 'unlock' | 'forgot-otp' | 'phone-required';
 
@@ -75,7 +77,14 @@ export function PasscodeModal({
   const { authenticate, isAvailable: biometricAvailable, method } = useBiometricUnlock();
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
-  const [value, setValue] = useState('');
+  const [value, setValueState] = useState('');
+  // Keys fire on touch-down; read the latest entry from a ref so fast taps
+  // never build on a stale value and drop a digit.
+  const valueRef = useRef('');
+  const setValue = useCallback((next: string | ((current: string) => string)) => {
+    valueRef.current = typeof next === 'function' ? next(valueRef.current) : next;
+    setValueState(valueRef.current);
+  }, []);
   const shakeX = useSharedValue(0);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -172,10 +181,11 @@ export function PasscodeModal({
   }));
 
   const pushDigit = (digit: string) => {
-    if (locked || value.length >= PASSCODE_LENGTH) return;
+    const current = valueRef.current;
+    if (locked || current.length >= PASSCODE_LENGTH) return;
     if (error) onClearError?.();
     haptics.selection();
-    const nextValue = value + digit;
+    const nextValue = current + digit;
     setValue(nextValue);
     if (nextValue.length === PASSCODE_LENGTH) {
       if (lastSubmittedRef.current === nextValue) return;
@@ -187,7 +197,7 @@ export function PasscodeModal({
   };
 
   const backspace = () => {
-    if (locked || !value) return;
+    if (locked || !valueRef.current) return;
     if (error) onClearError?.();
     haptics.selection();
     setValue((v) => v.slice(0, -1));
@@ -366,13 +376,13 @@ export function PasscodeModal({
                 }
                 if (key === 'back') {
                   return (
-                    <Pressable
+                    <KeypadKey
                       key='back'
-                      accessibilityLabel='Delete'
+                      label='Delete'
+                      size={keySize}
                       disabled={locked}
-                      onPress={backspace}
-                      className='items-center justify-center rounded-full active:opacity-55'
-                      style={{ width: keySize, height: keySize }}
+                      bordered={false}
+                      onActivate={backspace}
                     >
                       <View style={{ transform: [{ rotate: '180deg' }] }}>
                         <Icon
@@ -381,25 +391,20 @@ export function PasscodeModal({
                           color={colors.foreground}
                         />
                       </View>
-                    </Pressable>
+                    </KeypadKey>
                   );
                 }
                 return (
-                  <Pressable
+                  <KeypadKey
                     key={key}
-                    accessibilityLabel={`Digit ${key}`}
+                    label={`Digit ${key}`}
+                    size={keySize}
                     disabled={locked}
-                    onPress={() => pushDigit(key)}
-                    className='items-center justify-center rounded-full border active:bg-muted'
-                    style={{
-                      width: keySize,
-                      height: keySize,
-                      backgroundColor: colors.composer,
-                      borderColor: colors.border,
-                    }}
+                    bordered
+                    onActivate={() => pushDigit(key)}
                   >
                     <Text className='font-sans-medium text-[29px] text-foreground'>{key}</Text>
-                  </Pressable>
+                  </KeypadKey>
                 );
               })}
             </View>

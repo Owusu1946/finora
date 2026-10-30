@@ -24,11 +24,11 @@ import {
 } from 'react-native';
 import { Easing, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 
 import { AVATAR_COLORS } from '@/components/contacts/types';
 import { Icon } from '@/components/ui/icon';
 import { LoadingIcon } from '@/components/ui/loading-icon';
-import { SheetModal } from '@/components/ui/sheet-modal';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -40,14 +40,24 @@ import {
 import { haptics } from '@/lib/haptics';
 import { startLiveTranscription, type LiveTranscriptionSession } from '@/lib/live-transcription';
 import { payrollAttachmentContext, uploadPayrollAttachment } from '@/lib/payroll-attachments-api';
-import { ensureMediaLibraryPermission } from '@/lib/permissions';
-import { deleteRecording, transcribeRecording } from '@/lib/transcription-api';
+import {
+  deleteRecording,
+  transcribeRecording,
+  TranscriptionApiError,
+} from '@/lib/transcription-api';
+import { loadVoiceKeyterms } from '@/lib/voice-keyterms';
 
+import type { AttachAction } from './attach-menu.types';
+
+import { AttachMenu } from './attach-menu';
 import {
   ComposerImageAttachment,
   ComposerDocumentAttachment,
   ComposerAttachmentChip,
+  ComposerPendingImage,
+  registerAttachmentPreview,
 } from './attachment';
+import { CameraSheet, type CapturedPhoto } from './camera-sheet';
 import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
 
 /* ------------------------------------------------------------------ */
@@ -79,6 +89,42 @@ function useComposerNotice() {
   return notice;
 }
 
+/* ------------------------------------------------------------------ */
+/* Pending image uploads — shown instantly while the upload runs        */
+/* ------------------------------------------------------------------ */
+
+type PendingUpload = { id: string; uri: string };
+
+let pendingUploads: PendingUpload[] = [];
+const pendingUploadListeners = new Set<(uploads: PendingUpload[]) => void>();
+
+function setPendingUploads(next: PendingUpload[]) {
+  pendingUploads = next;
+  pendingUploadListeners.forEach((emit) => emit(next));
+}
+
+/** Show a local preview in the composer until `upload` settles. */
+async function withPendingUpload(uri: string, upload: () => Promise<void>) {
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  setPendingUploads([...pendingUploads, { id, uri }]);
+  try {
+    await upload();
+  } finally {
+    setPendingUploads(pendingUploads.filter((item) => item.id !== id));
+  }
+}
+
+function usePendingUploads() {
+  const [uploads, setUploads] = useState(pendingUploads);
+  useEffect(() => {
+    pendingUploadListeners.add(setUploads);
+    return () => {
+      pendingUploadListeners.delete(setUploads);
+    };
+  }, []);
+  return uploads;
+}
+
 const COMPOSER_ATTACHMENT_COMPONENTS = {
   Image: ComposerImageAttachment,
   Document: ComposerDocumentAttachment,
@@ -99,6 +145,9 @@ function AttachButton() {
   const addUploadedAttachment = async (source: Parameters<typeof uploadPayrollAttachment>[0]) => {
     try {
       const uploaded = await uploadPayrollAttachment(source, getToken);
+      if ('uri' in source && uploaded.contentType.startsWith('image/')) {
+        registerAttachmentPreview(uploaded.attachmentId, source.uri);
+      }
       await aui.composer.addAttachment({
         id: uploaded.attachmentId,
         name: uploaded.name,
@@ -136,11 +185,7 @@ function AttachButton() {
   };
 
   const handleNativePickImage = async () => {
-    const hasPermission = await ensureMediaLibraryPermission(
-      'Allow photo access in Settings to attach images.',
-    );
-    if (!hasPermission) return;
-
+    // The system photo picker runs out of process and needs no photo permission.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.8,
@@ -149,14 +194,18 @@ function AttachButton() {
 
     if (result.canceled || !result.assets?.length) return;
 
-    for (const asset of result.assets) {
-      await addUploadedAttachment({
-        uri: asset.uri,
-        name: asset.fileName || `image_${Date.now()}.jpg`,
-        contentType: asset.mimeType || 'image/jpeg',
-        size: asset.fileSize,
-      });
-    }
+    await Promise.all(
+      result.assets.map((asset) =>
+        withPendingUpload(asset.uri, () =>
+          addUploadedAttachment({
+            uri: asset.uri,
+            name: asset.fileName || `image_${Date.now()}.jpg`,
+            contentType: asset.mimeType || 'image/jpeg',
+            size: asset.fileSize,
+          }),
+        ),
+      ),
+    );
   };
 
   const handleNativePickDocument = async () => {
@@ -177,86 +226,79 @@ function AttachButton() {
     }
   };
 
-  const ATTACHMENT_ACTIONS = [
-    { key: 'photo', label: 'Photo library', icon: 'image' as const },
-    { key: 'document', label: 'Choose document', icon: 'file' as const },
-  ] as const;
+  const handleCapturedPhoto = (photo: CapturedPhoto) => {
+    void withPendingUpload(photo.uri, () =>
+      addUploadedAttachment({
+        uri: photo.uri,
+        name: `photo_${Date.now()}.jpg`,
+        contentType: 'image/jpeg',
+      }),
+    );
+  };
 
-  const [pickerVisible, setPickerVisible] = useState(false);
+  const [cameraVisible, setCameraVisible] = useState(false);
 
-  const openAttachmentPicker = () => {
+  // A native picker rejects if it can't open; show it in the composer instead of throwing.
+  const runPicker = (pick: () => Promise<void>) => {
+    void pick().catch(() => showComposerNotice('Could not open the picker. Try again.'));
+  };
+
+  // The native menu isn't a presented screen, so pickers open immediately from here.
+  const handleAttachAction = (action: AttachAction) => {
     haptics.selection();
-    // Settle keyboard layout before the system picker takes over.
     Keyboard.dismiss();
-
-    if (Platform.OS === 'web' || typeof document !== 'undefined') {
-      openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
-      return;
-    }
-
-    setPickerVisible(true);
+    if (action === 'camera') setCameraVisible(true);
+    else if (action === 'photo') runPicker(handleNativePickImage);
+    else if (action === 'document') runPicker(handleNativePickDocument);
   };
 
-  const pick = (action: (typeof ATTACHMENT_ACTIONS)[number]['key']) => {
-    setPickerVisible(false);
-    haptics.selection();
-    if (action === 'photo') void handleNativePickImage();
-    else void handleNativePickDocument();
-  };
+  const attachIcon = (
+    <Icon
+      name='attach'
+      size={20}
+      color={colors.mutedForeground}
+    />
+  );
 
-  return (
-    <>
+  if (Platform.OS === 'web' || typeof document !== 'undefined') {
+    return (
       <Pressable
         accessibilityLabel='Attach file or photo'
         hitSlop={8}
-        onPress={openAttachmentPicker}
+        onPress={() => {
+          haptics.selection();
+          openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
+        }}
         className='h-[38px] w-[38px] items-center justify-center rounded-full'
-        style={({ pressed }) => [
-          {
-            backgroundColor: pressed ? colors.muted : 'transparent',
-          },
-        ]}
+        style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
       >
-        <Icon
-          name='attach'
-          size={20}
-          color={colors.mutedForeground}
-        />
+        {attachIcon}
       </Pressable>
+    );
+  }
 
-      <SheetModal
-        visible={pickerVisible}
-        onClose={() => setPickerVisible(false)}
-        style={{ paddingHorizontal: 20, gap: 3 }}
+  return (
+    <>
+      <AttachMenu
+        size={38}
+        label='Attach file or photo'
+        onSelect={handleAttachAction}
       >
-        <Text className='mb-2 mt-1 font-sans-semibold text-lg text-foreground'>Attach</Text>
-        {ATTACHMENT_ACTIONS.map((action) => (
-          <Pressable
-            key={action.key}
-            accessibilityRole='button'
-            onPress={() => pick(action.key)}
-            className='min-h-[52px] flex-row items-center gap-3 bg-muted px-4'
-            style={({ pressed }) => [{ borderRadius: Radius.md, opacity: pressed ? 0.8 : 1 }]}
-          >
-            <Icon
-              name={action.icon}
-              size={18}
-              color={colors.foreground}
-            />
-            <Text className='font-sans-semibold text-[16px] text-foreground'>{action.label}</Text>
-          </Pressable>
-        ))}
-        <Pressable
+        <View
+          accessible
           accessibilityRole='button'
-          onPress={() => setPickerVisible(false)}
-          className='mt-2 min-h-[46px] items-center justify-center rounded-full bg-muted'
-          style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
+          accessibilityLabel='Attach file or photo'
+          className='h-[38px] w-[38px] items-center justify-center rounded-full'
         >
-          <Text className='font-sans-semibold text-[16px] tracking-[-0.2px] text-muted-foreground'>
-            Cancel
-          </Text>
-        </Pressable>
-      </SheetModal>
+          {attachIcon}
+        </View>
+      </AttachMenu>
+
+      <CameraSheet
+        visible={cameraVisible}
+        onClose={() => setCameraVisible(false)}
+        onCapture={handleCapturedPhoto}
+      />
     </>
   );
 }
@@ -287,9 +329,42 @@ function ScanButton() {
 
 type VoiceState = 'idle' | 'requesting_permission' | 'recording' | 'transcribing';
 
+/** A recording whose transcription failed but can be retried from the same audio. */
+type FailedTake = { uri: string; message: string; send: boolean };
+
+const VOICE_CONTENT_TYPE = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
+
+/** Human copy for a failed transcription, and whether retrying the same audio can help. */
+function describeTranscriptionError(error: unknown) {
+  if (error instanceof TranscriptionApiError) {
+    if (error.code === 'network') {
+      return { message: "No connection. Retry when you're back online.", retryable: true };
+    }
+    if (error.code === 'timeout') {
+      return { message: 'That took too long to transcribe.', retryable: true };
+    }
+    if (error.code === 'unauthorized') {
+      return { message: 'Your session expired. Sign in again.', retryable: false };
+    }
+    if (error.reason === 'speech_not_detected') {
+      return { message: "Didn't catch any words. Try again.", retryable: false };
+    }
+    if (error.reason === 'audio_too_large') {
+      return { message: 'That recording is too long. Try a shorter message.', retryable: false };
+    }
+    if (error.reason === 'empty_audio') {
+      return { message: 'The recording was empty. Try again.', retryable: false };
+    }
+  }
+  return { message: "Couldn't transcribe that.", retryable: true };
+}
+
 const MAX_RECORDING_SECONDS = 45;
 const INITIAL_SILENCE_TIMEOUT_MS = 7_000;
-const TRAILING_SILENCE_TIMEOUT_MS = 2_500;
+// Long enough for a pause while reading out an amount or account number.
+const TRAILING_SILENCE_TIMEOUT_MS = 3_500;
+/** Silence before the auto-finish countdown ring starts showing. */
+const AUTO_STOP_RING_DELAY_MS = 1_000;
 const VOICE_ACTIVITY_THRESHOLD_DB = -42;
 const VOICE_ACTIVITY_SAMPLES_REQUIRED = 2;
 const VOICE_RECORDING_OPTIONS: RecordingOptions = {
@@ -330,14 +405,26 @@ function useVoiceComposer() {
   const stopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
   const draftBeforeRecordingRef = useRef('');
+  const [draftBeforeRecording, setDraftBeforeRecording] = useState('');
   const voiceSessionRef = useRef(0);
   const speechDetectedRef = useRef(false);
   const voiceActivitySamplesRef = useRef(0);
   const lastVoiceActivityAtRef = useRef(0);
-  const stopRecordingRef = useRef<(discard?: boolean) => Promise<void>>(() => Promise.resolve());
+  const stopRecordingRef = useRef<(discard?: boolean, send?: boolean) => Promise<void>>(() =>
+    Promise.resolve(),
+  );
   const liveSessionRef = useRef<LiveTranscriptionSession | null>(null);
   const liveFinalsRef = useRef('');
+  const livePartialRef = useRef('');
   const [preview, setPreview] = useState('');
+  const [failedTake, setFailedTakeState] = useState<FailedTake | null>(null);
+  const failedTakeRef = useRef<FailedTake | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const retryingRef = useRef(false);
+  /** Keyterms for the current take, reused by the upload fallback and retries. */
+  const keytermsRef = useRef<string[]>([]);
+  /** 0 while speaking; climbs to 1 as a pause runs out and auto-finish nears. */
+  const [autoStopProgress, setAutoStopProgress] = useState(0);
 
   // Smoothed 0–1 mic level for the glow, animated on the UI thread.
   const level = useSharedValue(0);
@@ -368,14 +455,73 @@ function useVoiceComposer() {
   // "finals + current partial" is what the user reads while speaking.
   const resetLivePreview = () => {
     liveFinalsRef.current = '';
+    livePartialRef.current = '';
     setPreview('');
   };
   const setLivePartial = (text: string) => {
+    livePartialRef.current = text;
     const finals = liveFinalsRef.current;
     setPreview(finals ? `${finals} ${text}` : text);
   };
+  const liveTranscript = () =>
+    [liveFinalsRef.current, livePartialRef.current].filter(Boolean).join(' ').trim();
 
-  const stopRecording = async (discard = false) => {
+  const insertTranscript = (transcript: string, send: boolean) => {
+    const existing = draftBeforeRecordingRef.current.trimEnd();
+    const composer = aui.thread.composer();
+    composer.setText(existing ? `${existing} ${transcript}` : transcript);
+    haptics.success();
+    // Keep the text as a draft while photos are still uploading so they aren't dropped.
+    if (send && pendingUploads.length === 0) composer.send();
+  };
+
+  const setFailedTake = (take: FailedTake | null) => {
+    failedTakeRef.current = take;
+    if (mountedRef.current) setFailedTakeState(take);
+  };
+
+  /** Drop the failed take and its audio file. */
+  const discardFailedTake = () => {
+    deleteRecording(failedTakeRef.current?.uri ?? null);
+    setFailedTake(null);
+  };
+
+  const retryFailedTake = async () => {
+    const take = failedTakeRef.current;
+    if (!take || retryingRef.current) return;
+    retryingRef.current = true;
+    setRetrying(true);
+    haptics.selection();
+    try {
+      const result = await transcribeRecording(
+        take.uri,
+        VOICE_CONTENT_TYPE,
+        getToken,
+        keytermsRef.current,
+      );
+      setFailedTake(null);
+      const transcript = result.transcript.trim();
+      if (transcript && mountedRef.current) {
+        // Append to whatever is in the composer now; it may have changed since the take.
+        draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+        insertTranscript(transcript, take.send);
+      }
+    } catch (error) {
+      haptics.error();
+      const { message, retryable } = describeTranscriptionError(error);
+      if (retryable) {
+        setFailedTake({ ...take, message });
+      } else {
+        discardFailedTake();
+        showComposerNotice(message);
+      }
+    } finally {
+      retryingRef.current = false;
+      if (mountedRef.current) setRetrying(false);
+    }
+  };
+
+  const stopRecording = async (discard = false, send = false) => {
     if (voiceStateRef.current !== 'recording') return;
     const sessionId = voiceSessionRef.current;
     updateVoiceState(discard ? 'idle' : 'transcribing');
@@ -400,23 +546,41 @@ function useVoiceComposer() {
         return;
       }
 
-      const contentType = Platform.OS === 'web' ? 'audio/webm' : 'audio/aac';
-      const result = await transcribeRecording(uri, contentType, getToken);
+      // The live feed has already transcribed the take; use it right away and
+      // only upload the recording when the live feed produced nothing.
+      const liveText = liveTranscript();
+      if (liveText) {
+        deleteRecording(uri);
+        if (mountedRef.current && voiceSessionRef.current === sessionId) {
+          insertTranscript(liveText, send);
+        }
+        return;
+      }
+
+      const result = await transcribeRecording(
+        uri,
+        VOICE_CONTENT_TYPE,
+        getToken,
+        keytermsRef.current,
+      );
       if (!mountedRef.current || voiceSessionRef.current !== sessionId) return;
 
       const transcript = result.transcript.trim();
       if (!transcript) return;
-      const existing = draftBeforeRecordingRef.current.trimEnd();
-      aui.thread.composer().setText(existing ? `${existing} ${transcript}` : transcript);
-      haptics.success();
+      insertTranscript(transcript, send);
     } catch (error) {
-      if (!discard && mountedRef.current && voiceSessionRef.current === sessionId) {
+      const current = !discard && mountedRef.current && voiceSessionRef.current === sessionId;
+      const { message, retryable } = describeTranscriptionError(error);
+      if (current && retryable && uri) {
+        // Keep the audio so the user can retry without speaking again.
         haptics.error();
-        showComposerNotice(
-          error instanceof Error
-            ? `Could not transcribe · ${error.message}`
-            : 'Could not transcribe · try recording again',
-        );
+        setFailedTake({ uri, message, send });
+      } else {
+        deleteRecording(uri);
+        if (current) {
+          haptics.error();
+          showComposerNotice(message);
+        }
       }
     } finally {
       if (voiceSessionRef.current === sessionId) updateVoiceState('idle');
@@ -441,6 +605,7 @@ function useVoiceComposer() {
     if (recorderState.metering >= VOICE_ACTIVITY_THRESHOLD_DB) {
       voiceActivitySamplesRef.current += 1;
       lastVoiceActivityAtRef.current = now;
+      setAutoStopProgress(0);
       if (voiceActivitySamplesRef.current >= VOICE_ACTIVITY_SAMPLES_REQUIRED) {
         speechDetectedRef.current = true;
       }
@@ -450,14 +615,25 @@ function useVoiceComposer() {
     voiceActivitySamplesRef.current = 0;
     if (!speechDetectedRef.current) {
       if (recorderState.durationMillis >= INITIAL_SILENCE_TIMEOUT_MS) {
+        showComposerNotice("Didn't catch anything. Tap the mic to try again.");
         void stopRecordingRef.current(true);
       }
       return;
     }
 
-    if (now - lastVoiceActivityAtRef.current >= TRAILING_SILENCE_TIMEOUT_MS) {
+    const silentFor = now - lastVoiceActivityAtRef.current;
+    if (silentFor >= TRAILING_SILENCE_TIMEOUT_MS) {
+      setAutoStopProgress(0);
       void stopRecordingRef.current(false);
+      return;
     }
+    setAutoStopProgress(
+      Math.max(
+        0,
+        (silentFor - AUTO_STOP_RING_DELAY_MS) /
+          (TRAILING_SILENCE_TIMEOUT_MS - AUTO_STOP_RING_DELAY_MS),
+      ),
+    );
   }, [recorderState.durationMillis, recorderState.metering, voiceState]);
 
   useEffect(() => {
@@ -465,6 +641,7 @@ function useVoiceComposer() {
       mountedRef.current = false;
       clearStopTimer();
       void liveSessionRef.current?.stop(false);
+      deleteRecording(failedTakeRef.current?.uri ?? null);
       if (voiceStateRef.current === 'recording') {
         void recorder.stop().then(() => deleteRecording(recorder.uri));
       }
@@ -473,9 +650,15 @@ function useVoiceComposer() {
 
   const startRecording = async () => {
     if (voiceStateRef.current !== 'idle') return;
+    setAutoStopProgress(0);
+    // A new take replaces any failed one waiting for a retry.
+    discardFailedTake();
+    // Load in parallel with permission and recorder setup; never block recording on it.
+    const keytermsPromise = loadVoiceKeyterms().catch(() => [] as string[]);
     const sessionId = voiceSessionRef.current + 1;
     voiceSessionRef.current = sessionId;
     draftBeforeRecordingRef.current = aui.thread.composer().getState().text;
+    setDraftBeforeRecording(draftBeforeRecordingRef.current.trim());
     speechDetectedRef.current = false;
     voiceActivitySamplesRef.current = 0;
     lastVoiceActivityAtRef.current = 0;
@@ -512,16 +695,24 @@ function useVoiceComposer() {
       resetLivePreview();
       const liveUri = recorder.uri;
       if (liveUri) {
-        void startLiveTranscription(liveUri, getToken, {
-          onTranscript: (text, isFinal) => {
-            if (voiceSessionRef.current !== sessionId) return;
-            if (isFinal) liveFinalsRef.current = `${liveFinalsRef.current} ${text}`.trim();
-            setLivePartial(isFinal ? '' : text);
+        const keyterms = await keytermsPromise;
+        keytermsRef.current = keyterms;
+        if (voiceSessionRef.current !== sessionId) return;
+        void startLiveTranscription(
+          liveUri,
+          getToken,
+          {
+            onTranscript: (text, isFinal) => {
+              if (voiceSessionRef.current !== sessionId) return;
+              if (isFinal) liveFinalsRef.current = `${liveFinalsRef.current} ${text}`.trim();
+              setLivePartial(isFinal ? '' : text);
+            },
+            onError: (error) => {
+              console.warn('[voice:live]', error);
+            },
           },
-          onError: (error) => {
-            console.warn('[voice:live]', error);
-          },
-        })
+          keyterms,
+        )
           .then((session) => {
             if (voiceSessionRef.current !== sessionId) void session.stop(false);
             else liveSessionRef.current = session;
@@ -569,13 +760,57 @@ function useVoiceComposer() {
     }
   };
 
-  const acceptVoice = () => {
+  /** Finish the take: `send` also sends the message; otherwise it lands in the draft. */
+  const acceptVoice = (send = false) => {
     if (voiceStateRef.current !== 'recording') return;
     haptics.light();
-    void stopRecording(false);
+    void stopRecording(false, send);
   };
 
-  return { voiceState, level, preview, startRecording, cancelVoice, acceptVoice };
+  return {
+    voiceState,
+    level,
+    preview,
+    draftBeforeRecording,
+    autoStopProgress: voiceState === 'recording' ? autoStopProgress : 0,
+    failedTake,
+    retrying,
+    retryFailedTake,
+    discardFailedTake,
+    startRecording,
+    cancelVoice,
+    acceptVoice,
+  };
+}
+
+const RING_SIZE = 56;
+const RING_STROKE = 2;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+/** Shrinking ring around the finish button while a pause counts down to auto-finish. */
+function AutoStopRing({ progress, color }: { progress: number; color: string }) {
+  if (progress <= 0) return null;
+  return (
+    <Svg
+      pointerEvents='none'
+      width={RING_SIZE}
+      height={RING_SIZE}
+      style={{ position: 'absolute', top: -4, left: -4, transform: [{ rotate: '-90deg' }] }}
+    >
+      <Circle
+        cx={RING_SIZE / 2}
+        cy={RING_SIZE / 2}
+        r={RING_RADIUS}
+        stroke={color}
+        strokeWidth={RING_STROKE}
+        strokeLinecap='round'
+        fill='none'
+        strokeDasharray={RING_CIRCUMFERENCE}
+        strokeDashoffset={RING_CIRCUMFERENCE * Math.min(1, progress)}
+      />
+    </Svg>
+  );
 }
 
 function MicButton({ onPress }: { onPress: () => void }) {
@@ -599,13 +834,16 @@ function MicButton({ onPress }: { onPress: () => void }) {
 
 function PrimaryComposerAction({ onPressMic }: { onPressMic: () => void }) {
   const canSend = useAuiState((s) => s.thread.composer.canSend);
-  return canSend ? <SendButton /> : <MicButton onPress={onPressMic} />;
+  const uploading = usePendingUploads().length > 0;
+  return canSend || uploading ? <SendButton /> : <MicButton onPress={onPressMic} />;
 }
 
 function SendButton() {
   const { colors } = useTheme();
   const runtimeCanSend = useAuiState((s) => s.thread.composer.canSend);
-  const canSend = runtimeCanSend;
+  // Hold sends until in-flight photos land so they aren't dropped.
+  const uploading = usePendingUploads().length > 0;
+  const canSend = runtimeCanSend && !uploading;
 
   return (
     <ComposerPrimitive.Send
@@ -881,10 +1119,24 @@ export function Composer() {
   const notice = useComposerNotice();
   const inputRef = useRef<ComposerInputHandle>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const { voiceState, level, preview, startRecording, cancelVoice, acceptVoice } =
-    useVoiceComposer();
+  const {
+    voiceState,
+    level,
+    preview,
+    draftBeforeRecording,
+    autoStopProgress,
+    failedTake,
+    retrying,
+    retryFailedTake,
+    discardFailedTake,
+    startRecording,
+    cancelVoice,
+    acceptVoice,
+  } = useVoiceComposer();
   const insets = useSafeAreaInsets();
-  const hasAttachments = useAuiState((s) => s.thread.composer.attachments.length > 0);
+  const pending = usePendingUploads();
+  const hasAttachments =
+    useAuiState((s) => s.thread.composer.attachments.length > 0) || pending.length > 0;
   const composerText = useAuiState((s) => s.thread.composer.text);
   const slashMode = /^(\/(?:web|search|shop|product|products|deep|research))?(?:\s|$)/i
     .exec(composerText)?.[1]
@@ -932,6 +1184,48 @@ export function Composer() {
           </Text>
         </View>
       ) : null}
+      {failedTake && voiceState === 'idle' ? (
+        <View
+          className='mb-2 flex-row items-center gap-2 self-center rounded-full bg-foreground py-1.5 pl-4 pr-1.5'
+          style={{ maxWidth: '92%' }}
+        >
+          <Text
+            numberOfLines={2}
+            className='shrink font-sans-medium text-[13px] text-background'
+          >
+            {failedTake.message}
+          </Text>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel='Retry transcription'
+            disabled={retrying}
+            onPress={() => void retryFailedTake()}
+            className='h-8 min-w-[64px] items-center justify-center rounded-full bg-background px-3'
+          >
+            {retrying ? (
+              <LoadingIcon
+                color={colors.foreground}
+                size={14}
+              />
+            ) : (
+              <Text className='font-sans-semibold text-[13px] text-foreground'>Retry</Text>
+            )}
+          </Pressable>
+          <Pressable
+            accessibilityRole='button'
+            accessibilityLabel='Dismiss failed recording'
+            hitSlop={6}
+            onPress={discardFailedTake}
+            className='h-8 w-8 items-center justify-center'
+          >
+            <Icon
+              name='remove'
+              size={14}
+              color={colors.background}
+            />
+          </Pressable>
+        </View>
+      ) : null}
       {voiceState !== 'idle' ? (
         <>
           {/* Glow renders first so the transcript and controls draw over it. */}
@@ -942,8 +1236,18 @@ export function Composer() {
             colors={isDark ? VOICE_BLOOM_DARK : VOICE_BLOOM_LIGHT}
             additive={isDark}
           />
-          <View className='h-[128px] w-full items-center justify-end'>
-            <View className='min-h-[56px] w-full items-center justify-end pb-3'>
+          <View className='min-h-[128px] w-full items-center justify-end'>
+            <View className='min-h-[56px] w-full items-center justify-end gap-1 pb-3'>
+              {draftBeforeRecording ? (
+                // The new words are appended to this draft; show its end, faded.
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode='head'
+                  className='text-center font-sans-medium text-[15px] text-muted-foreground opacity-70'
+                >
+                  {draftBeforeRecording}
+                </Text>
+              ) : null}
               {preview ? (
                 <Text
                   numberOfLines={3}
@@ -951,7 +1255,14 @@ export function Composer() {
                 >
                   {preview}
                 </Text>
-              ) : null}
+              ) : (
+                <Text
+                  accessibilityLiveRegion='polite'
+                  className='text-center font-sans-medium text-[17px] text-muted-foreground'
+                >
+                  {voiceState === 'transcribing' ? 'Transcribing…' : 'Listening…'}
+                </Text>
+              )}
             </View>
             <View className='mb-2 flex-row items-center justify-end gap-6'>
               <Pressable
@@ -970,21 +1281,44 @@ export function Composer() {
                 />
               </Pressable>
               {voiceState === 'recording' ? (
-                <Pressable
-                  accessibilityLabel='Finish voice input'
-                  accessibilityRole='button'
-                  onPress={acceptVoice}
-                  className='h-12 w-12 items-center justify-center rounded-full border border-border'
-                  style={({ pressed }) => [
-                    { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
-                  ]}
-                >
-                  <Icon
-                    name='mic'
-                    size={20}
-                    color={colors.primary}
-                  />
-                </Pressable>
+                <>
+                  <View>
+                    <AutoStopRing
+                      progress={autoStopProgress}
+                      color={colors.foreground}
+                    />
+                    <Pressable
+                      accessibilityLabel='Insert transcript'
+                      accessibilityRole='button'
+                      onPress={() => acceptVoice(false)}
+                      className='h-12 w-12 items-center justify-center rounded-full border border-border'
+                      style={({ pressed }) => [
+                        { backgroundColor: colors.composer, opacity: pressed ? 0.6 : 0.95 },
+                      ]}
+                    >
+                      <Icon
+                        name='check'
+                        size={20}
+                        color={colors.foreground}
+                      />
+                    </Pressable>
+                  </View>
+                  <Pressable
+                    accessibilityLabel='Send voice message'
+                    accessibilityRole='button'
+                    onPress={() => acceptVoice(true)}
+                    className='h-12 w-12 items-center justify-center rounded-full'
+                    style={({ pressed }) => [
+                      { backgroundColor: colors.primary, opacity: pressed ? 0.8 : 1 },
+                    ]}
+                  >
+                    <Icon
+                      name='send'
+                      size={18}
+                      color={colors.primaryForeground}
+                    />
+                  </Pressable>
+                </>
               ) : null}
               {voiceState === 'transcribing' ? (
                 <View
@@ -1040,6 +1374,12 @@ export function Composer() {
               keyboardShouldPersistTaps='handled'
             >
               <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+              {pending.map((item) => (
+                <ComposerPendingImage
+                  key={item.id}
+                  uri={item.uri}
+                />
+              ))}
             </ScrollView>
           ) : null}
 

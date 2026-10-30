@@ -22,7 +22,7 @@ import type { AppEnv } from '../types';
 
 import { paragraphStreamingFilter } from '../ai/assistant-streaming';
 import { messagesForModel, refreshChatContext, threadContextPrompt } from '../ai/chat-context';
-import { fallbackChatTitle } from '../ai/chat-title';
+import { fallbackChatTitle, firstExchange, generateAndPersistChatTitle } from '../ai/chat-title';
 import { logChatError, toPublicChatError } from '../ai/errors';
 import {
   backfillMemoryEmbeddings,
@@ -847,6 +847,24 @@ chat.post('/:id', async (c) => {
         const persistence = (async () => {
           try {
             await finalizeChatStream(db, parsed.data.id, userId, streamId, persistedMessages);
+            // Name the chat from the first exchange even if the app closes before
+            // it asks; whichever of this and the client's request lands first wins.
+            if (shouldGenerateTitle && c.env.AI) {
+              c.executionCtx.waitUntil(
+                generateAndPersistChatTitle({
+                  db,
+                  ai: c.env.AI,
+                  chatId: parsed.data.id,
+                  userId,
+                  exchange: firstExchange(persistedMessages),
+                }).catch((error) => {
+                  console.error('[chat:title]', {
+                    requestId,
+                    errorName: error instanceof Error ? error.name : typeof error,
+                  });
+                }),
+              );
+            }
             c.executionCtx.waitUntil(
               refreshChatContext({
                 db,

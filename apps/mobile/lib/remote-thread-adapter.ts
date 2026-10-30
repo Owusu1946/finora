@@ -21,7 +21,13 @@ const pendingThreadBindings = new Map<string, { current: string | null }>();
 const generatedTitles = new Map<string, string>();
 const titleRequests = new Map<string, Promise<string | null>>();
 const THREAD_LIST_CACHE_TTL_MS = 5_000;
-const TITLE_REQUEST_TIMEOUT_MS = 20_000;
+const TITLE_REQUEST_TIMEOUT_MS = 12_000;
+const NEW_CHAT_TITLE = 'New chat';
+const MAX_TITLE_WORDS = 6;
+const MAX_TITLE_LENGTH = 48;
+/** Characters revealed per typewriter step, and the delay between steps. */
+const TYPEWRITER_CHUNK = 2;
+const TYPEWRITER_STEP_MS = 24;
 
 type GetToken = () => Promise<string | null>;
 
@@ -66,24 +72,69 @@ export function firstThreadUserText(messages: readonly ThreadMessage[]) {
     .trim();
 }
 
-export function fallbackThreadTitle(messages: readonly ThreadMessage[]) {
-  const text = firstThreadUserText(messages);
-  if (!text) return 'New chat';
-  const words = text.split(' ').slice(0, 7).join(' ');
-  return words.length > 60 ? `${words.slice(0, 57).trim()}...` : words;
+function messageText(message: ThreadMessage) {
+  return message.content
+    .flatMap((part) => (part.type === 'text' ? [part.text] : []))
+    .join(' ')
+    .replaceAll(/\s+/g, ' ')
+    .trim();
 }
 
+/**
+ * Local title from the first words of the first message, matching the API's
+ * fallback: no digits (amounts, account numbers) and no ellipsis.
+ */
+export function fallbackThreadTitle(messages: readonly ThreadMessage[]) {
+  const text = firstThreadUserText(messages);
+  if (!text) return NEW_CHAT_TITLE;
+  let title = '';
+  for (const word of text.replaceAll(/["'`]/g, '').split(' ')) {
+    if (!word || /\d/.test(word)) continue;
+    const next = title ? `${title} ${word}` : word;
+    if (next.length > MAX_TITLE_LENGTH || next.split(' ').length > MAX_TITLE_WORDS) break;
+    title = next;
+  }
+  title = title.replace(/[\s.!?:;,…-]+$/u, '');
+  return title ? title.charAt(0).toUpperCase() + title.slice(1) : NEW_CHAT_TITLE;
+}
+
+export type TitleExchange = { message: string; reply?: string };
+
+/**
+ * What a title describes: the user's opening messages (several, so a chat
+ * that opened with small talk still gets a topic) and the latest reply.
+ */
+export function threadTitleExchange(messages: readonly ThreadMessage[]): TitleExchange {
+  const userTexts = messages
+    .filter((message) => message.role === 'user')
+    .slice(0, 3)
+    .map(messageText)
+    .filter(Boolean);
+  const reply = [...messages]
+    .reverse()
+    .find((message) => message.role === 'assistant' && messageText(message));
+  return {
+    message: userTexts.join('\n').slice(0, 1_000),
+    reply: reply ? messageText(reply).slice(0, 2_000) : undefined,
+  };
+}
+
+export function hasGeneratedTitle(remoteId: string) {
+  return generatedTitles.has(remoteId);
+}
+
+/** Ask the API to title the chat; resolves to the title only once one is generated. */
 export async function requestRemoteThreadTitle(
   config: RemoteThreadConfig,
   remoteId: string,
-  message: string,
+  exchange: TitleExchange,
 ) {
   const existingRequest = titleRequests.get(remoteId);
   if (existingRequest) return existingRequest;
 
   const token = await config.getToken();
   if (!token) return null;
-  const request = generateTitle(config, remoteId, message, token);
+  const request = generateTitle(config, remoteId, exchange, token);
   titleRequests.set(remoteId, request);
   return request;
 }
@@ -91,7 +142,7 @@ export async function requestRemoteThreadTitle(
 async function generateTitle(
   config: RemoteThreadConfig,
   remoteId: string,
-  message: string,
+  exchange: TitleExchange,
   token: string,
 ) {
   const controller = new AbortController();
@@ -102,13 +153,18 @@ async function generateTitle(
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify(exchange),
         signal: controller.signal,
       },
     );
     if (!response.ok) return null;
-    const payload = (await response.json().catch(() => null)) as { title?: unknown } | null;
-    if (!payload || typeof payload.title !== 'string' || !payload.title.trim()) return null;
+    const payload = (await response.json().catch(() => null)) as {
+      title?: unknown;
+      titleStatus?: unknown;
+    } | null;
+    // A fallback means small talk or a model miss; keep "New chat" and retry next turn.
+    if (!payload || payload.titleStatus !== 'generated') return null;
+    if (typeof payload.title !== 'string' || !payload.title.trim()) return null;
     const title = payload.title.trim();
     generatedTitles.set(remoteId, title);
     return title;
@@ -120,8 +176,25 @@ async function generateTitle(
   }
 }
 
-function titleAssistantStream(title: string) {
-  return createAssistantStream((controller) => controller.appendText(title)) as AssistantStream;
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Streams a title into the drawer. The runtime updates the title per chunk, so
+ * an animated title types itself in; otherwise it appears at once.
+ */
+function titleAssistantStream(title: string, animate: boolean) {
+  return createAssistantStream(async (controller) => {
+    if (!animate) {
+      controller.appendText(title);
+      return;
+    }
+    for (let index = 0; index < title.length; index += TYPEWRITER_CHUNK) {
+      controller.appendText(title.slice(index, index + TYPEWRITER_CHUNK));
+      await wait(TYPEWRITER_STEP_MS);
+    }
+  }) as AssistantStream;
 }
 
 async function readCachedThreads(userId: string): Promise<RemoteThreadMetadata[]> {
@@ -284,8 +357,12 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
     },
 
     async generateTitle(remoteId, messages) {
-      const title = generatedTitles.get(remoteId) ?? fallbackThreadTitle(messages);
-      return titleAssistantStream(title);
+      // The local fallback shows the instant a message is sent; the generated
+      // title types in over it once the API has one.
+      const generated = generatedTitles.get(remoteId);
+      return generated
+        ? titleAssistantStream(generated, true)
+        : titleAssistantStream(fallbackThreadTitle(messages), false);
     },
   };
 }

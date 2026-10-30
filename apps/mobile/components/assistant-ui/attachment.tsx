@@ -4,9 +4,18 @@ import { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { Icon } from '@/components/ui/icon';
+import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
+
+/** On-device image URIs for uploaded attachments, keyed by attachment id. */
+const localPreviews = new Map<string, string>();
+
+/** Keep showing the local image after upload; the message only carries the file reference. */
+export function registerAttachmentPreview(attachmentId: string, uri: string) {
+  localPreviews.set(attachmentId, uri);
+}
 
 function useAttachmentPreview() {
   const attachment = useAuiState((s) => s.attachment);
@@ -15,6 +24,12 @@ function useAttachmentPreview() {
   useEffect(() => {
     if (!attachment) {
       setImageUri(null);
+      return;
+    }
+
+    const localUri = localPreviews.get(attachment.id);
+    if (localUri) {
+      setImageUri(localUri);
       return;
     }
 
@@ -55,6 +70,29 @@ function useAttachmentPreview() {
 /**
  * Image Attachment in Composer (Thumbnail with delete badge)
  */
+/** Local preview shown in the composer while an image is still uploading. */
+export function ComposerPendingImage({ uri }: { uri: string }) {
+  return (
+    <View
+      accessibilityLabel='Uploading photo'
+      className='h-16 w-16 overflow-hidden rounded-[18px] border border-border bg-muted'
+      style={styles.imageChip}
+    >
+      <ExpoImage
+        source={{ uri }}
+        style={styles.imagePreview}
+        contentFit='cover'
+      />
+      <View className='absolute inset-0 items-center justify-center bg-black/35'>
+        <LoadingIcon
+          color='#ffffff'
+          size={18}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function ComposerImageAttachment() {
   const { colors } = useTheme();
   const { imageUri } = useAttachmentPreview();
@@ -82,14 +120,15 @@ export function ComposerImageAttachment() {
         )}
       </View>
       <AttachmentPrimitive.Remove
+        accessibilityLabel='Remove photo'
         onPressIn={haptics.light}
         style={styles.imageRemoveBadge}
         hitSlop={6}
       >
         <Icon
-          name='close-circle'
-          size={18}
-          color={colors.foreground}
+          name='remove'
+          size={12}
+          color='#ffffff'
         />
       </AttachmentPrimitive.Remove>
     </AttachmentPrimitive.Root>
@@ -229,15 +268,16 @@ const styles = {
   },
   imageRemoveBadge: {
     position: 'absolute',
-    top: -6,
-    right: -6,
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: Radius.pill,
-    backgroundColor: '#000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   chip: {
     flexDirection: 'row',
