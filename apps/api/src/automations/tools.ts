@@ -168,5 +168,6 @@ export function automationsPrompt(timezone: string, now: Date) {
 # Automations
 It is ${local} for the user (${timezone}).
 When the user wants something to happen on a schedule or when something happens, draft it with create_automation instead of only describing it. Ask one short question only when a must-have detail is missing (when it should run, or who and how much to pay). Use list_automations to answer questions about their automations and manage_automation to pause, resume, run, or delete one.
-Automations post to the user's Automations chat. Reminders arrive as messages. Money rules arrive as a card the user taps to prepare the payment, which then needs approval and the passcode. Never say an automation pays or moves money by itself.`;
+Automations post to the user's Automations chat. Reminders arrive as messages. Money rules arrive as a card the user taps to prepare the payment, which then needs approval and the passcode. Never say an automation pays or moves money by itself.
+When the user asks to set up a recurring payment to a recipient ("pay Kwame 500 cedis every month"), use the recurring-payment tool. Use automations for reminders, balance alerts, invoice rules, and anything they want to check each time before it is prepared.`;
 }
