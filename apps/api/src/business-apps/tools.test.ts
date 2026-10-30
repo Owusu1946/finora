@@ -21,6 +21,15 @@ function setup(connected: string[], results: Record<string, unknown> = {}) {
       if (slug === 'NOPE_ACTION') throw new ComposioError('Not found', 404);
       return schema(slug, !slug.includes('REFUND') && !slug.includes('SEND'));
     }),
+    getToolkit: vi.fn(async (slug: string) => {
+      if (slug !== 'xero') throw new ComposioError('Toolkit not found', 404);
+      return {
+        slug: 'xero',
+        name: 'Xero',
+        auth_schemes: ['OAUTH2'],
+        meta: { logo: 'https://logos.composio.dev/api/xero' },
+      };
+    }),
     searchTools: vi.fn(async () => [
       {
         ...schema('QUICKBOOKS_LIST_INVOICES'),
@@ -126,7 +135,13 @@ describe('get_business_payments', () => {
     expect(await run(tools, 'get_business_payments', {})).toEqual({
       ok: false,
       errorCode: 'no_payment_app_connected',
-      connectable: ['paystack', 'flutterwave', 'stripe'],
+      connectOptions: ['paystack', 'flutterwave', 'stripe'].map((app) => ({
+        app,
+        name: expect.any(String),
+        logo: `https://logos.composio.dev/api/${app}`,
+        kind: 'business',
+        connectable: true,
+      })),
     });
   });
 });
@@ -166,6 +181,37 @@ describe('find_app_actions', () => {
       ok: false,
       errorCode: 'app_not_connected',
       app: 'quickbooks',
+      connectOptions: [
+        {
+          app: 'quickbooks',
+          name: 'QuickBooks',
+          logo: 'https://logos.composio.dev/api/quickbooks',
+          kind: 'business',
+          connectable: true,
+        },
+      ],
+    });
+  });
+
+  it('offers any real Composio app, marking ones Finora cannot connect yet', async () => {
+    const { tools } = setup([]);
+    const result = await run(tools, 'find_app_actions', { app: 'xero', query: 'invoices' });
+    expect(result.connectOptions).toEqual([
+      {
+        app: 'xero',
+        name: 'Xero',
+        logo: 'https://logos.composio.dev/api/xero',
+        kind: 'business',
+        connectable: false,
+      },
+    ]);
+  });
+
+  it('shows no card for an app that does not exist', async () => {
+    const { tools } = setup([]);
+    expect(await run(tools, 'find_app_actions', { app: 'my_books', query: 'x' })).toMatchObject({
+      errorCode: 'unknown_app',
+      connectOptions: [],
     });
   });
 });
@@ -198,6 +244,7 @@ describe('run_app_action', () => {
     ).toMatchObject({
       ok: false,
       errorCode: 'app_not_connected',
+      connectOptions: [{ app: 'quickbooks', kind: 'business' }],
     });
     expect(composio.executeTool).not.toHaveBeenCalled();
   });
@@ -233,7 +280,32 @@ describe('draft_whatsapp_message', () => {
     const { tools } = setup([]);
     expect(
       await run(tools, 'draft_whatsapp_message', { to: '+233241234567', text: 'Hi' }),
-    ).toMatchObject({ status: 'not_connected', app: 'whatsapp' });
+    ).toMatchObject({
+      status: 'not_connected',
+      app: 'whatsapp',
+      connectOptions: [{ app: 'whatsapp', kind: 'business' }],
+    });
+  });
+});
+
+describe('suggest_app_connection', () => {
+  it('routes Google apps to the native Google connect flow', async () => {
+    const { composio, tools } = setup([]);
+    expect(
+      await run(tools, 'suggest_app_connection', { app: 'google_calendar', reason: 'See dues' }),
+    ).toMatchObject({
+      ok: true,
+      app: 'googlecalendar',
+      connectOptions: [{ app: 'googlecalendar', kind: 'google', connectable: true }],
+    });
+    expect(composio.getToolkit).not.toHaveBeenCalled();
+  });
+
+  it('reports a connected business app as connected', async () => {
+    const { tools } = setup(['paystack']);
+    expect(
+      await run(tools, 'suggest_app_connection', { app: 'paystack', reason: 'Sales' }),
+    ).toMatchObject({ connected: true, name: 'Paystack' });
   });
 });
 
