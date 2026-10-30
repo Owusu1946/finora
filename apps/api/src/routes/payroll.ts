@@ -3,6 +3,7 @@ import {
   ArchivePayrollImportInputSchema,
   BulkArchivePayrollImportsInputSchema,
   BulkDeletePayrollRowsInputSchema,
+  ExecutePayrollRunRequestSchema,
   PayrollImportRowSchema,
   PayrollInspectionResponseSchema,
 } from '@finora/shared';
@@ -30,6 +31,13 @@ import {
   cancelPayrollProposal,
   PayrollEditError,
 } from '../payroll/edit-service';
+import {
+  cancelPayrollRun,
+  executePayrollRun,
+  getPayrollRun,
+  listPayrollRuns,
+  PayrollPreparationError,
+} from '../payroll/prepare-import';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const TTL_MS = 24 * 60 * 60 * 1000;
@@ -708,5 +716,61 @@ payroll.post('/proposals/:id/cancel', async (c) => {
     if (error instanceof PayrollEditError)
       return c.json(jsonError(error.code, error.status), error.status);
     throw error;
+  }
+});
+
+function runError(error: unknown) {
+  if (error instanceof PayrollPreparationError) {
+    return { body: { ...jsonError(error.code, error.status), ...error.details }, status: error.status };
+  }
+  throw error;
+}
+
+/** Completed payroll runs, newest first. */
+payroll.get('/runs', async (c) =>
+  c.json({ runs: await listPayrollRuns(c.get('env').DATABASE_URL, c.get('auth').userId) }),
+);
+
+payroll.get('/runs/:id', async (c) => {
+  try {
+    return c.json({
+      run: await getPayrollRun(c.get('env').DATABASE_URL, c.get('auth').userId, c.req.param('id')),
+    });
+  } catch (error) {
+    const { body, status } = runError(error);
+    return c.json(body, status);
+  }
+});
+
+/**
+ * Pays a prepared run. The app calls this only after the user picked a funding
+ * account and confirmed with their passcode.
+ */
+payroll.post('/runs/:id/execute', async (c) => {
+  const input = ExecutePayrollRunRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!input.success) return c.json(jsonError('invalid_request'), 400);
+  try {
+    return c.json({
+      run: await executePayrollRun(
+        c.get('env').DATABASE_URL,
+        c.get('auth').userId,
+        c.req.param('id'),
+        input.data,
+      ),
+    });
+  } catch (error) {
+    const { body, status } = runError(error);
+    return c.json(body, status);
+  }
+});
+
+payroll.post('/runs/:id/cancel', async (c) => {
+  try {
+    return c.json({
+      run: await cancelPayrollRun(c.get('env').DATABASE_URL, c.get('auth').userId, c.req.param('id')),
+    });
+  } catch (error) {
+    const { body, status } = runError(error);
+    return c.json(body, status);
   }
 });
