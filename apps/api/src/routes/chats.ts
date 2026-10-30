@@ -10,7 +10,6 @@ import { z } from 'zod';
 import type { AppEnv } from '../app-env';
 
 import { fallbackChatTitle, generateAndPersistChatTitle } from '../ai/chat-title';
-import { getModelProviderConfig } from '../ai/model-provider';
 import {
   deleteChat,
   ensureChat,
@@ -28,6 +27,8 @@ const ListQuerySchema = z.object({
 
 const GenerateTitleRequestSchema = z.object({
   message: z.string().trim().min(1).max(1_000),
+  /** The first assistant reply; titles describe the exchange, not just the question. */
+  reply: z.string().trim().max(2_000).optional(),
 });
 
 function encodeCursor(value: { updatedAt: Date; id: string }) {
@@ -130,36 +131,34 @@ chats.post('/:id/title', async (c) => {
     return c.json({ title: existing.title, titleStatus: 'generated' as const });
   }
 
-  const message = {
-    id: `title_${crypto.randomUUID()}`,
-    role: 'user' as const,
-    parts: [{ type: 'text' as const, text: body.data.message }],
-  };
-  const fallback = fallbackChatTitle([message]);
+  const fallback = fallbackChatTitle([
+    {
+      id: `title_${crypto.randomUUID()}`,
+      role: 'user',
+      parts: [{ type: 'text', text: body.data.message }],
+    },
+  ]);
   await setFallbackChatTitle(db, id.data, userId, fallback);
+  if (!c.env.AI) return c.json({ title: fallback, titleStatus: 'fallback' as const });
 
-  const provider = getModelProviderConfig(env);
-  if (!provider) return c.json({ title: fallback, titleStatus: 'fallback' as const });
-
-  // Respond with the seed title immediately and generate in the background
-  // (t3code pattern): the client polls the list, and the row flips to
-  // 'generated' when the detached job finishes. A slow model then can't hold
-  // the request past the client's timeout.
-  c.executionCtx.waitUntil(
-    generateAndPersistChatTitle({
+  // Workers AI answers in well under a second, so return the real title in this
+  // response instead of making the client wait for a list refresh.
+  try {
+    const title = await generateAndPersistChatTitle({
       db,
+      ai: c.env.AI,
       chatId: id.data,
       userId,
-      messages: [message],
-      provider,
-      referer: env.WELCOME_EMAIL_CTA_URL,
-    }).catch((error) => {
-      console.error('[chat:title:bg]', {
-        errorName: error instanceof Error ? error.name : typeof error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-    }),
-  );
+      exchange: { message: body.data.message, reply: body.data.reply },
+    });
+    if (title) return c.json({ title, titleStatus: 'generated' as const });
+  } catch (error) {
+    console.error('[chat:title]', {
+      errorName: error instanceof Error ? error.name : typeof error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+  }
+  // Small talk or a model failure: keep the fallback; the client retries on a later turn.
   return c.json({ title: fallback, titleStatus: 'fallback' as const });
 });
 
