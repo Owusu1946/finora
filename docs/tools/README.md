@@ -10,6 +10,7 @@ Product architecture: [`.agents/FINORA_VISION.md`](../../.agents/FINORA_VISION.m
 | [mcp.md](./mcp.md)                           | What **external AI agents** actually get via MCP        |
 | [mobile.md](./mobile.md)                     | What the **Expo chat** mock adapter uses today          |
 | [business-apps.md](./business-apps.md)       | Composio business apps and how chat uses them           |
+| [automations.md](./automations.md)           | Automation triggers, delivery to chat, and chat tools   |
 | [WeWire coverage](../wewire-api-coverage.md) | WeWire endpoint priorities and live-integration gaps    |
 
 ---
