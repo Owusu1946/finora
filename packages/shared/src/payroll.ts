@@ -167,3 +167,64 @@ export const PayrollAttachmentReferenceSchema = z
     name: boundedText(255),
   })
   .strict();
+
+export const PayrollRunStatusSchema = z.enum([
+  'pending_approval',
+  'completed',
+  'failed',
+  'cancelled',
+]);
+export const PayrollRunItemStatusSchema = z.enum(['pending', 'sent', 'failed']);
+
+/** One employee's payout in a run. The destination value is masked. */
+export const PayrollRunItemSchema = z.object({
+  id: z.string(),
+  employeeName: z.string(),
+  role: z.string().nullable(),
+  amount: z.number().nonnegative(),
+  destination: z.object({
+    kind: z.enum(['mobile_money', 'bank_account']),
+    label: z.string(),
+    value: z.string(),
+  }),
+  reference: z.string().nullable(),
+  status: PayrollRunItemStatusSchema,
+  failureReason: z.string().nullable(),
+});
+export type PayrollRunItem = z.infer<typeof PayrollRunItemSchema>;
+
+/**
+ * A prepared payroll (or single employee payment). It pays nobody until the
+ * user approves it with the passcode in the app. Amounts are in major units.
+ */
+export const PayrollRunSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(['payroll', 'single']),
+  importId: z.string().nullable(),
+  period: z.string().nullable(),
+  currency: z.string(),
+  total: z.number().nonnegative(),
+  status: PayrollRunStatusSchema,
+  /** `demo` until WeWire payouts are live: nobody is really paid. */
+  mode: z.enum(['demo', 'live']),
+  funding: z
+    .object({ walletId: z.string(), currency: z.string(), amount: z.number().nonnegative() })
+    .nullable(),
+  items: z.array(PayrollRunItemSchema),
+  createdAt: z.iso.datetime(),
+  executedAt: z.iso.datetime().nullable(),
+});
+export type PayrollRun = z.infer<typeof PayrollRunSchema>;
+
+export const PayrollRunResponseSchema = z.object({ run: PayrollRunSchema });
+export const PayrollRunListResponseSchema = z.object({ runs: z.array(PayrollRunSchema) });
+
+/** Approve and pay a run from a wallet. One currency per run; funding may convert. */
+export const ExecutePayrollRunRequestSchema = z
+  .object({
+    fundingWalletId: z.string().min(1).max(80),
+    fundingCurrency: z.string().min(3).max(12),
+    fundingAmount: z.number().positive(),
+  })
+  .strict();
+export type ExecutePayrollRunRequest = z.infer<typeof ExecutePayrollRunRequestSchema>;
