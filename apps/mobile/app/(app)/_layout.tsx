@@ -144,10 +144,11 @@ function bodyTitleScreenOptions(title: string) {
   };
 }
 
-export default function AppLayout() {
-  const { colors } = useTheme();
-  const { t } = useSettings();
-  const insets = useSafeAreaInsets();
+/**
+ * Dismisses the keyboard on route changes. Lives in its own component so a
+ * navigation re-renders only this, not the whole drawer navigator and headers.
+ */
+function KeyboardDismissOnRouteChange() {
   const pathname = usePathname();
   const previousPathname = useRef(pathname);
 
@@ -156,167 +157,178 @@ export default function AppLayout() {
     previousPathname.current = pathname;
   }, [pathname]);
 
+  return null;
+}
+
+export default function AppLayout() {
+  const { colors } = useTheme();
+  const { t } = useSettings();
+  const insets = useSafeAreaInsets();
+
   return (
-    <Drawer
-      drawerContent={(props) => <ThreadListDrawer {...props} />}
-      screenOptions={{
-        headerLeft: () => <DrawerTrigger />,
-        headerRight: () => <ChatHeaderRight />,
-        headerBackground: () => <HeaderBlurBackground />,
-        headerLeftContainerStyle: { paddingLeft: 16, paddingBottom: 8 },
-        headerRightContainerStyle: { gap: 10, paddingRight: 16, paddingBottom: 8 },
-        headerTitleContainerStyle: { paddingBottom: 8 },
-        headerShadowVisible: false,
-        headerStatusBarHeight: insets.top + 8,
-        headerTintColor: colors.foreground,
-        headerStyle: { backgroundColor: 'transparent' },
-        headerTitleAlign: 'center',
-        drawerType: 'back',
-        overlayColor: 'rgba(0, 0, 0, 0.26)',
-        swipeEnabled: true,
-        drawerStyle: {
-          width: '78%',
-          backgroundColor: colors.background,
-          borderRightColor: colors.border,
-          borderRightWidth: StyleSheet.hairlineWidth,
-        },
-        sceneStyle: {
-          backgroundColor: colors.background,
-          boxShadow: '-5px 0px 16px rgba(0, 0, 0, 0.14)',
-        },
-      }}
-    >
-      <Drawer.Screen
-        name='index'
-        options={{
-          title: '',
-          headerTitle: () => null,
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent' },
+    <>
+      <KeyboardDismissOnRouteChange />
+      <Drawer
+        drawerContent={(props) => <ThreadListDrawer {...props} />}
+        screenOptions={{
           headerLeft: () => <DrawerTrigger />,
-        }}
-      />
-      <Drawer.Screen
-        name='wallets'
-        options={{
-          ...screenOptions(t('nav_wallets')),
-          headerTransparent: true,
+          headerRight: () => <ChatHeaderRight />,
+          headerBackground: () => <HeaderBlurBackground />,
+          headerLeftContainerStyle: { paddingLeft: 16, paddingBottom: 8 },
+          headerRightContainerStyle: { gap: 10, paddingRight: 16, paddingBottom: 8 },
+          headerTitleContainerStyle: { paddingBottom: 8 },
+          headerShadowVisible: false,
+          headerStatusBarHeight: insets.top + 8,
+          headerTintColor: colors.foreground,
           headerStyle: { backgroundColor: 'transparent' },
+          headerTitleAlign: 'center',
+          drawerType: 'back',
+          overlayColor: 'rgba(0, 0, 0, 0.26)',
+          swipeEnabled: true,
+          drawerStyle: {
+            width: '78%',
+            backgroundColor: colors.background,
+            borderRightColor: colors.border,
+            borderRightWidth: StyleSheet.hairlineWidth,
+          },
+          sceneStyle: {
+            backgroundColor: colors.background,
+            boxShadow: '-5px 0px 16px rgba(0, 0, 0, 0.14)',
+          },
         }}
-      />
-      <Drawer.Screen
-        name='cards'
-        options={bodyTitleScreenOptions(t('nav_cards'))}
-      />
-      <Drawer.Screen
-        name='virtual-card'
-        options={{
-          ...screenOptions(t('nav_request_card')),
-          drawerItemStyle: { display: 'none' },
-          headerLeft: () => <BackHeaderButton fallback='cards' />,
-          headerRight: () => null,
-        }}
-      />
-      <Drawer.Screen
-        name='activity'
-        options={{
-          ...bodyTitleScreenOptions(t('nav_activity')),
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent' },
-        }}
-      />
-      <Drawer.Screen
-        name='card/[id]'
-        options={{
-          ...screenOptions(t('nav_card')),
-          drawerItemStyle: { display: 'none' },
-          headerLeft: () => <BackHeaderButton fallback='cards' />,
-          headerRight: () => null,
-        }}
-      />
-      <Drawer.Screen
-        name='approvals'
-        options={bodyTitleScreenOptions(t('nav_approvals'))}
-      />
-      <Drawer.Screen
-        name='invoices'
-        options={bodyTitleScreenOptions(t('nav_invoices'))}
-      />
-      <Drawer.Screen
-        name='recurring'
-        options={bodyTitleScreenOptions(t('nav_recurring'))}
-      />
-      <Drawer.Screen
-        name='payroll'
-        options={bodyTitleScreenOptions(t('nav_payroll'))}
-      />
-      <Drawer.Screen
-        name='suppliers'
-        options={bodyTitleScreenOptions(t('nav_suppliers'))}
-      />
-      <Drawer.Screen
-        name='beneficiaries'
-        options={bodyTitleScreenOptions(t('nav_beneficiaries'))}
-      />
-      <Drawer.Screen
-        name='expenses'
-        options={bodyTitleScreenOptions(t('nav_expenses'))}
-      />
-      <Drawer.Screen
-        name='treasury'
-        options={bodyTitleScreenOptions(t('nav_treasury'))}
-      />
-      <Drawer.Screen
-        name='automations'
-        options={bodyTitleScreenOptions(t('nav_automations'))}
-      />
-      <Drawer.Screen
-        name='policies'
-        options={bodyTitleScreenOptions(t('nav_policies'))}
-      />
-      <Drawer.Screen
-        name='contacts'
-        options={bodyTitleScreenOptions(t('nav_contacts'))}
-      />
-      <Drawer.Screen
-        name='integrations'
-        options={bodyTitleScreenOptions(t('nav_integrations'))}
-      />
-      <Drawer.Screen
-        name='settings'
-        options={{
-          title: t('nav_settings'),
-          // Nested settings Stack owns its own headers (hub + drill-downs).
-          headerShown: false,
-        }}
-      />
-      <Drawer.Screen
-        name='transaction/[id]'
-        options={{
-          ...screenOptions(t('nav_transaction')),
-          drawerItemStyle: { display: 'none' },
-          headerLeft: () => <BackHeaderButton />,
-          headerRight: () => null,
-        }}
-      />
-      <Drawer.Screen
-        name='approval/[id]'
-        options={{
-          ...screenOptions(t('nav_approve_payment')),
-          drawerItemStyle: { display: 'none' },
-          headerLeft: () => <BackHeaderButton />,
-          headerRight: () => null,
-        }}
-      />
-      <Drawer.Screen
-        name='scan'
-        options={{
-          ...screenOptions(t('nav_scan')),
-          drawerItemStyle: { display: 'none' },
-          headerLeft: () => <BackHeaderButton />,
-          headerRight: () => null,
-        }}
-      />
-    </Drawer>
+      >
+        <Drawer.Screen
+          name='index'
+          options={{
+            title: '',
+            headerTitle: () => null,
+            headerTransparent: true,
+            headerStyle: { backgroundColor: 'transparent' },
+            headerLeft: () => <DrawerTrigger />,
+          }}
+        />
+        <Drawer.Screen
+          name='wallets'
+          options={{
+            ...screenOptions(t('nav_wallets')),
+            headerTransparent: true,
+            headerStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Drawer.Screen
+          name='cards'
+          options={bodyTitleScreenOptions(t('nav_cards'))}
+        />
+        <Drawer.Screen
+          name='virtual-card'
+          options={{
+            ...screenOptions(t('nav_request_card')),
+            drawerItemStyle: { display: 'none' },
+            headerLeft: () => <BackHeaderButton fallback='cards' />,
+            headerRight: () => null,
+          }}
+        />
+        <Drawer.Screen
+          name='activity'
+          options={{
+            ...bodyTitleScreenOptions(t('nav_activity')),
+            headerTransparent: true,
+            headerStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Drawer.Screen
+          name='card/[id]'
+          options={{
+            ...screenOptions(t('nav_card')),
+            drawerItemStyle: { display: 'none' },
+            headerLeft: () => <BackHeaderButton fallback='cards' />,
+            headerRight: () => null,
+          }}
+        />
+        <Drawer.Screen
+          name='approvals'
+          options={bodyTitleScreenOptions(t('nav_approvals'))}
+        />
+        <Drawer.Screen
+          name='invoices'
+          options={bodyTitleScreenOptions(t('nav_invoices'))}
+        />
+        <Drawer.Screen
+          name='recurring'
+          options={bodyTitleScreenOptions(t('nav_recurring'))}
+        />
+        <Drawer.Screen
+          name='payroll'
+          options={bodyTitleScreenOptions(t('nav_payroll'))}
+        />
+        <Drawer.Screen
+          name='suppliers'
+          options={bodyTitleScreenOptions(t('nav_suppliers'))}
+        />
+        <Drawer.Screen
+          name='beneficiaries'
+          options={bodyTitleScreenOptions(t('nav_beneficiaries'))}
+        />
+        <Drawer.Screen
+          name='expenses'
+          options={bodyTitleScreenOptions(t('nav_expenses'))}
+        />
+        <Drawer.Screen
+          name='treasury'
+          options={bodyTitleScreenOptions(t('nav_treasury'))}
+        />
+        <Drawer.Screen
+          name='automations'
+          options={bodyTitleScreenOptions(t('nav_automations'))}
+        />
+        <Drawer.Screen
+          name='policies'
+          options={bodyTitleScreenOptions(t('nav_policies'))}
+        />
+        <Drawer.Screen
+          name='contacts'
+          options={bodyTitleScreenOptions(t('nav_contacts'))}
+        />
+        <Drawer.Screen
+          name='integrations'
+          options={bodyTitleScreenOptions(t('nav_integrations'))}
+        />
+        <Drawer.Screen
+          name='settings'
+          options={{
+            title: t('nav_settings'),
+            // Nested settings Stack owns its own headers (hub + drill-downs).
+            headerShown: false,
+          }}
+        />
+        <Drawer.Screen
+          name='transaction/[id]'
+          options={{
+            ...screenOptions(t('nav_transaction')),
+            drawerItemStyle: { display: 'none' },
+            headerLeft: () => <BackHeaderButton />,
+            headerRight: () => null,
+          }}
+        />
+        <Drawer.Screen
+          name='approval/[id]'
+          options={{
+            ...screenOptions(t('nav_approve_payment')),
+            drawerItemStyle: { display: 'none' },
+            headerLeft: () => <BackHeaderButton />,
+            headerRight: () => null,
+          }}
+        />
+        <Drawer.Screen
+          name='scan'
+          options={{
+            ...screenOptions(t('nav_scan')),
+            drawerItemStyle: { display: 'none' },
+            headerLeft: () => <BackHeaderButton />,
+            headerRight: () => null,
+          }}
+        />
+      </Drawer>
+    </>
   );
 }
