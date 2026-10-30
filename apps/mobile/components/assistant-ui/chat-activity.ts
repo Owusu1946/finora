@@ -49,6 +49,8 @@ const TOOL_ACTIVITY: Record<string, ChatActivity> = {
   run_app_action: { orbState: 'working', label: 'Reading from your connected app...' },
   draft_whatsapp_message: { orbState: 'shaping', label: 'Drafting the WhatsApp message...' },
   list_automations: { orbState: 'searching', label: 'Loading automations...' },
+  create_automation: { orbState: 'shaping', label: 'Drafting the automation...' },
+  manage_automation: { orbState: 'working', label: 'Updating the automation...' },
   get_treasury_overview: { orbState: 'solving', label: 'Preparing your treasury overview...' },
   financial_report: { orbState: 'solving', label: 'Preparing your financial report...' },
   generate_financial_insights: {
