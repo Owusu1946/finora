@@ -26,6 +26,8 @@ import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
 const LEGACY_CARDS_KEY = 'finora.virtual-cards.v1';
 const BASE_UNREAD_KEY = 'finora.virtual-cards.unread.v1';
 const REQUEST_TIMEOUT_MS = 20_000;
+/** How long to wait for Clerk to restore the session on a cold start. */
+const SESSION_WAIT_MS = 10_000;
 const unreadKey = () => userStorageKey(BASE_UNREAD_KEY);
 
 const listeners = new Set<() => void>();
@@ -85,10 +87,38 @@ async function clearLegacyCards() {
   await AsyncStorage.removeItem(userStorageKey(LEGACY_CARDS_KEY)).catch(() => undefined);
 }
 
+/**
+ * Clerk restores the session asynchronously after a cold start, so a screen
+ * that loads right away would otherwise find no token and show no cards.
+ */
+async function sessionToken() {
+  const clerk = getClerkInstance();
+  if (!clerk.loaded) {
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let unsubscribe = () => {};
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe();
+        resolve();
+      };
+      timer = setTimeout(finish, SESSION_WAIT_MS);
+      unsubscribe = clerk.addListener(() => {
+        if (clerk.loaded) finish();
+      });
+      if (clerk.loaded) finish();
+    });
+  }
+  return (await clerk.session?.getToken()) ?? null;
+}
+
 async function cardsRequest(path: string, init?: { method: string; body: unknown }) {
   const apiUrl = getApiUrl();
   if (!apiUrl) throw new VirtualCardError('Cards are unavailable right now.');
-  const token = await getClerkInstance().session?.getToken();
+  const token = await sessionToken();
   if (!token) throw new VirtualCardError('Your session is not ready. Try again.');
 
   const controller = new AbortController();
@@ -131,17 +161,28 @@ function replaceCached(card: VirtualCard) {
     : [card, ...cachedCards];
 }
 
-/** The user's cards; falls back to the last fetched list if the API can't be reached. */
-export async function listVirtualCards(): Promise<VirtualCard[]> {
+/**
+ * The user's cards plus a user-facing error when they couldn't be loaded, so a
+ * screen can tell "no cards" from "couldn't load". Falls back to the last list.
+ */
+export async function loadVirtualCards(): Promise<{ cards: VirtualCard[]; error: string | null }> {
   await clearLegacyCards();
   try {
     const { cards } = VirtualCardListResponseSchema.parse(await cardsRequest(''));
     cachedCards = cards;
-    return cards;
+    return { cards, error: null };
   } catch (error) {
     if (__DEV__) console.warn('[cards] list failed', error);
-    return cachedCards;
+    return {
+      cards: cachedCards,
+      error: error instanceof VirtualCardError ? error.message : "Couldn't load your cards.",
+    };
   }
+}
+
+/** The user's cards; falls back to the last fetched list if the API can't be reached. */
+export async function listVirtualCards(): Promise<VirtualCard[]> {
+  return (await loadVirtualCards()).cards;
 }
 
 export async function getVirtualCard(id: string): Promise<VirtualCard | null> {
