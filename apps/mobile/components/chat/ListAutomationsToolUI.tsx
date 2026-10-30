@@ -1,14 +1,22 @@
 import { makeAssistantToolUI } from '@assistant-ui/react-native';
 import { View } from 'react-native';
 
-import type { Automation } from '@/lib/automations-storage';
+/** From the API (description) or the offline demo adapter (trigger and action labels). */
+type ListedAutomation = {
+  id: string;
+  name: string;
+  status: string;
+  description?: string;
+  trigger?: string;
+  action?: string;
+};
 
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type Result = { automations?: Automation[] };
+type Result = { automations?: ListedAutomation[] };
 
 export const ListAutomationsToolUI = makeAssistantToolUI<Record<string, never>, Result>({
   toolName: 'list_automations',
@@ -38,7 +46,7 @@ export const ListAutomationsToolUI = makeAssistantToolUI<Record<string, never>, 
           style={[styles.box]}
         >
           <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
-            No automations yet. Rules only prepare actions — money still needs your approval.
+            No automations yet. Ask Finora, e.g. “Every Monday at 8, remind me to check sales”.
           </Text>
         </View>
       );
@@ -60,7 +68,7 @@ export const ListAutomationsToolUI = makeAssistantToolUI<Record<string, never>, 
             <View className='flex-1 gap-0.5 min-w-0'>
               <Text className='font-sans-semibold text-[15px] text-foreground'>{a.name}</Text>
               <Text className='font-sans-medium text-[13px] leading-[18px] text-muted-foreground'>
-                When {a.trigger} → {a.action}
+                {a.description ?? `When ${a.trigger} → ${a.action}`}
               </Text>
             </View>
             <Text

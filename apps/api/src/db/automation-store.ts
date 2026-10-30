@@ -105,6 +105,13 @@ export async function listActiveAutomations(db: Database, limit = 500) {
     .limit(limit);
 }
 
+export async function listActiveAutomationsForUser(db: Database, userId: string) {
+  return db
+    .select()
+    .from(automations)
+    .where(and(eq(automations.clerkUserId, userId), eq(automations.status, 'active')));
+}
+
 export async function markAutomationEvaluation(
   db: Database,
   automationId: string,
@@ -266,8 +273,7 @@ export async function listUserAutomationActivity(
       automationName: automations.name,
       status: automationExecutionLogs.status,
       summary: automationExecutionLogs.summary,
-      preparationId: automationExecutionLogs.preparationId,
-      approvalId: automationExecutionLogs.approvalId,
+      details: automationExecutionLogs.details,
       errorCode: automationExecutionLogs.errorCode,
       createdAt: automationExecutionLogs.createdAt,
     })

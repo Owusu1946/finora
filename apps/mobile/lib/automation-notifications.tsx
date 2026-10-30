@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 
 import { listAutomationActivity, type AutomationActivity } from './automations-api';
+import { requestOpenThread } from './open-thread';
 import { useSettings } from './settings-context';
 
 const CHANNEL_ID = 'automations';
@@ -26,12 +27,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function activityRoute(activity: AutomationActivity): Href {
-  return activity.status === 'prepared_approval' ? '/approvals' : '/automations';
-}
-
 function notificationTitle(activity: AutomationActivity) {
-  if (activity.status === 'prepared_approval') return 'Ready for your approval';
+  if (activity.status === 'prepared_approval') return `${activity.automationName} is ready`;
   if (activity.status === 'failed') return 'Automation needs attention';
   return activity.automationName;
 }
@@ -66,9 +63,10 @@ async function presentActivity(activity: AutomationActivity) {
       title: notificationTitle(activity),
       body: activity.summary,
       data: {
-        url: activityRoute(activity),
+        // Runs post to the Automations chat; failures are explained on the Automations screen.
+        url: '/automations',
+        chatId: activity.chatId,
         automationId: activity.automationId,
-        approvalId: activity.approvalId,
       },
     },
     trigger: Platform.OS === 'android' ? { channelId: CHANNEL_ID } : null,
@@ -92,9 +90,10 @@ export function AutomationNotificationBridge() {
 
   const openNotification = useCallback(
     async (response: Notifications.NotificationResponse | null) => {
-      const url = response?.notification.request.content.data?.url;
-      if (typeof url !== 'string') return;
-      router.push(url as Href);
+      const data = response?.notification.request.content.data;
+      if (typeof data?.chatId === 'string') requestOpenThread(data.chatId);
+      else if (typeof data?.url === 'string') router.push(data.url as Href);
+      else return;
       await Notifications.clearLastNotificationResponseAsync().catch(() => undefined);
     },
     [router],

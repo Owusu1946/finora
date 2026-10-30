@@ -37,6 +37,11 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { VirtualCardIssuedPopup } from '@/components/cards/VirtualCardIssuedPopup';
+import {
+  AutomationReadyToolUI,
+  CreateAutomationToolUI,
+  ManageAutomationToolUI,
+} from '@/components/chat/AutomationToolUIs';
 import { ConnectFallbackToolUIs } from '@/components/chat/ConnectFallbackToolUIs';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
@@ -83,12 +88,14 @@ import {
 import { AppSwitcherPrivacy } from '@/components/privacy/AppSwitcherPrivacy';
 import { SplashOverlay, SplashPlaceholder } from '@/components/splash/SplashOverlay';
 import { useSplashGate } from '@/components/splash/useSplashGate';
+import { OpenThreadBridge } from '@/components/thread-list/OpenThreadBridge';
 import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
+import { AutomationBalanceBridge } from '@/lib/automation-balance-events';
 import { AutomationNotificationBridge } from '@/lib/automation-notifications';
 import { createFinoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
@@ -287,6 +294,7 @@ function FinoraRuntimeContent({
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       {remoteConfig ? <InstantRemoteTitleSync config={remoteConfig} /> : null}
+      <OpenThreadBridge />
       <PreparePaymentToolUI />
       <FundAccountToolUI />
       <ListReceiveMethodsToolUI />
@@ -303,6 +311,9 @@ function FinoraRuntimeContent({
       <ListBeneficiariesToolUI />
       <ListPoliciesToolUI />
       <ListAutomationsToolUI />
+      <CreateAutomationToolUI />
+      <ManageAutomationToolUI />
+      <AutomationReadyToolUI />
       <ListExpensesToolUI />
       <ListVirtualAccountsToolUI />
       <TreasuryOverviewToolUI />
@@ -478,6 +489,7 @@ function RootApp() {
                   >
                     <ProfileSyncBridge />
                     <AutomationNotificationBridge />
+                    <AutomationBalanceBridge />
                     <FinoraAssistantRuntime
                       key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
                       remoteChat={boot.remoteChat}

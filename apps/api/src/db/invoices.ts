@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, gt, lt, ne, or } from 'drizzle-orm';
+import { and, desc, eq, gte, gt, lt, ne, or, sql } from 'drizzle-orm';
 
 import type { Database } from './client';
 
@@ -94,8 +94,9 @@ export async function getInvoiceSyncState(db: Database, clerkUserId: string) {
   return integration ?? null;
 }
 
+/** Saves a Gmail invoice. `created` is false when it was already stored. */
 export async function upsertGmailInvoice(db: Database, input: typeof invoices.$inferInsert) {
-  await db
+  const [row] = await db
     .insert(invoices)
     .values(input)
     .onConflictDoUpdate({
@@ -113,5 +114,8 @@ export async function upsertGmailInvoice(db: Database, input: typeof invoices.$i
         confidence: input.confidence,
         updatedAt: new Date(),
       },
-    });
+    })
+    // xmax is 0 only for a freshly inserted row.
+    .returning({ id: invoices.id, created: sql<boolean>`(xmax = 0)` });
+  return row!;
 }
