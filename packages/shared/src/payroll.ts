@@ -53,7 +53,8 @@ export const PayrollImportRowSchema = z
 export const PayrollInspectionResponseSchema = z
   .object({
     ok: z.boolean(),
-    attachmentId: z.string().uuid(),
+    /** Absent for payroll typed in chat. */
+    attachmentId: z.string().uuid().optional(),
     importId: z.string().uuid().optional(),
     sourceName: boundedText(255).optional(),
     status: PayrollImportStatusSchema.optional(),
@@ -167,3 +168,91 @@ export const PayrollAttachmentReferenceSchema = z
     name: boundedText(255),
   })
   .strict();
+
+export const PayrollRunStatusSchema = z.enum([
+  'pending_approval',
+  'completed',
+  'failed',
+  'cancelled',
+]);
+export const PayrollRunItemStatusSchema = z.enum(['pending', 'sent', 'failed']);
+
+/** One employee's payout in a run. The destination value is masked. */
+export const PayrollRunItemSchema = z.object({
+  id: z.string(),
+  employeeName: z.string(),
+  role: z.string().nullable(),
+  amount: z.number().nonnegative(),
+  destination: z.object({
+    kind: z.enum(['mobile_money', 'bank_account']),
+    label: z.string(),
+    value: z.string(),
+  }),
+  reference: z.string().nullable(),
+  status: PayrollRunItemStatusSchema,
+  failureReason: z.string().nullable(),
+});
+export type PayrollRunItem = z.infer<typeof PayrollRunItemSchema>;
+
+/**
+ * A prepared payroll (or single employee payment). It pays nobody until the
+ * user approves it with the passcode in the app. Amounts are in major units.
+ */
+export const PayrollRunSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(['payroll', 'single']),
+  importId: z.string().nullable(),
+  period: z.string().nullable(),
+  currency: z.string(),
+  total: z.number().nonnegative(),
+  status: PayrollRunStatusSchema,
+  /** `demo` until WeWire payouts are live: nobody is really paid. */
+  mode: z.enum(['demo', 'live']),
+  funding: z
+    .object({ walletId: z.string(), currency: z.string(), amount: z.number().nonnegative() })
+    .nullable(),
+  items: z.array(PayrollRunItemSchema),
+  createdAt: z.iso.datetime(),
+  executedAt: z.iso.datetime().nullable(),
+});
+export type PayrollRun = z.infer<typeof PayrollRunSchema>;
+
+export const PayrollRunResponseSchema = z.object({ run: PayrollRunSchema });
+export const PayrollRunListResponseSchema = z.object({ runs: z.array(PayrollRunSchema) });
+
+/** Approve and pay a run from a wallet. One currency per run; funding may convert. */
+export const ExecutePayrollRunRequestSchema = z
+  .object({
+    fundingWalletId: z.string().min(1).max(80),
+    fundingCurrency: z.string().min(3).max(12),
+    fundingAmount: z.number().positive(),
+  })
+  .strict();
+export type ExecutePayrollRunRequest = z.infer<typeof ExecutePayrollRunRequestSchema>;
+
+/** One employee as the user typed or said it in chat. Missing details stay null. */
+export const DraftPayrollRowSchema = z
+  .object({
+    employeeName: boundedText(200),
+    amount: z.number().positive().nullable().describe('Null when the user did not say'),
+    currency: boundedText(12)
+      .nullable()
+      .describe('ISO code, e.g. GHS. Null when not stated and not clear from context'),
+    destination: boundedText(160)
+      .nullable()
+      .describe('Mobile money number or bank account number, exactly as given'),
+    destinationType: z.enum(['mobile_money', 'bank_account']).nullable(),
+    rail: boundedText(40).nullable().describe('Network or bank, e.g. MTN MoMo, GCB Bank'),
+    role: boundedText(160).nullable(),
+    reference: boundedText(140).nullable(),
+  })
+  .strict();
+
+/** Chat: turn employees the user typed or said into a payroll they can review. */
+export const DraftPayrollInputSchema = z
+  .object({
+    period: boundedText(80).nullable().describe('Pay period, e.g. "October 2026"'),
+    rows: z.array(DraftPayrollRowSchema).min(1).max(200),
+  })
+  .strict();
+export type DraftPayrollInput = z.infer<typeof DraftPayrollInputSchema>;

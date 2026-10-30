@@ -40,17 +40,19 @@ export function defaultFundingWalletId(wallets: WalletItem[], amountUsd: number)
 }
 
 /**
- * Pick the account a prepaid card is funded from. Accounts that can't cover the
- * load plus the issue fee are disabled.
+ * Pick the account a payment is funded from. Accounts that can't cover it are
+ * disabled: by default the card load plus the issue fee, or `isAffordable`.
  */
 export function CardFundingSource({
   wallets,
-  amountUsd,
+  amountUsd = 0,
+  isAffordable,
   selectedId,
   onSelect,
 }: {
   wallets: WalletItem[];
-  amountUsd: number;
+  amountUsd?: number;
+  isAffordable?: (wallet: WalletItem) => boolean;
   selectedId: string | null;
   onSelect: (walletId: string) => void;
 }) {
@@ -59,7 +61,7 @@ export function CardFundingSource({
   return (
     <View className='gap-2'>
       {wallets.map((wallet) => {
-        const affordable = canFundCard(wallet, amountUsd);
+        const affordable = isAffordable ? isAffordable(wallet) : canFundCard(wallet, amountUsd);
         const selected = wallet.id === selectedId;
         return (
           <Pressable

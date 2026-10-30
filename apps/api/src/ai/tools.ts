@@ -34,12 +34,15 @@ import {
   ProposePayrollChangesInputSchema,
   ListPayrollImportsInputSchema,
   ForgetMemoryInputSchema,
+  DraftPayrollInputSchema,
+  type DraftPayrollInput,
   GOOGLE_CONNECT_OPTIONS,
   ListMemoriesInputSchema,
   UpdateMemoryInputSchema,
   RememberMemoryDetailsInputSchema,
   type CreateMemoryInput,
   type MemoryKind,
+  type PayrollRun,
   type UpdateMemoryInput,
 } from '@finora/shared';
 import { tool, zodSchema, type ToolSet } from 'ai';
@@ -48,10 +51,12 @@ import type { GmailSearchInput } from '../integrations/google-gmail';
 
 import { AUTOMATION_TOOL_NAMES } from '../automations/tools';
 import { BUSINESS_APP_TOOL_NAMES } from '../business-apps/tools';
+import { PayrollPreparationError } from '../payroll/prepare-import';
 import { v1 } from '../routes/v1';
 
 export const CHAT_AGENT_TOOL_NAMES = [
   'list_payroll_imports',
+  'draft_payroll',
   'propose_payroll_changes',
   'inspect_payroll_attachment',
   'search_drive_files',
@@ -159,20 +164,6 @@ function publicDestination(value: unknown) {
   };
 }
 
-function publicEmployee(value: unknown) {
-  const employee = asRecord(value);
-  if (!employee || employee.id === undefined || employee.name === undefined) return null;
-  return {
-    id: String(employee.id),
-    name: String(employee.name),
-    role: String(employee.role ?? ''),
-    salary: Number(employee.salary ?? 0),
-    currency: String(employee.currency ?? 'USD'),
-    destination: publicDestination(employee.destination),
-    status: employee.status === 'inactive' ? 'inactive' : 'active',
-  };
-}
-
 function publicSupplier(value: unknown) {
   const supplier = asRecord(value);
   if (!supplier || supplier.id === undefined || supplier.name === undefined) return null;
@@ -239,18 +230,19 @@ function webToolFailure(error: unknown, fallback: string) {
 }
 type PayrollToolReader = {
   inspectAttachment: (attachmentId: string) => Promise<unknown>;
+  draft?: (input: DraftPayrollInput) => Promise<unknown>;
   prepareImport: (input: {
     importId: string;
     period?: string;
     rowIds?: string[];
-  }) => Promise<Record<string, unknown>>;
+  }) => Promise<PayrollRun>;
   prepareEmployee: (input: {
     importId: string;
     rowId: string;
     amount?: number;
     currency?: string;
     reference?: string;
-  }) => Promise<Record<string, unknown>>;
+  }) => Promise<PayrollRun>;
   listImports: (input: { query?: string; importId?: string; limit: number }) => Promise<unknown>;
   proposeChanges: (input: unknown) => Promise<unknown>;
 };
@@ -274,6 +266,14 @@ function withGoogleConnect<T>(result: T, app: keyof typeof GOOGLE_CONNECT_OPTION
     code.endsWith('_not_connected') ||
     code.endsWith('_reauthorization_required');
   return missing ? { ...result, connectOptions: [GOOGLE_CONNECT_OPTIONS[app]] } : result;
+}
+
+/** Preparation errors (blocked import, mixed currencies, ...) the model can explain. */
+function payrollToolFailure(error: unknown) {
+  if (error instanceof PayrollPreparationError) {
+    return { ok: false as const, errorCode: error.code, ...error.details };
+  }
+  throw error;
 }
 
 function gmailToolFailure(error: unknown, operation: string) {
@@ -400,6 +400,15 @@ export function createChatAgentTools(
       inputSchema: zodSchema(ForgetMemoryInputSchema),
       execute: async ({ id }) =>
         memory?.forget(id) ?? { ok: false, errorCode: 'memory_unavailable' },
+    }),
+    draft_payroll: tool({
+      description:
+        'Create a payroll from employees the user typed or said in chat, e.g. "pay Ama 2,000 GHS to MTN 0241234567 and Kofi 1,500 to GCB 1234567890". Put each person in rows exactly as given; use null for anything they did not say and never invent amounts, currencies, or account numbers. If one currency or network clearly applies to everyone, use it for each row. The result is the same review card as an uploaded file: flagged rows must be fixed before prepare_payroll.',
+      inputSchema: zodSchema(DraftPayrollInputSchema),
+      execute: async (input) => {
+        if (!payroll?.draft) throw new Error('payroll_unavailable');
+        return payroll.draft(input);
+      },
     }),
     list_payroll_imports: tool({
       description:
@@ -746,30 +755,28 @@ export function createChatAgentTools(
     }),
     prepare_payroll: tool({
       description:
-        'Prepare a full or selected imported payroll for review and human approval. Pass rowIds only when the user named a specific set of employees. Use exact IDs returned by list_employees or list_payroll_imports. This never pays employees by itself.',
+        'Prepare a full or selected imported payroll for review and approval. Pass rowIds only when the user named a specific set of employees. Use exact IDs returned by list_employees or list_payroll_imports. The chat shows a card where the user picks the account to pay from and approves with their passcode; this tool never pays anyone. One currency per run: if the import mixes currencies, explain it and prepare each currency with rowIds.',
       inputSchema: zodSchema(PreparePayrollInputSchema),
       execute: async (input) => {
         if (!payroll) throw new Error('payroll_unavailable');
-        const result = await payroll.prepareImport(input);
-        const payload = asRecord(result.payload) ?? {};
-        const employees = Array.isArray(payload.employees) ? payload.employees : [];
-        return {
-          ...result,
-          period: String('period' in payload ? payload.period : (input.period ?? '')),
-          employees: employees.map(publicEmployee).filter(Boolean),
-          total: Number('total' in payload ? payload.total : 0),
-          currency: String('currency' in payload ? payload.currency : 'USD'),
-        };
+        try {
+          return { ok: true as const, run: await payroll.prepareImport(input) };
+        } catch (error) {
+          return payrollToolFailure(error);
+        }
       },
     }),
     prepare_employee_payment: tool({
       description:
-        'Prepare one imported employee payment using the payout destination already stored on that exact payroll row. Use only after resolving a unique importId and rowId. An optional amount may override the stored salary for a bonus or partial payment. This is preparation-only and never moves money.',
+        'Prepare one imported employee payment using the payout destination already stored on that exact payroll row. Use only after resolving a unique importId and rowId. An optional amount may override the stored salary for a bonus or partial payment. The chat shows an approval card; this tool never moves money.',
       inputSchema: zodSchema(PrepareEmployeePaymentInputSchema),
       execute: async (input) => {
         if (!payroll) throw new Error('payroll_unavailable');
-        const result = await payroll.prepareEmployee(input);
-        return { ...result, employee: publicEmployee(result.employee) };
+        try {
+          return { ok: true as const, run: await payroll.prepareEmployee(input) };
+        } catch (error) {
+          return payrollToolFailure(error);
+        }
       },
     }),
     prepare_supplier_payment: tool({

@@ -24,6 +24,7 @@ export type Employee = {
 };
 
 const BASE_KEY = 'finora.employees.v1';
+/** Payroll runs used to be kept on the device; now they live in the API. Cleared on sign-out. */
 const BASE_RUN_KEY = 'finora.payroll-runs.v1';
 const key = () => userStorageKey(BASE_KEY);
 const runKey = () => userStorageKey(BASE_RUN_KEY);
@@ -61,16 +62,6 @@ export const MOCK_EMPLOYEES: Employee[] = [
     status: 'active',
   },
 ];
-
-export type PayrollRun = {
-  id: string;
-  period: string;
-  total: number;
-  currency: string;
-  employeeIds: string[];
-  transactionId: string;
-  createdAt: string;
-};
 
 async function getItem(key: string): Promise<string | null> {
   try {
@@ -138,33 +129,6 @@ export async function createEmployee(
     };
     await setItem(storageKey, JSON.stringify([employee, ...employees]));
     return employee;
-  });
-}
-
-export async function listPayrollRuns(storageKey = runKey()): Promise<PayrollRun[]> {
-  const raw = await getItem(storageKey);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as PayrollRun[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export async function recordPayrollRun(
-  run: Omit<PayrollRun, 'id' | 'createdAt'>,
-): Promise<PayrollRun> {
-  const storageKey = runKey();
-  return serializeStorageMutation(storageKey, async () => {
-    const runs = await listPayrollRuns(storageKey);
-    const next: PayrollRun = {
-      ...run,
-      id: `prun_${Crypto.randomUUID()}`,
-      createdAt: new Date().toISOString(),
-    };
-    await setItem(storageKey, JSON.stringify([next, ...runs]));
-    return next;
   });
 }
 

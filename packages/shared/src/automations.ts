@@ -339,7 +339,7 @@ export function describeAutomation(input: {
 export function automationPreparePrompt(name: string, action: AutomationAction) {
   if (action.type === 'notify_chat') return null;
   if (action.type === 'prepare_payroll') {
-    return `Run payroll for my team. This is from my automation "${name}".`;
+    return `Prepare this month's payroll from my latest payroll list. This is from my automation "${name}".`;
   }
   if (action.type === 'prepare_conversion') {
     const { fromCurrency, toCurrency, amount } = action.config;

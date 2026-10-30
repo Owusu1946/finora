@@ -44,6 +44,12 @@ export function usdInWalletCurrency(wallet: WalletItem, usd: number) {
   return usd / rateFor(wallet.currency);
 }
 
+/** `amount` in `currency`, expressed in the wallet's own currency (demo FX rates). */
+export function amountInWalletCurrency(wallet: WalletItem, amount: number, currency: string) {
+  if (currency === wallet.currency) return amount;
+  return (amount * rateFor(currency)) / rateFor(wallet.currency);
+}
+
 /** Wallets with their stored balances; new users start from the demo balances. */
 export async function listWallets(storageKey = key()): Promise<WalletItem[]> {
   const raw = await AsyncStorage.getItem(storageKey).catch(() => null);
@@ -70,12 +76,34 @@ export async function saveWallets(wallets: WalletItem[], storageKey = key()) {
  * Throws `InsufficientFundsError` without changing anything when it can't cover it.
  */
 export async function debitWallet(walletId: string, usdAmount: number) {
+  return debitWalletIn(walletId, usdAmount, 'USD');
+}
+
+/** Puts money back after a payment that failed after its debit. */
+export async function creditWallet(walletId: string, amount: number) {
+  const storageKey = key();
+  return serializeStorageMutation(storageKey, async () => {
+    const wallets = await listWallets(storageKey);
+    await saveWallets(
+      wallets.map((item) =>
+        item.id === walletId ? withBalance(item, item.balance + amount) : item,
+      ),
+      storageKey,
+    );
+  });
+}
+
+/**
+ * Debit `amount` in `currency` from a wallet, converted to the wallet's currency.
+ * Throws `InsufficientFundsError` without changing anything when it can't cover it.
+ */
+export async function debitWalletIn(walletId: string, amountToPay: number, currency: string) {
   const storageKey = key();
   return serializeStorageMutation(storageKey, async () => {
     const wallets = await listWallets(storageKey);
     const wallet = wallets.find((item) => item.id === walletId);
     if (!wallet) throw new Error('That account is no longer available.');
-    const amount = usdInWalletCurrency(wallet, usdAmount);
+    const amount = amountInWalletCurrency(wallet, amountToPay, currency);
     if (amount > wallet.balance) throw new InsufficientFundsError(wallet);
     const updated = withBalance(wallet, wallet.balance - amount);
     await saveWallets(
