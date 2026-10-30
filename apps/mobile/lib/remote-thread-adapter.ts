@@ -181,12 +181,12 @@ function wait(ms: number) {
 }
 
 /**
- * Streams a title into the drawer. The runtime updates the title per chunk,
- * so a generated title types itself in; "New chat" appears at once.
+ * Streams a title into the drawer. The runtime updates the title per chunk, so
+ * an animated title types itself in; otherwise it appears at once.
  */
-function titleAssistantStream(title: string) {
+function titleAssistantStream(title: string, animate: boolean) {
   return createAssistantStream(async (controller) => {
-    if (title === NEW_CHAT_TITLE) {
+    if (!animate) {
       controller.appendText(title);
       return;
     }
@@ -356,9 +356,13 @@ export function createRemoteThreadAdapter(config: RemoteThreadConfig): RemoteThr
       await AsyncStorage.removeItem(threadCacheKey(config.userId));
     },
 
-    async generateTitle(remoteId) {
-      // "New chat" until the API has a real title (ChatGPT-style), never a truncated sentence.
-      return titleAssistantStream(generatedTitles.get(remoteId) ?? NEW_CHAT_TITLE);
+    async generateTitle(remoteId, messages) {
+      // The local fallback shows the instant a message is sent; the generated
+      // title types in over it once the API has one.
+      const generated = generatedTitles.get(remoteId);
+      return generated
+        ? titleAssistantStream(generated, true)
+        : titleAssistantStream(fallbackThreadTitle(messages), false);
     },
   };
 }
