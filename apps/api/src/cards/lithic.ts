@@ -1,4 +1,4 @@
-import type { VirtualCardRecord, VirtualCardStatus } from '@finora/shared';
+import type { CardTransaction, VirtualCardRecord, VirtualCardStatus } from '@finora/shared';
 
 import { z } from 'zod';
 
@@ -28,6 +28,30 @@ const LithicTransactionPageSchema = z.object({
   ),
   has_more: z.boolean(),
 });
+
+const LithicTransactionSchema = z.object({
+  token: z.string(),
+  result: z.string(),
+  status: z.string(),
+  amount: z.number(),
+  merchant_amount: z.number().nullable().optional(),
+  merchant_currency: z.string().nullable().optional(),
+  created: z.string(),
+  merchant: z
+    .object({
+      descriptor: z.string().nullable().optional(),
+      city: z.string().nullable().optional(),
+      country: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+});
+export type LithicTransaction = z.infer<typeof LithicTransactionSchema>;
+
+const LithicTransactionListSchema = z.object({ data: z.array(LithicTransactionSchema) });
+
+/** Most recent card transactions shown on the card screen. */
+const RECENT_TRANSACTION_LIMIT = 50;
 
 export class LithicError extends Error {
   constructor(
@@ -121,6 +145,20 @@ export function createLithicClient(options: {
       );
     },
 
+    /** The card's most recent transactions, newest first. */
+    async listTransactions(token: string) {
+      const query = new URLSearchParams({
+        card_token: token,
+        page_size: String(RECENT_TRANSACTION_LIMIT),
+      });
+      const result = LithicTransactionListSchema.parse(
+        await request(`/v1/transactions?${query.toString()}`),
+      );
+      return result.data
+        .map(toCardTransaction)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+
     /**
      * Lifetime approved spend on a card, in cents (pending and settled). Returns
      * and refunds have negative amounts and reduce spend, never below zero.
@@ -178,5 +216,33 @@ export function toVirtualCard(
     pan,
     expiry: `${card.exp_month.padStart(2, '0')}/${card.exp_year.slice(-2)}`,
     cvv: card.cvv ?? '',
+  };
+}
+
+/** Map a Lithic transaction to what the card screen shows; amounts in USD. */
+export function toCardTransaction(transaction: LithicTransaction): CardTransaction {
+  const state: CardTransaction['state'] =
+    transaction.result !== 'APPROVED' || transaction.status === 'DECLINED'
+      ? 'declined'
+      : transaction.status === 'VOIDED' || transaction.status === 'EXPIRED'
+        ? 'reversed'
+        : transaction.status === 'PENDING'
+          ? 'pending'
+          : 'completed';
+  const amount = transaction.amount / 100;
+  const location = [transaction.merchant?.city, transaction.merchant?.country]
+    .filter(Boolean)
+    .join(', ');
+  return {
+    id: transaction.token,
+    merchant: transaction.merchant?.descriptor?.trim() || 'Card transaction',
+    location: location || null,
+    kind: transaction.amount < 0 ? 'refund' : 'purchase',
+    state,
+    amount,
+    deducted: state === 'pending' || state === 'completed' ? amount : 0,
+    merchantAmount: (transaction.merchant_amount ?? transaction.amount) / 100,
+    merchantCurrency: transaction.merchant_currency ?? 'USD',
+    createdAt: new Date(transaction.created).toISOString(),
   };
 }

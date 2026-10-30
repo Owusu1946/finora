@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { VirtualCardRow } from '../db/virtual-cards';
 
-import { createLithicClient, LithicError, toVirtualCard } from './lithic';
+import { createLithicClient, LithicError, toCardTransaction, toVirtualCard } from './lithic';
 
 const card = {
   token: 'tok_1',
@@ -147,5 +147,59 @@ describe('toVirtualCard', () => {
     expect(toVirtualCard(row, { ...card, state: 'CLOSED' }, 0).status).toBe('cancelled');
     expect(toVirtualCard({ ...row, closedAt: new Date() }, card, 0).status).toBe('cancelled');
     expect(toVirtualCard(row, { ...card, pan: '5555555555554444' }, 0).network).toBe('mastercard');
+  });
+});
+
+describe('toCardTransaction', () => {
+  const base = {
+    token: 'tx_1',
+    result: 'APPROVED',
+    status: 'SETTLED',
+    amount: 1_299,
+    merchant_amount: 1_299,
+    merchant_currency: 'USD',
+    created: '2026-10-30T02:11:02Z',
+    merchant: { descriptor: 'NETFLIX.COM', city: 'Los Gatos', country: 'USA' },
+  };
+
+  it('maps a settled purchase as deducted', () => {
+    expect(toCardTransaction(base)).toEqual({
+      id: 'tx_1',
+      merchant: 'NETFLIX.COM',
+      location: 'Los Gatos, USA',
+      kind: 'purchase',
+      state: 'completed',
+      amount: 12.99,
+      deducted: 12.99,
+      merchantAmount: 12.99,
+      merchantCurrency: 'USD',
+      createdAt: '2026-10-30T02:11:02.000Z',
+    });
+  });
+
+  it('marks pending, refunded, declined, and reversed transactions', () => {
+    expect(toCardTransaction({ ...base, status: 'PENDING' })).toMatchObject({
+      state: 'pending',
+      deducted: 12.99,
+    });
+    expect(toCardTransaction({ ...base, amount: -500 })).toMatchObject({
+      kind: 'refund',
+      deducted: -5,
+    });
+    expect(toCardTransaction({ ...base, result: 'DECLINED', status: 'DECLINED' })).toMatchObject({
+      state: 'declined',
+      deducted: 0,
+    });
+    expect(toCardTransaction({ ...base, status: 'VOIDED' })).toMatchObject({
+      state: 'reversed',
+      deducted: 0,
+    });
+  });
+
+  it('falls back when the merchant is missing', () => {
+    expect(toCardTransaction({ ...base, merchant: null })).toMatchObject({
+      merchant: 'Card transaction',
+      location: null,
+    });
   });
 });
