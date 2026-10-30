@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
@@ -20,6 +20,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, getAccountLabel } from '@/lib/account';
 import { haptics } from '@/lib/haptics';
 import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
+import { listWallets, saveWallets, subscribeWallets } from '@/lib/wallet-balances';
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
@@ -28,7 +29,28 @@ export default function WalletsScreen() {
   const accountType = getAccountType();
   const accountLabel = getAccountLabel(accountType);
 
-  const [wallets, setWallets] = useState<WalletItem[]>(INITIAL_WALLETS_DATA);
+  const [wallets, setWalletsState] = useState<WalletItem[]>(INITIAL_WALLETS_DATA);
+  // Balances live in the shared wallet store, so card funding and this screen agree.
+  useEffect(() => {
+    let disposed = false;
+    const load = () =>
+      void listWallets().then((next) => {
+        if (!disposed) setWalletsState(next);
+      });
+    load();
+    const unsubscribe = subscribeWallets(load);
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
+  }, []);
+  const setWallets = useCallback((update: (prev: WalletItem[]) => WalletItem[]) => {
+    setWalletsState((prev) => {
+      const next = update(prev);
+      void saveWallets(next);
+      return next;
+    });
+  }, []);
   const [filter, setFilter] = useState<FilterCategory>('all');
   const [hideBalances, setHideBalances] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
