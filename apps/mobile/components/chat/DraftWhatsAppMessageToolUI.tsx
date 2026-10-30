@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
-import { AppConnectCard } from '@/components/chat/SuggestAppConnectionToolUI';
+import { ConnectOptionsCard, connectOptionsFrom } from '@/components/chat/ConnectOptionsCard';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
@@ -20,8 +20,6 @@ type DraftResult = {
   text: string;
   customerName?: string;
 };
-
-const WHATSAPP_LOGO = 'https://logos.composio.dev/api/whatsapp';
 
 /** Remembers which drafts were sent, so a reloaded chat never offers to send twice. */
 function sentKey(toolCallId: string) {
@@ -117,12 +115,9 @@ export const DraftWhatsAppMessageToolUI = makeAssistantToolUI<DraftArgs, DraftRe
     if (!result) return null;
     if (result.status === 'not_connected') {
       return (
-        <AppConnectCard
-          app='whatsapp'
-          name='WhatsApp Business'
-          logo={WHATSAPP_LOGO}
+        <ConnectOptionsCard
+          options={connectOptionsFrom(result)}
           reason='Connect your WhatsApp Business number to send this message.'
-          initiallyConnected={false}
         />
       );
     }
