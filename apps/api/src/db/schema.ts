@@ -536,9 +536,10 @@ export const payrollImports = pgTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
-    attachmentId: uuid('attachment_id')
-      .notNull()
-      .references(() => payrollAttachments.id, { onDelete: 'cascade' }),
+    /** Null for payroll typed or spoken in chat rather than uploaded. */
+    attachmentId: uuid('attachment_id').references(() => payrollAttachments.id, {
+      onDelete: 'cascade',
+    }),
     status: payrollImportStatusEnum('status').notNull().default('inspecting'),
     sourceName: text('source_name').notNull(),
     period: text('period'),
