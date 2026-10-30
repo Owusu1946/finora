@@ -13,6 +13,7 @@ import { consumeCalendarSyncQueue } from './integrations/calendar-consumer';
 import { consumeGmailSyncQueue } from './integrations/gmail-consumer';
 import { automations } from './routes/automations';
 import { calendarIntegrations, calendarOAuth } from './routes/calendar-integrations';
+import { cards } from './routes/cards';
 import { chat } from './routes/chat';
 import { chats } from './routes/chats';
 import { driveIntegrations, driveOAuth } from './routes/drive-integrations';
@@ -72,6 +73,7 @@ app.route('/v1/integrations/drive', driveIntegrations);
 app.route('/v1/invoices', invoiceRoutes);
 app.route('/v1/memories', memories);
 app.route('/v1/automations', automations);
+app.route('/v1/cards', cards);
 app.route('/v1/payroll', payroll);
 app.route('/v1', v1);
 
