@@ -233,38 +233,43 @@ function RootNavigator() {
 const MAX_TITLE_TURNS = 3;
 
 /**
- * Titles a new chat once its first reply finishes (ChatGPT-style), so the title
- * describes the exchange rather than just the question. If the opening was small
- * talk the API returns no title and this retries on the next turns.
+ * Titles chats started in this session. The local fallback shows the instant a
+ * message is sent (the runtime's own title pass); this then asks the API for a
+ * real title as soon as the run starts, from the message alone, so it types in
+ * while the reply streams. If the opening had no topic (small talk), it retries
+ * when the run ends with the reply for context, for up to three turns.
  */
 function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
   const aui = useAui();
   const generatingRef = useRef(new Set<string>());
+  // Only chats started here get titled, so chats loaded from history keep theirs.
+  const newChatsRef = useRef(new Set<string>());
 
-  useAuiEvent('thread.runEnd', () => {
-    void (async () => {
-      const messages = aui.thread().getState().messages;
-      const userTurns = messages.filter((message) => message.role === 'user').length;
-      if (userTurns === 0 || userTurns > MAX_TITLE_TURNS) return;
-      const exchange = threadTitleExchange(messages);
-      if (!exchange.message) return;
+  const requestTitle = async (withReply: boolean) => {
+    const messages = aui.thread().getState().messages;
+    const userTurns = messages.filter((message) => message.role === 'user').length;
+    if (userTurns === 0 || userTurns > MAX_TITLE_TURNS) return;
 
-      // Chats that already have a real title (e.g. loaded from history) keep it.
-      const item = aui.threadListItem.getState();
-      if (item.title && item.title !== 'New chat') return;
-      const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
-      if (hasGeneratedTitle(remoteId) || generatingRef.current.has(remoteId)) return;
-      generatingRef.current.add(remoteId);
+    const item = aui.threadListItem.getState();
+    const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
+    if (userTurns === 1 && !withReply) newChatsRef.current.add(remoteId);
+    if (!newChatsRef.current.has(remoteId)) return;
+    if (hasGeneratedTitle(remoteId) || generatingRef.current.has(remoteId)) return;
 
-      requestRemoteThreadTitle(config, remoteId, exchange)
-        .then((generated) => {
-          if (generated) aui.threadListItem.generateTitle();
-        })
-        .finally(() => {
-          generatingRef.current.delete(remoteId);
-        });
-    })();
-  });
+    const exchange = threadTitleExchange(messages);
+    if (!exchange.message) return;
+    generatingRef.current.add(remoteId);
+    requestRemoteThreadTitle(config, remoteId, withReply ? exchange : { message: exchange.message })
+      .then((generated) => {
+        if (generated) aui.threadListItem.generateTitle();
+      })
+      .finally(() => {
+        generatingRef.current.delete(remoteId);
+      });
+  };
+
+  useAuiEvent('thread.runStart', () => void requestTitle(false));
+  useAuiEvent('thread.runEnd', () => void requestTitle(true));
 
   return null;
 }
