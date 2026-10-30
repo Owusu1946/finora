@@ -11,6 +11,12 @@ export type VirtualCardNetwork = z.infer<typeof VirtualCardNetworkSchema>;
 export const MAX_VIRTUAL_CARD_LIMIT = 10_000;
 
 /**
+ * Flat fee charged to the funding account each time a card is issued, in USD.
+ * Cards are prepaid: the funded amount becomes the card's lifetime spend limit.
+ */
+export const VIRTUAL_CARD_ISSUE_FEE_USD = 1;
+
+/**
  * A virtual card as the app sees it. Amounts are in USD (major units).
  * `pan`, `cvv`, and `expiry` come live from the issuer on each request and are
  * never stored by Finora.
