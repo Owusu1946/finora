@@ -97,8 +97,9 @@ import { PhoneGateProvider, usePhoneGate } from '@/lib/phone-gate';
 import {
   createRemoteThreadAdapter,
   createRemoteThreadRuntimeAdapters,
-  firstThreadUserText,
+  hasGeneratedTitle,
   requestRemoteThreadTitle,
+  threadTitleExchange,
   type RemoteThreadConfig,
 } from '@/lib/remote-thread-adapter';
 import { setActiveUserId } from '@/lib/session-storage';
@@ -228,24 +229,34 @@ function RootNavigator() {
   );
 }
 
+/** Stop asking for a title once a chat is this many turns in without a topic. */
+const MAX_TITLE_TURNS = 3;
+
+/**
+ * Titles a new chat once its first reply finishes (ChatGPT-style), so the title
+ * describes the exchange rather than just the question. If the opening was small
+ * talk the API returns no title and this retries on the next turns.
+ */
 function InstantRemoteTitleSync({ config }: { config: RemoteThreadConfig }) {
   const aui = useAui();
   const generatingRef = useRef(new Set<string>());
 
-  useAuiEvent('thread.runStart', () => {
+  useAuiEvent('thread.runEnd', () => {
     void (async () => {
       const messages = aui.thread().getState().messages;
-      if (messages.filter((message) => message.role === 'user').length !== 1) return;
-      const message = firstThreadUserText(messages);
-      if (!message) return;
+      const userTurns = messages.filter((message) => message.role === 'user').length;
+      if (userTurns === 0 || userTurns > MAX_TITLE_TURNS) return;
+      const exchange = threadTitleExchange(messages);
+      if (!exchange.message) return;
 
+      // Chats that already have a real title (e.g. loaded from history) keep it.
       const item = aui.threadListItem.getState();
       if (item.title && item.title !== 'New chat') return;
       const remoteId = item.remoteId ?? (await aui.threadListItem.initialize()).remoteId;
-      if (generatingRef.current.has(remoteId)) return;
+      if (hasGeneratedTitle(remoteId) || generatingRef.current.has(remoteId)) return;
       generatingRef.current.add(remoteId);
 
-      requestRemoteThreadTitle(config, remoteId, message)
+      requestRemoteThreadTitle(config, remoteId, exchange)
         .then((generated) => {
           if (generated) aui.threadListItem.generateTitle();
         })
