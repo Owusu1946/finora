@@ -56,7 +56,11 @@ export function SheetModal({
           ]}
         >
           <RNHostView matchContents={fit}>
+            {/* Presented natively but still inside its opener in the React tree:
+                claim any touch the children don't, so taps on native controls
+                never bubble to the opener (e.g. the composer's tap-to-focus). */}
             <View
+              onStartShouldSetResponder={() => true}
               style={[
                 {
                   paddingTop: showHandle ? 20 : 12,

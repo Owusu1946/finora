@@ -57,7 +57,11 @@ export function SheetModal({
         scrimColor={`rgba(0, 0, 0, ${dimOpacity})`}
       >
         <RNHostView matchContents={fit}>
+          {/* Presented natively but still inside its opener in the React tree:
+              claim any touch the children don't, so taps never bubble to the
+              opener (e.g. the composer's tap-to-focus). */}
           <View
+            onStartShouldSetResponder={() => true}
             style={[
               { paddingBottom: edgeToEdge ? 0 : Math.max(insets.bottom, 16) },
               fit ? null : { flex: 1 },
