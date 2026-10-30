@@ -127,7 +127,12 @@ export default function AutomationsScreen() {
     <>
       <ScrollView
         className='flex-1 bg-background'
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40, gap: 12 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: 40,
+          gap: 12,
+        }}
         contentInsetAdjustmentBehavior='automatic'
         refreshControl={
           <RefreshControl

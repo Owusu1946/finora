@@ -11,7 +11,12 @@ import { isDailyInvoiceScanMinute } from './producers';
 
 const payment: AutomationAction = {
   type: 'prepare_payment',
-  config: { recipient: 'Kwame, MTN MoMo 0241234567', amount: 500, currency: 'GHS', purpose: 'rent' },
+  config: {
+    recipient: 'Kwame, MTN MoMo 0241234567',
+    amount: 500,
+    currency: 'GHS',
+    purpose: 'rent',
+  },
 };
 
 describe('automationMessage', () => {

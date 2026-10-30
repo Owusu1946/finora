@@ -47,7 +47,11 @@ function setup() {
   return { queue, tools };
 }
 
-async function run(tools: ReturnType<typeof setup>['tools'], name: keyof typeof tools, input: object) {
+async function run(
+  tools: ReturnType<typeof setup>['tools'],
+  name: keyof typeof tools,
+  input: object,
+) {
   const execute = tools[name].execute as unknown as (
     input: object,
     options: object,
@@ -65,7 +69,10 @@ describe('create_automation', () => {
     const { tools } = setup();
     const result = await run(tools, 'create_automation', {
       name: 'Monday sales check',
-      trigger: { type: 'schedule', config: { frequency: 'weekly', time: '08:00', timezone: 'UTC', weekday: 1 } },
+      trigger: {
+        type: 'schedule',
+        config: { frequency: 'weekly', time: '08:00', timezone: 'UTC', weekday: 1 },
+      },
       action: { type: 'notify_chat', config: { message: 'Check last week’s sales' } },
     });
     expect(result).toMatchObject({
@@ -83,7 +90,10 @@ describe('manage_automation', () => {
     store.listAutomations.mockResolvedValue([record()]);
     store.updateAutomation.mockResolvedValue(record({ status: 'paused' }));
 
-    const result = await run(tools, 'manage_automation', { name: 'friday rent', operation: 'pause' });
+    const result = await run(tools, 'manage_automation', {
+      name: 'friday rent',
+      operation: 'pause',
+    });
 
     expect(store.updateAutomation).toHaveBeenCalledWith({}, 'user_1', {
       id: record().id,
@@ -147,6 +157,8 @@ describe('helpers', () => {
 
   it('tells the model the local date and time', () => {
     const prompt = automationsPrompt('Africa/Accra', new Date('2026-10-30T09:15:00Z'));
-    expect(prompt).toMatch(/It is Friday,? 30 October 2026( at|,) 09:15 for the user \(Africa\/Accra\)\./);
+    expect(prompt).toMatch(
+      /It is Friday,? 30 October 2026( at|,) 09:15 for the user \(Africa\/Accra\)\./,
+    );
   });
 });

@@ -62,7 +62,8 @@ export function createAutomationTools(context: AutomationToolContext) {
     const query = input.name?.trim().toLowerCase();
     if (!query) return { errorCode: 'automation_not_specified' as const };
     const exact = all.filter((item) => item.name.toLowerCase() === query);
-    const matches = exact.length > 0 ? exact : all.filter((item) => item.name.toLowerCase().includes(query));
+    const matches =
+      exact.length > 0 ? exact : all.filter((item) => item.name.toLowerCase().includes(query));
     if (matches.length === 1) return { automation: matches[0]! };
     if (matches.length === 0) return { errorCode: 'automation_not_found' as const };
     return {
@@ -105,7 +106,7 @@ export function createAutomationTools(context: AutomationToolContext) {
 
     manage_automation: tool({
       description:
-        'Pause, resume, run now, or delete one of the user\'s automations, found by id or name. Pause, resume, and run now happen right away (run now posts the result to the Automations chat). Delete shows a confirmation the user taps.',
+        "Pause, resume, run now, or delete one of the user's automations, found by id or name. Pause, resume, and run now happen right away (run now posts the result to the Automations chat). Delete shows a confirmation the user taps.",
       inputSchema: zodSchema(ManageAutomationToolInputSchema),
       execute: async ({ automationId, name, operation }) => {
         const found = await resolve({ automationId, name });
@@ -121,7 +122,11 @@ export function createAutomationTools(context: AutomationToolContext) {
         }
         if (operation === 'run_now') {
           if (automation.status !== 'active') {
-            return { ok: false as const, errorCode: 'automation_paused', automation: automationSummary(automation) };
+            return {
+              ok: false as const,
+              errorCode: 'automation_paused',
+              automation: automationSummary(automation),
+            };
           }
           await queue.send({
             kind: 'evaluate',
@@ -130,14 +135,22 @@ export function createAutomationTools(context: AutomationToolContext) {
             forced: true,
             context: {},
           });
-          return { ok: true as const, status: 'queued' as const, automation: automationSummary(automation) };
+          return {
+            ok: true as const,
+            status: 'queued' as const,
+            automation: automationSummary(automation),
+          };
         }
         const updated = await updateAutomation(db, userId, {
           id: automation.id,
           status: operation === 'pause' ? 'paused' : 'active',
         });
         return updated
-          ? { ok: true as const, status: 'updated' as const, automation: automationSummary(updated) }
+          ? {
+              ok: true as const,
+              status: 'updated' as const,
+              automation: automationSummary(updated),
+            }
           : { ok: false as const, errorCode: 'automation_not_found' };
       },
     }),

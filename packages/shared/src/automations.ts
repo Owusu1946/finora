@@ -325,7 +325,10 @@ export function describeAutomationAction(action: AutomationAction) {
   }
 }
 
-export function describeAutomation(input: { trigger: AutomationTrigger; action: AutomationAction }) {
+export function describeAutomation(input: {
+  trigger: AutomationTrigger;
+  action: AutomationAction;
+}) {
   return `${describeAutomationTrigger(input.trigger)}, Finora will ${describeAutomationAction(input.action)}.`;
 }
 

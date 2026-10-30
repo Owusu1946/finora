@@ -124,4 +124,3 @@ export async function postToAutomationsChat(db: Database, userId: string, messag
   }
   return chatId;
 }
-

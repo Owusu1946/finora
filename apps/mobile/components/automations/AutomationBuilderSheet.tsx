@@ -1,3 +1,4 @@
+import { useAuth } from '@clerk/expo';
 import {
   describeAutomation,
   type AutomationAction,
@@ -5,7 +6,6 @@ import {
   type CreateAutomationInput,
   type Currency,
 } from '@finora/shared';
-import { useAuth } from '@clerk/expo';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 
