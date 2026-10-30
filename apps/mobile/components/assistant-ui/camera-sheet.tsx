@@ -65,7 +65,7 @@ function PermissionPrompt({
 }
 
 /**
- * Native sheet with a live camera card. The "more" control reveals flash and
+ * Native sheet with a live camera card. The "more" control reveals the light and
  * flip; the shutter hands the photo back to the composer.
  */
 export function CameraSheet({
@@ -80,7 +80,10 @@ export function CameraSheet({
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<CameraType>('back');
-  const [flash, setFlash] = useState<'off' | 'on'>('off');
+  // A torch, not a capture flash: it lights the scene as soon as it is on, and
+  // the capture flash was silently dropped by the upload-sized photo preset.
+  const [light, setLight] = useState(false);
+  const lightAvailable = facing === 'back';
   const [controlsOpen, setControlsOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [capturing, setCapturing] = useState(false);
@@ -90,6 +93,7 @@ export function CameraSheet({
 
   const close = () => {
     setControlsOpen(false);
+    setLight(false);
     setReady(false);
     onClose();
   };
@@ -124,7 +128,7 @@ export function CameraSheet({
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
           facing={facing}
-          flash={flash}
+          enableTorch={light && lightAvailable}
           animateShutter
           pictureSize={pictureSize}
           onCameraReady={() => {
@@ -153,11 +157,14 @@ export function CameraSheet({
             { bottom: barBottom + SHUTTER_SIZE / 2 + CAMERA_CONTROL_SIZE / 2 + 12 },
           ]}
         >
-          <CameraControl
-            kind={flash === 'on' ? 'flash-on' : 'flash-off'}
-            label={flash === 'on' ? 'Turn flash off' : 'Turn flash on'}
-            onPress={() => setFlash((value) => (value === 'on' ? 'off' : 'on'))}
-          />
+          {/* The front camera has no light; hide the control instead of a dead button. */}
+          {lightAvailable ? (
+            <CameraControl
+              kind={light ? 'flash-on' : 'flash-off'}
+              label={light ? 'Turn light off' : 'Turn light on'}
+              onPress={() => setLight((value) => !value)}
+            />
+          ) : null}
           <CameraControl
             kind='flip'
             label='Flip camera'
