@@ -168,8 +168,15 @@ export async function findVirtualCardByLabel(query: string): Promise<VirtualCard
   );
 }
 
-/** Issues a USD card. Throws `VirtualCardError` with a user-facing message on failure. */
-export async function createVirtualCard(input: CreateVirtualCardInput): Promise<VirtualCard> {
+/**
+ * Issues a USD card. Throws `VirtualCardError` with a user-facing message on
+ * failure. Pass `announce: false` when the caller shows its own confirmation,
+ * so the global "Card ready" popup doesn't stack a second one on top.
+ */
+export async function createVirtualCard(
+  input: CreateVirtualCardInput,
+  options: { announce?: boolean } = {},
+): Promise<VirtualCard> {
   const { card } = VirtualCardResponseSchema.parse(
     await cardsRequest('', {
       method: 'POST',
@@ -182,7 +189,7 @@ export async function createVirtualCard(input: CreateVirtualCardInput): Promise<
   );
   replaceCached(card);
   notify();
-  await publishIssuance(card);
+  if (options.announce !== false) await publishIssuance(card);
   return card;
 }
 

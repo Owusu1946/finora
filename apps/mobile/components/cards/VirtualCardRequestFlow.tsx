@@ -112,11 +112,15 @@ export function VirtualCardRequestFlow() {
     try {
       const approved = await requestApproval();
       if (!approved) return;
-      await createVirtualCard({
-        label: purpose,
-        spendLimit: limitValue,
-        currency,
-      });
+      // This flow shows its own confirmation; skip the global "Card ready" popup.
+      await createVirtualCard(
+        {
+          label: purpose,
+          spendLimit: limitValue,
+          currency,
+        },
+        { announce: false },
+      );
       haptics.success();
       setStep('submitted');
     } catch (error) {

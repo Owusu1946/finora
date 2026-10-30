@@ -73,7 +73,8 @@ export function CreateVirtualCardWizard({
     };
     let card;
     try {
-      card = await createVirtualCard(input);
+      // The wizard shows the issued card itself; skip the global "Card ready" popup.
+      card = await createVirtualCard(input, { announce: false });
     } catch (error) {
       setBusy(false);
       haptics.error();
