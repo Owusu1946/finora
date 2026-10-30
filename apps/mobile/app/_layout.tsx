@@ -89,6 +89,8 @@ import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
+import { OpenThreadBridge } from '@/components/thread-list/OpenThreadBridge';
+import { AutomationBalanceBridge } from '@/lib/automation-balance-events';
 import { AutomationNotificationBridge } from '@/lib/automation-notifications';
 import { createFinoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
@@ -287,6 +289,7 @@ function FinoraRuntimeContent({
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       {remoteConfig ? <InstantRemoteTitleSync config={remoteConfig} /> : null}
+      <OpenThreadBridge />
       <PreparePaymentToolUI />
       <FundAccountToolUI />
       <ListReceiveMethodsToolUI />
@@ -478,6 +481,7 @@ function RootApp() {
                   >
                     <ProfileSyncBridge />
                     <AutomationNotificationBridge />
+                    <AutomationBalanceBridge />
                     <FinoraAssistantRuntime
                       key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
                       remoteChat={boot.remoteChat}
