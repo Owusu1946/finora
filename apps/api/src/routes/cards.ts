@@ -1,19 +1,19 @@
-import {
-  CreateVirtualCardRequestSchema,
-  UpdateVirtualCardRequestSchema,
-  type VirtualCardRecord,
-} from '@finora/shared';
+import { CreateVirtualCardRequestSchema, UpdateVirtualCardRequestSchema } from '@finora/shared';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
-import type { AppApiEnv } from '../env';
 
-import { createLithicClient, LithicError, toVirtualCard, type LithicClient } from '../cards/lithic';
+import { toVirtualCard } from '../cards/lithic';
+import {
+  lithicFor,
+  listUserCards,
+  loadCard,
+  logCardProviderError as providerError,
+} from '../cards/service';
 import { createDb } from '../db/client';
 import {
   getVirtualCardRow,
   insertVirtualCard,
-  listVirtualCardRows,
   updateVirtualCardRow,
   type VirtualCardRow,
 } from '../db/virtual-cards';
@@ -22,26 +22,6 @@ import {
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
 export const cards = new Hono<AppEnv>();
-
-function lithicFor(env: AppApiEnv) {
-  if (!env.LITHIC_API_KEY) return null;
-  return createLithicClient({ apiKey: env.LITHIC_API_KEY, baseUrl: env.LITHIC_API_BASE_URL });
-}
-
-async function loadCard(lithic: LithicClient, row: VirtualCardRow) {
-  const [card, spentCents] = await Promise.all([
-    lithic.getCard(row.providerCardToken),
-    lithic.spentCents(row.providerCardToken),
-  ]);
-  return toVirtualCard(row, card, spentCents);
-}
-
-function providerError(error: unknown) {
-  console.error('[cards:provider]', {
-    errorName: error instanceof Error ? error.name : typeof error,
-    status: error instanceof LithicError ? error.status : undefined,
-  });
-}
 
 const unavailable = {
   error: 'cards_unavailable',
@@ -53,19 +33,14 @@ const providerFailed = {
 } as const;
 
 cards.get('/', async (c) => {
-  const env = c.get('env');
-  const lithic = lithicFor(env);
-  if (!lithic) return c.json(unavailable, 503, NO_STORE);
-
-  const rows = await listVirtualCardRows(createDb(env.DATABASE_URL), c.get('auth').userId);
-  const results = await Promise.allSettled(rows.map((row) => loadCard(lithic, row)));
-  const list: VirtualCardRecord[] = [];
-  for (const result of results) {
-    if (result.status === 'fulfilled') list.push(result.value);
-    else providerError(result.reason);
-  }
+  const {
+    cards: list,
+    rowCount,
+    configured,
+  } = await listUserCards(c.get('env'), c.get('auth').userId);
+  if (!configured) return c.json(unavailable, 503, NO_STORE);
   // Every card failed to load: report it instead of showing an empty wallet.
-  if (rows.length > 0 && list.length === 0) return c.json(providerFailed, 502, NO_STORE);
+  if (rowCount > 0 && list.length === 0) return c.json(providerFailed, 502, NO_STORE);
   return c.json({ cards: list }, 200, NO_STORE);
 });
 
