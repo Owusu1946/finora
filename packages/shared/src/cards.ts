@@ -58,6 +58,29 @@ export const UpdateVirtualCardRequestSchema = z
   });
 export type UpdateVirtualCardRequest = z.infer<typeof UpdateVirtualCardRequestSchema>;
 
+/**
+ * A purchase or refund on a card. `deducted` is what it took off the card's
+ * balance in USD: positive for purchases, negative for refunds, and 0 for
+ * declined or reversed transactions.
+ */
+export const CardTransactionSchema = z.object({
+  id: z.string().min(1),
+  merchant: z.string(),
+  location: z.string().nullable(),
+  kind: z.enum(['purchase', 'refund']),
+  state: z.enum(['pending', 'completed', 'declined', 'reversed']),
+  amount: z.number(),
+  deducted: z.number(),
+  merchantAmount: z.number(),
+  merchantCurrency: z.string(),
+  createdAt: z.iso.datetime(),
+});
+export type CardTransaction = z.infer<typeof CardTransactionSchema>;
+
+export const CardTransactionListResponseSchema = z.object({
+  transactions: z.array(CardTransactionSchema),
+});
+
 /** Chat tool: open card setup in the app (the app picks funding and confirms). */
 export const CreateVirtualCardToolInputSchema = z.object({
   label: z
