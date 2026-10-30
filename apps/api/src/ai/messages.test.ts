@@ -2,7 +2,12 @@ import type { UIMessage } from 'ai';
 
 import { describe, expect, it } from 'vitest';
 
-import { reconcileChatMessages } from './messages';
+import {
+  generatedMessagesForPersistence,
+  reconcileChatMessages,
+  sanitizeIncomingMessages,
+  withoutDisplayOnlyParts,
+} from './messages';
 
 function textMessage(id: string, role: 'user' | 'assistant', text: string): UIMessage {
   return { id, role, parts: [{ type: 'text', text }] };
@@ -62,5 +67,36 @@ describe('reconcileChatMessages', () => {
         'submit-message',
       ),
     ).toBeNull();
+  });
+});
+
+describe('automation cards in chat history', () => {
+  const card: UIMessage = {
+    id: 'automation-1',
+    role: 'assistant',
+    parts: [
+      { type: 'text', text: 'Your automation "Rent" ran.' },
+      {
+        type: 'dynamic-tool',
+        toolName: 'automation_ready',
+        toolCallId: 'automation_ready_1',
+        state: 'output-available',
+        input: { automationId: 'a1' },
+        output: { automationId: 'a1', name: 'Rent', description: 'x', prompt: 'Pay rent' },
+      },
+    ],
+  };
+  const reply = textMessage('user-1', 'user', 'Thanks');
+
+  it('accepts and keeps the card when the user replies in the Automations chat', () => {
+    const sanitized = sanitizeIncomingMessages([card, reply]);
+    expect(sanitized?.[0]).toEqual(card);
+    expect(generatedMessagesForPersistence([card, reply, textMessage('a2', 'assistant', 'Ok')], [])[0]).toEqual(card);
+  });
+
+  it('hides the card from the model but keeps the text', () => {
+    expect(withoutDisplayOnlyParts([card])[0]?.parts).toEqual([
+      { type: 'text', text: 'Your automation "Rent" ran.' },
+    ]);
   });
 });
