@@ -98,6 +98,25 @@ describe('createLithicClient', () => {
     expect(String(fetch.mock.calls[1]![0])).toContain('starting_after=t2');
   });
 
+  it('counts refunds against spend but never goes below zero', async () => {
+    const { lithic } = client([
+      {
+        data: [
+          { token: 't1', result: 'APPROVED', status: 'SETTLED', amount: 1_000 },
+          { token: 't2', result: 'APPROVED', status: 'SETTLED', amount: -400 },
+        ],
+        has_more: false,
+      },
+      {
+        data: [{ token: 't3', result: 'APPROVED', status: 'SETTLED', amount: -2_000 }],
+        has_more: false,
+      },
+    ]);
+
+    expect(await lithic.spentCents('tok_1')).toBe(600);
+    expect(await lithic.spentCents('tok_2')).toBe(0);
+  });
+
   it('surfaces Lithic errors with their status', async () => {
     const { lithic } = client([{ message: 'Card not found' }], 404);
 

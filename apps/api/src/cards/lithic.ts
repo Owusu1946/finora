@@ -121,7 +121,10 @@ export function createLithicClient(options: {
       );
     },
 
-    /** Lifetime approved spend on a card, in cents (pending and settled). */
+    /**
+     * Lifetime approved spend on a card, in cents (pending and settled). Returns
+     * and refunds have negative amounts and reduce spend, never below zero.
+     */
     async spentCents(token: string) {
       let total = 0;
       let startingAfter: string | undefined;
@@ -142,7 +145,7 @@ export function createLithicClient(options: {
         if (!result.has_more || result.data.length === 0) break;
         startingAfter = result.data.at(-1)!.token;
       }
-      return total;
+      return Math.max(0, total);
     },
   };
 }
