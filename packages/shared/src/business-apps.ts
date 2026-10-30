@@ -266,3 +266,37 @@ export const SuggestAppConnectionToolInputSchema = z.object({
     .max(160)
     .describe('One sentence on what connecting it lets Finora do for this request'),
 });
+
+/**
+ * Attached to a tool result when the tool needs an app the user hasn't
+ * connected. The chat renders a Connect card for each option, so the user can
+ * connect without leaving the conversation.
+ */
+export const AppConnectOptionSchema = z.object({
+  /** Composio slug, or gmail / googledrive / googlecalendar for the native Google apps. */
+  app: z.string().min(1),
+  name: z.string().min(1),
+  logo: z.string().nullable(),
+  kind: z.enum(['business', 'google']),
+  /** False when Finora can't connect this app yet. */
+  connectable: z.boolean(),
+});
+export type AppConnectOption = z.infer<typeof AppConnectOptionSchema>;
+
+export const GOOGLE_CONNECT_OPTIONS = {
+  gmail: { app: 'gmail', name: 'Gmail', logo: null, kind: 'google', connectable: true },
+  googledrive: {
+    app: 'googledrive',
+    name: 'Google Drive',
+    logo: null,
+    kind: 'google',
+    connectable: true,
+  },
+  googlecalendar: {
+    app: 'googlecalendar',
+    name: 'Google Calendar',
+    logo: null,
+    kind: 'google',
+    connectable: true,
+  },
+} satisfies Record<string, AppConnectOption>;
