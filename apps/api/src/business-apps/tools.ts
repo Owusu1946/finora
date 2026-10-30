@@ -367,7 +367,8 @@ export function createBusinessAppTools(context: BusinessAppsToolContext) {
       inputSchema: zodSchema(SuggestAppConnectionToolInputSchema),
       execute: async ({ app, reason }) => {
         const option = await connectOption(app);
-        if (!option) return { ok: false as const, errorCode: 'unknown_app', app, connectOptions: [] };
+        if (!option)
+          return { ok: false as const, errorCode: 'unknown_app', app, connectOptions: [] };
         return {
           ok: true as const,
           app: option.app,
