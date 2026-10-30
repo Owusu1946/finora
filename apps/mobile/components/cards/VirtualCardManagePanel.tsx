@@ -1,7 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
 
+import { CardTopUpSheet, type CardTopUpChoice } from '@/components/cards/CardTopUpSheet';
 import {
   formatCardAmount,
   formatPanGrouped,
@@ -11,11 +12,12 @@ import {
 import { VirtualCardFace } from '@/components/cards/VirtualCardFace';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { Icon } from '@/components/ui/icon';
-import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
+import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
+import { topUpCard } from '@/lib/card-funding';
 import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
-import { setVirtualCardStatus, updateVirtualCard } from '@/lib/virtual-cards-storage';
+import { setVirtualCardStatus } from '@/lib/virtual-cards-storage';
 
 const REVEAL_MS = 30_000;
 
@@ -34,13 +36,13 @@ export function VirtualCardManagePanel({
   const [revealed, setRevealed] = useState(false);
   const [cardSide, setCardSide] = useState<'front' | 'back'>('front');
   const [revealUntil, setRevealUntil] = useState<number | null>(null);
-  const [editingLimit, setEditingLimit] = useState(false);
-  const [limitDraft, setLimitDraft] = useState(String(initial.spendLimit));
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  // Set when the top-up sheet confirms; runs once the sheet has fully closed.
+  const pendingTopUpRef = useRef<CardTopUpChoice | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setCard(initial);
-    setLimitDraft(String(initial.spendLimit));
   }, [initial]);
 
   useEffect(() => {
@@ -105,16 +107,29 @@ export function VirtualCardManagePanel({
     apply(next);
   };
 
-  const saveLimit = async () => {
-    const n = Number(limitDraft.replace(/,/g, ''));
-    if (!Number.isFinite(n) || n <= 0) return;
+  // Confirm with the passcode, then add to the card and charge the chosen account.
+  const runTopUp = async (choice: CardTopUpChoice) => {
+    if (busy || card.status === 'cancelled') return;
     setBusy(true);
-    const next = await updateVirtualCard(card.id, { spendLimit: n });
-    setBusy(false);
-    if (!next) return;
-    haptics.success();
-    setEditingLimit(false);
-    apply(next);
+    try {
+      const ok = await requestApproval();
+      if (!ok) return;
+      const next = await topUpCard({
+        card,
+        amountUsd: choice.amountUsd,
+        walletId: choice.walletId,
+      });
+      haptics.success();
+      apply(next);
+    } catch (error) {
+      haptics.error();
+      Alert.alert(
+        "Couldn't top up card",
+        error instanceof Error ? error.message : 'Try again in a moment.',
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const cancelCard = () => {
@@ -168,7 +183,7 @@ export function VirtualCardManagePanel({
           value={formatCardAmount(remainingLimit(card), card.currency)}
         />
         <Stat
-          label='Limit'
+          label='Loaded'
           value={formatCardAmount(card.spendLimit, card.currency)}
         />
       </View>
@@ -249,43 +264,18 @@ export function VirtualCardManagePanel({
         )}
       </View>
 
-      {editingLimit ? (
-        <View className='gap-2.5 rounded-[26px] border border-border bg-composer p-3.5'>
-          <Text className='font-sans-medium text-sm text-foreground'>Edit limit</Text>
-          <TextInput
-            value={limitDraft}
-            onChangeText={(t) => setLimitDraft(t.replace(/[^0-9.]/g, ''))}
-            keyboardType='decimal-pad'
-            className='rounded-[32px] border border-border bg-background px-3.5 py-3 font-sans text-base text-foreground'
-          />
-          <View className='flex-row gap-2'>
-            <ActionButton
-              label='Cancel'
-              tone='secondary'
-              flex
-              onPress={() => setEditingLimit(false)}
-            />
-            <ActionButton
-              label='Save'
-              flex
-              onPress={() => void saveLimit()}
-            />
-          </View>
-        </View>
-      ) : null}
-
       <View className='gap-2'>
         {card.status !== 'cancelled' ? (
           <ActionButton
-            label={card.status === 'frozen' ? 'Unfreeze' : 'Freeze'}
-            onPress={() => void toggleFreeze()}
+            label='Top up'
+            onPress={() => setTopUpOpen(true)}
           />
         ) : null}
         {card.status !== 'cancelled' ? (
           <ActionButton
-            label='Edit limit'
+            label={card.status === 'frozen' ? 'Unfreeze' : 'Freeze'}
             tone='secondary'
-            onPress={() => setEditingLimit(true)}
+            onPress={() => void toggleFreeze()}
           />
         ) : null}
         {card.status !== 'cancelled' ? (
@@ -296,6 +286,21 @@ export function VirtualCardManagePanel({
           />
         ) : null}
       </View>
+
+      <CardTopUpSheet
+        card={card}
+        visible={topUpOpen}
+        onClose={() => setTopUpOpen(false)}
+        onConfirm={(choice) => {
+          pendingTopUpRef.current = choice;
+          setTopUpOpen(false);
+        }}
+        onDismissed={() => {
+          const choice = pendingTopUpRef.current;
+          pendingTopUpRef.current = null;
+          if (choice) void runTopUp(choice);
+        }}
+      />
 
       {modal}
     </View>
