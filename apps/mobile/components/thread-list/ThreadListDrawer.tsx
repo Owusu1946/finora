@@ -28,6 +28,11 @@ import { ThreadListItem } from './ThreadListItem';
 
 type NavTab = 'money' | 'pay' | 'more';
 
+/** Let the open animation finish before refreshing, so the work never competes with it. */
+const DRAWER_SETTLE_MS = 300;
+/** Opening the drawer repeatedly shouldn't refetch and re-render the whole chat list. */
+const THREAD_RELOAD_INTERVAL_MS = 30_000;
+
 type NavItem = { href: Href; key: TranslationKey; icon: IconName };
 
 const MONEY_ITEMS_BASE: NavItem[] = [
@@ -103,7 +108,9 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const drawerStatus = useDrawerStatus();
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [unreadCards, setUnreadCards] = useState(false);
-  const didReloadForOpenRef = useRef(false);
+  const lastThreadReloadRef = useRef(0);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
   const [business, setBusiness] = useState(() => isBusinessAccount());
   const navTabs = useMemo(() => buildNavTabs(business), [business]);
   const [activeTab, setActiveTab] = useState<NavTab>(() =>
@@ -134,20 +141,23 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
     [aui],
   );
 
+  // Refresh once per open, after the animation settles. Reading the pathname
+  // through a ref keeps route changes (e.g. while closing) from re-running this.
   useEffect(() => {
-    if (drawerStatus === 'closed') {
-      didReloadForOpenRef.current = false;
-      return;
-    }
-    if (!didReloadForOpenRef.current) {
-      didReloadForOpenRef.current = true;
-      void aui.threads.reload();
-    }
-    const nextBusiness = isBusinessAccount();
-    setBusiness(nextBusiness);
-    void countPendingApprovals().then(setPendingApprovals);
-    setActiveTab(tabForPathname(pathname, buildNavTabs(nextBusiness)));
-  }, [aui, drawerStatus, pathname]);
+    if (drawerStatus !== 'open') return;
+    const timer = setTimeout(() => {
+      const now = Date.now();
+      if (now - lastThreadReloadRef.current >= THREAD_RELOAD_INTERVAL_MS) {
+        lastThreadReloadRef.current = now;
+        void aui.threads.reload();
+      }
+      const nextBusiness = isBusinessAccount();
+      setBusiness(nextBusiness);
+      void countPendingApprovals().then(setPendingApprovals);
+      setActiveTab(tabForPathname(pathnameRef.current, buildNavTabs(nextBusiness)));
+    }, DRAWER_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [aui, drawerStatus]);
 
   useEffect(() => {
     const refreshUnreadCards = () => void hasUnreadVirtualCards().then(setUnreadCards);
