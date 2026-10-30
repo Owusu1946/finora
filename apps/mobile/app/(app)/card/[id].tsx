@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native';
 
 import type { VirtualCard } from '@/components/cards/types';
 
+import { CardTransactions } from '@/components/cards/CardTransactions';
 import { VirtualCardManagePanel } from '@/components/cards/VirtualCardManagePanel';
 import { SwipeBackView } from '@/components/navigation/swipe-back-view';
 import { LoadingIcon } from '@/components/ui/loading-icon';
@@ -52,10 +53,13 @@ export default function CardDetailScreen() {
           contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 48 }}
           showsVerticalScrollIndicator={false}
         >
-          <VirtualCardManagePanel
-            card={card}
-            onChanged={setCard}
-          />
+          <View className='gap-4'>
+            <VirtualCardManagePanel
+              card={card}
+              onChanged={setCard}
+            />
+            <CardTransactions card={card} />
+          </View>
         </ScrollView>
       )}
     </SwipeBackView>
