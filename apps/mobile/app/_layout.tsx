@@ -55,7 +55,10 @@ import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
 import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
 import { GetVirtualCardToolUI } from '@/components/chat/GetVirtualCardToolUI';
-import { InspectPayrollAttachmentToolUI } from '@/components/chat/InspectPayrollAttachmentToolUI';
+import {
+  DraftPayrollToolUI,
+  InspectPayrollAttachmentToolUI,
+} from '@/components/chat/InspectPayrollAttachmentToolUI';
 import { ListAutomationsToolUI } from '@/components/chat/ListAutomationsToolUI';
 import { ListBeneficiariesToolUI } from '@/components/chat/ListBeneficiariesToolUI';
 import { ListCalendarDuesToolUI } from '@/components/chat/ListCalendarDuesToolUI';
@@ -321,6 +324,7 @@ function FinoraRuntimeContent({
       <TreasuryOverviewToolUI />
       <FinancialReportToolUI />
       <InspectPayrollAttachmentToolUI />
+      <DraftPayrollToolUI />
       <PreparePayrollToolUI />
       <ProposePayrollChangesToolUI />
       <PrepareSupplierPaymentToolUI />

@@ -175,3 +175,9 @@ export async function cancelPayrollRun(getToken: GetToken, runId: string) {
     }),
   ).run;
 }
+
+export async function getPayrollImport(getToken: GetToken, importId: string) {
+  const payload = await payrollRequest(`/imports/${encodeURIComponent(importId)}`, getToken);
+  if (!payload.import) throw new Error('Payroll import not found.');
+  return payload.import;
+}
