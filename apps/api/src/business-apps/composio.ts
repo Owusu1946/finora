@@ -163,7 +163,15 @@ export function createComposioClient(options: { apiKey: string; fetch?: typeof f
     },
 
     async getToolkit(slug: string) {
-      return ToolkitDetailSchema.parse(await request(`/toolkits/${encodeURIComponent(slug)}`));
+      const toolkit = ToolkitDetailSchema.parse(
+        await request(`/toolkits/${encodeURIComponent(slug)}`),
+      );
+      // The single-toolkit endpoint lists schemes under auth_config_details instead.
+      return {
+        ...toolkit,
+        auth_schemes:
+          toolkit.auth_schemes ?? toolkit.auth_config_details?.map((detail) => detail.mode),
+      };
     },
 
     /**
