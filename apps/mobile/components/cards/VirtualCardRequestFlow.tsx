@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import type { VirtualCardCurrency } from '@/components/cards/types';
 
@@ -9,13 +9,14 @@ import { Icon } from '@/components/ui/icon';
 import { AppText as Text, AppTextInput } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import { createVirtualCard } from '@/lib/virtual-cards-storage';
+import { createVirtualCard, VirtualCardError } from '@/lib/virtual-cards-storage';
 
 type Currency = VirtualCardCurrency;
 type Purpose = 'Subscriptions' | 'Travel' | 'Online purchases' | 'Team spend';
 type Step = 'details' | 'review';
 
-const currencies: Currency[] = ['USD', 'EUR', 'GBP'];
+// Cards are issued in USD by the card issuer.
+const currencies: Currency[] = ['USD'];
 const purposes: Purpose[] = ['Subscriptions', 'Travel', 'Online purchases', 'Team spend'];
 
 function OptionChip({
@@ -118,6 +119,12 @@ export function VirtualCardRequestFlow() {
       });
       haptics.success();
       setStep('submitted');
+    } catch (error) {
+      haptics.error();
+      Alert.alert(
+        "Couldn't create card",
+        error instanceof VirtualCardError ? error.message : 'Try again in a moment.',
+      );
     } finally {
       setBusy(false);
     }

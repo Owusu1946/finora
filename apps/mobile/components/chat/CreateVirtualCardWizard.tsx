@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import {
   formatCardAmount,
@@ -13,7 +13,7 @@ import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptics } from '@/lib/haptics';
-import { createVirtualCard } from '@/lib/virtual-cards-storage';
+import { createVirtualCard, VirtualCardError } from '@/lib/virtual-cards-storage';
 
 export type CreateVirtualCardSeed = {
   label?: string;
@@ -71,7 +71,18 @@ export function CreateVirtualCardWizard({
       label: resolvedLabel,
       spendLimit: resolvedLimit,
     };
-    const card = await createVirtualCard(input);
+    let card;
+    try {
+      card = await createVirtualCard(input);
+    } catch (error) {
+      setBusy(false);
+      haptics.error();
+      Alert.alert(
+        "Couldn't create card",
+        error instanceof VirtualCardError ? error.message : 'Try again in a moment.',
+      );
+      return;
+    }
     setIssued(card);
     setStep('issued');
     setBusy(false);
