@@ -45,6 +45,7 @@ import { tool, zodSchema, type ToolSet } from 'ai';
 
 import type { GmailSearchInput } from '../integrations/google-gmail';
 
+import { BUSINESS_APP_TOOL_NAMES } from '../business-apps/tools';
 import { v1 } from '../routes/v1';
 
 export const CHAT_AGENT_TOOL_NAMES = [
@@ -91,8 +92,11 @@ export const CHAT_AGENT_TOOL_NAMES = [
 
 export type ChatAgentToolName = (typeof CHAT_AGENT_TOOL_NAMES)[number];
 
-export function isChatAgentToolName(value: string): value is ChatAgentToolName {
-  return (CHAT_AGENT_TOOL_NAMES as readonly string[]).includes(value);
+export function isChatAgentToolName(value: string) {
+  return (
+    (CHAT_AGENT_TOOL_NAMES as readonly string[]).includes(value) ||
+    (BUSINESS_APP_TOOL_NAMES as readonly string[]).includes(value)
+  );
 }
 
 async function callPlatform(path: string, options?: { method?: 'GET' | 'POST'; body?: unknown }) {
