@@ -84,6 +84,9 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'list_memories',
   'update_memory',
   'forget_memory',
+  'create_virtual_card',
+  'list_virtual_cards',
+  'get_virtual_card',
 ] as const;
 
 export type ChatAgentToolName = (typeof CHAT_AGENT_TOOL_NAMES)[number];
