@@ -15,6 +15,8 @@ import { useBiometricUnlock } from '@/lib/biometrics';
 import { haptics } from '@/lib/haptics';
 import { PASSCODE_LENGTH } from '@/lib/passcode-storage';
 
+import { KeypadKey } from './keypad-key';
+
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'empty', '0', 'back'] as const;
 
 type PasscodeViewProps = {
@@ -48,7 +50,14 @@ export function PasscodeView({
     mode === 'create' ? 'create_first' : 'enter',
   );
   const [firstPasscode, setFirstPasscode] = useState('');
-  const [value, setValue] = useState('');
+  const [value, setValueState] = useState('');
+  // Digits fire on touch-down; read the latest entry from a ref so taps faster
+  // than a re-render never build on a stale value and drop a digit.
+  const valueRef = useRef('');
+  const setValue = useCallback((next: string | ((current: string) => string)) => {
+    valueRef.current = typeof next === 'function' ? next(valueRef.current) : next;
+    setValueState(valueRef.current);
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   /** One-shot: fire the device biometric prompt immediately on unlock. */
@@ -82,7 +91,7 @@ export function PasscodeView({
         withTiming(0, { duration: 36 }),
       );
     },
-    [shakeX],
+    [setValue, shakeX],
   );
 
   const shakeStyle = useAnimatedStyle(() => ({
@@ -110,10 +119,11 @@ export function PasscodeView({
   }, [customSubtitle, customTitle, step]);
 
   const handleDigit = async (digit: string) => {
-    if (loading || submittingRef.current || value.length >= PASSCODE_LENGTH) return;
+    const current = valueRef.current;
+    if (loading || submittingRef.current || current.length >= PASSCODE_LENGTH) return;
     if (error) setError(null);
     haptics.selection();
-    const nextValue = value + digit;
+    const nextValue = current + digit;
     setValue(nextValue);
 
     if (nextValue.length === PASSCODE_LENGTH) {
@@ -170,7 +180,7 @@ export function PasscodeView({
   };
 
   const backspace = () => {
-    if (loading || !value) return;
+    if (loading || !valueRef.current) return;
     if (error) setError(null);
     haptics.selection();
     setValue((v) => v.slice(0, -1));
@@ -323,13 +333,13 @@ export function PasscodeView({
             }
             if (key === 'back') {
               return (
-                <Pressable
+                <KeypadKey
                   key='back'
-                  accessibilityLabel='Delete digit'
+                  label='Delete digit'
+                  size={keySize}
                   disabled={loading}
-                  onPress={backspace}
-                  className='items-center justify-center rounded-full active:opacity-[0.55]'
-                  style={{ width: keySize, height: keySize }}
+                  bordered={false}
+                  onActivate={backspace}
                 >
                   <View style={{ transform: [{ rotate: '180deg' }] }}>
                     <Icon
@@ -338,25 +348,20 @@ export function PasscodeView({
                       color={colors.foreground}
                     />
                   </View>
-                </Pressable>
+                </KeypadKey>
               );
             }
             return (
-              <Pressable
+              <KeypadKey
                 key={key}
-                accessibilityLabel={`Digit ${key}`}
+                label={`Digit ${key}`}
+                size={keySize}
                 disabled={loading}
-                onPress={() => void handleDigit(key)}
-                className='items-center justify-center rounded-full border active:bg-muted'
-                style={{
-                  width: keySize,
-                  height: keySize,
-                  backgroundColor: colors.composer,
-                  borderColor: colors.border,
-                }}
+                bordered
+                onActivate={() => void handleDigit(key)}
               >
                 <Text className='font-sans-medium text-[29px] text-foreground'>{key}</Text>
-              </Pressable>
+              </KeypadKey>
             );
           })}
         </View>
