@@ -69,10 +69,12 @@ import { ListSuppliersToolUI } from '@/components/chat/ListSuppliersToolUI';
 import { ListVirtualAccountsToolUI } from '@/components/chat/ListVirtualAccountsToolUI';
 import { ListVirtualCardsToolUI } from '@/components/chat/ListVirtualCardsToolUI';
 import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
-import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeePaymentToolUI';
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
-import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
+import {
+  PrepareEmployeePaymentToolUI,
+  PreparePayrollToolUI,
+} from '@/components/chat/PreparePayrollToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
 import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
