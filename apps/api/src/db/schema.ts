@@ -3,7 +3,9 @@ import type { UIMessage } from 'ai';
 
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -697,4 +699,129 @@ export const payrollRunItems = pgTable(
     sentAt: timestamp('sent_at', { withTimezone: true }),
   },
   (table) => [uniqueIndex('payroll_run_items_run_position_unique').on(table.runId, table.position)],
+);
+
+export const ledgerDirectionEnum = pgEnum('ledger_direction', ['sent', 'received', 'swap']);
+export const ledgerStatusEnum = pgEnum('ledger_status', ['completed', 'pending', 'failed']);
+
+/**
+ * A user's demo wallet. `balanceMinor` only changes in the same batch as the
+ * ledger entries that explain it, and can never go below zero.
+ */
+export const ledgerWallets = pgTable(
+  'ledger_wallets',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    /** Stable key the app uses, e.g. `w-usd`. */
+    walletKey: text('wallet_key').notNull(),
+    currency: text('currency').notNull(),
+    balanceMinor: bigint('balance_minor', { mode: 'number' }).notNull().default(0),
+    /** Set once the app's own balances were copied in (or the starting balances accepted). */
+    importedAt: timestamp('imported_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('ledger_wallets_user_key_unique').on(table.clerkUserId, table.walletKey),
+    check('ledger_wallets_balance_non_negative', sql`${table.balanceMinor} >= 0`),
+  ],
+);
+
+/** One money movement as the user sees it in Activity. Amounts are in minor units. */
+export const ledgerTransactions = pgTable(
+  'ledger_transactions',
+  {
+    id: text('id').primaryKey(),
+    clerkUserId: text('clerk_user_id').notNull(),
+    direction: ledgerDirectionEnum('direction').notNull(),
+    status: ledgerStatusEnum('status').notNull().default('completed'),
+    currency: text('currency').notNull(),
+    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
+    toCurrency: text('to_currency'),
+    toAmountMinor: bigint('to_amount_minor', { mode: 'number' }),
+    feeMinor: bigint('fee_minor', { mode: 'number' }),
+    counterparty: text('counterparty').notNull(),
+    method: text('method').notNull(),
+    reference: text('reference'),
+    /** Masked to the last four characters. */
+    destination: text('destination'),
+    source: text('source').$type<'chat' | 'mcp' | 'manual' | 'automation'>().notNull(),
+    /** What created it: `payment`, `payroll_run`, `card_funding`, `opening_balance`, ... */
+    kind: text('kind').notNull(),
+    /** The record it settles, e.g. a payroll run id. Unique per kind, so nothing settles twice. */
+    sourceId: text('source_id').notNull(),
+    mode: text('mode').$type<'demo' | 'live'>().notNull().default('demo'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('ledger_transactions_source_unique').on(
+      table.clerkUserId,
+      table.kind,
+      table.sourceId,
+    ),
+    index('ledger_transactions_user_created_index').on(table.clerkUserId, table.createdAt),
+  ],
+);
+
+/** Append-only balance changes: each wallet's balance is the sum of its entries. */
+export const ledgerEntries = pgTable(
+  'ledger_entries',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    walletId: uuid('wallet_id')
+      .notNull()
+      .references(() => ledgerWallets.id, { onDelete: 'cascade' }),
+    transactionId: text('transaction_id')
+      .notNull()
+      .references(() => ledgerTransactions.id, { onDelete: 'cascade' }),
+    /** Signed: negative for money out. */
+    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('ledger_entries_wallet_index').on(table.walletId)],
+);
+
+export const preparedActionStatusEnum = pgEnum('prepared_action_status', [
+  'pending_approval',
+  'executed',
+  'cancelled',
+  'failed',
+]);
+
+/**
+ * A payment, conversion, or plan prepared by chat, the app, an automation, or
+ * an MCP agent. It moves money only when the user approves it in the app.
+ * `payload` holds the validated request; amounts there are in major units.
+ */
+export const preparedActions = pgTable(
+  'prepared_actions',
+  {
+    id: text('id').primaryKey(),
+    clerkUserId: text('clerk_user_id').notNull(),
+    kind: text('kind').$type<'payment' | 'conversion' | 'plan'>().notNull(),
+    status: preparedActionStatusEnum('status').notNull().default('pending_approval'),
+    source: text('source').$type<'chat' | 'manual' | 'automation' | 'mcp'>().notNull(),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    policy: jsonb('policy')
+      .$type<{ outcome: 'allowed' | 'needs_review' | 'blocked'; reasons: string[] }>()
+      .notNull(),
+    fundingWalletId: text('funding_wallet_id'),
+    transactionId: text('transaction_id'),
+    failureReason: text('failure_reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('prepared_actions_user_status_index').on(
+      table.clerkUserId,
+      table.status,
+      table.createdAt,
+    ),
+  ],
 );
