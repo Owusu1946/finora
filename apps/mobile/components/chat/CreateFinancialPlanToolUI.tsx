@@ -3,21 +3,23 @@ import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 
+import type { FinancialPlanItem, FinancialPlanPayload } from '@/components/approvals/types';
 import type { PaymentConfirmationStatus } from '@/components/chat/PaymentConfirmationCard';
 
 import { FinancialPlanConfirmationCard } from '@/components/approvals/FinancialPlanConfirmationCard';
-import {
-  MOCK_BUSINESS_PLAN,
-  type FinancialPlanItem,
-  type FinancialPlanPayload,
-} from '@/components/approvals/types';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  actionErrorMessage,
+  cancelAction,
+  executeAction,
+  getAction,
+  prepareAction,
+} from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
 
 type FinancialPlanItemInput = Omit<FinancialPlanItem, 'amount' | 'currency' | 'label'> & {
   amount?: number | { amount: number; currency: string };
@@ -37,6 +39,8 @@ type CreateFinancialPlanArgs = FinancialPlanInput;
 
 type CreateFinancialPlanResult = {
   status?: PaymentConfirmationStatus | 'pending' | 'confirmed';
+  /** The prepared plan on the Finora API; it executes only after the passcode. */
+  actionId?: string;
   planId?: string;
   preparationId?: string;
   transactionId?: string;
@@ -46,7 +50,7 @@ type CreateFinancialPlanResult = {
 function asPlan(
   args: CreateFinancialPlanArgs,
   result?: CreateFinancialPlanResult,
-): FinancialPlanPayload {
+): FinancialPlanPayload | null {
   const resultPlan = result?.plan;
   const source = {
     ...args,
@@ -77,11 +81,7 @@ function asPlan(
       items,
     };
   }
-  return {
-    ...MOCK_BUSINESS_PLAN,
-    intent: source.intent ?? MOCK_BUSINESS_PLAN.intent,
-    planId: source.planId ?? MOCK_BUSINESS_PLAN.planId,
-  };
+  return null;
 }
 
 function PreparingCard() {
@@ -94,14 +94,6 @@ function PreparingCard() {
       <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
-}
-
-function mockTransactionId() {
-  const n = Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase();
-  return `WW-${n}`;
 }
 
 function resolveStatus(
@@ -119,6 +111,7 @@ function resolveStatus(
 
 function CreateFinancialPlanConfirm({
   plan,
+  actionId: preparedActionId,
   resultStatus,
   preparationId,
   resultTransactionId,
@@ -126,6 +119,7 @@ function CreateFinancialPlanConfirm({
   onCancelled,
 }: {
   plan: FinancialPlanPayload;
+  actionId?: string;
   resultStatus: CreateFinancialPlanResult['status'] | undefined;
   preparationId: string;
   resultTransactionId?: string;
@@ -152,20 +146,73 @@ function CreateFinancialPlanConfirm({
 
   const status = resolveStatus(resultStatus, localStatus);
 
+  // The chat may be reopened after approving: show what really happened.
+  useEffect(() => {
+    if (!preparedActionId) return;
+    let cancelled = false;
+    void getAction(preparedActionId)
+      .then((action) => {
+        if (cancelled) return;
+        if (action.status === 'executed') {
+          finishedRef.current = true;
+          followedUpRef.current = true;
+          setTransactionId(action.transactionId ?? undefined);
+          setTxRecordId(action.transactionId);
+          setLocalStatus('sent');
+        } else if (action.status === 'cancelled') {
+          setLocalStatus('cancelled');
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [preparedActionId]);
+
   useEffect(() => {
     if (status !== 'sending') return;
 
     let cancelled = false;
     const run = async () => {
-      for (let step = 0; step < 3; step++) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step++) {
+          if (cancelled) return;
+          setSendingStep(step);
+          await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        }
+      })();
+      let action;
+      try {
+        const id =
+          preparedActionId ??
+          (
+            await prepareAction({
+              kind: 'plan',
+              title: plan.intent.slice(0, 120),
+              currency: plan.currency,
+              items: plan.items.map((item) => ({
+                title: item.label.slice(0, 120),
+                amount: item.amount,
+                category: item.kind,
+              })),
+            })
+          ).id;
+        [action] = await Promise.all([executeAction(id), steps]);
+      } catch (error) {
         if (cancelled) return;
-        setSendingStep(step);
-        await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        haptics.error();
+        setLocalStatus('failed');
+        appendAgentFollowUp(
+          aui,
+          `“${plan.intent}” didn't go through. ${actionErrorMessage(error)}`,
+        );
+        return;
       }
       if (cancelled || finishedRef.current) return;
-      const txId = resultTransactionId ?? mockTransactionId();
+      const txId = action.transactionId ?? action.id;
       finishedRef.current = true;
       setTransactionId(txId);
+      setTxRecordId(action.transactionId);
       setLocalStatus('sent');
       haptics.success();
       onFinishedRef.current({
@@ -175,28 +222,11 @@ function CreateFinancialPlanConfirm({
         status: 'sent',
       });
 
-      const recorded = await recordSentPayment({
-        payment: {
-          amount: plan.total,
-          currency: plan.currency,
-          recipientName: plan.intent,
-          destination: {
-            kind: 'bank_account',
-            label: 'Financial plan',
-            value: `${plan.items.length} line items`,
-          },
-          reference: plan.planId,
-        },
-        transactionId: txId,
-        source: 'chat',
-      });
-      if (!cancelled) setTxRecordId(recorded.id);
-
       if (!followedUpRef.current) {
         followedUpRef.current = true;
         appendAgentFollowUp(
           aui,
-          `Executed “${plan.intent}” for ${plan.items.length} items (batch ${txId}). Check Approvals history or Activity for the receipt. What else?`,
+          `Done: “${plan.intent}” for ${plan.items.length} items (ref ${txId}). It's in Activity. What else?`,
         );
       }
     };
@@ -204,7 +234,7 @@ function CreateFinancialPlanConfirm({
     return () => {
       cancelled = true;
     };
-  }, [aui, plan, preparationId, resultTransactionId, status]);
+  }, [aui, plan, preparationId, preparedActionId, status]);
 
   return (
     <>
@@ -232,6 +262,7 @@ function CreateFinancialPlanConfirm({
         }}
         onCancel={() => {
           if (status !== 'pending' || busy) return;
+          if (preparedActionId) void cancelAction(preparedActionId).catch(() => undefined);
           onCancelled();
         }}
       />
@@ -250,7 +281,9 @@ export const CreateFinancialPlanToolUI = makeAssistantToolUI<
     const requiresPlatformPreparation = args?.items?.some(
       (item) => typeof item.amount === 'object' && item.amount !== null,
     );
-    if (requiresPlatformPreparation && !result?.planId) return <PreparingCard />;
+    if (requiresPlatformPreparation && !result && status.type === 'running') {
+      return <PreparingCard />;
+    }
 
     const hasArgs =
       args != null &&
@@ -260,11 +293,13 @@ export const CreateFinancialPlanToolUI = makeAssistantToolUI<
     }
 
     const plan = asPlan(args ?? {}, result);
-    const preparationId = result?.preparationId ?? `prep_${plan.planId}`;
+    if (!plan) return null;
+    const preparationId = result?.preparationId ?? result?.actionId ?? `prep_${plan.planId}`;
 
     return (
       <CreateFinancialPlanConfirm
         plan={plan}
+        actionId={result?.actionId}
         resultStatus={result?.status}
         preparationId={preparationId}
         resultTransactionId={result?.transactionId}
