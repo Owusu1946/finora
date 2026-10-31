@@ -15,11 +15,12 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage, executeAction, prepareAction } from '@/lib/actions-api';
 import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up';
 import { contactToSendSeed, findContactsByName } from '@/lib/contact-lookup';
 import { findContactByIdentifier, listContacts, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
+import { paymentActionRequest } from '@/lib/payment-actions';
 
 export type ResolveSendCandidate = {
   id: string;
@@ -47,14 +48,6 @@ type ResolveSendResult = {
   transactionId?: string;
   contactId?: string;
 };
-
-function mockTransactionId() {
-  const n = Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase();
-  return `WW-${n}`;
-}
 
 function toContact(c: ResolveSendCandidate): Contact {
   return {
@@ -163,24 +156,35 @@ function ResolveSendFlow({
     if (status !== 'sending' || !payment || !contact) return;
     let cancelled = false;
     const run = async () => {
-      for (let step = 0; step < 3; step++) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step++) {
+          if (cancelled) return;
+          setSendingStep(step);
+          await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        }
+      })();
+      let action;
+      try {
+        const prepared = await prepareAction(await paymentActionRequest(payment));
+        [action] = await Promise.all([executeAction(prepared.id), steps]);
+      } catch (error) {
         if (cancelled) return;
-        setSendingStep(step);
-        await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        haptics.error();
+        setLocalStatus('failed');
+        appendAgentFollowUp(
+          aui,
+          `The payment to ${payment.recipientName} didn't go through. ${actionErrorMessage(error)}`,
+        );
+        return;
       }
       if (cancelled || finishedRef.current) return;
-      const txId = mockTransactionId();
+      const txId = action.transactionId ?? action.id;
       finishedRef.current = true;
       setTransactionId(txId);
+      setTxRecordId(action.transactionId);
       setLocalStatus('sent');
       haptics.success();
       onFinished({ transactionId: txId, contactId: contact.id });
-      const recorded = await recordSentPayment({
-        payment,
-        transactionId: txId,
-        source: 'chat',
-      });
-      if (!cancelled) setTxRecordId(recorded.id);
       if (!followedUpRef.current) {
         followedUpRef.current = true;
         appendAgentFollowUp(aui, paymentSentFollowUp(payment, txId));
