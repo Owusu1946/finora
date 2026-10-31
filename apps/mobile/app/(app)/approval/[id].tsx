@@ -15,17 +15,9 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius, Rounded } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage } from '@/lib/actions-api';
 import { getApproval, resolveApproval } from '@/lib/approvals-storage';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
-
-function mockTransactionId() {
-  const n = Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase();
-  return `WW-${n}`;
-}
 
 export default function ApprovalDetailScreen() {
   const { colors } = useTheme();
@@ -40,6 +32,7 @@ export default function ApprovalDetailScreen() {
   const [sendingStep, setSendingStep] = useState(0);
   const [transactionId, setTransactionId] = useState<string | undefined>();
   const [txRecordId, setTxRecordId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const finishedRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -69,62 +62,36 @@ export default function ApprovalDetailScreen() {
 
     let cancelled = false;
     const run = async () => {
-      for (let step = 0; step < 3; step++) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step++) {
+          if (cancelled) return;
+          setSendingStep(step);
+          await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        }
+      })();
+      let resolved;
+      try {
+        [resolved] = await Promise.all([resolveApproval(approval.id, 'approved'), steps]);
+      } catch (cause) {
         if (cancelled) return;
-        setSendingStep(step);
-        await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        haptics.error();
+        setError(actionErrorMessage(cause));
+        setLocalStatus('failed');
+        return;
       }
       if (cancelled || finishedRef.current) return;
-      const txId = transactionId ?? mockTransactionId();
       finishedRef.current = true;
-      setTransactionId(txId);
+      setTransactionId(resolved.transactionId);
+      setTxRecordId(resolved.transactionId ?? null);
       setLocalStatus('sent');
       haptics.success();
-
-      await resolveApproval(approval.id, 'approved', txId);
-
-      if (approval.kind === 'plan' && approval.plan) {
-        const tx = await recordSentPayment({
-          payment: {
-            amount: approval.plan.total,
-            currency: approval.plan.currency,
-            recipientName: approval.plan.intent,
-            destination: {
-              kind: 'bank_account',
-              label: 'Financial plan',
-              value: `${approval.plan.items.length} line items`,
-            },
-            reference: approval.plan.planId,
-          },
-          transactionId: txId,
-          source: 'mcp',
-        });
-        setTxRecordId(tx.id);
-      } else if (approval.payment) {
-        const tx = await recordSentPayment({
-          payment: approval.payment,
-          transactionId: txId,
-          source: 'mcp',
-        });
-        setTxRecordId(tx.id);
-      }
-
-      setApproval((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: 'approved',
-              transactionId: txId,
-              resolvedAt: new Date().toISOString(),
-            }
-          : prev,
-      );
+      setApproval(resolved);
     };
     void run();
     return () => {
       cancelled = true;
     };
-  }, [approval, status, transactionId]);
+  }, [approval, status]);
 
   if (loading) {
     return (
@@ -169,13 +136,15 @@ export default function ApprovalDetailScreen() {
   const onCancel = async () => {
     if (status !== 'pending' || busy) return;
     setBusy(true);
-    await resolveApproval(approval.id, 'rejected');
-    setLocalStatus('cancelled');
-    setApproval((prev) =>
-      prev ? { ...prev, status: 'rejected', resolvedAt: new Date().toISOString() } : prev,
-    );
-    setBusy(false);
-    haptics.selection();
+    try {
+      setApproval(await resolveApproval(approval.id, 'rejected'));
+      setLocalStatus('cancelled');
+      haptics.selection();
+    } catch (cause) {
+      setError(actionErrorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -201,7 +170,7 @@ export default function ApprovalDetailScreen() {
               {approval.agent}
             </Text>
             <Text className='font-sans-medium text-[14px] text-muted-foreground'>
-              Prepared via MCP · {new Date(approval.createdAt).toLocaleString()}
+              Prepared {new Date(approval.createdAt).toLocaleString()} · Demo, no real money moves
             </Text>
           </View>
 
@@ -230,6 +199,10 @@ export default function ApprovalDetailScreen() {
           ) : (
             <Text className='text-muted-foreground'>Invalid approval payload.</Text>
           )}
+
+          {error ? (
+            <Text className='font-sans-medium text-[14px] leading-5 text-destructive'>{error}</Text>
+          ) : null}
 
           {status === 'sent' && !canOpenTx ? (
             <Pressable
