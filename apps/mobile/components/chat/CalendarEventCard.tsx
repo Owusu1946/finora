@@ -9,6 +9,7 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage, executeAction, prepareAction } from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import {
   dismissCalendarEvent,
@@ -16,14 +17,6 @@ import {
   type CalendarMoneyEvent,
 } from '@/lib/calendar-events-storage';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
-
-function mockTransactionId() {
-  return `WW-CAL-${Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase()}`;
-}
 
 function formatDue(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -58,32 +51,29 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
     if (phase !== 'sending' || finishedRef.current) return;
     let cancelled = false;
     const run = async () => {
-      await new Promise((r) => setTimeout(r, 900));
       if (cancelled || finishedRef.current) return;
+      if (!event.amount || !event.currency || !event.counterparty) {
+        setPhase('idle');
+        return;
+      }
       finishedRef.current = true;
-      const txId = mockTransactionId();
       try {
+        const prepared = await prepareAction({
+          kind: 'payment',
+          recipientName: event.counterparty,
+          amount: event.amount,
+          currency: event.currency,
+          destination: { kind: 'bank_account', label: 'Calendar payment', value: '' },
+          reference: event.title.slice(0, 140),
+          purpose: 'bill',
+          relatedId: `calendar:${event.id}`,
+        });
+        const action = await executeAction(prepared.id);
+        const txId = action.transactionId ?? action.id;
         const updated = await markCalendarEventPaid(event.id, txId);
         if (updated) setEvent(updated);
         setPhase('paid');
         haptics.success();
-        if (event.amount && event.currency && event.counterparty) {
-          await recordSentPayment({
-            payment: {
-              amount: event.amount,
-              currency: event.currency,
-              recipientName: event.counterparty,
-              destination: {
-                kind: 'bank_account',
-                label: 'Calendar payment',
-                value: event.title,
-              },
-              reference: event.title,
-            },
-            transactionId: txId,
-            source: 'chat',
-          });
-        }
         appendAgentFollowUp(
           aui,
           `Paid ${event.title}${
@@ -92,9 +82,11 @@ export function CalendarEventCard({ event: initial }: { event: CalendarMoneyEven
               : ''
           }. Ref ${txId}.`,
         );
-      } catch {
+      } catch (error) {
         finishedRef.current = false;
+        haptics.error();
         setPhase('idle');
+        appendAgentFollowUp(aui, `${event.title} wasn't paid. ${actionErrorMessage(error)}`);
       }
     };
     void run();
