@@ -45,7 +45,7 @@ export default function ActivityScreen() {
               Activity
             </Text>
             <Text className='pb-3.5 pt-1.5 font-sans-medium text-[15px] leading-5 text-muted-foreground'>
-              Every send, receive, and conversion — tap a row for status, WeWire id, and rail.
+              Every payment, deposit, and conversion. Tap one for its status and reference.
             </Text>
           </>
         }

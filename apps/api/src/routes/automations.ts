@@ -19,7 +19,6 @@ import {
   listUserAutomationActivity,
   updateAutomation,
 } from '../db/automation-store';
-import { listActiveAutomationsForUser } from '../db/automation-store';
 import { createDb } from '../db/client';
 
 export const automations = new Hono<AppEnv>();
@@ -41,35 +40,6 @@ automations.get('/activity', async (c) => {
       createdAt: item.createdAt.toISOString(),
     })),
   });
-});
-
-automations.post('/events/balance', async (c) => {
-  const body = (await c.req.json().catch(() => null)) as {
-    walletId?: string;
-    currency?: string;
-    balance?: number;
-    eventId?: string;
-  } | null;
-  if (!body?.currency || typeof body.balance !== 'number') {
-    return c.json({ message: 'currency and numeric balance are required.' }, 400);
-  }
-  const db = createDb(c.get('env').DATABASE_URL);
-  const rows = (await listActiveAutomationsForUser(db, c.get('auth').userId)).filter(
-    (row) =>
-      row.trigger.type === 'balance_threshold' &&
-      row.trigger.config.currency === body.currency &&
-      (!row.trigger.config.walletId || row.trigger.config.walletId === body.walletId),
-  );
-  const eventId = body.eventId ?? `balance:${body.walletId ?? body.currency}:${Date.now()}`;
-  for (const row of rows) {
-    await c.env.AUTOMATION_QUEUE.send({
-      kind: 'evaluate',
-      automationId: row.id,
-      eventId: `${eventId}:${row.id}`,
-      context: { currency: body.currency as never, walletBalance: body.balance },
-    } satisfies AutomationQueueMessage);
-  }
-  return c.json({ queued: rows.length, eventId }, 202);
 });
 
 automations.get('/', async (c) => {

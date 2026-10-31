@@ -1,93 +1,122 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { PreparedAction } from '@finora/shared';
 
-import {
-  MOCK_APPROVALS,
-  type ApprovalRequest,
-  type ApprovalStatus,
-} from '@/components/approvals/types';
+import type { ApprovalRequest, ApprovalStatus } from '@/components/approvals/types';
+import type { PaymentDestinationKind } from '@/components/chat/PaymentConfirmationCard';
 
-import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
-import { serializeStorageMutation } from './storage-mutation';
+import { cancelAction, executeAction, getAction, listActions } from './actions-api';
 
-const BASE_KEY = 'finora.approvals.v2';
-const key = () => userStorageKey(BASE_KEY);
+/**
+ * The Approvals inbox: payments, conversions, and plans prepared on the Finora
+ * API (by chat, automations, or an MCP agent) that wait for the user.
+ */
 
-const memory = new Map<string, string>();
+const AGENT: Record<PreparedAction['source'], string> = {
+  chat: 'Finora chat',
+  manual: 'You',
+  automation: 'Automation',
+  mcp: 'AI agent (MCP)',
+};
 
-async function getItem(key: string): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(key);
-  } catch {
-    return memory.get(key) ?? null;
-  }
+function approvalStatus(action: PreparedAction): ApprovalStatus {
+  if (action.status === 'executed') return 'approved';
+  if (action.status === 'pending_approval') return 'pending';
+  return 'rejected';
 }
 
-async function setItem(key: string, value: string): Promise<void> {
-  if (!isUserStorageKeyWritable(key)) return;
-  memory.set(key, value);
-  try {
-    await AsyncStorage.setItem(key, value);
-  } catch {
-    // Still valid for this process via memory.
-  }
+const DESTINATION_KINDS: PaymentDestinationKind[] = [
+  'mobile_money',
+  'bank_account',
+  'crypto_wallet',
+  'internal_wallet',
+];
+
+function destinationKind(kind: string): PaymentDestinationKind {
+  return (DESTINATION_KINDS as string[]).includes(kind)
+    ? (kind as PaymentDestinationKind)
+    : 'bank_account';
 }
 
-export async function listApprovals(storageKey = key()): Promise<ApprovalRequest[]> {
-  const raw = await getItem(storageKey);
-  if (!raw) {
-    await setItem(storageKey, JSON.stringify(MOCK_APPROVALS));
-    return [...MOCK_APPROVALS];
+export function toApproval(action: PreparedAction): ApprovalRequest {
+  const common = {
+    id: action.id,
+    status: approvalStatus(action),
+    agent: AGENT[action.source],
+    createdAt: action.createdAt,
+    resolvedAt: action.executedAt ?? undefined,
+    preparationId: action.id,
+    transactionId: action.transactionId ?? undefined,
+  };
+  if (action.kind === 'plan') {
+    return {
+      ...common,
+      kind: 'plan',
+      plan: {
+        planId: action.id,
+        intent: action.title,
+        currency: action.currency,
+        total: action.amount,
+        items: action.items.map((item) => ({
+          kind: 'payment',
+          label: item.title,
+          amount: item.amount,
+          currency: action.currency,
+        })),
+      },
+    };
   }
-  try {
-    const parsed = JSON.parse(raw) as ApprovalRequest[];
-    return Array.isArray(parsed) ? parsed : [...MOCK_APPROVALS];
-  } catch {
-    return [...MOCK_APPROVALS];
-  }
+  return {
+    ...common,
+    kind: 'payment',
+    payment: {
+      amount: action.amount,
+      currency: action.currency,
+      recipientName: action.recipient?.name ?? action.title,
+      destination: action.recipient
+        ? {
+            kind: destinationKind(action.recipient.destination.kind),
+            label: action.recipient.destination.label,
+            value: action.recipient.destination.value,
+          }
+        : {
+            kind: 'internal_wallet',
+            label: 'Conversion',
+            value: action.conversion ? `${action.conversion.toAmount} ${action.conversion.to}` : '',
+          },
+      ...(action.reference ? { reference: action.reference } : {}),
+    },
+  };
+}
+
+export async function listApprovals(): Promise<ApprovalRequest[]> {
+  return (await listActions()).map(toApproval);
 }
 
 export async function getApproval(id: string): Promise<ApprovalRequest | null> {
-  const items = await listApprovals();
-  return items.find((a) => a.id === id) ?? null;
+  try {
+    return toApproval(await getAction(id));
+  } catch {
+    return null;
+  }
 }
 
 export async function countPendingApprovals(): Promise<number> {
-  const items = await listApprovals();
-  return items.filter((a) => a.status === 'pending').length;
+  try {
+    return (await listActions({ status: 'pending_approval' })).length;
+  } catch {
+    return 0;
+  }
 }
 
-export async function updateApproval(
-  id: string,
-  patch: Partial<Pick<ApprovalRequest, 'status' | 'resolvedAt' | 'transactionId'>>,
-): Promise<ApprovalRequest | null> {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const items = await listApprovals(storageKey);
-    const idx = items.findIndex((a) => a.id === id);
-    if (idx < 0) return null;
-    const next: ApprovalRequest = { ...items[idx]!, ...patch };
-    await setItem(storageKey, JSON.stringify(items.map((a, i) => (i === idx ? next : a))));
-    return next;
-  });
-}
-
+/**
+ * Approves (executes) or rejects (cancels) an action. Call `approved` only
+ * after the passcode.
+ */
 export async function resolveApproval(
   id: string,
   status: Extract<ApprovalStatus, 'approved' | 'rejected'>,
-  transactionId?: string,
-): Promise<ApprovalRequest | null> {
-  return updateApproval(id, {
-    status,
-    resolvedAt: new Date().toISOString(),
-    transactionId,
-  });
+): Promise<ApprovalRequest> {
+  return toApproval(status === 'approved' ? await executeAction(id) : await cancelAction(id));
 }
 
-export async function clearApprovals(): Promise<void> {
-  memory.delete(key());
-  try {
-    await AsyncStorage.removeItem(key());
-  } catch {
-    // ignore
-  }
-}
+/** Nothing is kept on the device; kept for the sign-out reset. */
+export async function clearApprovals(): Promise<void> {}

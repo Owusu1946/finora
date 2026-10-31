@@ -11,6 +11,7 @@ import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage, cancelAction, executeAction, getAction } from '@/lib/actions-api';
 import { appendAgentFollowUp, conversionDoneFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 
@@ -29,6 +30,8 @@ type PrepareConversionArgs = {
 
 type PrepareConversionResult = {
   status?: ConversionStatus | 'pending' | 'confirmed';
+  /** The prepared conversion on the Finora API; it executes only after the passcode. */
+  actionId?: string;
   conversionId?: string;
   fromCurrency?: string;
   toCurrency?: string;
@@ -80,13 +83,7 @@ function PreparingCard() {
   );
 }
 
-function mockConversionId() {
-  const n = Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase();
-  return `FX-${n}`;
-}
+const CONVERT_STEP_MS = 600;
 
 function resolveStatus(
   resultStatus: PrepareConversionResult['status'] | undefined,
@@ -103,12 +100,14 @@ function resolveStatus(
 
 function PrepareConversionConfirm({
   quote,
+  actionId,
   resultStatus,
   resultConversionId,
   onFinished,
   onCancelled,
 }: {
   quote: ConversionQuote;
+  actionId: string;
   resultStatus: PrepareConversionResult['status'] | undefined;
   resultConversionId?: string;
   onFinished: (payload: { conversionId: string; status: 'converted' }) => void;
@@ -127,32 +126,63 @@ function PrepareConversionConfirm({
 
   const status = resolveStatus(resultStatus, localStatus);
 
+  // The chat may be reopened after converting: show what really happened.
+  useEffect(() => {
+    let cancelled = false;
+    void getAction(actionId)
+      .then((action) => {
+        if (cancelled) return;
+        if (action.status === 'executed') {
+          finishedRef.current = true;
+          followedUpRef.current = true;
+          setConversionId(action.transactionId ?? action.id);
+          setLocalStatus('converted');
+        } else if (action.status === 'cancelled') {
+          setLocalStatus('cancelled');
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [actionId]);
+
   useEffect(() => {
     if (status !== 'converting') return;
     let cancelled = false;
     const run = async () => {
-      for (let step = 0; step < 3; step++) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step++) {
+          if (cancelled) return;
+          setConvertingStep(step);
+          await new Promise((r) => setTimeout(r, CONVERT_STEP_MS));
+        }
+      })();
+      try {
+        const [action] = await Promise.all([executeAction(actionId), steps]);
+        if (cancelled || finishedRef.current) return;
+        const id = action.transactionId ?? action.id;
+        finishedRef.current = true;
+        setConversionId(id);
+        setLocalStatus('converted');
+        haptics.success();
+        onFinishedRef.current({ conversionId: id, status: 'converted' });
+        if (!followedUpRef.current) {
+          followedUpRef.current = true;
+          appendAgentFollowUp(aui, conversionDoneFollowUp(quote, id));
+        }
+      } catch (error) {
         if (cancelled) return;
-        setConvertingStep(step);
-        await new Promise((r) => setTimeout(r, step === 0 ? 600 : 700));
-      }
-      if (cancelled || finishedRef.current) return;
-      const id = resultConversionId ?? mockConversionId();
-      finishedRef.current = true;
-      setConversionId(id);
-      setLocalStatus('converted');
-      haptics.success();
-      onFinishedRef.current({ conversionId: id, status: 'converted' });
-      if (!followedUpRef.current) {
-        followedUpRef.current = true;
-        appendAgentFollowUp(aui, conversionDoneFollowUp(quote, id));
+        haptics.error();
+        setLocalStatus('failed');
+        appendAgentFollowUp(aui, `The conversion didn't go through. ${actionErrorMessage(error)}`);
       }
     };
     void run();
     return () => {
       cancelled = true;
     };
-  }, [aui, quote, resultConversionId, status]);
+  }, [actionId, aui, quote, status]);
 
   return (
     <>
@@ -173,6 +203,7 @@ function PrepareConversionConfirm({
         }}
         onCancel={() => {
           if (status !== 'pending' || busy) return;
+          void cancelAction(actionId).catch(() => undefined);
           onCancelled();
         }}
       />
@@ -189,11 +220,12 @@ export const PrepareConversionToolUI = makeAssistantToolUI<
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
     const quote = asQuote(args ?? {}, result);
-    if (!quote) return status.type === 'running' ? <PreparingCard /> : null;
+    if (!quote || !result?.actionId) return status.type === 'running' ? <PreparingCard /> : null;
 
     return (
       <PrepareConversionConfirm
         quote={quote}
+        actionId={result.actionId}
         resultStatus={result?.status}
         resultConversionId={result?.conversionId}
         onFinished={({ conversionId, status: next }) => {

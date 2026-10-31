@@ -12,10 +12,15 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  actionErrorMessage,
+  executeAction,
+  findPaidAction,
+  prepareAction,
+} from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { dismissInvoice, markInvoicePaid } from '@/lib/invoices-storage';
-import { recordSentPayment } from '@/lib/transactions-storage';
 
 type InvoiceCardProps = {
   invoice: Invoice;
@@ -23,14 +28,6 @@ type InvoiceCardProps = {
 };
 
 const SEND_STEPS = ['Authorizing', 'Paying supplier', 'Confirming'] as const;
-
-function mockTransactionId() {
-  const n = Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase();
-  return `WW-${n}`;
-}
 
 function formatDue(iso: string | null | undefined) {
   if (!iso) return 'No due date';
@@ -56,6 +53,22 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
   const [transactionId, setTransactionId] = useState(initial.transactionId);
   const [txRecordId, setTxRecordId] = useState<string | null>(null);
   const finishedRef = useRef(false);
+
+  // Paid elsewhere (another chat, or before the chat was reopened): show it paid.
+  useEffect(() => {
+    if (initial.status === 'paid' || initial.status === 'dismissed') return;
+    let cancelled = false;
+    void findPaidAction(`invoice:${initial.id}`).then((action) => {
+      if (cancelled || !action) return;
+      finishedRef.current = true;
+      setTransactionId(action.transactionId ?? action.id);
+      setTxRecordId(action.transactionId);
+      setPhase('paid');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initial.id, initial.status]);
 
   const pulse = useRef(new Animated.Value(0.45)).current;
   useEffect(() => {
@@ -89,13 +102,38 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
     const run = async () => {
       const destination = invoice.destination;
       if (!destination) return;
-      for (let step = 0; step < 3; step++) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step++) {
+          if (cancelled) return;
+          setSendingStep(step);
+          await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        }
+      })();
+      let action;
+      try {
+        const prepared = await prepareAction({
+          kind: 'payment',
+          recipientName: invoice.vendor,
+          amount: invoice.amount,
+          currency: invoice.currency,
+          destination,
+          reference: invoice.invoiceNumber,
+          purpose: 'invoice',
+          relatedId: `invoice:${invoice.id}`,
+        });
+        [action] = await Promise.all([executeAction(prepared.id), steps]);
+      } catch (error) {
         if (cancelled) return;
-        setSendingStep(step);
-        await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
+        haptics.error();
+        setPhase('idle');
+        appendAgentFollowUp(
+          aui,
+          `${invoice.invoiceNumber} wasn't paid. ${actionErrorMessage(error)}`,
+        );
+        return;
       }
       if (cancelled || finishedRef.current) return;
-      const txId = mockTransactionId();
+      const txId = action.transactionId ?? action.id;
       finishedRef.current = true;
       setTransactionId(txId);
       setPhase('paid');
@@ -107,18 +145,7 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
         onUpdated?.(updated);
       }
 
-      const recorded = await recordSentPayment({
-        payment: {
-          amount: invoice.amount,
-          currency: invoice.currency,
-          recipientName: invoice.vendor,
-          destination,
-          reference: invoice.invoiceNumber,
-        },
-        transactionId: txId,
-        source: 'chat',
-      });
-      if (!cancelled) setTxRecordId(recorded.id);
+      if (!cancelled) setTxRecordId(action.transactionId);
 
       appendAgentFollowUp(
         aui,

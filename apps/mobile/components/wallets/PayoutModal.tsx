@@ -14,19 +14,21 @@ interface PayoutModalProps {
   visible: boolean;
   wallets: WalletItem[];
   onClose: () => void;
-  onSendSuccess: (sendWalletId: string, amountNum: number) => void;
+  /** Prepares, asks for the passcode, and sends; resolves true once it went through. */
+  onSend: (sendWalletId: string, amountNum: number, recipient: string) => Promise<boolean>;
 }
 
-export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: PayoutModalProps) {
+export function PayoutModal({ visible, wallets, onClose, onSend }: PayoutModalProps) {
   const { colors } = useTheme();
 
   const [sendWalletId, setSendWalletId] = useState(wallets[0]?.id || 'w-usd');
   const [sendAmount, setSendAmount] = useState('');
   const [sendRecipient, setSendRecipient] = useState('');
   const [sendSuccess, setSendSuccess] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const handleExecuteSend = () => {
-    if (!sendAmount || !sendRecipient) return;
+  const handleExecuteSend = async () => {
+    if (!sendAmount || !sendRecipient || sending) return;
     haptics.impact();
     const amountNum = parseFloat(sendAmount);
     const sourceWallet = wallets.find((wallet) => wallet.id === sendWalletId);
@@ -36,7 +38,10 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
       return;
     }
 
-    onSendSuccess(sendWalletId, amountNum);
+    setSending(true);
+    const sent = await onSend(sendWalletId, amountNum, sendRecipient.trim());
+    setSending(false);
+    if (!sent) return;
     setSendSuccess(true);
     setTimeout(() => {
       setSendSuccess(false);
