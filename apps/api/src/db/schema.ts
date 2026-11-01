@@ -881,3 +881,46 @@ export const approvalPolicies = pgTable(
   },
   (table) => [uniqueIndex('approval_policies_user_kind_unique').on(table.clerkUserId, table.kind)],
 );
+
+export const recurringScheduleStatusEnum = pgEnum('recurring_schedule_status', [
+  'draft',
+  'active',
+  'paused',
+  'cancelled',
+]);
+
+/**
+ * A recurring payment. On `next_run_at` Finora prepares the payment for the
+ * user to approve and moves `next_run_at` on by one period.
+ */
+export const recurringSchedules = pgTable(
+  'recurring_schedules',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    recipientName: text('recipient_name').notNull(),
+    amountMinor: bigint('amount_minor', { mode: 'number' }).notNull(),
+    currency: text('currency').notNull(),
+    frequency: text('frequency').$type<'weekly' | 'monthly' | 'quarterly'>().notNull(),
+    destination: jsonb('destination')
+      .$type<{
+        kind: 'mobile_money' | 'bank_account' | 'crypto_wallet';
+        label: string;
+        value: string;
+      }>()
+      .notNull(),
+    reference: text('reference'),
+    status: recurringScheduleStatusEnum('status').notNull().default('draft'),
+    nextRunAt: timestamp('next_run_at', { withTimezone: true }).notNull(),
+    lastRunAt: timestamp('last_run_at', { withTimezone: true }),
+    lastActionId: text('last_action_id'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('recurring_schedules_due_index').on(table.status, table.nextRunAt),
+    index('recurring_schedules_user_index').on(table.clerkUserId, table.createdAt),
+  ],
+);
