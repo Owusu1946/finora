@@ -13,6 +13,7 @@ Product architecture: [`.agents/FINORA_VISION.md`](../../.agents/FINORA_VISION.m
 | [automations.md](./automations.md)           | Automation triggers, delivery to chat, and chat tools   |
 | [payroll.md](./payroll.md)                   | Payroll inputs, review, runs, and approval              |
 | [ledger.md](./ledger.md)                     | Balances, Activity, and prepared actions                |
+| [insights.md](./insights.md)                 | Spending, cash flow, treasury, and weekly insights      |
 | [WeWire coverage](../wewire-api-coverage.md) | WeWire endpoint priorities and live-integration gaps    |
 
 ---

@@ -48,4 +48,3 @@ Recurring payments are schedules (`recurring_schedules`), not standing orders: t
 3. The user approves the card with their passcode, like any payment. Policies apply, and each due date can be paid only once (`relatedId: recurring:<id>:<date>`). It also appears in the Approvals inbox.
 
 If a payment can't be prepared (for example, no wallet in that currency), the Automations chat says why and nothing is sent. Pause, resume, and cancel from the Recurring screen or in chat (`update_recurring_payment`); resuming skips dates that passed while paused.
-
