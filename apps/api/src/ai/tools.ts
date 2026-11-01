@@ -7,6 +7,8 @@ import {
   CreateFinancialPlanInputSchema,
   ListLedgerTransactionsInputSchema,
   ListPayeesInputSchema,
+  ListRecurringPaymentsInputSchema,
+  UpdateRecurringPaymentInputSchema,
   SavePayeeToolInputSchema,
   FindGmailInvoicesInputSchema,
   GetBalancesInputSchema,
@@ -49,7 +51,9 @@ import {
   type UpdateMemoryInput,
   type ApprovalPolicy,
   type LedgerTransaction,
+  type CreateRecurringRequest,
   type Payee,
+  type RecurringSchedule,
   type SavePayeeRequest,
   type LedgerWalletsResponse,
   type PrepareActionRequest,
@@ -99,6 +103,8 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'prepare_employee_payment',
   'prepare_supplier_payment',
   'prepare_recurring',
+  'list_recurring_payments',
+  'update_recurring_payment',
   'create_financial_plan',
   'remember_preference',
   'remember_contact',
@@ -211,6 +217,30 @@ type DirectoryToolReader = {
   save: (request: SavePayeeRequest) => Promise<Payee>;
   policies: () => Promise<ApprovalPolicy[]>;
 };
+
+type RecurringToolReader = {
+  create: (request: CreateRecurringRequest) => Promise<RecurringSchedule>;
+  list: () => Promise<RecurringSchedule[]>;
+  setStatus: (id: string, status: 'active' | 'paused' | 'cancelled') => Promise<RecurringSchedule>;
+};
+
+/** The first due date: the given day of the month (monthly and quarterly) and time, UTC. */
+export function firstRecurringRun(
+  frequency: 'weekly' | 'monthly' | 'quarterly',
+  options: { dayOfMonth?: number; timeOfDay?: string },
+  now = new Date(),
+) {
+  const [hour, minute] = (options.timeOfDay ?? '09:00').split(':').map(Number);
+  const next = new Date(now);
+  next.setUTCHours(Number.isFinite(hour) ? hour! : 9, Number.isFinite(minute) ? minute! : 0, 0, 0);
+  if (frequency !== 'weekly' && options.dayOfMonth) {
+    next.setUTCDate(options.dayOfMonth);
+    while (next <= now) next.setUTCMonth(next.getUTCMonth() + 1);
+    return next;
+  }
+  if (next <= now) next.setUTCDate(next.getUTCDate() + (frequency === 'weekly' ? 7 : 1));
+  return next;
+}
 
 type GmailToolReader = {
   status: () => Promise<unknown>;
@@ -335,6 +365,7 @@ export function createChatAgentTools(
   cards?: CardToolReader,
   money?: MoneyToolReader,
   directory?: DirectoryToolReader,
+  recurring?: RecurringToolReader,
 ) {
   return {
     create_virtual_card: tool({
@@ -935,11 +966,66 @@ export function createChatAgentTools(
     }),
     prepare_recurring: tool({
       description:
-        'Proactively prepare a recurring payment schedule whenever the user asks to schedule, automate, or repeat a payment. Extract recipient, amount, currency, payment network, destination, frequency, and date from the conversation; normalize natural-language dates. Ask for only one missing field at a time. This never activates or executes a payment and always requires explicit human approval.',
+        'Proactively prepare a recurring payment schedule whenever the user asks to schedule, automate, or repeat a payment. Extract recipient, amount, currency, payment network, destination, frequency, and date from the conversation; normalize natural-language dates. Ask for only one missing field at a time. The chat shows a card the user confirms with their passcode. Once active, Finora prepares each payment on its due date for the user to approve; it never pays on its own.',
       inputSchema: zodSchema(PrepareRecurringPaymentInputSchema),
       execute: async (input) => {
-        const result = await callPlatform('/recurring/prepare', { method: 'POST', body: input });
-        return { ...result, status: 'pending', recurring: input };
+        if (!recurring) throw new Error('recurring_unavailable');
+        const schedule = await recurring.create({
+          recipientName: input.recipientName,
+          amount: input.amount.amount,
+          currency: input.amount.currency,
+          frequency: input.frequency,
+          destination: {
+            kind:
+              input.destinationKind === 'mobile_money' || input.destinationKind === 'crypto_wallet'
+                ? input.destinationKind
+                : 'bank_account',
+            label: input.destinationLabel?.trim() || destinationLabel(input.destinationKind),
+            value: input.destinationValue.slice(0, 120),
+          },
+          reference: input.reference,
+          nextRunAt: firstRecurringRun(input.frequency, input).toISOString(),
+          activate: false,
+        });
+        return {
+          status: 'pending' as const,
+          recurringId: schedule.id,
+          nextRunAt: schedule.nextRunAt,
+          recurring: input,
+        };
+      },
+    }),
+    list_recurring_payments: tool({
+      description:
+        "List the user's recurring payments: who, how much, how often, the next due date, and whether it's active or paused.",
+      inputSchema: zodSchema(ListRecurringPaymentsInputSchema),
+      execute: async ({ status }) => {
+        if (!recurring) throw new Error('recurring_unavailable');
+        const schedules = await recurring.list();
+        return {
+          schedules:
+            status && status !== 'all'
+              ? schedules.filter((schedule) => schedule.status === status)
+              : schedules.filter((schedule) => schedule.status !== 'cancelled'),
+        };
+      },
+    }),
+    update_recurring_payment: tool({
+      description:
+        'Pause, resume, or cancel a recurring payment when the user asks. Use the id from list_recurring_payments. Only status changes are supported; to change the amount or date, cancel it and prepare a new one.',
+      inputSchema: zodSchema(UpdateRecurringPaymentInputSchema),
+      execute: async ({ recurringId, status }) => {
+        if (!recurring) throw new Error('recurring_unavailable');
+        if (!status) return { ok: false as const, errorCode: 'status_required' };
+        try {
+          return { ok: true as const, schedule: await recurring.setStatus(recurringId, status) };
+        } catch (error) {
+          const code = error instanceof Error ? error.message : '';
+          if (code === 'recurring_not_found' || code === 'recurring_cancelled') {
+            return { ok: false as const, errorCode: code };
+          }
+          throw error;
+        }
       },
     }),
     create_financial_plan: tool({
