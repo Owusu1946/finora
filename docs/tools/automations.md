@@ -38,3 +38,14 @@ The app sends its timezone in `X-Timezone`, and the prompt tells the model the u
 ## Testing locally
 
 `wrangler dev` runs the queue locally, so **Run now** works end to end. Cron doesn't fire in `wrangler dev`; trigger it with `curl "http://localhost:8787/__scheduled?cron=*+*+*+*+*"` after starting with `--test-scheduled`, or deploy.
+
+## Recurring payments
+
+Recurring payments are schedules (`recurring_schedules`), not standing orders: they never pay on their own.
+
+1. `prepare_recurring` saves a **draft** schedule and shows a card. Confirming it with the passcode makes it active (`PATCH /v1/recurring/:id`). The app's own schedule wizard creates active schedules directly (`POST /v1/recurring`).
+2. Every minute the cron runs `runDueSchedules`. For each active schedule whose `next_run_at` has passed, it moves the date on by one period in a conditional update (so overlapping runs prepare each date once), prepares the payment as an action (`source: automation`), and posts it to the Automations chat with a `payment_due` card. Missed dates prepare once, not once per missed date.
+3. The user approves the card with their passcode, like any payment. Policies apply, and each due date can be paid only once (`relatedId: recurring:<id>:<date>`). It also appears in the Approvals inbox.
+
+If a payment can't be prepared (for example, no wallet in that currency), the Automations chat says why and nothing is sent. Pause, resume, and cancel from the Recurring screen or in chat (`update_recurring_payment`); resuming skips dates that passed while paused.
+
