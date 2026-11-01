@@ -44,3 +44,42 @@ export async function listUserCards(env: AppApiEnv, userId: string) {
   }
   return { cards, rowCount: rows.length, configured: true };
 }
+
+/**
+ * Recent purchases across the user's open cards, newest first, as business
+ * expenses (merchant, amount in USD, card). Declined and reversed ones are left out.
+ */
+export async function listCardPurchases(env: AppApiEnv, userId: string, limit = 50) {
+  const lithic = lithicFor(env);
+  if (!lithic) return [];
+  const rows = (await listVirtualCardRows(createDb(env.DATABASE_URL), userId)).filter(
+    (row) => !row.closedAt,
+  );
+  const results = await Promise.allSettled(
+    rows.map(async (row) => ({
+      row,
+      transactions: await lithic.listTransactions(row.providerCardToken),
+    })),
+  );
+  const purchases = [];
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      logCardProviderError(result.reason);
+      continue;
+    }
+    for (const tx of result.value.transactions) {
+      if (tx.kind !== 'purchase' || tx.state === 'declined' || tx.state === 'reversed') continue;
+      purchases.push({
+        id: tx.id,
+        merchant: tx.merchant,
+        category: 'Card purchase',
+        amount: tx.amount,
+        currency: 'USD',
+        spentAt: tx.createdAt,
+        cardLabel: result.value.row.label,
+        status: tx.state === 'pending' ? ('pending' as const) : ('posted' as const),
+      });
+    }
+  }
+  return purchases.sort((a, b) => b.spentAt.localeCompare(a.spentAt)).slice(0, limit);
+}
