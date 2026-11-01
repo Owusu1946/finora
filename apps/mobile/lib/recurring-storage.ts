@@ -1,19 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import {
-  MOCK_RECURRING,
-  type RecurringPayment,
-  type RecurringStatus,
-} from '@/components/recurring/types';
+  RecurringScheduleListResponseSchema,
+  RecurringScheduleResponseSchema,
+  type CreateRecurringRequest,
+  type RecurringSchedule,
+} from '@finora/shared';
 
-import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
-import { serializeStorageMutation } from './storage-mutation';
+import type { RecurringPayment, RecurringStatus } from '@/components/recurring/types';
 
-const BASE_KEY = 'finora.recurring.v1';
-const key = () => userStorageKey(BASE_KEY);
+import { ledgerRequest } from './ledger-api';
 
-const memory = new Map<string, string>();
+/**
+ * Recurring payments are schedules on the Finora API. On each due date Finora
+ * prepares the payment and posts it to the Automations chat for approval.
+ */
+
 const listeners = new Set<() => void>();
+let cached: RecurringPayment[] = [];
 
 function notify() {
   for (const listener of listeners) listener();
@@ -26,73 +28,69 @@ export function subscribeRecurring(listener: () => void) {
   };
 }
 
-async function getItem(key: string): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(key);
-  } catch {
-    return memory.get(key) ?? null;
-  }
+function toPayment(schedule: RecurringSchedule): RecurringPayment {
+  return {
+    id: schedule.id,
+    recipientName: schedule.recipientName,
+    amount: schedule.amount,
+    currency: schedule.currency,
+    frequency: schedule.frequency,
+    nextRunAt: schedule.nextRunAt,
+    // A draft (not yet confirmed) shows as not active.
+    status: schedule.status === 'draft' ? 'paused' : schedule.status,
+    destination: schedule.destination,
+    reference: schedule.reference ?? undefined,
+    createdAt: schedule.createdAt,
+  };
 }
 
-async function setItem(key: string, value: string): Promise<void> {
-  if (!isUserStorageKeyWritable(key)) return;
-  memory.set(key, value);
+export async function listRecurring(): Promise<RecurringPayment[]> {
   try {
-    await AsyncStorage.setItem(key, value);
-  } catch {
-    // memory fallback
-  }
-}
-
-export async function listRecurring(storageKey = key()): Promise<RecurringPayment[]> {
-  const raw = await getItem(storageKey);
-  if (!raw) {
-    await setItem(storageKey, JSON.stringify(MOCK_RECURRING));
-    return [...MOCK_RECURRING];
-  }
-  try {
-    const parsed = JSON.parse(raw) as RecurringPayment[];
-    return Array.isArray(parsed) ? parsed : [...MOCK_RECURRING];
-  } catch {
-    return [...MOCK_RECURRING];
-  }
-}
-
-export async function saveRecurring(payment: RecurringPayment): Promise<RecurringPayment> {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const items = await listRecurring(storageKey);
-    await setItem(
-      storageKey,
-      JSON.stringify([payment, ...items.filter((item) => item.id !== payment.id)]),
+    const { schedules } = RecurringScheduleListResponseSchema.parse(
+      await ledgerRequest('/recurring'),
     );
-    notify();
-    return payment;
-  });
+    cached = schedules.map(toPayment);
+  } catch (error) {
+    if (__DEV__) console.warn('[recurring] load failed', error);
+  }
+  return cached;
+}
+
+export async function getRecurringSchedule(id: string) {
+  return RecurringScheduleResponseSchema.parse(
+    await ledgerRequest(`/recurring/${encodeURIComponent(id)}`),
+  ).schedule;
+}
+
+/** Creates an active schedule. The caller asks for the passcode first. */
+export async function createRecurring(request: CreateRecurringRequest) {
+  const { schedule } = RecurringScheduleResponseSchema.parse(
+    await ledgerRequest('/recurring', { method: 'POST', body: { ...request, activate: true } }),
+  );
+  notify();
+  return toPayment(schedule);
 }
 
 export async function updateRecurringStatus(
   id: string,
   status: RecurringStatus,
 ): Promise<RecurringPayment | null> {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const items = await listRecurring(storageKey);
-    const idx = items.findIndex((r) => r.id === id);
-    if (idx < 0) return null;
-    const next: RecurringPayment = { ...items[idx]!, status };
-    await setItem(storageKey, JSON.stringify(items.map((r, i) => (i === idx ? next : r))));
+  try {
+    const { schedule } = RecurringScheduleResponseSchema.parse(
+      await ledgerRequest(`/recurring/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: { status },
+      }),
+    );
     notify();
-    return next;
-  });
+    return toPayment(schedule);
+  } catch (error) {
+    if (__DEV__) console.warn('[recurring] update failed', error);
+    return null;
+  }
 }
 
 export async function clearRecurring(): Promise<void> {
-  memory.delete(key());
-  try {
-    await AsyncStorage.removeItem(key());
-  } catch {
-    // ignore
-  }
+  cached = [];
   notify();
 }
