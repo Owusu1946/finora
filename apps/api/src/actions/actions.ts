@@ -96,7 +96,13 @@ export function priceAction(
   const currency = payload.currency.toUpperCase();
   const amount =
     payload.kind === 'plan'
-      ? round(payload.items.reduce((sum, item) => sum + item.amount, 0))
+      ? round(
+          payload.items.reduce(
+            (sum, item) =>
+              sum + convertDemoAmount(item.amount, item.currency ?? currency, currency),
+            0,
+          ),
+        )
       : payload.amount;
   const wallet = walletFor(wallets, currency, fundingWalletId ?? payload.fundingWalletId);
   if (!wallet) throw new LedgerError('wallet_not_found', 404);
@@ -161,6 +167,8 @@ function toPreparedAction(row: ActionRow, wallets: WalletRow[]): PreparedAction 
     policy: row.policy,
     transactionId: row.transactionId,
     failureReason: row.failureReason,
+    notes: payload.kind === 'plan' ? (payload.notes ?? []) : [],
+    results: row.results ?? null,
     createdAt: row.createdAt.toISOString(),
     executedAt: row.executedAt?.toISOString() ?? null,
   };

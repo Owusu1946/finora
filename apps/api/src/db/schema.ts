@@ -790,6 +790,7 @@ export const ledgerEntries = pgTable(
 
 export const preparedActionStatusEnum = pgEnum('prepared_action_status', [
   'pending_approval',
+  'executing',
   'executed',
   'cancelled',
   'failed',
@@ -815,6 +816,17 @@ export const preparedActions = pgTable(
     fundingWalletId: text('funding_wallet_id'),
     transactionId: text('transaction_id'),
     failureReason: text('failure_reason'),
+    /** Plans: how each item went once the plan ran. */
+    results: jsonb('results').$type<
+      {
+        type: 'action' | 'payroll_run';
+        id: string;
+        title: string;
+        status: 'paid' | 'failed';
+        transactionId: string | null;
+        error: string | null;
+      }[]
+    >(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     executedAt: timestamp('executed_at', { withTimezone: true }),
