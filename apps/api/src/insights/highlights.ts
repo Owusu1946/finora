@@ -62,9 +62,11 @@ export function buildHighlights(input: {
       `Your balance drops to about ${money(forecast.lowestBalance, forecast.currency)} around ${day(forecast.lowestAt)}.`,
     );
   }
-  const soon = upcoming.filter(
-    (bill) => Date.parse(bill.dueAt) - Date.now() < forecast.days * 86_400_000,
-  );
+  const start = Date.parse(forecast.points[0]?.date ?? new Date().toISOString());
+  const soon = upcoming.filter((bill) => {
+    const due = Date.parse(bill.dueAt) - start;
+    return due >= 0 && due < forecast.days * 86_400_000;
+  });
   if (soon.length) {
     highlights.push(
       `${soon.length} ${soon.length === 1 ? 'bill' : 'bills'} due in the next ${forecast.days} days, ${money(forecast.upcomingTotal, forecast.currency)} in total.`,
