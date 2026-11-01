@@ -6,7 +6,6 @@ import type { AppEnv } from '../app-env';
 import {
   ActionError,
   cancelAction,
-  executeAction,
   getAction,
   listActions,
   prepareAction,
@@ -15,6 +14,7 @@ import {
 import { afterMoneyMoved } from '../automations/balance-events';
 import { createDb } from '../db/client';
 import { LedgerError } from '../ledger/ledger';
+import { executeAnyAction } from '../plans/execute';
 
 /**
  * Prepared payments, conversions, and plans. Anyone can prepare one (chat, the
@@ -106,8 +106,20 @@ actions.post('/:id/execute', async (c) => {
   const db = createDb(c.get('env').DATABASE_URL);
   const userId = c.get('auth').userId;
   try {
-    const action = await executeAction(db, userId, c.req.param('id'), input.data);
-    afterMoneyMoved(c.executionCtx, c.env.AUTOMATION_QUEUE, db, userId, action.transactionId);
+    const action = await executeAnyAction(
+      c.get('env').DATABASE_URL,
+      db,
+      userId,
+      c.req.param('id'),
+      input.data,
+    );
+    afterMoneyMoved(
+      c.executionCtx,
+      c.env.AUTOMATION_QUEUE,
+      db,
+      userId,
+      action.transactionId ?? (action.results?.length ? `plan:${action.id}` : null),
+    );
     return c.json({ action });
   } catch (error) {
     const { body, status } = actionError(error);
