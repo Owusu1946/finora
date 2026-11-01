@@ -1,4 +1,8 @@
-import { ExecuteActionRequestSchema, PrepareActionRequestSchema } from '@finora/shared';
+import {
+  ExecuteActionRequestSchema,
+  PrepareActionRequestSchema,
+  PrepareInvoicePaymentInputSchema,
+} from '@finora/shared';
 import { Hono } from 'hono';
 
 import type { AppEnv } from '../app-env';
@@ -11,6 +15,7 @@ import {
   prepareAction,
   updatePendingAction,
 } from '../actions/actions';
+import { invoicePaymentFor, InvoicePaymentError } from '../actions/invoices';
 import { afterMoneyMoved } from '../automations/balance-events';
 import { createDb } from '../db/client';
 import { LedgerError } from '../ledger/ledger';
@@ -61,6 +66,27 @@ actions.post('/', async (c) => {
     );
     return c.json({ action }, 201);
   } catch (error) {
+    const { body, status } = actionError(error);
+    return c.json(body, status);
+  }
+});
+
+/**
+ * Prepares paying one of the user's invoices to the saved supplier that
+ * matches its vendor, so the account number never leaves the server.
+ */
+actions.post('/invoice', async (c) => {
+  const input = PrepareInvoicePaymentInputSchema.safeParse(await c.req.json().catch(() => null));
+  if (!input.success) return c.json({ ok: false, errorCode: 'invalid_request' }, 400);
+  const db = createDb(c.get('env').DATABASE_URL);
+  const userId = c.get('auth').userId;
+  try {
+    const { request } = await invoicePaymentFor(db, userId, input.data.invoiceId);
+    return c.json({ action: await prepareAction(db, userId, request, 'manual') }, 201);
+  } catch (error) {
+    if (error instanceof InvoicePaymentError) {
+      return c.json({ ok: false, errorCode: error.code }, error.status);
+    }
     const { body, status } = actionError(error);
     return c.json(body, status);
   }
