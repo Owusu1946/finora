@@ -10,6 +10,7 @@ import { and, eq, gte, inArray, lte } from 'drizzle-orm';
 import type { Database } from '../db/client';
 
 import { ActionError, cancelAction, listActions, prepareAction } from '../actions/actions';
+import { invoicePaymentRequest, supplierForVendor } from '../actions/invoices';
 import { invoices, payrollRuns } from '../db/schema';
 import { fromMinor, listLedgerWallets } from '../ledger/ledger';
 import { listPayees } from '../payees/payees';
@@ -91,13 +92,7 @@ async function invoicePayments(
   for (const invoice of due) {
     const relatedId = `invoice:${invoice.id}`;
     if (pendingRelated.has(relatedId)) continue;
-    const vendor = invoice.vendor.toLowerCase();
-    const supplier = suppliers.find(
-      (item) =>
-        item.name.toLowerCase() === vendor ||
-        item.name.toLowerCase().includes(vendor) ||
-        vendor.includes(item.name.toLowerCase()),
-    );
+    const supplier = supplierForVendor(suppliers, invoice.vendor);
     const what = `${invoice.vendor} ${invoice.invoiceNumber} (${money(fromMinor(invoice.amountMinor), invoice.currency)})`;
     if (!supplier) {
       notes.push(
@@ -107,25 +102,7 @@ async function invoicePayments(
     }
     try {
       actions.push(
-        await prepareAction(
-          db,
-          userId,
-          {
-            kind: 'payment',
-            recipientName: supplier.name,
-            amount: fromMinor(invoice.amountMinor),
-            currency: invoice.currency,
-            destination: {
-              kind: supplier.method,
-              label: supplier.label,
-              value: supplier.identifier,
-            },
-            reference: invoice.invoiceNumber,
-            purpose: 'invoice',
-            relatedId,
-          },
-          source,
-        ),
+        await prepareAction(db, userId, invoicePaymentRequest(invoice, supplier), source),
       );
     } catch (error) {
       // Already paid: nothing to do today.
