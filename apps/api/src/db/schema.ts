@@ -825,3 +825,59 @@ export const preparedActions = pgTable(
     ),
   ],
 );
+
+export const payeeKindEnum = pgEnum('payee_kind', ['contact', 'supplier']);
+
+/**
+ * A saved contact or supplier with their payout details. `identifierKey` is the
+ * identifier without spaces or case, so the same account is saved once.
+ */
+export const payees = pgTable(
+  'payees',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    kind: payeeKindEnum('kind').notNull(),
+    name: text('name').notNull(),
+    currency: text('currency').notNull(),
+    method: text('method')
+      .$type<'bank_account' | 'mobile_money' | 'crypto_wallet' | 'finora'>()
+      .notNull(),
+    label: text('label').notNull(),
+    identifier: text('identifier').notNull(),
+    identifierKey: text('identifier_key').notNull(),
+    country: text('country'),
+    defaultAmountMinor: bigint('default_amount_minor', { mode: 'number' }),
+    notes: text('notes'),
+    favourite: boolean('favourite').notNull().default(false),
+    lastPaidAt: timestamp('last_paid_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('payees_user_kind_identifier_unique').on(
+      table.clerkUserId,
+      table.kind,
+      table.identifierKey,
+    ),
+  ],
+);
+
+/** The user's approval rules. They block or flag; the passcode is always required. */
+export const approvalPolicies = pgTable(
+  'approval_policies',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    kind: text('kind').$type<'amount_review' | 'new_recipient' | 'daily_limit'>().notNull(),
+    enabled: boolean('enabled').notNull().default(true),
+    amountUsdMinor: bigint('amount_usd_minor', { mode: 'number' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('approval_policies_user_kind_unique').on(table.clerkUserId, table.kind)],
+);
