@@ -10,7 +10,7 @@ import {
   type LedgerWallet,
   type LedgerWalletsResponse,
 } from '@finora/shared';
-import { and, desc, eq, ilike, ne, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, ne, or, sql } from 'drizzle-orm';
 
 import type { Database } from '../db/client';
 
@@ -363,7 +363,13 @@ export async function walletCost(
 export async function listLedgerTransactions(
   db: Database,
   userId: string,
-  options: { limit?: number; query?: string; direction?: TransactionRow['direction'] } = {},
+  options: {
+    limit?: number;
+    query?: string;
+    direction?: TransactionRow['direction'];
+    /** Only transactions on or after this date; allows up to 5,000 rows, for insights. */
+    since?: Date;
+  } = {},
 ) {
   const query = options.query?.trim();
   const rows = await db
@@ -373,6 +379,7 @@ export async function listLedgerTransactions(
       and(
         eq(ledgerTransactions.clerkUserId, userId),
         options.direction ? eq(ledgerTransactions.direction, options.direction) : undefined,
+        options.since ? gte(ledgerTransactions.createdAt, options.since) : undefined,
         query
           ? or(
               ilike(ledgerTransactions.counterparty, `%${query}%`),
@@ -382,7 +389,7 @@ export async function listLedgerTransactions(
       ),
     )
     .orderBy(desc(ledgerTransactions.createdAt))
-    .limit(Math.min(options.limit ?? 50, 200));
+    .limit(Math.min(options.limit ?? 50, options.since ? 5_000 : 200));
   return rows.map(toLedgerTransaction);
 }
 
