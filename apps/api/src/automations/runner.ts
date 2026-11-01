@@ -10,6 +10,7 @@ import {
 import { createDb } from '../db/client';
 import { automationExecutionLogs, automations } from '../db/schema';
 import { getApiEnv } from '../env';
+import { isWeeklyInsightMinute, postWeeklyInsights } from '../insights/weekly';
 import { runDueSchedules } from '../recurring/recurring';
 import { automationMessage, postToAutomationsChat } from './deliver';
 import { enqueueDueInvoiceEvents, isDailyInvoiceScanMinute } from './producers';
@@ -46,6 +47,13 @@ export async function enqueueDueAutomations(bindings: Env, now = new Date()) {
   }
   if (isDailyInvoiceScanMinute(now)) {
     queued += await enqueueDueInvoiceEvents(db, bindings.AUTOMATION_QUEUE, rows, now);
+  }
+  if (isWeeklyInsightMinute(now)) {
+    await postWeeklyInsights(db, now).catch((error) => {
+      console.error('[insights:weekly-run]', {
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+    });
   }
   await runDueSchedules(db, now).catch((error) => {
     console.error('[recurring:run]', {
