@@ -35,7 +35,6 @@ import {
 } from '../db/user-profiles';
 import { createPreparation, mockStore, newId } from '../mock/store';
 import { syncOAuthAvatar } from '../oauth-avatar';
-import { PayrollPreparationError, preparePayrollImport } from '../payroll/prepare-import';
 import { transcriptions } from './transcriptions';
 
 type AppEnv = {
@@ -439,39 +438,6 @@ v1.get('/crypto-addresses', (c) =>
 
 // ─── Contacts ──────────────────────────────────────────────────────────────
 
-v1.get('/contacts', (c) => {
-  const q = (c.req.query('query') ?? '').toLowerCase();
-  const favouriteOnly = c.req.query('favouriteOnly') === 'true';
-  let items = [...mockStore.contacts];
-  if (favouriteOnly) items = items.filter((x) => x.favourite);
-  if (q) {
-    items = items.filter(
-      (x) => x.name.toLowerCase().includes(q) || x.identifier.toLowerCase().includes(q),
-    );
-  }
-  return c.json({ mode: 'mock', contacts: items });
-});
-
-v1.post('/contacts', async (c) => {
-  const body = await c.req.json<{
-    name: string;
-    method: string;
-    identifier: string;
-    currency?: string;
-    favourite?: boolean;
-  }>();
-  const contact = {
-    id: newId('c'),
-    name: body.name,
-    method: body.method,
-    identifier: body.identifier,
-    currency: body.currency ?? 'USD',
-    favourite: body.favourite ?? false,
-  };
-  mockStore.contacts.unshift(contact);
-  return c.json({ mode: 'mock', contact }, 201);
-});
-
 v1.post('/accounts/lookup', async (c) => {
   const body = await c.req.json<{ kind: string; value: string }>();
   if (body.kind === 'internal_wallet') {
@@ -534,160 +500,6 @@ v1.get('/finora-tags/:tag', (c) => {
   if (!account) return c.json({ error: 'finora_tag_not_found' }, 404);
   if (account.id === 'sc_personal_001') return c.json({ error: 'self_transfer' }, 409);
   return c.json({ mode: 'mock', account: publicFinoraAccount(account) });
-});
-
-// ─── Preparations (money movement → approval) ──────────────────────────────
-
-v1.post('/payments/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  // Accepts international fields (destinationCountry, settlementMethod, purposeCode,
-  // rail details, fundingCurrency, fx) and stores them on the preparation payload.
-  return c.json(
-    createPreparation('payment', {
-      ...body,
-      corridor:
-        typeof body.destinationCountry === 'string'
-          ? SEND_CORRIDORS.find((x) => x.code === body.destinationCountry)
-          : undefined,
-    }),
-    201,
-  );
-});
-
-v1.post('/disbursements/mobile-money/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('momo_disbursement', body), 201);
-});
-
-v1.post('/transfers/prepare', async (c) => {
-  const body = await c.req.json<{
-    fromSubCustomerId?: string;
-    toSubCustomerId?: string;
-    amount?: { value?: number; currency?: string };
-    reference?: string;
-  }>();
-  if (
-    !body.fromSubCustomerId ||
-    !body.toSubCustomerId ||
-    body.fromSubCustomerId === body.toSubCustomerId
-  ) {
-    return c.json({ error: 'invalid_internal_transfer_accounts' }, 400);
-  }
-  const recipient = mockStore.subcustomers.find(
-    (item) =>
-      item.id === body.toSubCustomerId &&
-      item.status === 'ACTIVE' &&
-      item.onboardingStatus === 'APPROVED',
-  );
-  if (!recipient) return c.json({ error: 'recipient_not_found' }, 404);
-  const currency = body.amount?.currency?.toUpperCase();
-  if (!body.amount?.value || body.amount.value <= 0 || !currency) {
-    return c.json({ error: 'invalid_amount' }, 400);
-  }
-  if (!recipient.walletCurrencies.includes(currency)) {
-    return c.json(
-      { error: 'recipient_wallet_unavailable', available: recipient.walletCurrencies },
-      409,
-    );
-  }
-  return c.json(
-    createPreparation('internal_transfer', {
-      ...body,
-      recipient: publicFinoraAccount(recipient),
-    }),
-    201,
-  );
-});
-
-v1.post('/conversions/prepare', async (c) => {
-  const body = await c.req.json<{ from: string; to: string; amount: number }>();
-  const rate = mockStore.fxRates.find((r) => r.from === body.from && r.to === body.to)?.rate ?? 1;
-  const fee = Number((body.amount * 0.004).toFixed(2));
-  const toAmount = Number(((body.amount - fee) * rate).toFixed(2));
-  return c.json(
-    createPreparation('conversion', {
-      ...body,
-      rate,
-      fee,
-      toAmount,
-      quoteId: newId('quote'),
-    }),
-    201,
-  );
-});
-
-// ─── Approvals ─────────────────────────────────────────────────────────────
-
-v1.get('/approvals', (c) => {
-  const status = c.req.query('status') ?? 'pending';
-  const items =
-    status === 'all' ? mockStore.approvals : mockStore.approvals.filter((a) => a.status === status);
-  return c.json({ mode: 'mock', approvals: items });
-});
-
-v1.get('/approvals/:id', (c) => {
-  const item = mockStore.approvals.find(
-    (a) => a.id === c.req.param('id') || a.preparationId === c.req.param('id'),
-  );
-  if (!item) return c.json({ error: 'not_found' }, 404);
-  return c.json({ mode: 'mock', approval: item });
-});
-
-v1.post('/approvals/request', async (c) => {
-  const body = await c.req.json<{ preparationId: string; note?: string }>();
-  const item = mockStore.approvals.find((a) => a.preparationId === body.preparationId);
-  if (!item) return c.json({ error: 'preparation_not_found' }, 404);
-  return c.json({
-    mode: 'mock',
-    approvalId: item.id,
-    status: item.status,
-    push: 'queued',
-    note: body.note,
-    message: 'Human notified in Finora Approvals inbox.',
-  });
-});
-
-/** Human app only — MCP must not call this to move money. */
-v1.post('/approvals/:id/resolve', async (c) => {
-  const body = await c.req.json<{ decision: 'approved' | 'rejected' }>();
-  const item = mockStore.approvals.find((a) => a.id === c.req.param('id'));
-  if (!item) return c.json({ error: 'not_found' }, 404);
-  item.status = body.decision;
-  item.resolvedAt = new Date().toISOString();
-  if (body.decision === 'approved') {
-    const txId = newId('WW');
-    item.transactionId = txId;
-    item.status = 'executed';
-    mockStore.transactions.unshift({
-      id: newId('tx'),
-      wewireId: txId,
-      type:
-        item.kind === 'conversion'
-          ? 'CONVERSION'
-          : item.kind === 'momo_disbursement'
-            ? 'DISBURSEMENT'
-            : 'PAYOUT',
-      channel:
-        item.kind === 'momo_disbursement'
-          ? 'MOBILE_MONEY'
-          : item.kind === 'conversion'
-            ? 'FX'
-            : item.kind === 'internal_transfer'
-              ? 'INTERNAL'
-              : 'BANK',
-      status: 'COMPLETED',
-      amount: String((item.payload as { amount?: number }).amount ?? 0),
-      currency: String((item.payload as { currency?: string }).currency ?? 'USD'),
-      counterparty: String(
-        (item.payload as { recipientName?: string }).recipientName ?? 'Counterparty',
-      ),
-      reference: String((item.payload as { reference?: string }).reference ?? item.preparationId),
-      subCustomerId: 'sc_personal_001',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-  }
-  return c.json({ mode: 'mock', approval: item });
 });
 
 // ─── FX ────────────────────────────────────────────────────────────────────
@@ -821,43 +633,6 @@ v1.post('/subcustomers/:id/kyc/submit', (c) => {
   return c.json({ mode: 'mock', status: 'PENDING_REVIEW' });
 });
 
-// ─── Invoices ──────────────────────────────────────────────────────────────
-
-v1.get('/invoices', (c) => {
-  const status = c.req.query('status');
-  const query = (c.req.query('query') ?? '').toLowerCase();
-  let items = [...mockStore.invoices];
-  if (status && status !== 'all') items = items.filter((i) => i.status === status);
-  if (query) {
-    items = items.filter(
-      (i) =>
-        i.vendor.toLowerCase().includes(query) || i.invoiceNumber.toLowerCase().includes(query),
-    );
-  }
-  return c.json({ mode: 'mock', invoices: items });
-});
-
-v1.get('/invoices/:id', (c) => {
-  const inv = mockStore.invoices.find((i) => i.id === c.req.param('id'));
-  if (!inv) return c.json({ error: 'not_found' }, 404);
-  return c.json({ mode: 'mock', invoice: inv });
-});
-
-v1.post('/invoices/:id/prepare-payment', (c) => {
-  const inv = mockStore.invoices.find((i) => i.id === c.req.param('id'));
-  if (!inv) return c.json({ error: 'not_found' }, 404);
-  return c.json(
-    createPreparation('invoice_payment', {
-      invoiceId: inv.id,
-      amount: inv.amount,
-      currency: inv.currency,
-      recipientName: inv.vendor,
-      reference: inv.invoiceNumber,
-    }),
-    201,
-  );
-});
-
 // ─── Extra wallet / currency stubs ─────────────────────────────────────────
 
 v1.get('/wallets/:id/limits', (c) => {
@@ -873,23 +648,12 @@ v1.get('/wallets/:id/limits', (c) => {
   });
 });
 
-v1.get('/wallets/:id', (c) => {
-  const wallet = mockStore.wallets.find((w) => w.id === c.req.param('id'));
-  if (!wallet) return c.json({ error: 'not_found' }, 404);
-  return c.json({ mode: 'mock', wallet });
-});
-
 v1.get('/currencies', (c) =>
   c.json({
     mode: 'mock',
     currencies: ['USD', 'GHS', 'EUR', 'GBP', 'USDT', 'USDC'],
   }),
 );
-
-v1.post('/wallets/transfer/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('wallet_transfer', body), 201);
-});
 
 v1.get('/virtual-accounts/:id', (c) => {
   const accounts = [
@@ -1006,14 +770,6 @@ v1.post('/recipients/resolve-duplicates', async (c) => {
   return c.json({ mode: 'mock', selected: contact ?? null, query: body.query });
 });
 
-v1.get('/recipients/search', (c) => {
-  const q = (c.req.query('query') ?? '').toLowerCase();
-  const contacts = mockStore.contacts.filter(
-    (x) => x.name.toLowerCase().includes(q) || x.identifier.toLowerCase().includes(q),
-  );
-  return c.json({ mode: 'mock', recipients: contacts });
-});
-
 // ─── Payment helpers / more prepares ───────────────────────────────────────
 
 v1.post('/payments/preview', async (c) => {
@@ -1028,35 +784,6 @@ v1.post('/payments/preview', async (c) => {
     fee,
     total: amount + fee,
   });
-});
-
-v1.post('/transfers/bank/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('bank_transfer', body), 201);
-});
-
-v1.post('/crypto/usdt/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('usdt_transfer', body), 201);
-});
-
-v1.post('/crypto/usdc/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('usdc_transfer', body), 201);
-});
-
-v1.post('/preparations/cancel', async (c) => {
-  const body = await c.req.json<{ preparationId: string }>();
-  const item = mockStore.approvals.find(
-    (a) => a.preparationId === body.preparationId || a.id === body.preparationId,
-  );
-  if (!item) return c.json({ error: 'preparation_not_found' }, 404);
-  if (item.status !== 'pending') {
-    return c.json({ error: 'not_cancellable', status: item.status }, 409);
-  }
-  item.status = 'cancelled';
-  item.resolvedAt = new Date().toISOString();
-  return c.json({ mode: 'mock', cancelled: true, approval: item });
 });
 
 v1.post('/payments/estimate-fees', async (c) => {
@@ -1119,25 +846,7 @@ v1.get('/momo-networks', (c) =>
   }),
 );
 
-v1.post('/approvals', async (c) => {
-  const body = await c.req.json<{ preparationId?: string; note?: string }>();
-  if (body.preparationId) {
-    const item = mockStore.approvals.find((a) => a.preparationId === body.preparationId);
-    if (!item) return c.json({ error: 'preparation_not_found' }, 404);
-    return c.json({ mode: 'mock', approvalId: item.id, status: item.status, note: body.note });
-  }
-  return c.json(createPreparation('payment', { note: body.note }), 201);
-});
-
 // ─── Transaction search / filter ───────────────────────────────────────────
-
-v1.post('/transactions/filter', async (c) => {
-  const body = await c.req.json<{ type?: string; status?: string; limit?: number }>();
-  let items = [...mockStore.transactions];
-  if (body.type) items = items.filter((t) => t.type === body.type);
-  if (body.status) items = items.filter((t) => t.status === body.status);
-  return c.json({ mode: 'mock', transactions: items.slice(0, body.limit ?? 50) });
-});
 
 // ─── KYC start / status ────────────────────────────────────────────────────
 
@@ -1159,66 +868,9 @@ v1.get('/subcustomers/:id/kyc/status', (c) => {
   });
 });
 
-// ─── Invoices scan ─────────────────────────────────────────────────────────
-
-v1.post('/invoices/scan', async (c) => {
-  return c.json({
-    mode: 'mock',
-    scanned: mockStore.invoices.length,
-    invoices: mockStore.invoices.filter((i) => i.status === 'due'),
-  });
-});
-
-// ─── Business: suppliers / payroll ─────────────────────────────────────────
-
-v1.post('/suppliers/prepare-payment', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('supplier_payment', body), 201);
-});
-
-v1.get('/employees', (c) => c.json({ mode: 'mock', employees: mockStore.employees }));
-
-v1.post('/payroll/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  if (typeof body.importId !== 'string') {
-    return c.json(
-      {
-        error: 'payroll_import_required',
-        message: 'Payroll must be imported and validated before preparation.',
-      },
-      409,
-    );
-  }
-  try {
-    return c.json(
-      await preparePayrollImport({
-        databaseUrl: c.get('env').DATABASE_URL,
-        userId: c.get('auth').userId,
-        importId: body.importId,
-        period: typeof body.period === 'string' ? body.period : undefined,
-      }),
-      201,
-    );
-  } catch (error) {
-    if (error instanceof PayrollPreparationError) {
-      return c.json({ error: error.code, ...error.details }, error.status);
-    }
-    throw error;
-  }
-});
-
 // ─── Notifications / integrations ──────────────────────────────────────────
 
-v1.get('/notifications', (c) => {
-  const unreadOnly = c.req.query('unreadOnly') === 'true';
-  let items = [...mockStore.notifications];
-  if (unreadOnly) items = items.filter((n) => n.unread);
-  return c.json({ mode: 'mock', notifications: items });
-});
-
 v1.get('/integrations', (c) => c.json({ mode: 'mock', integrations: mockStore.integrations }));
-
-// ─── Policy ────────────────────────────────────────────────────────────────
 
 // ─── Intelligence stubs ────────────────────────────────────────────────────
 
@@ -1234,21 +886,6 @@ v1.post('/intelligence/recommend-rail', async (c) => {
 
 v1.post('/intelligence/cheapest-rail', async (c) => {
   return c.json({ mode: 'mock', recommended: 'mobile_money', estimatedFee: 0.5 });
-});
-
-v1.post('/intelligence/detect-duplicates', async (c) => {
-  const body = await c.req.json<{ amount?: number; destinationValue?: string }>();
-  const hits = mockStore.transactions.filter(
-    (t) =>
-      Number(t.amount) === Number(body.amount ?? -1) ||
-      (body.destinationValue &&
-        t.counterparty.toLowerCase().includes(String(body.destinationValue).toLowerCase())),
-  );
-  return c.json({
-    mode: 'mock',
-    duplicates: hits.slice(0, 3),
-    likelyDuplicate: hits.length > 0,
-  });
 });
 
 v1.post('/intelligence/best-wallet', async (c) => {
@@ -1289,181 +926,6 @@ v1.post('/intelligence/payment-schedule', async (c) => {
     mode: 'mock',
     recommendedPayAt: body.dueDate ?? new Date(Date.now() + 86_400_000).toISOString(),
     reason: 'Pay one day before due to avoid late fees',
-  });
-});
-
-// ─── Payment status / pending ──────────────────────────────────────────────
-
-v1.get('/payments/status', (c) => {
-  const id = c.req.query('id') ?? '';
-  const approval = mockStore.approvals.find(
-    (a) => a.id === id || a.preparationId === id || a.transactionId === id,
-  );
-  const tx = mockStore.transactions.find((t) => t.id === id || t.wewireId === id);
-  if (approval) {
-    return c.json({
-      mode: 'mock',
-      kind: 'preparation',
-      id: approval.preparationId,
-      approvalId: approval.id,
-      status: approval.status,
-      payload: approval.payload,
-    });
-  }
-  if (tx) {
-    return c.json({
-      mode: 'mock',
-      kind: 'transaction',
-      id: tx.id,
-      wewireId: tx.wewireId,
-      status: tx.status,
-    });
-  }
-  return c.json({ error: 'not_found' }, 404);
-});
-
-v1.get('/transfers/pending', (c) => {
-  const pending = mockStore.transactions.filter(
-    (t) => t.status === 'PENDING' || t.status === 'PROCESSING' || t.status === 'REQUIRES_APPROVAL',
-  );
-  const pendingApprovals = mockStore.approvals.filter((a) => a.status === 'pending');
-  return c.json({ mode: 'mock', transfers: pending, preparations: pendingApprovals });
-});
-
-// ─── Financial plans ───────────────────────────────────────────────────────
-
-v1.post('/plans', async (c) => {
-  const body = await c.req.json<{
-    intent: string;
-    currency?: string;
-    items?: Array<Record<string, unknown>>;
-  }>();
-  const items =
-    body.items && body.items.length
-      ? body.items
-      : [
-          { kind: 'payroll', label: 'Payroll due today', amount: 5700, currency: 'USD' },
-          { kind: 'payment', label: 'Rent', amount: 250, currency: 'USD' },
-          {
-            kind: 'invoice',
-            label: 'TechFlow INV-1042',
-            amount: 780,
-            currency: 'GBP',
-            refId: 'inv-1',
-          },
-          {
-            kind: 'supplier',
-            label: 'ClearView Partners',
-            amount: 1500,
-            currency: 'GBP',
-            refId: 'sup-2',
-          },
-        ];
-  if (body.items?.length) {
-    const itemCurrencyValues = items.map((item) => String(item.currency ?? ''));
-    const itemCurrencies = new Set(itemCurrencyValues);
-    if (itemCurrencyValues.some((currency) => !currency) || itemCurrencies.size !== 1) {
-      return c.json({ error: 'plan_currency_mismatch' }, 400);
-    }
-    const itemCurrency = itemCurrencies.values().next().value;
-    if (body.currency && body.currency !== itemCurrency) {
-      return c.json({ error: 'plan_currency_mismatch' }, 400);
-    }
-  }
-  const total = items.reduce((s, i) => s + Number(i.amount ?? 0), 0);
-  const plan = {
-    id: newId('plan'),
-    intent: body.intent,
-    status: 'pending_approval' as const,
-    items,
-    total,
-    currency: body.currency ?? String(items[0]?.currency ?? 'USD'),
-    createdAt: new Date().toISOString(),
-  };
-  mockStore.plans.unshift(plan);
-  const prep = createPreparation('payment', {
-    planId: plan.id,
-    intent: plan.intent,
-    items: plan.items,
-    total: plan.total,
-    currency: plan.currency,
-  });
-  return c.json({ mode: 'mock', plan, ...prep }, 201);
-});
-
-v1.get('/plans', (c) => c.json({ mode: 'mock', plans: mockStore.plans }));
-
-v1.get('/plans/:id', (c) => {
-  const plan = mockStore.plans.find((p) => p.id === c.req.param('id'));
-  if (!plan) return c.json({ error: 'not_found' }, 404);
-  return c.json({ mode: 'mock', plan });
-});
-
-v1.post('/plans/:id/cancel', (c) => {
-  const plan = mockStore.plans.find((p) => p.id === c.req.param('id'));
-  if (!plan) return c.json({ error: 'not_found' }, 404);
-  plan.status = 'cancelled';
-  return c.json({ mode: 'mock', plan });
-});
-
-// ─── Agent transactions (MCP unit of work) ─────────────────────────────────
-
-v1.post('/agent-transactions', async (c) => {
-  const body = await c.req.json<{ label?: string }>();
-  const tx = {
-    id: newId('atx'),
-    label: body.label,
-    status: 'open' as const,
-    preparationIds: [] as string[],
-    createdAt: new Date().toISOString(),
-  };
-  mockStore.agentTransactions.unshift(tx);
-  return c.json({ mode: 'mock', transaction: tx }, 201);
-});
-
-v1.post('/agent-transactions/:id/commit', async (c) => {
-  const body = await c.req.json<{ note?: string }>().catch(() => ({ note: undefined }));
-  const tx = mockStore.agentTransactions.find((t) => t.id === c.req.param('id'));
-  if (!tx) return c.json({ error: 'not_found' }, 404);
-  if (tx.status !== 'open') return c.json({ error: 'not_open', status: tx.status }, 409);
-  tx.status = 'committed';
-  tx.closedAt = new Date().toISOString();
-  const pending = mockStore.approvals.filter((a) => a.status === 'pending');
-  return c.json({
-    mode: 'mock',
-    transaction: tx,
-    approvalsQueued: pending.length,
-    note: body.note,
-    message: 'Committed. Human notified in Finora Approvals inbox.',
-  });
-});
-
-v1.post('/agent-transactions/:id/rollback', async (c) => {
-  const body = await c.req.json<{ reason?: string }>().catch(() => ({ reason: undefined }));
-  const tx = mockStore.agentTransactions.find((t) => t.id === c.req.param('id'));
-  if (!tx) return c.json({ error: 'not_found' }, 404);
-  if (tx.status !== 'open') return c.json({ error: 'not_open', status: tx.status }, 409);
-  tx.status = 'rolled_back';
-  tx.closedAt = new Date().toISOString();
-  for (const prepId of tx.preparationIds) {
-    const item = mockStore.approvals.find((a) => a.preparationId === prepId);
-    if (item && item.status === 'pending') {
-      item.status = 'cancelled';
-      item.resolvedAt = new Date().toISOString();
-    }
-  }
-  return c.json({ mode: 'mock', transaction: tx, reason: body.reason });
-});
-
-// ─── Invoice source email ──────────────────────────────────────────────────
-
-v1.get('/invoices/:id/source-email', (c) => {
-  const inv = mockStore.invoices.find((i) => i.id === c.req.param('id'));
-  if (!inv) return c.json({ error: 'not_found' }, 404);
-  return c.json({
-    mode: 'mock',
-    invoiceId: inv.id,
-    sourceEmail: inv.sourceEmail ?? null,
   });
 });
 
@@ -1555,28 +1017,6 @@ v1.get('/capabilities/networks', (c) =>
       crypto: ['TRC20', 'ERC20', 'SOL'],
     },
   }),
-);
-
-// ─── Conversation context ──────────────────────────────────────────────────
-
-v1.get('/context/recent', (c) => {
-  const limit = Number(c.req.query('limit') ?? 5);
-  return c.json({
-    mode: 'mock',
-    recipients: mockStore.contacts.slice(0, limit),
-    wallets: mockStore.wallets.slice(0, limit),
-    transactions: mockStore.transactions.slice(0, limit),
-    lastRecipient: mockStore.contacts[0] ?? null,
-    lastWallet: mockStore.wallets[0] ?? null,
-  });
-});
-
-v1.get('/context/last-recipient', (c) =>
-  c.json({ mode: 'mock', recipient: mockStore.contacts[0] ?? null }),
-);
-
-v1.get('/context/last-wallet', (c) =>
-  c.json({ mode: 'mock', wallet: mockStore.wallets[0] ?? null }),
 );
 
 // ─── Events / webhooks ─────────────────────────────────────────────────────
