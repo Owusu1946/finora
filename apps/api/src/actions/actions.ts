@@ -17,6 +17,7 @@ import type { Database } from '../db/client';
 
 import { ledgerWallets, preparedActions } from '../db/schema';
 import { ensureWallets, LedgerError, maskTail, settle, type Settlement } from '../ledger/ledger';
+import { markPayeePaid } from '../payees/payees';
 import { evaluateActionPolicy } from '../policies/evaluate';
 
 export class ActionError extends Error {
@@ -347,6 +348,20 @@ export async function executeAction(
   }
   const wallets = await ensureWallets(db, userId);
   const priced = priceAction(payload, wallets, request.fundingWalletId ?? row.fundingWalletId);
+  // Check again: today's total may have grown since this was prepared.
+  const policy = await evaluateActionPolicy(db, userId, {
+    kind: payload.kind,
+    amount: priced.amount,
+    currency: priced.currency,
+    recipient: payload.kind === 'payment' ? payload.destination.value : null,
+  });
+  if (policy.outcome === 'blocked') {
+    await db
+      .update(preparedActions)
+      .set({ policy, updatedAt: new Date() })
+      .where(eq(preparedActions.id, row.id));
+    throw new ActionError('action_blocked', 409, { reasons: policy.reasons });
+  }
   const settlement = settlementFor(row, payload, priced);
   const now = new Date();
 
@@ -364,6 +379,9 @@ export async function executeAction(
           updatedAt: now,
         })
         .where(and(eq(preparedActions.id, row.id), eq(preparedActions.status, 'pending_approval'))),
+      ...(payload.kind === 'payment' && payload.destination.value
+        ? [markPayeePaid(db, userId, payload.destination.value, now)]
+        : []),
     ],
   );
 
