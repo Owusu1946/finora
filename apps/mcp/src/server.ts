@@ -90,18 +90,9 @@ export class FinoraMCP extends McpAgent<Env> {
       const path =
         typeof meta.path === 'function' ? meta.path(args as Record<string, unknown>) : meta.path;
 
-      // Strip path-param fields from body where needed
+      // Sub-customer ids belong to the old mock platform; the API scopes to the signed-in user.
       const bodyArgs = { ...(args as Record<string, unknown>) };
-      if (meta.body) {
-        delete bodyArgs.subCustomerId;
-        delete bodyArgs.invoiceId;
-        delete bodyArgs.recurringId;
-        delete bodyArgs.approvalId;
-        delete bodyArgs.transactionId;
-        delete bodyArgs.walletId;
-        delete bodyArgs.virtualAccountId;
-        delete bodyArgs.accountId;
-      }
+      if (meta.body) delete bodyArgs.subCustomerId;
 
       try {
         const { request } = getCurrentAgent();
