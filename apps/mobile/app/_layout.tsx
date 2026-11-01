@@ -84,6 +84,7 @@ import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierP
 import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
+import { SpendingSummaryToolUI } from '@/components/chat/SpendingSummaryToolUI';
 import { SuggestAppConnectionToolUI } from '@/components/chat/SuggestAppConnectionToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
 import {
@@ -324,6 +325,7 @@ function FinoraRuntimeContent({
       <ListVirtualAccountsToolUI />
       <TreasuryOverviewToolUI />
       <FinancialReportToolUI />
+      <SpendingSummaryToolUI />
       <InspectPayrollAttachmentToolUI />
       <DraftPayrollToolUI />
       <PreparePayrollToolUI />
