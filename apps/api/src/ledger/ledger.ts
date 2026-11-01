@@ -60,6 +60,21 @@ function toWallet(row: WalletRow): LedgerWallet {
   };
 }
 
+const KIND_CATEGORY: Record<string, string> = {
+  payroll_run: 'Payroll',
+  card_funding: 'Cards',
+  fund: 'Deposits',
+  device_import: 'Payments',
+};
+
+/** The stored category, or one worked out from what created the transaction. */
+export function categoryOf(row: Pick<TransactionRow, 'category' | 'kind' | 'direction'>) {
+  if (row.category) return row.category;
+  if (row.kind.endsWith('_refund')) return 'Refunds';
+  if (row.direction === 'swap') return 'Conversions';
+  return KIND_CATEGORY[row.kind] ?? (row.direction === 'received' ? 'Deposits' : 'Payments');
+}
+
 export function toLedgerTransaction(row: TransactionRow): LedgerTransaction {
   return {
     id: row.id,
@@ -76,6 +91,7 @@ export function toLedgerTransaction(row: TransactionRow): LedgerTransaction {
     destination: row.destination,
     source: row.source,
     kind: row.kind,
+    category: categoryOf(row),
     mode: 'demo',
     createdAt: row.createdAt.toISOString(),
   };
@@ -229,6 +245,8 @@ export type Settlement = {
   method: string;
   reference?: string | null;
   destination?: string | null;
+  /** Spending category; worked out from `kind` when left out. */
+  category?: string;
   legs: SettlementLeg[];
 };
 
@@ -272,6 +290,7 @@ export async function settle(
       destination: maskTail(input.destination),
       source: input.source,
       kind: input.kind,
+      category: input.category ?? null,
       sourceId: input.sourceId,
       createdAt: now,
     }),

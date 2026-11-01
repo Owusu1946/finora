@@ -42,6 +42,21 @@ type Payload = PaymentActionInput | ConversionActionInput | PlanActionInput;
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
+const PURPOSE_CATEGORY: Record<PaymentActionInput['purpose'], string> = {
+  payment: 'Payments',
+  supplier: 'Suppliers',
+  invoice: 'Invoices',
+  bill: 'Bills',
+  transfer: 'Transfers',
+};
+
+/** The spending category an action's payment counts under. */
+export function actionCategory(payload: Payload) {
+  if (payload.kind === 'conversion') return 'Conversions';
+  if (payload.kind === 'plan') return 'Plans';
+  return PURPOSE_CATEGORY[payload.purpose];
+}
+
 /** The wallet in `currency`, else USD, else the first one. */
 function walletFor(wallets: WalletRow[], currency: string, preferred?: string | null) {
   return (
@@ -367,7 +382,14 @@ export async function executeAction(
 
   const transaction = await settle(
     db,
-    { ...settlement, userId, kind: 'action', sourceId: row.id, source: row.source },
+    {
+      ...settlement,
+      userId,
+      kind: 'action',
+      sourceId: row.id,
+      source: row.source,
+      category: actionCategory(payload),
+    },
     (transactionId) => [
       db
         .update(preparedActions)

@@ -81,6 +81,8 @@ export const LedgerTransactionSchema = z.object({
   source: LedgerTransactionSourceSchema,
   /** What created it, e.g. `payment`, `payroll_run`, `card_funding`. */
   kind: z.string(),
+  /** Spending category, e.g. Payroll, Suppliers, Bills, Cards. */
+  category: z.string(),
   mode: z.literal('demo'),
   createdAt: z.string(),
 });
