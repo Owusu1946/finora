@@ -6,6 +6,7 @@ import {
 } from '@finora/shared';
 
 import { LedgerApiError, ledgerRequest } from './ledger-api';
+import { reviewPolicy } from './policy-review';
 import { refreshAfterMoneyMoved } from './wallet-balances';
 
 /**
@@ -72,6 +73,16 @@ export async function findPaidAction(relatedId: string): Promise<PreparedAction 
   return actions[0] ?? null;
 }
 
+/** Shows the action's policy flags (if any) before the passcode; true to go ahead. */
+export async function reviewActionPolicy(id: string) {
+  try {
+    return await reviewPolicy((await getAction(id)).policy);
+  } catch {
+    // The execute call will report the real problem.
+    return true;
+  }
+}
+
 /** Executes an approved action, then refreshes balances and Activity. */
 export async function executeAction(id: string, options: { fundingWalletId?: string } = {}) {
   try {
@@ -94,15 +105,15 @@ export async function cancelAction(id: string) {
 
 /**
  * For money the user starts in the app (not from a chat card): prepares the
- * action, asks `approve` (the passcode) once it passed the checks, then
- * executes it. Resolves null when the user backs out at the passcode.
+ * action, shows any policy flags, asks `approve` (the passcode), then executes
+ * it. Resolves null when the user backs out.
  */
 export async function prepareApproveAndExecute(
   request: PrepareActionRequest,
   approve: () => Promise<boolean>,
 ) {
   const action = await prepareAction(request);
-  if (!(await approve())) {
+  if (!(await reviewPolicy(action.policy)) || !(await approve())) {
     await cancelAction(action.id).catch(() => undefined);
     return null;
   }

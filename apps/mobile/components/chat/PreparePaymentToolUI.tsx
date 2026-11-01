@@ -23,6 +23,7 @@ import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up'
 import { findContactByIdentifier, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
 import { paymentActionRequest } from '@/lib/payment-actions';
+import { reviewPolicy } from '@/lib/policy-review';
 
 type PreparePaymentArgs = Omit<SendMoneySeed, 'amount'> & {
   amount?: number | { amount: number; currency: string };
@@ -244,8 +245,8 @@ function PreparePaymentFlow({
             setConfirmedPayment(next);
             if (action.policy.outcome === 'blocked') {
               appendAgentFollowUp(aui, `I can't send this: ${action.policy.reasons.join(' ')}`);
-              return;
             }
+            if (!(await reviewPolicy(action.policy))) return;
             const ok = await requestApproval();
             if (!ok) return;
             setSendingStep(0);
