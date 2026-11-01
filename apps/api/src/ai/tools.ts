@@ -66,6 +66,7 @@ import type { GmailSearchInput } from '../integrations/google-gmail';
 import { ActionError } from '../actions/actions';
 import { AUTOMATION_TOOL_NAMES } from '../automations/tools';
 import { BUSINESS_APP_TOOL_NAMES } from '../business-apps/tools';
+import { INSIGHT_TOOL_NAMES } from '../insights/tools';
 import { LedgerError } from '../ledger/ledger';
 import { PayrollPreparationError } from '../payroll/prepare-import';
 import { v1 } from '../routes/v1';
@@ -124,7 +125,8 @@ export function isChatAgentToolName(value: string) {
   return (
     (CHAT_AGENT_TOOL_NAMES as readonly string[]).includes(value) ||
     (BUSINESS_APP_TOOL_NAMES as readonly string[]).includes(value) ||
-    (AUTOMATION_TOOL_NAMES as readonly string[]).includes(value)
+    (AUTOMATION_TOOL_NAMES as readonly string[]).includes(value) ||
+    (INSIGHT_TOOL_NAMES as readonly string[]).includes(value)
   );
 }
 
