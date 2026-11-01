@@ -1,33 +1,9 @@
-import type { LedgerTransaction } from '@finora/shared';
-
 import { describe, expect, it } from 'vitest';
 
 import { periodRange, spendingChanges, summarizeSpending } from './spending';
+import { tx } from './test-fixtures';
 
 const now = new Date('2026-11-20T12:00:00.000Z');
-
-export function tx(overrides: Partial<LedgerTransaction>): LedgerTransaction {
-  return {
-    id: `tx_${Math.random()}`,
-    direction: 'sent',
-    status: 'completed',
-    currency: 'USD',
-    amount: 100,
-    toCurrency: null,
-    toAmount: null,
-    fee: null,
-    counterparty: 'Acme',
-    method: 'Bank account',
-    reference: null,
-    destination: null,
-    source: 'chat',
-    kind: 'action',
-    category: 'Suppliers',
-    mode: 'demo',
-    createdAt: '2026-11-10T10:00:00.000Z',
-    ...overrides,
-  };
-}
 
 describe('periodRange', () => {
   it('compares month-to-date with the same days last month', () => {
@@ -75,7 +51,11 @@ describe('spendingChanges', () => {
   it('reports only meaningful moves', () => {
     const range = periodRange('month', now);
     const current = summarizeSpending(
-      [tx({ amount: 118 }), tx({ amount: 30, category: 'Bills' }), tx({ amount: 103, category: 'Cards' })],
+      [
+        tx({ amount: 118 }),
+        tx({ amount: 30, category: 'Bills' }),
+        tx({ amount: 103, category: 'Cards' }),
+      ],
       range.current,
     );
     const previous = summarizeSpending(

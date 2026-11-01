@@ -71,7 +71,11 @@ export function summarizeSpending(
     byCategory.set(tx.category, { amount: category.amount + value(tx), count: category.count + 1 });
     const key = tx.counterparty.toLowerCase();
     const recipient = byRecipient.get(key) ?? { name: tx.counterparty, amount: 0, count: 0 };
-    byRecipient.set(key, { ...recipient, amount: recipient.amount + value(tx), count: recipient.count + 1 });
+    byRecipient.set(key, {
+      ...recipient,
+      amount: recipient.amount + value(tx),
+      count: recipient.count + 1,
+    });
   }
   const total = [...byCategory.values()].reduce((sum, item) => sum + item.amount, 0);
 
@@ -113,7 +117,10 @@ export type SpendingChange = {
  */
 export function spendingChanges(current: SpendingSummary, previous: SpendingSummary) {
   const before = new Map(previous.byCategory.map((item) => [item.category, item.amount]));
-  const categories = new Set([...current.byCategory.map((item) => item.category), ...before.keys()]);
+  const categories = new Set([
+    ...current.byCategory.map((item) => item.category),
+    ...before.keys(),
+  ]);
   const changes: SpendingChange[] = [];
   for (const category of categories) {
     const now = current.byCategory.find((item) => item.category === category)?.amount ?? 0;
@@ -123,5 +130,7 @@ export function spendingChanges(current: SpendingSummary, previous: SpendingSumm
     if (change !== null && Math.abs(change) < 0.15) continue;
     changes.push({ category, current: now, previous: then, change });
   }
-  return changes.sort((a, b) => Math.abs(b.current - b.previous) - Math.abs(a.current - a.previous));
+  return changes.sort(
+    (a, b) => Math.abs(b.current - b.previous) - Math.abs(a.current - a.previous),
+  );
 }
