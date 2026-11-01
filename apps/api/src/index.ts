@@ -24,6 +24,7 @@ import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
 import { invoiceRoutes } from './routes/invoices';
 import { ledger } from './routes/ledger';
 import { memories } from './routes/memories';
+import { payeeRoutes, policyRoutes } from './routes/payees';
 import { payroll } from './routes/payroll';
 import { v1 } from './routes/v1';
 
@@ -80,6 +81,8 @@ app.route('/v1/apps', businessApps);
 app.route('/v1/cards', cards);
 app.route('/v1/payroll', payroll);
 app.route('/v1/actions', actions);
+app.route('/v1/payees', payeeRoutes);
+app.route('/v1/policies', policyRoutes);
 app.route('/v1', ledger);
 app.route('/v1', v1);
 
