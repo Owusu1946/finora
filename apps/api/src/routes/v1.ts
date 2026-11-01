@@ -33,7 +33,7 @@ import {
   setVerifiedPhoneNumber,
   upsertUserProfile,
 } from '../db/user-profiles';
-import { createPreparation, mockStore, newId } from '../mock/store';
+import { mockStore, newId } from '../mock/store';
 import { syncOAuthAvatar } from '../oauth-avatar';
 import { transcriptions } from './transcriptions';
 
@@ -697,11 +697,14 @@ v1.post('/crypto/validate-address', async (c) => {
 
 v1.post('/payment-requests', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
-  const prep = createPreparation('payment_request', body);
-  const link = `https://pay.finora.app/r/${prep.preparationId}`;
+  // A request for someone to pay the user: nothing to approve, no money moves.
+  const requestId = newId('req');
+  const link = `https://pay.finora.app/r/${requestId}`;
   return c.json(
     {
-      ...prep,
+      mode: 'mock',
+      status: 'created',
+      requestId,
       link,
       qrPayload: link,
       amount: body.amount ?? null,
