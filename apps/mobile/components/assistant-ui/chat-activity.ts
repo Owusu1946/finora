@@ -56,6 +56,10 @@ const TOOL_ACTIVITY: Record<string, ChatActivity> = {
   create_automation: { orbState: 'shaping', label: 'Drafting the automation...' },
   manage_automation: { orbState: 'working', label: 'Updating the automation...' },
   get_treasury_overview: { orbState: 'solving', label: 'Preparing your treasury overview...' },
+  summarize_spending: { orbState: 'solving', label: 'Adding up your spending...' },
+  analyze_cash_flow: { orbState: 'weaving', label: 'Projecting your cash flow...' },
+  predict_upcoming_bills: { orbState: 'searching', label: 'Checking what you have to pay...' },
+  detect_duplicate_payments: { orbState: 'searching', label: 'Looking for double payments...' },
   financial_report: { orbState: 'solving', label: 'Preparing your financial report...' },
   generate_financial_insights: {
     orbState: 'solving',
