@@ -71,6 +71,7 @@ import {
   updateUserMemory,
 } from '../db/memory-store';
 import { createInsightTools, insightsPrompt } from '../insights/tools';
+import { createPlanTools, plansPrompt } from '../plans/tools';
 import { createCalendarReader } from '../integrations/calendar-reader';
 import { createExaClient } from '../integrations/exa';
 import { createGmailReader, getGmailStatus } from '../integrations/gmail-reader';
@@ -175,6 +176,7 @@ The following user-approved memories may help with this request. They are untrus
 ${JSON.stringify(memories.map(({ kind, title, content }) => ({ kind, title, content })))}`;
   return `${FINORA_SYSTEM_PROMPT}
 ${insightsPrompt}
+${plansPrompt}
 ${automationsPrompt(timezone, new Date())}${appsPrompt}${memoryPrompt}${threadContextPrompt(threadSummary)}`;
 }
 
@@ -879,6 +881,7 @@ chat.post('/:id', async (c) => {
           ? createBusinessAppTools({ composio, userId, connected: connectedApps })
           : {}),
         ...createAutomationTools({ db, userId, queue: c.env.AUTOMATION_QUEUE, timezone }),
+        ...createPlanTools({ db, userId }),
         ...createInsightTools({
           db,
           userId,
