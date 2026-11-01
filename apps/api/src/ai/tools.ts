@@ -308,6 +308,7 @@ type MoneyToolReader = {
     direction?: 'sent' | 'received' | 'swap';
   }) => Promise<LedgerTransaction[]>;
   prepare: (request: PrepareActionRequest) => Promise<PreparedAction>;
+  invoices?: (filter: { status?: string; query?: string }) => Promise<Array<{ source: string }>>;
 };
 
 /** Preparation errors (missing wallet, already paid, ...) the model can explain. */
@@ -704,22 +705,12 @@ export function createChatAgentTools(
         'Proactively list supplier invoices in Finora when the user asks to review, find, check, or summarize due, scheduled, paid, or dismissed invoices.',
       inputSchema: zodSchema(ListInvoicesInputSchema),
       execute: async ({ status, source, query }) => {
-        const params = new URLSearchParams();
-        if (status) params.set('status', status);
-        if (query) params.set('query', query);
-        const suffix = params.size > 0 ? `?${params.toString()}` : '';
-        const data = await callPlatform(`/invoices${suffix}`);
-        const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+        if (!money?.invoices) throw new Error('invoices_unavailable');
+        const invoices = await money.invoices({ status, query });
         return {
           invoices:
             source && source !== 'all'
-              ? invoices.filter(
-                  (entry) =>
-                    typeof entry === 'object' &&
-                    entry !== null &&
-                    'source' in entry &&
-                    entry.source === source,
-                )
+              ? invoices.filter((invoice) => invoice.source === source)
               : invoices,
         };
       },

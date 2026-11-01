@@ -1,11 +1,11 @@
 import type { Payee, PrepareActionRequest } from '@finora/shared';
 
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, ilike, or } from 'drizzle-orm';
 
 import type { Database } from '../db/client';
 
 import { invoices } from '../db/schema';
-import { fromMinor } from '../ledger/ledger';
+import { fromMinor, maskTail } from '../ledger/ledger';
 import { listPayees } from '../payees/payees';
 
 type InvoiceRow = typeof invoices.$inferSelect;
@@ -67,4 +67,56 @@ export async function invoicePaymentFor(db: Database, userId: string, invoiceId:
   );
   if (!supplier) throw new InvoicePaymentError('invoice_destination_missing', 409);
   return { invoice, request: invoicePaymentRequest(invoice, supplier) };
+}
+
+/**
+ * The user's invoices for chat, newest first. Each shows the matching saved
+ * supplier's payout method (masked); without one it can't be paid yet.
+ */
+export async function listInvoicesForChat(
+  db: Database,
+  userId: string,
+  filter: { status?: string; query?: string } = {},
+) {
+  const query = filter.query?.trim();
+  const [rows, suppliers] = await Promise.all([
+    db
+      .select()
+      .from(invoices)
+      .where(
+        and(
+          eq(invoices.clerkUserId, userId),
+          filter.status && filter.status !== 'all' ? eq(invoices.status, filter.status) : undefined,
+          query
+            ? or(ilike(invoices.vendor, `%${query}%`), ilike(invoices.invoiceNumber, `%${query}%`))
+            : undefined,
+        ),
+      )
+      .orderBy(desc(invoices.receivedAt))
+      .limit(50),
+    listPayees(db, userId, { kind: 'supplier' }),
+  ]);
+  return rows.map((row) => {
+    const supplier = supplierForVendor(suppliers, row.vendor);
+    return {
+      id: row.id,
+      vendor: row.vendor,
+      invoiceNumber: row.invoiceNumber,
+      amount: fromMinor(row.amountMinor),
+      currency: row.currency,
+      dueDate: row.dueDate?.toISOString() ?? null,
+      status: row.status,
+      source: 'gmail' as const,
+      description: row.description ?? undefined,
+      ...(supplier
+        ? {
+            destination: {
+              kind: supplier.method,
+              label: supplier.label,
+              value: maskTail(supplier.identifier) ?? '',
+            },
+          }
+        : {}),
+    };
+  });
 }
