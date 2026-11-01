@@ -7,7 +7,7 @@
  *
  * Code ids are snake_case. camelCase is the product-facing alias.
  *
- * Money path: prepare_* → (optional create_financial_plan / begin_transaction) →
+ * Money path: prepare_* → (optional create_financial_plan / prepare_daily_plan) →
  * request_approval → human PIN → execute_approved_* → audit → WeWire
  */
 
@@ -968,6 +968,14 @@ export const TOOL_REGISTRY = [
     'Build a multi-item money plan for one approval',
   ),
   t(
+    'prepare_daily_plan',
+    'prepareDailyPlan',
+    'plans',
+    ['platform', 'mcp'],
+    'prepare',
+    'Gather everything due today (payments, payroll, invoices) into one plan for one approval',
+  ),
+  t(
     'get_financial_plan',
     'getFinancialPlan',
     'plans',
@@ -998,32 +1006,6 @@ export const TOOL_REGISTRY = [
     ['platform', 'mobile'],
     'execute',
     'Execute all plan items after approval',
-  ),
-
-  // ── MCP agent transactions (unit of work over preparations) ──────────────
-  t(
-    'begin_transaction',
-    'beginTransaction',
-    'mcp_tx',
-    ['platform', 'mcp'],
-    'prepare',
-    'Open an agent transaction spanning related prepares',
-  ),
-  t(
-    'commit_transaction',
-    'commitTransaction',
-    'mcp_tx',
-    ['platform', 'mcp'],
-    'prepare',
-    'Commit agent transaction → request human approval for all items',
-  ),
-  t(
-    'rollback_transaction',
-    'rollbackTransaction',
-    'mcp_tx',
-    ['platform', 'mcp'],
-    'prepare',
-    'Roll back agent transaction and cancel preparations',
   ),
 
   // ── Notifications ────────────────────────────────────────────────────────
