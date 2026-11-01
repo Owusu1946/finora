@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 
-import { AUTOMATION_READY_PART } from '../automations/deliver';
+import { AUTOMATION_READY_PART, PAYMENT_DUE_PART } from '../automations/deliver';
 import { isChatAgentToolName } from './tools';
 
 const MAX_CHAT_TEXT_LENGTH = 120_000;
@@ -56,7 +56,7 @@ function sanitizeToolPart(part: UIMessagePart): DynamicToolPart | null {
  * Tool parts the app renders but no model tool produced, such as the card an
  * automation posts. They stay in chat history but never reach the model.
  */
-const DISPLAY_ONLY_TOOL_NAMES = new Set<string>([AUTOMATION_READY_PART]);
+const DISPLAY_ONLY_TOOL_NAMES = new Set<string>([AUTOMATION_READY_PART, PAYMENT_DUE_PART]);
 
 function displayOnlyPart(part: UIMessagePart): DynamicToolPart | null {
   const tool = asToolPart(part);
