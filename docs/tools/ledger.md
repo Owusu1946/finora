@@ -34,6 +34,12 @@ Payments for an invoice, bill, SMS request, or calendar event carry a `relatedId
 
 Payroll runs (`docs/tools/payroll.md`) and card loads settle on the same ledger.
 
+## Today's plan
+
+`prepare_daily_plan` (chat and MCP) gathers what needs attention: payments waiting for approval from the last 14 days (including recurring payments that fell due), unpaid payroll runs, and invoices due in the next 3 days that match a saved supplier. If a wallet couldn't cover its items, it adds a conversion from the user's other wallets (fee included). It prepares one plan whose children are those actions and runs; asking again replaces the earlier plan.
+
+Approving the plan (one passcode) runs `executePlan` (`apps/api/src/plans/execute.ts`): conversions first, then payroll, then payments. Each item goes through its own checks and ledger transaction, so a failure moves no money for that item and the rest still run. The plan records a result per item (`results`), and ends `executed`, or `failed` with how many didn't go through. Invoices without a matching supplier, and wallets still short, are listed as notes.
+
 ## Payees and policies
 
 Saved contacts and suppliers are **payees** (`payees`), shared by the app, chat (`list_payees`, `save_payee`, `list_beneficiaries`, `list_suppliers`), and MCP. The same account is saved once (matched without spaces or dashes). Paying a saved payee by `contactId` or `supplierId` uses its stored account; the model only sees it masked. On first launch the app copies the contacts it saved on the device once. Payees aren't verified until WeWire is live.
