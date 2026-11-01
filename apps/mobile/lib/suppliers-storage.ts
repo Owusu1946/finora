@@ -1,9 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Payee } from '@finora/shared';
 
 import type { PayoutDestination } from '@/lib/employees-storage';
 
-import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
+import { listPayeesOfKind } from './payees-api';
 
+/** Suppliers are saved payees on the Finora API, shared with chat and MCP. */
 export type Supplier = {
   id: string;
   name: string;
@@ -13,71 +14,23 @@ export type Supplier = {
   notes?: string;
 };
 
-const BASE_KEY = 'finora.suppliers.v1';
-const key = () => userStorageKey(BASE_KEY);
-const memory = new Map<string, string>();
-
-export const MOCK_SUPPLIERS: Supplier[] = [
-  {
-    id: 'sup-1',
-    name: 'TechFlow Ltd',
-    currency: 'GBP',
-    defaultAmount: 780,
+function toSupplier(payee: Payee): Supplier {
+  return {
+    id: payee.id,
+    name: payee.name,
+    currency: payee.currency,
+    defaultAmount: payee.defaultAmount ?? undefined,
     destination: {
-      kind: 'bank_account',
-      label: 'Barclays · FPS',
-      value: '•••• 0194',
-      beneficiaryAccountId: 'ba_sup_techflow_001',
-      rail: 'FPS',
+      kind: payee.method === 'mobile_money' ? 'mobile_money' : 'bank_account',
+      label: payee.label,
+      value: payee.identifier,
     },
-    notes: 'Engineering contractor',
-  },
-  {
-    id: 'sup-2',
-    name: 'ClearView Partners',
-    currency: 'GBP',
-    defaultAmount: 1500,
-    destination: {
-      kind: 'bank_account',
-      label: 'HSBC · FPS',
-      value: '•••• 7731',
-      beneficiaryAccountId: 'ba_sup_clearview_001',
-      rail: 'FPS',
-    },
-    notes: 'Advisory retainer',
-  },
-];
-
-async function getItem(key: string): Promise<string | null> {
-  try {
-    return await AsyncStorage.getItem(key);
-  } catch {
-    return memory.get(key) ?? null;
-  }
+    notes: payee.notes ?? undefined,
+  };
 }
 
-async function setItem(key: string, value: string): Promise<void> {
-  if (!isUserStorageKeyWritable(key)) return;
-  memory.set(key, value);
-  try {
-    await AsyncStorage.setItem(key, value);
-  } catch {
-    // memory fallback
-  }
-}
-
-export async function listSuppliers(storageKey = key()): Promise<Supplier[]> {
-  const raw = await getItem(storageKey);
-  if (!raw) {
-    await setItem(storageKey, JSON.stringify(MOCK_SUPPLIERS));
-    return [...MOCK_SUPPLIERS];
-  }
-  try {
-    const parsed = JSON.parse(raw) as Supplier[];
-    return Array.isArray(parsed) ? parsed : [...MOCK_SUPPLIERS];
-  } catch {
-    return [...MOCK_SUPPLIERS];
-  }
+export async function listSuppliers(): Promise<Supplier[]> {
+  return (await listPayeesOfKind('supplier')).map(toSupplier);
 }
 
 export async function getSupplier(id: string): Promise<Supplier | null> {
@@ -97,11 +50,5 @@ export async function findSupplierByName(query: string): Promise<Supplier | null
   );
 }
 
-export async function clearSuppliers(): Promise<void> {
-  memory.delete(key());
-  try {
-    await AsyncStorage.removeItem(key());
-  } catch {
-    // ignore
-  }
-}
+/** Saved payees stay on the account; the payee cache is cleared with contacts. */
+export async function clearSuppliers(): Promise<void> {}
