@@ -50,6 +50,7 @@ import {
   GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
 import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
+import { DailyPlanToolUI } from '@/components/chat/DailyPlanToolUI';
 import { DraftWhatsAppMessageToolUI } from '@/components/chat/DraftWhatsAppMessageToolUI';
 import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
@@ -321,6 +322,7 @@ function FinoraRuntimeContent({
       <ManageAutomationToolUI />
       <AutomationReadyToolUI />
       <PaymentDueToolUI />
+      <DailyPlanToolUI />
       <ListExpensesToolUI />
       <ListVirtualAccountsToolUI />
       <TreasuryOverviewToolUI />
