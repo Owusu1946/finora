@@ -81,9 +81,11 @@ import {
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
 import { listLedgerTransactions, listLedgerWallets } from '../ledger/ledger';
+import { getPayee, listPayees, savePayee } from '../payees/payees';
 import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
 import { rowsFromDraft, savePayrollImport } from '../payroll/imports';
 import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
+import { listPolicies } from '../policies/policies';
 import { inspectPayrollAttachment } from './payroll';
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000;
@@ -856,6 +858,12 @@ chat.post('/:id', async (c) => {
             wallets: () => listLedgerWallets(db, userId),
             transactions: (input) => listLedgerTransactions(db, userId, input),
             prepare: (request) => prepareAction(db, userId, request, 'chat'),
+          },
+          {
+            payees: (filter) => listPayees(db, userId, filter),
+            payee: (id) => getPayee(db, userId, id),
+            save: (request) => savePayee(db, userId, request),
+            policies: () => listPolicies(db, userId),
           },
         ),
         ...(composio && connectedApps
