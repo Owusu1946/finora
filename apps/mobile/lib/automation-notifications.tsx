@@ -43,7 +43,8 @@ function isNotificationPermissionGranted(status: Notifications.NotificationPermi
   );
 }
 
-async function ensureNotificationPermission() {
+/** Asks for notification permission once; true when notifications can be shown. */
+export async function ensureNotificationPermission() {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: 'Automations',

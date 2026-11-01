@@ -101,6 +101,7 @@ import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
+import { ApprovalNotificationBridge } from '@/lib/approval-notifications';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { AutomationNotificationBridge } from '@/lib/automation-notifications';
@@ -500,6 +501,7 @@ function RootApp() {
                   >
                     <ProfileSyncBridge />
                     <AutomationNotificationBridge />
+                    <ApprovalNotificationBridge />
                     <FinoraAssistantRuntime
                       key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
                       remoteChat={boot.remoteChat}
