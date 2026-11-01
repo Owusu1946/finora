@@ -17,6 +17,7 @@ import {
   executeAction,
   findPaidAction,
   prepareAction,
+  prepareInvoiceAction,
 } from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
@@ -111,16 +112,20 @@ export function InvoiceCard({ invoice: initial, onUpdated }: InvoiceCardProps) {
       })();
       let action;
       try {
-        const prepared = await prepareAction({
-          kind: 'payment',
-          recipientName: invoice.vendor,
-          amount: invoice.amount,
-          currency: invoice.currency,
-          destination,
-          reference: invoice.invoiceNumber,
-          purpose: 'invoice',
-          relatedId: `invoice:${invoice.id}`,
-        });
+        // Synced invoices are paid to the matching saved supplier, looked up on the server.
+        const prepared =
+          invoice.source === 'gmail'
+            ? await prepareInvoiceAction(invoice.id)
+            : await prepareAction({
+                kind: 'payment',
+                recipientName: invoice.vendor,
+                amount: invoice.amount,
+                currency: invoice.currency,
+                destination,
+                reference: invoice.invoiceNumber,
+                purpose: 'invoice',
+                relatedId: `invoice:${invoice.id}`,
+              });
         [action] = await Promise.all([executeAction(prepared.id), steps]);
       } catch (error) {
         if (cancelled) return;
