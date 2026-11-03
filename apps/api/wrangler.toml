@@ -27,6 +27,13 @@ binding = "GMAIL_SYNC_QUEUE"
 queue = "finora-calendar-sync"
 binding = "CALENDAR_SYNC_QUEUE"
 
+[[queues.producers]]
+queue = "finora-automation-evaluation"
+binding = "AUTOMATION_QUEUE"
+
+[triggers]
+crons = ["* * * * *"]
+
 [[r2_buckets]]
 binding = "PAYROLL_ATTACHMENTS"
 bucket_name = "finora-payroll-attachments"
@@ -53,6 +60,14 @@ max_batch_timeout = 5
 max_retries = 5
 retry_delay = 60
 dead_letter_queue = "finora-calendar-sync-dlq"
+
+[[queues.consumers]]
+queue = "finora-automation-evaluation"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 5
+retry_delay = 30
+dead_letter_queue = "finora-automation-evaluation-dlq"
 # Secrets (set via `wrangler secret put` or local `.dev.vars`):
 # WEWIRE_API_KEY
 # CLERK_SECRET_KEY

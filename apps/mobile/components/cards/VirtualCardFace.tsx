@@ -646,10 +646,10 @@ const styles = {
     width: '100%',
   },
   flipDeck: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   faceSide: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'space-between',
     overflow: 'hidden',
     borderRadius: CARD_RADIUS,
@@ -669,7 +669,7 @@ const styles = {
     backgroundColor: '#101113',
   },
   backWash: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#101113',
   },
   backTop: {
@@ -863,7 +863,7 @@ const styles = {
     backgroundColor: '#1c1c1e',
   },
   miniMetal: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#222226',
   },
   miniWave: {

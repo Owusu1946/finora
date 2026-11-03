@@ -1,6 +1,6 @@
 # @finora/mobile
 
-Conversation-first Finora mobile app built with Expo SDK 54.
+Conversation-first Finora mobile app built with Expo SDK 57.
 
 ## Stack
 

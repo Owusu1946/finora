@@ -1,4 +1,4 @@
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,

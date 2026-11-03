@@ -1,6 +1,6 @@
 import { LegendList } from '@legendapp/list/react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useNavigation } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

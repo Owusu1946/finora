@@ -32,8 +32,8 @@
     "@types/node": "^26.2.0",
     "oxfmt": "^0.62.0",
     "oxlint": "^1.79.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "turbo": "^2.10.11",
     "typescript": "^7.0.2"
   },
