@@ -751,6 +751,8 @@ export const ledgerTransactions = pgTable(
     source: text('source').$type<'chat' | 'mcp' | 'manual' | 'automation'>().notNull(),
     /** What created it: `payment`, `payroll_run`, `card_funding`, `opening_balance`, ... */
     kind: text('kind').notNull(),
+    /** Spending category for insights, e.g. Payroll, Suppliers, Bills. */
+    category: text('category'),
     /** The record it settles, e.g. a payroll run id. Unique per kind, so nothing settles twice. */
     sourceId: text('source_id').notNull(),
     mode: text('mode').$type<'demo' | 'live'>().notNull().default('demo'),

@@ -30,39 +30,6 @@ const key = () => userStorageKey(BASE_KEY);
 const runKey = () => userStorageKey(BASE_RUN_KEY);
 const memory = new Map<string, string>();
 
-export const MOCK_EMPLOYEES: Employee[] = [
-  {
-    id: 'emp-1',
-    name: 'Ama Boateng',
-    role: 'Designer',
-    salary: 2500,
-    currency: 'USD',
-    destination: {
-      kind: 'bank_account',
-      label: 'Chase · ACH',
-      value: '•••• 4412',
-      beneficiaryAccountId: 'ba_emp_ama_001',
-      rail: 'ACH',
-    },
-    status: 'active',
-  },
-  {
-    id: 'emp-2',
-    name: 'Kwame Mensah',
-    role: 'Engineer',
-    salary: 3200,
-    currency: 'USD',
-    destination: {
-      kind: 'bank_account',
-      label: 'Wise · ACH',
-      value: '•••• 8821',
-      beneficiaryAccountId: 'ba_emp_kwame_001',
-      rail: 'ACH',
-    },
-    status: 'active',
-  },
-];
-
 async function getItem(key: string): Promise<string | null> {
   try {
     return await AsyncStorage.getItem(key);
@@ -83,15 +50,12 @@ async function setItem(key: string, value: string): Promise<void> {
 
 export async function listEmployees(storageKey = key()): Promise<Employee[]> {
   const raw = await getItem(storageKey);
-  if (!raw) {
-    await setItem(storageKey, JSON.stringify(MOCK_EMPLOYEES));
-    return [...MOCK_EMPLOYEES];
-  }
+  if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as Employee[];
-    return Array.isArray(parsed) ? parsed : [...MOCK_EMPLOYEES];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return [...MOCK_EMPLOYEES];
+    return [];
   }
 }
 

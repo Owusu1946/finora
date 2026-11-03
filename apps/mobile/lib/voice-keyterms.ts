@@ -1,7 +1,8 @@
 import { listBeneficiaries } from '@/lib/beneficiaries-storage';
 import { listContacts } from '@/lib/contacts-storage';
-import { listEmployees } from '@/lib/employees-storage';
 import { listRecentFinoraTags } from '@/lib/finora-tags';
+import { listPayrollImports } from '@/lib/payroll-api';
+import { sessionToken } from '@/lib/session-token';
 import { listSuppliers } from '@/lib/suppliers-storage';
 
 /** Deepgram keyterm prompting works best with a focused list. */
@@ -26,9 +27,15 @@ const FINANCE_KEYTERMS = [
   'payout',
 ];
 
+/** Employee names from the user's imported payrolls. */
+async function payrollEmployeeNames() {
+  const imports = await listPayrollImports(sessionToken);
+  return imports.flatMap((item) => item.rows.map((row) => row.employeeName));
+}
+
 /**
  * Names and tags from the user's own Finora data (contacts, beneficiaries,
- * suppliers, employees, recent tags) followed by common money words, so
+ * suppliers, payroll employees, recent tags) followed by common money words, so
  * dictation spells "send 500 cedis to Kwame" correctly. Personal terms come
  * first because they are the hardest to recognise and matter most.
  */
@@ -37,7 +44,7 @@ export async function loadVoiceKeyterms() {
     listContacts().catch(() => []),
     listBeneficiaries().catch(() => []),
     listSuppliers().catch(() => []),
-    listEmployees().catch(() => []),
+    payrollEmployeeNames().catch(() => []),
     listRecentFinoraTags().catch(() => []),
   ]);
 
@@ -45,7 +52,7 @@ export async function loadVoiceKeyterms() {
     ...contacts.map((item) => item.name),
     ...beneficiaries.map((item) => item.name),
     ...suppliers.map((item) => item.name),
-    ...employees.map((item) => item.name),
+    ...employees,
     ...tags.flatMap((item) => [item.displayName, item.tag]),
   ];
 

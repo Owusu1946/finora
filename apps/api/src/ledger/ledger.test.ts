@@ -29,6 +29,7 @@ describe('toLedgerTransaction', () => {
       destination: null,
       source: 'chat',
       kind: 'action',
+      category: null,
       sourceId: 'act_1',
       mode: 'demo',
       createdAt: new Date('2026-10-31T10:00:00.000Z'),
@@ -37,6 +38,7 @@ describe('toLedgerTransaction', () => {
       amount: 100,
       toAmount: 1532.31,
       fee: 0.4,
+      category: 'Conversions',
       mode: 'demo',
       createdAt: '2026-10-31T10:00:00.000Z',
     });

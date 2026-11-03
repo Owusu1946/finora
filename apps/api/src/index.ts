@@ -21,6 +21,7 @@ import { chats } from './routes/chats';
 import { driveIntegrations, driveOAuth } from './routes/drive-integrations';
 import { emailWebhooks } from './routes/email-webhooks';
 import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
+import { insightRoutes } from './routes/insights';
 import { invoiceRoutes } from './routes/invoices';
 import { ledger } from './routes/ledger';
 import { memories } from './routes/memories';
@@ -85,6 +86,7 @@ app.route('/v1/actions', actions);
 app.route('/v1/payees', payeeRoutes);
 app.route('/v1/policies', policyRoutes);
 app.route('/v1/recurring', recurringRoutes);
+app.route('/v1/insights', insightRoutes);
 app.route('/v1', ledger);
 app.route('/v1', v1);
 
