@@ -12,6 +12,7 @@ import { getApiEnv } from './env';
 import { consumeCalendarSyncQueue } from './integrations/calendar-consumer';
 import { consumeGmailSyncQueue } from './integrations/gmail-consumer';
 import { actions } from './routes/actions';
+import { agentRoutes } from './routes/agent';
 import { automations } from './routes/automations';
 import { businessApps } from './routes/business-apps';
 import { calendarIntegrations, calendarOAuth } from './routes/calendar-integrations';
@@ -50,13 +51,13 @@ app.get('/', (c) =>
   c.json({
     name: 'finora-api',
     status: 'ok',
-    mode: 'mock',
+    mode: 'demo',
     tools: PLATFORM_TOOL_NAMES,
-    docs: 'Money-moving routes return pending_approval; humans resolve via /v1/approvals/:id/resolve',
+    docs: 'Money-moving routes prepare actions (pending_approval); the user approves them in the Finora app, which calls /v1/actions/:id/execute',
   }),
 );
 
-app.get('/health', (c) => c.json({ ok: true, mode: 'mock' }));
+app.get('/health', (c) => c.json({ ok: true, mode: 'demo' }));
 
 app.route('/webhooks', emailWebhooks);
 app.route('/oauth/google', googleOAuth);
@@ -83,6 +84,7 @@ app.route('/v1/apps', businessApps);
 app.route('/v1/cards', cards);
 app.route('/v1/payroll', payroll);
 app.route('/v1/actions', actions);
+app.route('/v1/agent', agentRoutes);
 app.route('/v1/payees', payeeRoutes);
 app.route('/v1/policies', policyRoutes);
 app.route('/v1/recurring', recurringRoutes);

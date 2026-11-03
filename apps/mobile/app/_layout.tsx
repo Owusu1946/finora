@@ -50,6 +50,7 @@ import {
   GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
 import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
+import { DailyPlanToolUI } from '@/components/chat/DailyPlanToolUI';
 import { DraftWhatsAppMessageToolUI } from '@/components/chat/DraftWhatsAppMessageToolUI';
 import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
@@ -100,6 +101,7 @@ import { SPLASH_BACKGROUND } from '@/components/ui/finora-mark-paths';
 import { useTheme } from '@/hooks/use-theme';
 import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
+import { ApprovalNotificationBridge } from '@/lib/approval-notifications';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
 import { AutomationNotificationBridge } from '@/lib/automation-notifications';
@@ -321,6 +323,7 @@ function FinoraRuntimeContent({
       <ManageAutomationToolUI />
       <AutomationReadyToolUI />
       <PaymentDueToolUI />
+      <DailyPlanToolUI />
       <ListExpensesToolUI />
       <ListVirtualAccountsToolUI />
       <TreasuryOverviewToolUI />
@@ -498,6 +501,7 @@ function RootApp() {
                   >
                     <ProfileSyncBridge />
                     <AutomationNotificationBridge />
+                    <ApprovalNotificationBridge />
                     <FinoraAssistantRuntime
                       key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
                       remoteChat={boot.remoteChat}

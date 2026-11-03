@@ -18,7 +18,8 @@ const AGENT: Record<PreparedAction['source'], string> = {
 };
 
 function approvalStatus(action: PreparedAction): ApprovalStatus {
-  if (action.status === 'executed') return 'approved';
+  // A plan that is running was approved; its items are being paid.
+  if (action.status === 'executed' || action.status === 'executing') return 'approved';
   if (action.status === 'pending_approval') return 'pending';
   return 'rejected';
 }

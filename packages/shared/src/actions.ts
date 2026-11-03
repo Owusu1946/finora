@@ -11,6 +11,8 @@ export type PreparedActionKind = z.infer<typeof PreparedActionKindSchema>;
 
 export const PreparedActionStatusSchema = z.enum([
   'pending_approval',
+  /** A plan whose items are being paid one by one. */
+  'executing',
   'executed',
   'cancelled',
   'failed',
@@ -65,8 +67,33 @@ export const PlanActionItemSchema = z
     title: z.string().trim().min(1).max(120),
     amount,
     category: z.string().trim().max(40).optional(),
+    /** The item's own currency, when it differs from the plan's. */
+    currency: currency.optional(),
   })
   .strict();
+
+/**
+ * Something a plan pays when approved: a prepared action (payment or
+ * conversion) or a payroll run. Each still settles, and is checked, on its own.
+ */
+export const PlanChildSchema = z
+  .object({
+    type: z.enum(['action', 'payroll_run']),
+    id: z.string().min(1).max(80),
+  })
+  .strict();
+export type PlanChild = z.infer<typeof PlanChildSchema>;
+
+/** How each part of a plan went once it ran. */
+export const PlanResultSchema = z.object({
+  type: z.enum(['action', 'payroll_run']),
+  id: z.string(),
+  title: z.string(),
+  status: z.enum(['paid', 'failed']),
+  transactionId: z.string().nullable(),
+  error: z.string().nullable(),
+});
+export type PlanResult = z.infer<typeof PlanResultSchema>;
 
 export const PlanActionInputSchema = z
   .object({
@@ -75,6 +102,10 @@ export const PlanActionInputSchema = z
     currency,
     items: z.array(PlanActionItemSchema).min(1).max(50),
     fundingWalletId: z.string().min(1).max(40).optional(),
+    /** When set, approving the plan pays these (in order) instead of one lump sum. */
+    children: z.array(PlanChildSchema).max(50).optional(),
+    /** Things Finora found but couldn't prepare, e.g. an invoice with no payout details. */
+    notes: z.array(z.string().max(280)).max(20).optional(),
   })
   .strict();
 
@@ -127,6 +158,9 @@ export const PreparedActionSchema = z.object({
   policy: PolicyResultSchema,
   transactionId: z.string().nullable(),
   failureReason: z.string().nullable(),
+  /** Plans: what's left to sort out by hand, and how each item went once run. */
+  notes: z.array(z.string()),
+  results: z.array(PlanResultSchema).nullable(),
   createdAt: z.string(),
   executedAt: z.string().nullable(),
 });

@@ -64,11 +64,19 @@ import { tool, zodSchema, type ToolSet } from 'ai';
 import type { GmailSearchInput } from '../integrations/google-gmail';
 
 import { ActionError } from '../actions/actions';
+import {
+  destinationLabel,
+  findSupplier,
+  paymentRequestFromInput,
+  planRequestFromInput,
+  supplierPaymentRequest,
+} from '../actions/inputs';
 import { AUTOMATION_TOOL_NAMES } from '../automations/tools';
 import { BUSINESS_APP_TOOL_NAMES } from '../business-apps/tools';
 import { INSIGHT_TOOL_NAMES } from '../insights/tools';
 import { LedgerError } from '../ledger/ledger';
 import { PayrollPreparationError } from '../payroll/prepare-import';
+import { PLAN_TOOL_NAMES } from '../plans/tools';
 import { v1 } from '../routes/v1';
 
 export const CHAT_AGENT_TOOL_NAMES = [
@@ -126,7 +134,8 @@ export function isChatAgentToolName(value: string) {
     (CHAT_AGENT_TOOL_NAMES as readonly string[]).includes(value) ||
     (BUSINESS_APP_TOOL_NAMES as readonly string[]).includes(value) ||
     (AUTOMATION_TOOL_NAMES as readonly string[]).includes(value) ||
-    (INSIGHT_TOOL_NAMES as readonly string[]).includes(value)
+    (INSIGHT_TOOL_NAMES as readonly string[]).includes(value) ||
+    (PLAN_TOOL_NAMES as readonly string[]).includes(value)
   );
 }
 
@@ -164,12 +173,6 @@ function walletName(currency: string) {
   if (currency === 'USDT') return 'Tether wallet';
   if (currency === 'USDC') return 'USD Coin wallet';
   return `${currency} wallet`;
-}
-
-function destinationLabel(kind: string) {
-  if (kind === 'mobile_money') return 'Mobile money';
-  if (kind === 'crypto_wallet') return 'Crypto wallet';
-  return 'Bank account';
 }
 
 function asRecord(value: unknown) {
@@ -305,6 +308,7 @@ type MoneyToolReader = {
     direction?: 'sent' | 'received' | 'swap';
   }) => Promise<LedgerTransaction[]>;
   prepare: (request: PrepareActionRequest) => Promise<PreparedAction>;
+  invoices?: (filter: { status?: string; query?: string }) => Promise<Array<{ source: string }>>;
 };
 
 /** Preparation errors (missing wallet, already paid, ...) the model can explain. */
@@ -701,22 +705,12 @@ export function createChatAgentTools(
         'Proactively list supplier invoices in Finora when the user asks to review, find, check, or summarize due, scheduled, paid, or dismissed invoices.',
       inputSchema: zodSchema(ListInvoicesInputSchema),
       execute: async ({ status, source, query }) => {
-        const params = new URLSearchParams();
-        if (status) params.set('status', status);
-        if (query) params.set('query', query);
-        const suffix = params.size > 0 ? `?${params.toString()}` : '';
-        const data = await callPlatform(`/invoices${suffix}`);
-        const invoices = Array.isArray(data.invoices) ? data.invoices : [];
+        if (!money?.invoices) throw new Error('invoices_unavailable');
+        const invoices = await money.invoices({ status, query });
         return {
           invoices:
             source && source !== 'all'
-              ? invoices.filter(
-                  (entry) =>
-                    typeof entry === 'object' &&
-                    entry !== null &&
-                    'source' in entry &&
-                    entry.source === source,
-                )
+              ? invoices.filter((invoice) => invoice.source === source)
               : invoices,
         };
       },
@@ -820,33 +814,10 @@ export function createChatAgentTools(
       inputSchema: zodSchema(PreparePaymentInputSchema),
       execute: async (input) => {
         if (!money) throw new Error('payments_unavailable');
-        const saved = input.contactId ? await directory?.payee(input.contactId) : null;
+        const saved = input.contactId ? ((await directory?.payee(input.contactId)) ?? null) : null;
         if (input.contactId && !saved) return { ok: false as const, errorCode: 'payee_not_found' };
-        const destinationKind = saved?.method ?? input.destinationKind ?? 'bank_account';
         try {
-          const action = await money.prepare({
-            kind: 'payment',
-            recipientName:
-              saved?.name ??
-              (input.recipientName?.trim() || input.accountName?.trim() || 'Recipient'),
-            amount: input.amount.amount,
-            currency: input.amount.currency,
-            destination: {
-              kind: destinationKind,
-              label:
-                saved?.label ??
-                (input.destinationLabel?.trim() || destinationLabel(destinationKind)),
-              value: (
-                saved?.identifier ??
-                input.destinationValue ??
-                input.accountNumber ??
-                input.iban ??
-                ''
-              ).slice(0, 120),
-            },
-            reference: input.reference,
-            purpose: 'payment',
-          });
+          const action = await money.prepare(paymentRequestFromInput(input, saved));
           return {
             status: 'pending' as const,
             actionId: action.id,
@@ -928,28 +899,13 @@ export function createChatAgentTools(
         if (!input.supplierId && !supplierName) throw new Error('supplier_required');
 
         if (!money || !directory) throw new Error('payments_unavailable');
-        const suppliers = await directory.payees({ kind: 'supplier' });
-        const supplier = suppliers.find(
-          (entry) =>
-            (input.supplierId && entry.id === input.supplierId) ||
-            (supplierName !== undefined && entry.name.toLowerCase() === supplierName.toLowerCase()),
-        );
+        const supplier = findSupplier(await directory.payees({ kind: 'supplier' }), input);
         if (!supplier) return { ok: false as const, errorCode: 'supplier_not_found' };
         const publicDetails = publicSupplier(supplier);
         try {
-          const action = await money.prepare({
-            kind: 'payment',
-            recipientName: publicDetails.name,
-            amount: input.amount.amount,
-            currency: input.amount.currency,
-            destination: {
-              kind: supplier.method,
-              label: supplier.label,
-              value: supplier.identifier,
-            },
-            reference: input.reference,
-            purpose: 'supplier',
-          });
+          const action = await money.prepare(
+            supplierPaymentRequest(supplier, input.amount, input.reference),
+          );
           return {
             status: 'pending' as const,
             actionId: action.id,
@@ -1035,31 +991,10 @@ export function createChatAgentTools(
         'Create a single-currency, multi-item financial plan for human review and approval. Every item must include an amount. This never executes any plan item.',
       inputSchema: zodSchema(CreateFinancialPlanInputSchema),
       execute: async (input) => {
-        if (!input.items?.length) throw new Error('plan_items_required');
-        if (input.items.some((item) => item.amount === undefined)) {
-          throw new Error('plan_item_amount_required');
-        }
-        const currencies = new Set(input.items.map((item) => item.amount!.currency));
-        if (currencies.size !== 1) throw new Error('plan_currency_mismatch');
-        const currency = currencies.values().next().value as string;
-        const items = input.items.map((item) => ({
-          ...item,
-          amount: item.amount!.amount,
-          currency: item.amount!.currency,
-        }));
-        const total = items.reduce((sum, item) => sum + item.amount, 0);
+        const { request, items, currency, total } = planRequestFromInput(input);
         if (!money) throw new Error('plans_unavailable');
         try {
-          const action = await money.prepare({
-            kind: 'plan',
-            title: input.intent.slice(0, 120),
-            currency,
-            items: items.map((item) => ({
-              title: (item.label ?? item.kind).slice(0, 120),
-              amount: item.amount,
-              category: item.kind,
-            })),
-          });
+          const action = await money.prepare(request);
           return {
             status: 'pending' as const,
             actionId: action.id,

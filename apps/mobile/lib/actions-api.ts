@@ -18,6 +18,8 @@ const MESSAGES: Record<string, string> = {
   action_not_pending: 'This was already approved or cancelled.',
   action_not_found: 'This is no longer available.',
   already_paid: 'This was already paid.',
+  invoice_destination_missing: 'Save this vendor as a supplier with payout details to pay it.',
+  invoice_not_due: 'This invoice is already paid or dismissed.',
   wallet_not_found: 'That account is no longer available.',
 };
 
@@ -43,6 +45,13 @@ export function actionErrorMessage(error: unknown) {
 export async function prepareAction(request: PrepareActionRequest) {
   return PreparedActionResponseSchema.parse(
     await ledgerRequest('/actions', { method: 'POST', body: request }),
+  ).action;
+}
+
+/** Prepares paying a synced invoice to its saved supplier; the server fills in the account. */
+export async function prepareInvoiceAction(invoiceId: string) {
+  return PreparedActionResponseSchema.parse(
+    await ledgerRequest('/actions/invoice', { method: 'POST', body: { invoiceId } }),
   ).action;
 }
 

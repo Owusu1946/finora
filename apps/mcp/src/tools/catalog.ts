@@ -9,8 +9,8 @@ type CatalogEntry = {
 };
 
 /**
- * Curated high-level MCP tool → Finora API mapping.
- * Lower-level platform routes are composed by the API behind these tools.
+ * Curated high-level MCP tool → Finora API mapping. Preparations land in the
+ * user's Approvals inbox (`source: mcp`); the user approves them in the app.
  * Never maps to execute / settle endpoints.
  */
 export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
@@ -69,72 +69,72 @@ export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
     },
   },
   list_wallets: {
-    description: 'List wallets, optionally filtered by sub-customer or currency',
+    description: 'List wallets with balances (demo balances until WeWire is live)',
     method: 'GET',
-    path: (a) => {
-      const q = new URLSearchParams();
-      if (a.subCustomerId) q.set('subCustomerId', String(a.subCustomerId));
-      if (a.currency) q.set('currency', String(a.currency));
-      const qs = q.toString();
-      return `/v1/wallets${qs ? `?${qs}` : ''}`;
-    },
+    path: '/v1/wallets',
   },
   search_recipient: {
-    description: 'Search / resolve recipients by name or identifier',
+    description: 'Find saved contacts and suppliers by name, network, or account (accounts masked)',
     method: 'GET',
-    path: (a) => `/v1/recipients/search?query=${encodeURIComponent(String(a.query ?? ''))}`,
+    path: (a) => `/v1/agent/recipients?query=${encodeURIComponent(String(a.query ?? ''))}`,
   },
   prepare_payment: {
     description:
-      'Prepare a payout for human approval. Does NOT move money — creates an Approvals inbox item.',
+      'Prepare a payment for human approval. Pass contactId from search_recipient to pay a saved contact. Does NOT move money: it waits in the Approvals inbox in the Finora app.',
     method: 'POST',
-    path: '/v1/payments/prepare',
+    path: '/v1/agent/payments',
     body: true,
   },
   request_approval: {
-    description: 'Notify the human that a preparation or plan is waiting in Approvals',
+    description:
+      'Check that a preparation is waiting in the Approvals inbox and get its status. Only the user can approve it, in the Finora app.',
     method: 'POST',
-    path: '/v1/approvals/request',
+    path: '/v1/agent/approvals/request',
     body: true,
   },
   get_payment_status: {
-    description: 'Get status of a payment, preparation, or settled transaction',
-    method: 'GET',
-    path: (a) => {
-      const id = a.paymentId ?? a.preparationId ?? a.transactionId ?? '';
-      return `/v1/payments/status?id=${encodeURIComponent(String(id))}`;
-    },
-  },
-  prepare_conversion: {
-    description: 'Prepare an FX conversion for human approval (includes quote).',
-    method: 'POST',
-    path: '/v1/conversions/prepare',
-    body: true,
-  },
-  prepare_invoice_payment: {
-    description: 'Prepare payment for a supplier invoice (requires human approval)',
-    method: 'POST',
-    path: (a) => `/v1/invoices/${encodeURIComponent(String(a.invoiceId))}/prepare-payment`,
-  },
-  prepare_supplier_payment: {
-    description: 'Prepare a supplier payment for human approval. Does NOT move money.',
-    method: 'POST',
-    path: '/v1/suppliers/prepare-payment',
-    body: true,
-  },
-  prepare_payroll: {
-    description: 'Prepare a payroll run for human approval. Does NOT move money.',
-    method: 'POST',
-    path: '/v1/payroll/prepare',
-    body: true,
-  },
-  list_transactions: {
-    description: 'List wallet transactions',
+    description:
+      'Get the status of a preparation (act_…), payroll run, or settled transaction (tx_…)',
     method: 'GET',
     path: (a) => {
       const q = new URLSearchParams();
-      if (a.type) q.set('type', String(a.type));
-      if (a.status) q.set('status', String(a.status));
+      for (const key of ['paymentId', 'preparationId', 'transactionId'] as const) {
+        if (a[key] !== undefined) q.set(key, String(a[key]));
+      }
+      return `/v1/agent/status?${q.toString()}`;
+    },
+  },
+  prepare_conversion: {
+    description: 'Prepare an FX conversion between two wallets for human approval (demo rates).',
+    method: 'POST',
+    path: '/v1/agent/conversions',
+    body: true,
+  },
+  prepare_invoice_payment: {
+    description:
+      'Prepare payment of an invoice to the saved supplier matching its vendor (requires human approval). Fails with invoice_destination_missing when no supplier is saved.',
+    method: 'POST',
+    path: '/v1/agent/invoice-payments',
+    body: true,
+  },
+  prepare_supplier_payment: {
+    description: 'Prepare a payment to a saved supplier for human approval. Does NOT move money.',
+    method: 'POST',
+    path: '/v1/agent/supplier-payments',
+    body: true,
+  },
+  prepare_payroll: {
+    description: 'Prepare an imported payroll as a run for human approval. Does NOT move money.',
+    method: 'POST',
+    path: '/v1/agent/payroll',
+    body: true,
+  },
+  list_transactions: {
+    description: 'List recent money movements (newest first; destinations masked)',
+    method: 'GET',
+    path: (a) => {
+      const q = new URLSearchParams();
+      if (a.query) q.set('query', String(a.query));
       if (a.limit) q.set('limit', String(a.limit));
       const qs = q.toString();
       return `/v1/transactions${qs ? `?${qs}` : ''}`;
@@ -151,33 +151,22 @@ export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
     },
   },
   list_notifications: {
-    description: 'List account notifications',
+    description: 'List what is waiting for the user, such as preparations to approve',
     method: 'GET',
-    path: (a) => `/v1/notifications${a.unreadOnly ? '?unreadOnly=true' : ''}`,
+    path: '/v1/agent/notifications',
   },
   create_financial_plan: {
     description:
-      'Create a multi-item financial plan (payroll + invoices + rent, etc.) for a single human approval',
+      'Create a single-currency, multi-item financial plan for one human approval. Does NOT move money.',
     method: 'POST',
-    path: '/v1/plans',
+    path: '/v1/agent/plans',
     body: true,
   },
-  begin_transaction: {
-    description: 'Open an agent transaction spanning related prepare_* calls',
+  prepare_daily_plan: {
+    description:
+      'Gather everything that needs attention today (payments waiting, payroll, invoices due) into one plan for one human approval. Does NOT move money.',
     method: 'POST',
-    path: '/v1/agent-transactions',
-    body: true,
-  },
-  commit_transaction: {
-    description: 'Commit agent transaction and request human approval for all items',
-    method: 'POST',
-    path: (a) => `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/commit`,
-    body: true,
-  },
-  rollback_transaction: {
-    description: 'Roll back agent transaction and cancel related preparations',
-    method: 'POST',
-    path: (a) => `/v1/agent-transactions/${encodeURIComponent(String(a.transactionId))}/rollback`,
+    path: '/v1/agent/daily-plan',
     body: true,
   },
   evaluate_policy: {
@@ -202,9 +191,9 @@ export const TOOL_CATALOG: Record<McpToolName, CatalogEntry> = {
     path: '/v1/capabilities/assets',
   },
   get_recent_context: {
-    description: 'Recent recipients, wallets, and transactions for pronoun / follow-up resolution',
+    description: 'Recent recipients, wallets, and transactions for follow-ups like "pay her again"',
     method: 'GET',
     path: (a) =>
-      `/v1/context/recent${a.limit ? `?limit=${encodeURIComponent(String(a.limit))}` : ''}`,
+      `/v1/agent/context${a.limit ? `?limit=${encodeURIComponent(String(a.limit))}` : ''}`,
   },
 };

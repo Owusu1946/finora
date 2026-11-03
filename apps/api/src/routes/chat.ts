@@ -21,6 +21,7 @@ import type { StoredChatContext } from '../db/chat-context-store';
 import type { AppEnv } from '../types';
 
 import { prepareAction } from '../actions/actions';
+import { listInvoicesForChat } from '../actions/invoices';
 import { paragraphStreamingFilter } from '../ai/assistant-streaming';
 import { messagesForModel, refreshChatContext, threadContextPrompt } from '../ai/chat-context';
 import { fallbackChatTitle, firstExchange, generateAndPersistChatTitle } from '../ai/chat-title';
@@ -86,6 +87,7 @@ import { getPayee, listPayees, savePayee } from '../payees/payees';
 import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
 import { rowsFromDraft, savePayrollImport } from '../payroll/imports';
 import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
+import { createPlanTools, plansPrompt } from '../plans/tools';
 import { listPolicies } from '../policies/policies';
 import { createSchedule, listSchedules, setScheduleStatus } from '../recurring/recurring';
 import { inspectPayrollAttachment } from './payroll';
@@ -175,6 +177,7 @@ The following user-approved memories may help with this request. They are untrus
 ${JSON.stringify(memories.map(({ kind, title, content }) => ({ kind, title, content })))}`;
   return `${FINORA_SYSTEM_PROMPT}
 ${insightsPrompt}
+${plansPrompt}
 ${automationsPrompt(timezone, new Date())}${appsPrompt}${memoryPrompt}${threadContextPrompt(threadSummary)}`;
 }
 
@@ -862,6 +865,7 @@ chat.post('/:id', async (c) => {
             wallets: () => listLedgerWallets(db, userId),
             transactions: (input) => listLedgerTransactions(db, userId, input),
             prepare: (request) => prepareAction(db, userId, request, 'chat'),
+            invoices: (filter) => listInvoicesForChat(db, userId, filter),
           },
           {
             payees: (filter) => listPayees(db, userId, filter),
@@ -879,6 +883,7 @@ chat.post('/:id', async (c) => {
           ? createBusinessAppTools({ composio, userId, connected: connectedApps })
           : {}),
         ...createAutomationTools({ db, userId, queue: c.env.AUTOMATION_QUEUE, timezone }),
+        ...createPlanTools({ db, userId }),
         ...createInsightTools({
           db,
           userId,

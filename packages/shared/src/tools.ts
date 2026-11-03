@@ -692,26 +692,6 @@ export const GetFinancialPlanInputSchema = z
   })
   .strict();
 
-export const BeginTransactionInputSchema = z
-  .object({
-    label: z.string().optional(),
-  })
-  .strict();
-
-export const CommitTransactionInputSchema = z
-  .object({
-    transactionId: z.string().min(1),
-    note: z.string().optional(),
-  })
-  .strict();
-
-export const RollbackTransactionInputSchema = z
-  .object({
-    transactionId: z.string().min(1),
-    reason: z.string().optional(),
-  })
-  .strict();
-
 export const GetPaymentStatusInputSchema = z
   .object({
     paymentId: z.string().optional(),
@@ -853,9 +833,7 @@ export const TOOL_INPUT_SCHEMAS = {
   list_invoices: ListInvoicesInputSchema,
   list_notifications: ListNotificationsInputSchema,
   create_financial_plan: CreateFinancialPlanInputSchema,
-  begin_transaction: BeginTransactionInputSchema,
-  commit_transaction: CommitTransactionInputSchema,
-  rollback_transaction: RollbackTransactionInputSchema,
+  prepare_daily_plan: EmptyInputSchema,
   evaluate_policy: EvaluatePolicyInputSchema,
   list_supported_payment_rails: ListSupportedPaymentRailsInputSchema,
   list_supported_countries: ListSupportedCountriesInputSchema,
