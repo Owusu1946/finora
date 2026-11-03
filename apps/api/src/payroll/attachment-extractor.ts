@@ -187,11 +187,8 @@ export async function extractPayrollRows(input: {
   bytes: ArrayBuffer;
   fileName: string;
   contentType: string;
-  extractImage?: (input: {
-    bytes: Uint8Array;
-    contentType: string;
-    fileName: string;
-  }) => Promise<unknown[][]>;
+  /** Reads images, and PDFs whose text has no usable rows, with the model. */
+  extractWithModel?: (input: { bytes: Uint8Array; contentType: string }) => Promise<unknown[][]>;
 }) {
   const ext = extension(input.fileName);
   if (SUPPORTED_TEXT.has(ext) || input.contentType.startsWith('text/')) {
@@ -216,7 +213,7 @@ export async function extractPayrollRows(input: {
     const pdf = await getDocumentProxy(new Uint8Array(input.bytes));
     const result = await extractText(pdf, { mergePages: false });
     const pages = Array.isArray(result.text) ? result.text : [result.text];
-    return pages
+    const textRows = pages
       .flatMap((page, index) =>
         rowsFromMatrix(
           String(page)
@@ -227,12 +224,26 @@ export async function extractPayrollRows(input: {
         ),
       )
       .slice(0, MAX_ROWS);
+    // Tables in PDFs lose their columns as plain text, and scans have no text:
+    // when nothing usable came out, let the model read the PDF itself.
+    const usable = textRows.some((row) => !row.issues.some((issue) => issue.blocking));
+    if (!usable && input.extractWithModel) {
+      try {
+        const matrix = await input.extractWithModel({
+          bytes: new Uint8Array(input.bytes),
+          contentType: 'application/pdf',
+        });
+        return rowsFromMatrix(matrix, input.fileName, 'PDF');
+      } catch (error) {
+        if (textRows.length === 0) throw error;
+      }
+    }
+    return textRows;
   }
-  if (input.contentType.startsWith('image/') && input.extractImage) {
-    const matrix = await input.extractImage({
+  if (input.contentType.startsWith('image/') && input.extractWithModel) {
+    const matrix = await input.extractWithModel({
       bytes: new Uint8Array(input.bytes),
       contentType: input.contentType,
-      fileName: input.fileName,
     });
     return rowsFromMatrix(matrix, input.fileName, 'Image');
   }

@@ -80,6 +80,7 @@ import {
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
 import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
+import { rowsFromDraft, savePayrollImport } from '../payroll/imports';
 import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
 import { inspectPayrollAttachment } from './payroll';
 
@@ -777,6 +778,14 @@ chat.post('/:id', async (c) => {
                 apiEnv: env,
                 userId,
                 attachmentId,
+              }),
+            draft: (input) =>
+              savePayrollImport(db, {
+                userId,
+                attachmentId: null,
+                sourceName: 'Typed in chat',
+                rows: rowsFromDraft(input),
+                period: input.period,
               }),
             prepareImport: ({ importId, period, rowIds }) =>
               preparePayrollImport({

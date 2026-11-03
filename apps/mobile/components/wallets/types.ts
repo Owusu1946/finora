@@ -127,4 +127,12 @@ export const FX_RATES: Record<string, number> = {
   USDT: 1.0,
   USDC: 1.0,
   GHS: 0.065,
+  // Approximate demo rates for payroll currencies until live FX is wired in.
+  NGN: 0.00065,
+  KES: 0.0077,
+  ZAR: 0.055,
+  UGX: 0.00027,
+  TZS: 0.00037,
+  XOF: 0.0016,
+  XAF: 0.0016,
 };

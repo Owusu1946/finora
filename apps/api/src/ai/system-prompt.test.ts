@@ -48,8 +48,12 @@ describe('chat tools', () => {
   it('gives imported employees stable UI identities', async () => {
     const tools = createChatAgentTools(undefined, undefined, undefined, {
       inspectAttachment: async () => ({}),
-      prepareImport: async () => ({}),
-      prepareEmployee: async () => ({}),
+      prepareImport: async () => {
+        throw new Error('not used');
+      },
+      prepareEmployee: async () => {
+        throw new Error('not used');
+      },
       proposeChanges: async () => ({}),
       listImports: async () => ({
         imports: [

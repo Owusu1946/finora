@@ -55,7 +55,10 @@ import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
 import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
 import { GetVirtualCardToolUI } from '@/components/chat/GetVirtualCardToolUI';
-import { InspectPayrollAttachmentToolUI } from '@/components/chat/InspectPayrollAttachmentToolUI';
+import {
+  DraftPayrollToolUI,
+  InspectPayrollAttachmentToolUI,
+} from '@/components/chat/InspectPayrollAttachmentToolUI';
 import { ListAutomationsToolUI } from '@/components/chat/ListAutomationsToolUI';
 import { ListBeneficiariesToolUI } from '@/components/chat/ListBeneficiariesToolUI';
 import { ListCalendarDuesToolUI } from '@/components/chat/ListCalendarDuesToolUI';
@@ -69,10 +72,12 @@ import { ListSuppliersToolUI } from '@/components/chat/ListSuppliersToolUI';
 import { ListVirtualAccountsToolUI } from '@/components/chat/ListVirtualAccountsToolUI';
 import { ListVirtualCardsToolUI } from '@/components/chat/ListVirtualCardsToolUI';
 import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
-import { PrepareEmployeePaymentToolUI } from '@/components/chat/PrepareEmployeePaymentToolUI';
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
-import { PreparePayrollToolUI } from '@/components/chat/PreparePayrollToolUI';
+import {
+  PrepareEmployeePaymentToolUI,
+  PreparePayrollToolUI,
+} from '@/components/chat/PreparePayrollToolUI';
 import { PrepareRecurringToolUI } from '@/components/chat/PrepareRecurringToolUI';
 import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierPaymentToolUI';
 import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
@@ -319,6 +324,7 @@ function FinoraRuntimeContent({
       <TreasuryOverviewToolUI />
       <FinancialReportToolUI />
       <InspectPayrollAttachmentToolUI />
+      <DraftPayrollToolUI />
       <PreparePayrollToolUI />
       <ProposePayrollChangesToolUI />
       <PrepareSupplierPaymentToolUI />

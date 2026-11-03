@@ -536,9 +536,10 @@ export const payrollImports = pgTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     clerkUserId: text('clerk_user_id').notNull(),
-    attachmentId: uuid('attachment_id')
-      .notNull()
-      .references(() => payrollAttachments.id, { onDelete: 'cascade' }),
+    /** Null for payroll typed or spoken in chat rather than uploaded. */
+    attachmentId: uuid('attachment_id').references(() => payrollAttachments.id, {
+      onDelete: 'cascade',
+    }),
     status: payrollImportStatusEnum('status').notNull().default('inspecting'),
     sourceName: text('source_name').notNull(),
     period: text('period'),
@@ -627,4 +628,73 @@ export const payrollAuditEvents = pgTable(
   (table) => [
     index('payroll_audit_events_user_created_index').on(table.clerkUserId, table.createdAt),
   ],
+);
+
+export const payrollRunStatusEnum = pgEnum('payroll_run_status', [
+  'pending_approval',
+  'completed',
+  'failed',
+  'cancelled',
+]);
+
+export const payrollRunItemStatusEnum = pgEnum('payroll_run_item_status', [
+  'pending',
+  'sent',
+  'failed',
+]);
+
+/**
+ * One payroll payment: prepared from an import (or one employee), approved with
+ * the passcode, then executed. Amounts are in minor units of `currency`.
+ */
+export const payrollRuns = pgTable(
+  'payroll_runs',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    clerkUserId: text('clerk_user_id').notNull(),
+    importId: uuid('import_id').references(() => payrollImports.id, { onDelete: 'set null' }),
+    kind: text('kind').$type<'payroll' | 'single'>().notNull(),
+    period: text('period'),
+    currency: text('currency').notNull(),
+    totalMinor: integer('total_minor').notNull(),
+    status: payrollRunStatusEnum('status').notNull().default('pending_approval'),
+    /** Payouts are simulated until WeWire is live. */
+    mode: text('mode').$type<'demo' | 'live'>().notNull().default('demo'),
+    fundingWalletId: text('funding_wallet_id'),
+    fundingCurrency: text('funding_currency'),
+    fundingAmountMinor: integer('funding_amount_minor'),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    executedAt: timestamp('executed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('payroll_runs_user_created_index').on(table.clerkUserId, table.createdAt)],
+);
+
+export const payrollRunItems = pgTable(
+  'payroll_run_items',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => payrollRuns.id, { onDelete: 'cascade' }),
+    position: integer('position').notNull(),
+    rowId: text('row_id'),
+    employeeName: text('employee_name').notNull(),
+    employeeId: text('employee_id'),
+    role: text('role'),
+    amountMinor: integer('amount_minor').notNull(),
+    destinationKind: text('destination_kind').notNull(),
+    destinationLabel: text('destination_label').notNull(),
+    destinationValue: text('destination_value').notNull(),
+    reference: text('reference'),
+    status: payrollRunItemStatusEnum('status').notNull().default('pending'),
+    failureReason: text('failure_reason'),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (table) => [uniqueIndex('payroll_run_items_run_position_unique').on(table.runId, table.position)],
 );

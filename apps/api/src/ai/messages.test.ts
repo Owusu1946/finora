@@ -91,7 +91,9 @@ describe('automation cards in chat history', () => {
   it('accepts and keeps the card when the user replies in the Automations chat', () => {
     const sanitized = sanitizeIncomingMessages([card, reply]);
     expect(sanitized?.[0]).toEqual(card);
-    expect(generatedMessagesForPersistence([card, reply, textMessage('a2', 'assistant', 'Ok')], [])[0]).toEqual(card);
+    expect(
+      generatedMessagesForPersistence([card, reply, textMessage('a2', 'assistant', 'Ok')], [])[0],
+    ).toEqual(card);
   });
 
   it('hides the card from the model but keeps the text', () => {

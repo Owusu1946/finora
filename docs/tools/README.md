@@ -11,6 +11,7 @@ Product architecture: [`.agents/FINORA_VISION.md`](../../.agents/FINORA_VISION.m
 | [mobile.md](./mobile.md)                     | What the **Expo chat** mock adapter uses today          |
 | [business-apps.md](./business-apps.md)       | Composio business apps and how chat uses them           |
 | [automations.md](./automations.md)           | Automation triggers, delivery to chat, and chat tools   |
+| [payroll.md](./payroll.md)                   | Payroll inputs, review, runs, and approval              |
 | [WeWire coverage](../wewire-api-coverage.md) | WeWire endpoint priorities and live-integration gaps    |
 
 ---
