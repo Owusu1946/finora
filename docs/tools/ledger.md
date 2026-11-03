@@ -34,6 +34,20 @@ Payments for an invoice, bill, SMS request, or calendar event carry a `relatedId
 
 Payroll runs (`docs/tools/payroll.md`) and card loads settle on the same ledger.
 
+## Payees and policies
+
+Saved contacts and suppliers are **payees** (`payees`), shared by the app, chat (`list_payees`, `save_payee`, `list_beneficiaries`, `list_suppliers`), and MCP. The same account is saved once (matched without spaces or dashes). Paying a saved payee by `contactId` or `supplierId` uses its stored account; the model only sees it masked. On first launch the app copies the contacts it saved on the device once. Payees aren't verified until WeWire is live.
+
+**Approval policies** (`approval_policies`) are checked when an action is prepared and again at execute:
+
+| Policy                | Default | Outcome                                                        |
+| --------------------- | ------- | -------------------------------------------------------------- |
+| Review large payments | $500    | `needs_review`: the app shows the reasons before the passcode  |
+| New recipients        | on      | `needs_review` when the account isn't saved and was never paid |
+| Daily limit           | $10,000 | `blocked` once today's payments (UTC) would pass it            |
+
+Policies only flag or block; the passcode is always required. Conversions aren't checked. `POST /v1/policies/check` evaluates an intended payment (MCP `evaluate_policy`).
+
 ## Fees and rates
 
 - Payments: no fee.

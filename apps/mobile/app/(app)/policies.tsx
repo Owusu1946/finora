@@ -67,7 +67,8 @@ export default function PoliciesScreen() {
             Approval policies
           </Text>
           <Text className='mb-1.5 mt-[-4px] font-sans-medium text-[15px] leading-5 text-muted-foreground'>
-            Rules that decide when prepares need your passcode. AI never bypasses these.
+            Finora checks every payment against these: they flag it for a second look or block it.
+            Your passcode is always required, and AI can't change them.
           </Text>
           <Pressable
             onPress={() => {

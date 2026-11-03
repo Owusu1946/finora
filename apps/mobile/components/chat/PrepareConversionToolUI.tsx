@@ -11,7 +11,13 @@ import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { actionErrorMessage, cancelAction, executeAction, getAction } from '@/lib/actions-api';
+import {
+  actionErrorMessage,
+  cancelAction,
+  executeAction,
+  getAction,
+  reviewActionPolicy,
+} from '@/lib/actions-api';
 import { appendAgentFollowUp, conversionDoneFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 
@@ -195,7 +201,7 @@ function PrepareConversionConfirm({
         onConfirm={async () => {
           if (status !== 'pending' || busy) return;
           setBusy(true);
-          const ok = await requestApproval();
+          const ok = (await reviewActionPolicy(actionId)) && (await requestApproval());
           setBusy(false);
           if (!ok) return;
           setConvertingStep(0);

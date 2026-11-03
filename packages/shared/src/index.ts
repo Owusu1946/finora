@@ -12,6 +12,7 @@ export * from './invoices';
 export * from './ledger';
 export * from './memory';
 export * from './money';
+export * from './payees';
 export * from './payroll';
 export * from './phone';
 export * from './registry';

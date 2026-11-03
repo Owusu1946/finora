@@ -973,8 +973,6 @@ v1.post('/payment-requests', async (c) => {
 
 // ─── Beneficiaries / recipients ────────────────────────────────────────────
 
-v1.get('/beneficiaries', (c) => c.json({ mode: 'mock', beneficiaries: mockStore.beneficiaries }));
-
 v1.post('/beneficiaries/verify', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
   return c.json({ mode: 'mock', verified: true, ...body });
@@ -1195,8 +1193,6 @@ v1.post('/invoices/scan', async (c) => {
 
 // ─── Business: suppliers / payroll ─────────────────────────────────────────
 
-v1.get('/suppliers', (c) => c.json({ mode: 'mock', suppliers: mockStore.suppliers }));
-
 v1.post('/suppliers/prepare-payment', async (c) => {
   const body = await c.req.json<Record<string, unknown>>();
   return c.json(createPreparation('supplier_payment', body), 201);
@@ -1245,28 +1241,6 @@ v1.get('/notifications', (c) => {
 v1.get('/integrations', (c) => c.json({ mode: 'mock', integrations: mockStore.integrations }));
 
 // ─── Policy ────────────────────────────────────────────────────────────────
-
-v1.get('/policies', (c) => c.json({ mode: 'mock', policies: mockStore.policies }));
-
-v1.post('/policies/check', async (c) => {
-  const body = await c.req.json<{
-    action: string;
-    amount?: number;
-    destinationValue?: string;
-  }>();
-  const amount = Number(body.amount ?? 0);
-  const requiresApproval = amount > 500 || Boolean(body.destinationValue);
-  return c.json({
-    mode: 'mock',
-    action: body.action,
-    allowed: true,
-    requiresApproval,
-    matchedPolicies: mockStore.policies.filter((p) => p.enabled).map((p) => p.id),
-    message: requiresApproval
-      ? 'Allowed after human approval in Finora Approvals inbox.'
-      : 'Allowed under current policy.',
-  });
-});
 
 // ─── Intelligence stubs ────────────────────────────────────────────────────
 
@@ -1512,61 +1486,6 @@ v1.get('/invoices/:id/source-email', (c) => {
     mode: 'mock',
     invoiceId: inv.id,
     sourceEmail: inv.sourceEmail ?? null,
-  });
-});
-
-// ─── Policy CRUD ───────────────────────────────────────────────────────────
-
-v1.post('/policies', async (c) => {
-  const body = await c.req.json<{ name: string; rule: string; enabled?: boolean }>();
-  const policy = {
-    id: newId('pol'),
-    name: body.name,
-    rule: body.rule,
-    enabled: body.enabled ?? true,
-  };
-  mockStore.policies.push(policy);
-  return c.json({ mode: 'mock', policy }, 201);
-});
-
-v1.patch('/policies/:id', async (c) => {
-  const body = await c.req.json<{ name?: string; rule?: string; enabled?: boolean }>();
-  const policy = mockStore.policies.find((p) => p.id === c.req.param('id'));
-  if (!policy) return c.json({ error: 'not_found' }, 404);
-  if (body.name !== undefined) policy.name = body.name;
-  if (body.rule !== undefined) policy.rule = body.rule;
-  if (body.enabled !== undefined) policy.enabled = body.enabled;
-  return c.json({ mode: 'mock', policy });
-});
-
-v1.delete('/policies/:id', (c) => {
-  const idx = mockStore.policies.findIndex((p) => p.id === c.req.param('id'));
-  if (idx < 0) return c.json({ error: 'not_found' }, 404);
-  const [policy] = mockStore.policies.splice(idx, 1);
-  return c.json({ mode: 'mock', deleted: true, policy });
-});
-
-v1.post('/policies/assign', async (c) => {
-  const body = await c.req.json<{
-    policyId: string;
-    targetType: string;
-    targetId: string;
-  }>();
-  const policy = mockStore.policies.find((p) => p.id === body.policyId);
-  if (!policy) return c.json({ error: 'policy_not_found' }, 404);
-  return c.json({ mode: 'mock', assigned: true, policy, target: body });
-});
-
-v1.post('/policies/simulate', async (c) => {
-  const body = await c.req.json<{ action: string; amount?: number }>();
-  const amount = Number(body.amount ?? 0);
-  return c.json({
-    mode: 'mock',
-    simulation: true,
-    action: body.action,
-    wouldRequireApproval: amount > 500,
-    wouldAutoApprove: amount > 0 && amount <= 100,
-    wouldBlock: false,
   });
 });
 

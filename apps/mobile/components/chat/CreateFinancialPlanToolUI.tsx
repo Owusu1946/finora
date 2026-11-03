@@ -17,6 +17,7 @@ import {
   executeAction,
   getAction,
   prepareAction,
+  reviewActionPolicy,
 } from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
@@ -254,7 +255,9 @@ function CreateFinancialPlanConfirm({
         onConfirm={async () => {
           if (status !== 'pending' || busy) return;
           setBusy(true);
-          const ok = await requestApproval();
+          const ok =
+            (!preparedActionId || (await reviewActionPolicy(preparedActionId))) &&
+            (await requestApproval());
           setBusy(false);
           if (!ok) return;
           setSendingStep(0);

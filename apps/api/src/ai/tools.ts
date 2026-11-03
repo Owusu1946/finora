@@ -6,6 +6,8 @@ import {
   type VirtualCardRecord,
   CreateFinancialPlanInputSchema,
   ListLedgerTransactionsInputSchema,
+  ListPayeesInputSchema,
+  SavePayeeToolInputSchema,
   FindGmailInvoicesInputSchema,
   GetBalancesInputSchema,
   GetGmailMessageInputSchema,
@@ -45,7 +47,10 @@ import {
   type MemoryKind,
   type PayrollRun,
   type UpdateMemoryInput,
+  type ApprovalPolicy,
   type LedgerTransaction,
+  type Payee,
+  type SavePayeeRequest,
   type LedgerWalletsResponse,
   type PrepareActionRequest,
   type PreparedAction,
@@ -86,6 +91,8 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'list_suppliers',
   'list_beneficiaries',
   'list_policies',
+  'list_payees',
+  'save_payee',
   'prepare_payment',
   'prepare_conversion',
   'prepare_payroll',
@@ -161,51 +168,49 @@ function asRecord(value: unknown) {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
 }
 
-function maskIdentifier(value: unknown) {
-  const identifier = String(value ?? '');
-  if (!identifier || identifier.includes('•')) return identifier;
-  const compact = identifier.replaceAll(' ', '');
+function maskTail(value: string) {
+  if (!value || value.includes('•')) return value;
+  const compact = value.replaceAll(' ', '');
   return compact.length <= 4 ? '••••' : `•••• ${compact.slice(-4)}`;
 }
 
-function publicDestination(value: unknown) {
-  const destination = asRecord(value);
+/** A supplier as the model and supplier card see it: the account is masked. */
+function publicSupplier(payee: Payee) {
   return {
-    kind: String(destination?.kind ?? 'bank_account'),
-    label: String(destination?.label ?? 'Payout method'),
-    value: maskIdentifier(destination?.value),
-    rail: destination?.rail === undefined ? undefined : String(destination.rail),
+    id: payee.id,
+    name: payee.name,
+    currency: payee.currency,
+    defaultAmount: payee.defaultAmount ?? undefined,
+    destination: { kind: payee.method, label: payee.label, value: maskTail(payee.identifier) },
+    notes: payee.notes ?? undefined,
   };
 }
 
-function publicSupplier(value: unknown) {
-  const supplier = asRecord(value);
-  if (!supplier || supplier.id === undefined || supplier.name === undefined) return null;
+function publicBeneficiary(payee: Payee) {
   return {
-    id: String(supplier.id),
-    name: String(supplier.name),
-    currency: String(supplier.currency ?? 'USD'),
-    defaultAmount:
-      supplier.defaultAmount === undefined ? undefined : Number(supplier.defaultAmount),
-    destination: publicDestination(supplier.destination),
-    notes: supplier.notes === undefined ? undefined : String(supplier.notes),
+    id: payee.id,
+    name: payee.name,
+    method:
+      payee.method === 'mobile_money'
+        ? 'mobile_money'
+        : payee.method === 'crypto_wallet'
+          ? 'crypto'
+          : 'bank',
+    identifier: maskTail(payee.identifier),
+    currency: payee.currency,
+    country: payee.country ?? undefined,
+    // No verification rails yet: saved, not verified.
+    verified: false,
+    rail: payee.label,
   };
 }
 
-function publicBeneficiary(value: unknown) {
-  const beneficiary = asRecord(value);
-  if (!beneficiary || beneficiary.id === undefined || beneficiary.name === undefined) return null;
-  return {
-    id: String(beneficiary.id),
-    name: String(beneficiary.name),
-    method: String(beneficiary.method ?? 'bank'),
-    identifier: maskIdentifier(beneficiary.identifier),
-    currency: String(beneficiary.currency ?? 'USD'),
-    country: beneficiary.country === undefined ? undefined : String(beneficiary.country),
-    verified: beneficiary.verified === true,
-    rail: beneficiary.rail === undefined ? undefined : String(beneficiary.rail),
-  };
-}
+type DirectoryToolReader = {
+  payees: (filter: { kind?: 'contact' | 'supplier'; query?: string }) => Promise<Payee[]>;
+  payee: (id: string) => Promise<Payee | null>;
+  save: (request: SavePayeeRequest) => Promise<Payee>;
+  policies: () => Promise<ApprovalPolicy[]>;
+};
 
 type GmailToolReader = {
   status: () => Promise<unknown>;
@@ -329,6 +334,7 @@ export function createChatAgentTools(
   web?: WebToolReader,
   cards?: CardToolReader,
   money?: MoneyToolReader,
+  directory?: DirectoryToolReader,
 ) {
   return {
     create_virtual_card: tool({
@@ -709,12 +715,12 @@ export function createChatAgentTools(
                   role: String(row.role ?? ''),
                   salary: Number(row.amount ?? 0),
                   currency: String(row.currency ?? item.currency ?? 'USD'),
-                  destination: publicDestination({
-                    kind: row.destinationType,
-                    label: row.rail ?? row.destinationType,
-                    value: row.destination,
-                    rail: row.rail,
-                  }),
+                  destination: {
+                    kind: String(row.destinationType ?? 'bank_account'),
+                    label: String(row.rail ?? row.destinationType ?? 'Payout method'),
+                    value: maskTail(String(row.destination ?? '')),
+                    rail: row.rail == null ? undefined : String(row.rail),
+                  },
                 };
               })
               .filter(Boolean);
@@ -723,30 +729,57 @@ export function createChatAgentTools(
       },
     }),
     list_suppliers: tool({
-      description: 'List suppliers saved in Finora, including their payout details and defaults.',
+      description:
+        'List suppliers saved in Finora, with their payout method (account masked) and default amount.',
       inputSchema: zodSchema(ListSuppliersInputSchema),
       execute: async () => {
-        const data = await callPlatform('/suppliers');
-        const suppliers = Array.isArray(data.suppliers) ? data.suppliers : [];
-        return { mode: data.mode, suppliers: suppliers.map(publicSupplier).filter(Boolean) };
+        if (!directory) throw new Error('suppliers_unavailable');
+        return { suppliers: (await directory.payees({ kind: 'supplier' })).map(publicSupplier) };
       },
     }),
     list_beneficiaries: tool({
-      description: 'List verified and unverified payout beneficiaries saved in Finora.',
+      description:
+        "List the people the user saved to pay, with their payout method (account masked). Saved payees aren't verified until WeWire is live.",
       inputSchema: zodSchema(ListBeneficiariesInputSchema),
       execute: async () => {
-        const data = await callPlatform('/beneficiaries');
-        const beneficiaries = Array.isArray(data.beneficiaries) ? data.beneficiaries : [];
+        if (!directory) throw new Error('beneficiaries_unavailable');
         return {
-          mode: data.mode,
-          beneficiaries: beneficiaries.map(publicBeneficiary).filter(Boolean),
+          beneficiaries: (await directory.payees({ kind: 'contact' })).map(publicBeneficiary),
         };
       },
     }),
+    list_payees: tool({
+      description:
+        'Find saved contacts and suppliers by name, network, or account, e.g. before paying "Ama" or "my landlord". Use the returned id as contactId (prepare_payment) or supplierId (prepare_supplier_payment). Accounts are masked.',
+      inputSchema: zodSchema(ListPayeesInputSchema),
+      execute: async (input) => {
+        if (!directory) throw new Error('payees_unavailable');
+        return {
+          payees: (await directory.payees(input)).map((payee) => ({
+            ...payee,
+            identifier: maskTail(payee.identifier),
+          })),
+        };
+      },
+    }),
+    save_payee: tool({
+      description:
+        'Save a contact or supplier with their payout details when the user asks to save, add, or remember who to pay (e.g. "save Ama, MTN 0241234567, GHS"). Ask for anything missing: name, currency, method, network or bank, and the account or number. Saving never pays anyone.',
+      inputSchema: zodSchema(SavePayeeToolInputSchema),
+      execute: async (input) => {
+        if (!directory) throw new Error('payees_unavailable');
+        const payee = await directory.save(input);
+        return { ok: true as const, payee: { ...payee, identifier: maskTail(payee.identifier) } };
+      },
+    }),
     list_policies: tool({
-      description: "List the user's Finora approval and payment policies.",
+      description:
+        "List the user's approval policies: which payments are flagged for review or blocked. Every payment still needs the user's passcode.",
       inputSchema: zodSchema(ListPoliciesInputSchema),
-      execute: async () => callPlatform('/policies'),
+      execute: async () => {
+        if (!directory) throw new Error('policies_unavailable');
+        return { policies: await directory.policies() };
+      },
     }),
     prepare_payment: tool({
       description:
@@ -754,20 +787,29 @@ export function createChatAgentTools(
       inputSchema: zodSchema(PreparePaymentInputSchema),
       execute: async (input) => {
         if (!money) throw new Error('payments_unavailable');
-        const destinationKind = input.destinationKind ?? 'bank_account';
+        const saved = input.contactId ? await directory?.payee(input.contactId) : null;
+        if (input.contactId && !saved) return { ok: false as const, errorCode: 'payee_not_found' };
+        const destinationKind = saved?.method ?? input.destinationKind ?? 'bank_account';
         try {
           const action = await money.prepare({
             kind: 'payment',
-            recipientName: input.recipientName?.trim() || input.accountName?.trim() || 'Recipient',
+            recipientName:
+              saved?.name ??
+              (input.recipientName?.trim() || input.accountName?.trim() || 'Recipient'),
             amount: input.amount.amount,
             currency: input.amount.currency,
             destination: {
               kind: destinationKind,
-              label: input.destinationLabel?.trim() || destinationLabel(destinationKind),
-              value: (input.destinationValue ?? input.accountNumber ?? input.iban ?? '').slice(
-                0,
-                120,
-              ),
+              label:
+                saved?.label ??
+                (input.destinationLabel?.trim() || destinationLabel(destinationKind)),
+              value: (
+                saved?.identifier ??
+                input.destinationValue ??
+                input.accountNumber ??
+                input.iban ??
+                ''
+              ).slice(0, 120),
             },
             reference: input.reference,
             purpose: 'payment',
@@ -852,22 +894,15 @@ export function createChatAgentTools(
         const supplierName = input.supplierName?.trim();
         if (!input.supplierId && !supplierName) throw new Error('supplier_required');
 
-        const suppliers = await callPlatform('/suppliers');
-        const supplierList = Array.isArray(suppliers.suppliers) ? suppliers.suppliers : [];
-        const supplier = supplierList.find((entry) => {
-          if (typeof entry !== 'object' || entry === null) return false;
-          if (input.supplierId && 'id' in entry && entry.id === input.supplierId) return true;
-          return (
-            supplierName !== undefined &&
-            'name' in entry &&
-            String(entry.name).toLowerCase() === supplierName.toLowerCase()
-          );
-        });
-        if (!supplier) throw new Error('supplier_not_found');
-
+        if (!money || !directory) throw new Error('payments_unavailable');
+        const suppliers = await directory.payees({ kind: 'supplier' });
+        const supplier = suppliers.find(
+          (entry) =>
+            (input.supplierId && entry.id === input.supplierId) ||
+            (supplierName !== undefined && entry.name.toLowerCase() === supplierName.toLowerCase()),
+        );
+        if (!supplier) return { ok: false as const, errorCode: 'supplier_not_found' };
         const publicDetails = publicSupplier(supplier);
-        const destination = asRecord(asRecord(supplier)?.destination);
-        if (!money || !publicDetails) throw new Error('payments_unavailable');
         try {
           const action = await money.prepare({
             kind: 'payment',
@@ -875,9 +910,9 @@ export function createChatAgentTools(
             amount: input.amount.amount,
             currency: input.amount.currency,
             destination: {
-              kind: String(destination?.kind ?? 'bank_account'),
-              label: String(destination?.label ?? 'Payout method'),
-              value: String(destination?.value ?? '').slice(0, 120),
+              kind: supplier.method,
+              label: supplier.label,
+              value: supplier.identifier,
             },
             reference: input.reference,
             purpose: 'supplier',
