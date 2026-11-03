@@ -1,5 +1,4 @@
-import type { AutomationAction } from '@finora/shared';
-
+import { describeAutomationAction } from '@finora/shared';
 import { and, eq } from 'drizzle-orm';
 
 import {
@@ -11,8 +10,12 @@ import {
 import { createDb } from '../db/client';
 import { automationExecutionLogs, automations } from '../db/schema';
 import { getApiEnv } from '../env';
-import { createPreparation } from '../mock/store';
+import { automationMessage, postToAutomationsChat } from './deliver';
+import { enqueueDueInvoiceEvents, isDailyInvoiceScanMinute } from './producers';
 import { AutomationQueueMessageSchema, type AutomationQueueMessage } from './queue';
+
+/** Attempts before a failed delivery is logged instead of retried. */
+const MAX_DELIVERY_ATTEMPTS = 3;
 
 export async function enqueueDueAutomations(bindings: Env, now = new Date()) {
   const env = getApiEnv(bindings);
@@ -40,25 +43,10 @@ export async function enqueueDueAutomations(bindings: Env, now = new Date()) {
     } satisfies AutomationQueueMessage);
     queued += 1;
   }
-  return queued;
-}
-
-function preparationForAction(action: AutomationAction, userId: string) {
-  const type = action.type;
-  const config = action.config;
-  if (type === 'prepare_conversion') {
-    if (action.type !== 'prepare_conversion') throw new Error('invalid_conversion_action');
-    return createPreparation('conversion', {
-      from: action.config.fromCurrency,
-      to: action.config.toCurrency,
-      amount: action.config.amount,
-      automationUserId: userId,
-    });
+  if (isDailyInvoiceScanMinute(now)) {
+    queued += await enqueueDueInvoiceEvents(db, bindings.AUTOMATION_QUEUE, rows, now);
   }
-  return createPreparation(type.replace('prepare_', '') as 'payment', {
-    ...config,
-    automationUserId: userId,
-  });
+  return queued;
 }
 
 export async function runAutomationMessage(message: Message<unknown>, bindings: Env) {
@@ -92,81 +80,95 @@ export async function runAutomationMessage(message: Message<unknown>, bindings: 
     message.ack();
     return;
   }
-  const result = evaluateAutomation({
-    trigger: row.trigger,
-    conditions: row.conditions,
-    context: parsed.data.context as Parameters<typeof evaluateAutomation>[0]['context'],
-    now: parsed.data.context.now ? new Date(parsed.data.context.now) : new Date(),
-  });
-  if (!result.matched) {
-    await recordAutomationLog(db, {
-      automationId: row.id,
-      clerkUserId: row.clerkUserId,
-      eventId: parsed.data.eventId,
-      status: 'skipped_condition',
-      summary: 'Automation evaluated but its trigger or conditions did not match.',
-      details: { failedConditions: result.failedConditions },
+
+  const { event, ...context } = parsed.data.context;
+  const forced = parsed.data.forced === true;
+  if (!forced) {
+    const result = evaluateAutomation({
+      trigger: row.trigger,
+      conditions: row.conditions,
+      context,
+      now: context.now ? new Date(context.now) : new Date(),
     });
-    await markAutomationEvaluation(db, row.id, 'skipped', false);
-    message.ack();
-    return;
+    if (!result.matched) {
+      await recordAutomationLog(db, {
+        automationId: row.id,
+        clerkUserId: row.clerkUserId,
+        eventId: parsed.data.eventId,
+        status: 'skipped_condition',
+        summary: 'Automation evaluated but its trigger or conditions did not match.',
+        details: { failedConditions: result.failedConditions },
+      });
+      await markAutomationEvaluation(db, row.id, 'skipped', false);
+      message.ack();
+      return;
+    }
+    if (
+      row.cooldownSeconds > 0 &&
+      row.lastTriggeredAt &&
+      Date.now() - row.lastTriggeredAt.getTime() < row.cooldownSeconds * 1000
+    ) {
+      await recordAutomationLog(db, {
+        automationId: row.id,
+        clerkUserId: row.clerkUserId,
+        eventId: parsed.data.eventId,
+        status: 'duplicate',
+        summary: 'Automation skipped because its cooldown is still active.',
+      });
+      message.ack();
+      return;
+    }
   }
-  if (
-    row.cooldownSeconds > 0 &&
-    row.lastTriggeredAt &&
-    Date.now() - row.lastTriggeredAt.getTime() < row.cooldownSeconds * 1000
-  ) {
+
+  const notify = row.action.type === 'notify_chat';
+  try {
+    const chatId = await postToAutomationsChat(
+      db,
+      row.clerkUserId,
+      automationMessage({
+        messageId: `automation-${crypto.randomUUID()}`,
+        automation: { id: row.id, name: row.name, action: row.action },
+        event,
+      }),
+    );
     await recordAutomationLog(db, {
       automationId: row.id,
       clerkUserId: row.clerkUserId,
       eventId: parsed.data.eventId,
-      status: 'duplicate',
-      summary: 'Automation skipped because its cooldown is still active.',
+      status: notify ? 'notified' : 'prepared_approval',
+      summary: notify
+        ? row.action.type === 'notify_chat'
+          ? row.action.config.message
+          : row.name
+        : `Ready to ${describeAutomationAction(row.action)}.`,
+      details: { chatId, forced, ...(event ? { event } : {}) },
     });
-    message.ack();
-    return;
-  }
-  if (row.action.type === 'notify_chat') {
-    await recordAutomationLog(db, {
+  } catch (error) {
+    if (message.attempts < MAX_DELIVERY_ATTEMPTS) {
+      message.retry({ delaySeconds: 30 });
+      return;
+    }
+    console.error('[automations:deliver]', {
       automationId: row.id,
-      clerkUserId: row.clerkUserId,
-      eventId: parsed.data.eventId,
-      status: 'notified',
-      summary: row.action.config.message,
-      details: { channel: 'chat' },
+      errorName: error instanceof Error ? error.name : typeof error,
     });
-  } else if (
-    row.action.type === 'prepare_payment' ||
-    row.action.type === 'prepare_invoice_payment' ||
-    row.action.type === 'prepare_supplier_payment' ||
-    row.action.type === 'prepare_payroll' ||
-    row.action.type === 'prepare_conversion' ||
-    row.action.type === 'prepare_internal_transfer'
-  ) {
-    const preparation = preparationForAction(row.action, row.clerkUserId);
-    await recordAutomationLog(db, {
-      automationId: row.id,
-      clerkUserId: row.clerkUserId,
-      eventId: parsed.data.eventId,
-      status: 'prepared_approval',
-      summary: 'Prepared an automation action for human approval.',
-      details: { action: row.action },
-      preparationId: preparation.preparationId,
-      approvalId: preparation.approvalId,
-    });
-  } else {
     await recordAutomationLog(db, {
       automationId: row.id,
       clerkUserId: row.clerkUserId,
       eventId: parsed.data.eventId,
       status: 'failed',
-      summary: 'Automation action is not supported by the worker.',
-      errorCode: 'unsupported_action',
+      summary: "The automation ran but couldn't post to your Automations chat.",
+      errorCode: 'delivery_failed',
     });
     await markAutomationEvaluation(db, row.id, 'failed', false);
     message.ack();
     return;
   }
+
   await markAutomationEvaluation(db, row.id, 'success', true);
+  // A one-time schedule has done its job.
+  if (!forced && row.trigger.type === 'schedule' && row.trigger.config.frequency === 'once') {
+    await db.update(automations).set({ status: 'paused' }).where(eq(automations.id, row.id));
+  }
   message.ack();
 }

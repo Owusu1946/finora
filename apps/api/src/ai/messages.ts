@@ -1,5 +1,6 @@
 import type { UIMessage } from 'ai';
 
+import { AUTOMATION_READY_PART } from '../automations/deliver';
 import { isChatAgentToolName } from './tools';
 
 const MAX_CHAT_TEXT_LENGTH = 120_000;
@@ -51,13 +52,50 @@ function sanitizeToolPart(part: UIMessagePart): DynamicToolPart | null {
   return null;
 }
 
+/**
+ * Tool parts the app renders but no model tool produced, such as the card an
+ * automation posts. They stay in chat history but never reach the model.
+ */
+const DISPLAY_ONLY_TOOL_NAMES = new Set<string>([AUTOMATION_READY_PART]);
+
+function displayOnlyPart(part: UIMessagePart): DynamicToolPart | null {
+  const tool = asToolPart(part);
+  if (!tool || !DISPLAY_ONLY_TOOL_NAMES.has(tool.name)) return null;
+  const value = tool.part as UIMessagePart & {
+    toolCallId: string;
+    state: string;
+    input?: unknown;
+    output?: unknown;
+  };
+  if (value.state !== 'output-available') return null;
+  return {
+    type: 'dynamic-tool',
+    toolName: tool.name,
+    toolCallId: value.toolCallId,
+    state: 'output-available',
+    input: value.input ?? {},
+    output: value.output ?? null,
+  };
+}
+
+/** The conversation as the model should see it: display-only cards removed. */
+export function withoutDisplayOnlyParts(messages: UIMessage[]) {
+  return messages.map((message) => ({
+    ...message,
+    parts: message.parts.filter((part) => {
+      const tool = asToolPart(part);
+      return !tool || !DISPLAY_ONLY_TOOL_NAMES.has(tool.name);
+    }),
+  }));
+}
+
 function sanitizeMessage(message: UIMessage): UIMessage {
   const parts: UIMessage['parts'] = [];
   for (const part of message.parts) {
     if (part.type === 'text') parts.push({ type: 'text', text: part.text });
     if (part.type === 'step-start') parts.push({ type: 'step-start' });
     if (message.role === 'assistant') {
-      const toolPart = sanitizeToolPart(part);
+      const toolPart = sanitizeToolPart(part) ?? displayOnlyPart(part);
       if (toolPart) parts.push(toolPart);
     }
   }
@@ -87,7 +125,7 @@ export function sanitizeIncomingMessages(messages: UIMessage[]) {
         continue;
       }
       if (message.role === 'assistant' && part.type === 'step-start') continue;
-      if (message.role === 'assistant' && sanitizeToolPart(part)) {
+      if (message.role === 'assistant' && (sanitizeToolPart(part) || displayOnlyPart(part))) {
         hasContent = true;
         continue;
       }

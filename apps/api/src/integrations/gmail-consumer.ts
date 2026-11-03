@@ -1,3 +1,4 @@
+import { enqueueGmailInvoiceEvents } from '../automations/producers';
 import { createDb } from '../db/client';
 import {
   getGmailIntegrationById,
@@ -135,7 +136,9 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
           ]),
         );
         const subject = headers.get('subject') ?? 'Invoice';
-        const sender = (headers.get('from') ?? 'Unknown supplier').replace(/<.*>/, '').trim();
+        const from = headers.get('from') ?? '';
+        const sender = (from || 'Unknown supplier').replace(/<.*>/, '').trim();
+        const senderDomain = from.match(/@([\w.-]+\.[a-z]{2,})/i)?.[1]?.toLowerCase() ?? null;
         const snippet = candidate.snippet ?? '';
         const amountMatch = snippet.match(/(?:GHS|USD|EUR|GBP|\$|£|€)\s?([\d,]+(?:\.\d{1,2})?)/i);
         const amountMinor = extractAmountMinor(subject, snippet);
@@ -150,7 +153,7 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
         const invoiceNumber =
           extractInvoiceNumber(subject, snippet) ?? `GMAIL-${candidate.id.slice(-10)}`;
         if (!amountMinor || sender === 'Unknown supplier') continue;
-        await upsertGmailInvoice(db, {
+        const stored = await upsertGmailInvoice(db, {
           clerkUserId: integration.clerkUserId,
           gmailMessageId: candidate.id,
           gmailThreadId: candidate.threadId,
@@ -165,6 +168,22 @@ export async function consumeGmailSyncQueue(batch: MessageBatch<unknown>, bindin
           hasAttachment: false,
           confidence: 80,
         });
+        // A new invoice sets off the user's "invoice arrives in Gmail" automations.
+        if (stored.created) {
+          await enqueueGmailInvoiceEvents(db, bindings.AUTOMATION_QUEUE, {
+            userId: integration.clerkUserId,
+            invoiceId: stored.id,
+            vendor: sender.slice(0, 160),
+            invoiceNumber,
+            amountMinor,
+            currency: detectedCurrency ?? currency,
+            senderDomain,
+          }).catch((error) => {
+            console.error('[automations:gmail-invoice]', {
+              errorName: error instanceof Error ? error.name : typeof error,
+            });
+          });
+        }
       }
       const acceptedCount = candidates.messages.reduce(
         (count, candidate) => count + (classifyInvoiceCandidate(candidate) ? 1 : 0),

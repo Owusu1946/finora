@@ -6,6 +6,8 @@ export const AutomationQueueMessageSchema = z
     kind: z.literal('evaluate'),
     automationId: z.uuid(),
     eventId: z.string().min(1),
+    /** A manual "Run now": skips the trigger, conditions, and cooldown. */
+    forced: z.boolean().optional(),
     context: z
       .object({
         amount: z.number().nonnegative().optional(),
@@ -15,6 +17,8 @@ export const AutomationQueueMessageSchema = z
         walletBalance: z.number().nonnegative().optional(),
         invoiceDueInDays: z.number().int().optional(),
         now: z.iso.datetime().optional(),
+        /** What happened, in a few words, e.g. "Invoice INV-104 from Acme, USD 500". */
+        event: z.string().max(240).optional(),
       })
       .default({}),
   })

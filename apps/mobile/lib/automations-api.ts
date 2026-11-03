@@ -1,4 +1,5 @@
 import type {
+  AutomationActivityItem,
   AutomationRecord,
   CreateAutomationInput,
   TestAutomationInput,
@@ -9,23 +10,7 @@ import { getApiUrl } from './api-url';
 
 type GetToken = () => Promise<string | null>;
 
-export type AutomationActivity = {
-  id: string;
-  automationId: string;
-  automationName: string;
-  status:
-    | 'evaluated'
-    | 'skipped_condition'
-    | 'prepared_approval'
-    | 'notified'
-    | 'failed'
-    | 'duplicate';
-  summary: string;
-  preparationId: string | null;
-  approvalId: string | null;
-  errorCode: string | null;
-  createdAt: string;
-};
+export type AutomationActivity = AutomationActivityItem;
 
 async function request<T>(path: string, getToken: GetToken, init?: RequestInit): Promise<T> {
   const apiUrl = getApiUrl();
@@ -97,12 +82,20 @@ export async function testRemoteAutomation(
   }>(`/v1/automations/${id}/test`, getToken, { method: 'POST', body: JSON.stringify(input) });
 }
 
-export async function runRemoteAutomation(
-  getToken: GetToken,
-  id: string,
-  input: TestAutomationInput,
-) {
+/** Runs an automation once now; the result posts to the Automations chat. */
+export async function runRemoteAutomation(getToken: GetToken, id: string) {
   return request<{ queued: true; eventId: string }>(`/v1/automations/${id}/run`, getToken, {
+    method: 'POST',
+    body: '{}',
+  });
+}
+
+/** Tells the API a wallet balance changed, so balance automations can check it. */
+export async function postBalanceEvent(
+  getToken: GetToken,
+  input: { walletId: string; currency: string; balance: number },
+) {
+  return request<{ queued: number }>('/v1/automations/events/balance', getToken, {
     method: 'POST',
     body: JSON.stringify(input),
   });

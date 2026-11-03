@@ -19,6 +19,7 @@ import {
 } from 'ai';
 import { fetch } from 'expo/fetch';
 
+import { deviceTimezone } from './open-thread';
 import { canonicalizeRemoteChatHistory } from './remote-chat-history';
 import { userStorageKey } from './session-storage';
 
@@ -281,7 +282,10 @@ function createRemoteChatApi(apiConfig: RemoteChatConfig) {
       fetch: async (input, init) => {
         const chatId = await resolveChatId(apiConfig);
         const url = `${apiConfig.apiUrl}/v1/chat/${encodeURIComponent(chatId)}`;
-        const response = await fetch(url, init as Parameters<typeof fetch>[1]);
+        // The device timezone lets Finora schedule automations in local time.
+        const headers = new Headers(init?.headers);
+        headers.set('X-Timezone', deviceTimezone());
+        const response = await fetch(url, { ...(init as RequestInit), headers });
         if (!response.ok) throw new RemoteChatError((await responseError(response)).error.message);
         const streamId = response.headers.get(RESUMABLE_STREAM_ID_HEADER);
         if (streamId) {
