@@ -12,6 +12,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 
+import { BusinessAppsSection } from '@/components/integrations/BusinessAppsSection';
 import { GmailLogo } from '@/components/integrations/gmail-logo';
 import { GoogleCalendarLogo } from '@/components/integrations/google-calendar-logo';
 import { GoogleDriveLogo } from '@/components/integrations/google-drive-logo';
@@ -574,6 +575,8 @@ export default function IntegrationsScreen() {
           </>
         }
       />
+
+      <BusinessAppsSection />
     </ScrollView>
   );
 }

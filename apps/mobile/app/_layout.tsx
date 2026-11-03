@@ -37,6 +37,7 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import { VirtualCardIssuedPopup } from '@/components/cards/VirtualCardIssuedPopup';
+import { ConnectFallbackToolUIs } from '@/components/chat/ConnectFallbackToolUIs';
 import { CreateEmployeeToolUI } from '@/components/chat/CreateEmployeeToolUI';
 import { CreateFinancialPlanToolUI } from '@/components/chat/CreateFinancialPlanToolUI';
 import {
@@ -44,6 +45,7 @@ import {
   GeneratePaymentLinkToolUI,
 } from '@/components/chat/CreatePaymentRequestToolUI';
 import { CreateVirtualCardToolUI } from '@/components/chat/CreateVirtualCardToolUI';
+import { DraftWhatsAppMessageToolUI } from '@/components/chat/DraftWhatsAppMessageToolUI';
 import { FinancialReportToolUI } from '@/components/chat/FinancialReportToolUI';
 import { FundAccountToolUI } from '@/components/chat/FundAccountToolUI';
 import { GetBalancesToolUI } from '@/components/chat/GetBalancesToolUI';
@@ -71,6 +73,7 @@ import { PrepareSupplierPaymentToolUI } from '@/components/chat/PrepareSupplierP
 import { ProposePayrollChangesToolUI } from '@/components/chat/ProposePayrollChangesToolUI';
 import { ResolveSendToolUI } from '@/components/chat/ResolveSendToolUI';
 import { SchedulePaymentWizardToolUI } from '@/components/chat/SchedulePaymentWizardToolUI';
+import { SuggestAppConnectionToolUI } from '@/components/chat/SuggestAppConnectionToolUI';
 import { TreasuryOverviewToolUI } from '@/components/chat/TreasuryOverviewToolUI';
 import {
   ResearchWebToolUI,
@@ -317,6 +320,9 @@ function FinoraRuntimeContent({
       <CreateVirtualCardToolUI />
       <ListVirtualCardsToolUI />
       <GetVirtualCardToolUI />
+      <SuggestAppConnectionToolUI />
+      <DraftWhatsAppMessageToolUI />
+      <ConnectFallbackToolUIs />
       <SearchWebToolUI />
       <SearchProductsToolUI />
       <ResearchWebToolUI />

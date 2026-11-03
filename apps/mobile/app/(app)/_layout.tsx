@@ -294,6 +294,15 @@ export default function AppLayout() {
           options={bodyTitleScreenOptions(t('nav_integrations'))}
         />
         <Drawer.Screen
+          name='apps'
+          options={{
+            ...screenOptions(t('nav_more_apps')),
+            drawerItemStyle: { display: 'none' },
+            headerLeft: () => <BackHeaderButton fallback='integrations' />,
+            headerRight: () => null,
+          }}
+        />
+        <Drawer.Screen
           name='settings'
           options={{
             title: t('nav_settings'),
