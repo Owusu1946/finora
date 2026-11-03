@@ -134,6 +134,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.theme, systemScheme]);
 
   const colors = isDark ? Colors.dark : Colors.light;
+  // A new vars object tells every NativeWind-styled view the theme changed, so
+  // only rebuild it when the palette does (not on every provider render).
+  const variables = useMemo(() => themeVariables(colors), [colors]);
 
   const translate = useCallback(
     (key: TranslationKey) => t(key, settings.language),
@@ -168,7 +171,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <VariableContextProvider value={themeVariables(colors)}>
+    <VariableContextProvider value={variables}>
       <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
     </VariableContextProvider>
   );

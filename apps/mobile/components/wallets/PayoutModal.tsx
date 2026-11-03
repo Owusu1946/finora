@@ -51,6 +51,7 @@ export function PayoutModal({ visible, wallets, onClose, onSendSuccess }: Payout
       visible={visible}
       onClose={onClose}
       keyboardAvoiding
+      detents={['medium', 'large']}
       style={{ paddingHorizontal: 20, gap: 16 }}
     >
       <View className='flex-row items-center justify-between'>

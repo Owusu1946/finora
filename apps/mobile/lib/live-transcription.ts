@@ -6,17 +6,18 @@ type GetToken = () => Promise<string | null>;
 
 /**
  * Streams the growing recording file to Deepgram's live WebSocket for
- * interim transcript previews while the user is still speaking. The
- * authoritative transcript keeps coming from the one-shot POST /v1/transcriptions
- * call after stop; this path only feeds the on-screen preview and can fail
- * silently without affecting the final result.
+ * transcripts while the user is still speaking. On stop the composer uses the
+ * live transcript directly so results are instant; the one-shot
+ * POST /v1/transcriptions call is only the fallback when the live feed produced
+ * nothing (e.g. it never connected). Failures here stay silent.
  *
  * Both platforms record ADTS AAC (extension .aac), whose raw frames can be
  * tailed mid-capture and streamed without containers.
  */
 
 const TICK_INTERVAL_MS = 250;
-const CLOSE_GRACE_MS = 350;
+/** Upper bound on waiting for Deepgram to flush its last finals after CloseStream. */
+const FLUSH_TIMEOUT_MS = 1_500;
 
 type LiveMessage = {
   type?: string;
@@ -37,8 +38,9 @@ export type LiveTranscriptionHandlers = {
 
 export type LiveTranscriptionSession = {
   /**
-   * Ends the feed. `flush` sends any unstreamed bytes before closing, used
-   * when accepting the take; cancel discards without flushing.
+   * Ends the feed. `flush` sends any unstreamed bytes and resolves once
+   * Deepgram has delivered its final results (capped), so the caller can use
+   * the live transcript; cancel discards without flushing.
    */
   stop: (flush?: boolean) => Promise<void>;
 };
@@ -47,6 +49,8 @@ export async function startLiveTranscription(
   recordingUri: string,
   getToken: GetToken,
   handlers: LiveTranscriptionHandlers,
+  /** Names and money words to prime recognition with (Deepgram keyterm prompting). */
+  keyterms: string[] = [],
 ): Promise<LiveTranscriptionSession> {
   const apiUrl = getApiUrl();
   if (!apiUrl) throw new Error('API URL is not configured.');
@@ -69,6 +73,7 @@ export async function startLiveTranscription(
     interim_results: 'true',
     endpointing: '700',
   });
+  for (const term of keyterms) params.append('keyterm', term);
   const headers = { Authorization: `Bearer ${grant.token}` };
 
   // RN's WebSocket takes extra headers through its third constructor arg,
@@ -80,6 +85,11 @@ export async function startLiveTranscription(
   ) => WebSocket;
   const ws = new RnWebSocket(`wss://api.deepgram.com/v1/listen?${params.toString()}`, undefined, {
     headers,
+  });
+
+  // Deepgram sends its remaining finals after CloseStream, then closes the socket.
+  const closed = new Promise<void>((resolve) => {
+    ws.onclose = () => resolve();
   });
 
   const file = new File(recordingUri);
@@ -144,7 +154,10 @@ export async function startLiveTranscription(
             .catch((error) => {
               handlers.onError?.(error);
             })
-            .finally(() => setTimeout(finish, CLOSE_GRACE_MS));
+            .finally(() => {
+              const timeout = new Promise<void>((done) => setTimeout(done, FLUSH_TIMEOUT_MS));
+              void Promise.race([closed, timeout]).then(finish);
+            });
         } else {
           finish();
         }

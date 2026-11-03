@@ -50,6 +50,44 @@ describe('POST /transcriptions', () => {
     expect(provider).not.toHaveBeenCalled();
   });
 
+  it('forwards cleaned, de-duplicated keyterms to Deepgram', async () => {
+    const provider = vi.fn().mockResolvedValue(
+      Response.json({
+        results: { channels: [{ alternatives: [{ transcript: 'Pay Kwame.' }] }] },
+      }),
+    );
+    vi.stubGlobal('fetch', provider);
+
+    const request = audioRequest();
+    const url = new URL(request.url);
+    for (const term of [' Kwame ', 'kwame', 'cedis', '', 'x'.repeat(41)]) {
+      url.searchParams.append('keyterm', term);
+    }
+    const response = await createTestApp('deepgram_test_key').request(new Request(url, request));
+
+    expect(response.status).toBe(200);
+    const providerUrl = new URL(String(provider.mock.calls[0]?.[0]));
+    expect(providerUrl.searchParams.get('model')).toBe('nova-3');
+    expect(providerUrl.searchParams.getAll('keyterm')).toEqual(['Kwame', 'cedis']);
+  });
+
+  it('caps keyterms at 50', async () => {
+    const provider = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ results: { channels: [{ alternatives: [{ transcript: 'Hi.' }] }] } }),
+      );
+    vi.stubGlobal('fetch', provider);
+
+    const request = audioRequest();
+    const url = new URL(request.url);
+    for (let i = 0; i < 60; i++) url.searchParams.append('keyterm', `term${i}`);
+    await createTestApp('deepgram_test_key').request(new Request(url, request));
+
+    const providerUrl = new URL(String(provider.mock.calls[0]?.[0]));
+    expect(providerUrl.searchParams.getAll('keyterm')).toHaveLength(50);
+  });
+
   it('returns only the transcript and duration from Deepgram', async () => {
     const provider = vi.fn().mockResolvedValue(
       Response.json({

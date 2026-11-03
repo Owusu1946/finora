@@ -9,8 +9,7 @@ import { z } from 'zod';
 
 import type { AppEnv } from '../app-env';
 
-import { fallbackChatTitle, generateAndPersistChatTitle } from '../ai/chat-title';
-import { getModelProviderConfig } from '../ai/model-provider';
+import { fallbackChatTitle, generateChatTitle, persistGeneratedChatTitle } from '../ai/chat-title';
 import {
   deleteChat,
   ensureChat,
@@ -28,6 +27,8 @@ const ListQuerySchema = z.object({
 
 const GenerateTitleRequestSchema = z.object({
   message: z.string().trim().min(1).max(1_000),
+  /** The first assistant reply; titles describe the exchange, not just the question. */
+  reply: z.string().trim().max(2_000).optional(),
 });
 
 function encodeCursor(value: { updatedAt: Date; id: string }) {
@@ -125,41 +126,41 @@ chats.post('/:id/title', async (c) => {
     return c.json({ message: 'This chat ID is unavailable.' }, 409);
   }
 
+  // Start the model now so it runs alongside the metadata read and fallback
+  // write instead of after them; titles are on the critical path for the drawer.
+  const generation = c.env.AI
+    ? generateChatTitle(c.env.AI, { message: body.data.message, reply: body.data.reply }).catch(
+        (error: unknown) => {
+          console.error('[chat:title]', {
+            errorName: error instanceof Error ? error.name : typeof error,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        },
+      )
+    : Promise.resolve(null);
+
   const existing = await getChatMetadata(db, id.data, userId);
   if (existing?.titleStatus === 'generated' && existing.title) {
     return c.json({ title: existing.title, titleStatus: 'generated' as const });
   }
 
-  const message = {
-    id: `title_${crypto.randomUUID()}`,
-    role: 'user' as const,
-    parts: [{ type: 'text' as const, text: body.data.message }],
-  };
-  const fallback = fallbackChatTitle([message]);
-  await setFallbackChatTitle(db, id.data, userId, fallback);
-
-  const provider = getModelProviderConfig(env);
-  if (!provider) return c.json({ title: fallback, titleStatus: 'fallback' as const });
-
-  // Respond with the seed title immediately and generate in the background
-  // (t3code pattern): the client polls the list, and the row flips to
-  // 'generated' when the detached job finishes. A slow model then can't hold
-  // the request past the client's timeout.
-  c.executionCtx.waitUntil(
-    generateAndPersistChatTitle({
-      db,
-      chatId: id.data,
-      userId,
-      messages: [message],
-      provider,
-      referer: env.WELCOME_EMAIL_CTA_URL,
-    }).catch((error) => {
-      console.error('[chat:title:bg]', {
-        errorName: error instanceof Error ? error.name : typeof error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-    }),
-  );
+  const fallback = fallbackChatTitle([
+    {
+      id: `title_${crypto.randomUUID()}`,
+      role: 'user',
+      parts: [{ type: 'text', text: body.data.message }],
+    },
+  ]);
+  const [generated] = await Promise.all([
+    generation,
+    setFallbackChatTitle(db, id.data, userId, fallback),
+  ]);
+  if (generated) {
+    const title = await persistGeneratedChatTitle(db, id.data, userId, generated);
+    if (title) return c.json({ title, titleStatus: 'generated' as const });
+  }
+  // Small talk or a model failure: keep the fallback; the client retries on a later turn.
   return c.json({ title: fallback, titleStatus: 'fallback' as const });
 });
 

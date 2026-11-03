@@ -10,6 +10,8 @@ import {
   ArrowUpRight01Icon,
   ArrowUpDownIcon,
   Building02Icon,
+  Camera01Icon,
+  CameraRotated01Icon,
   Call02Icon,
   Cancel01Icon,
   CancelCircleIcon,
@@ -48,6 +50,9 @@ import {
   ViewOffIcon,
   Wallet01Icon,
   Wrench01Icon,
+  FlashIcon,
+  FlashOffIcon,
+  MoreHorizontalIcon,
 } from '@hugeicons/core-free-icons';
 
 export type IconName =
@@ -101,7 +106,12 @@ export type IconName =
   | 'quote'
   | 'biometric'
   | 'face-id'
-  | 'eraser';
+  | 'eraser'
+  | 'camera'
+  | 'camera-flip'
+  | 'flash'
+  | 'flash-off'
+  | 'more';
 
 export type IconProps = {
   name: IconName;
@@ -162,4 +172,9 @@ export const HUGE_ICONS = {
   biometric: FingerPrintScanIcon,
   'face-id': ScanFaceIcon,
   eraser: Eraser01Icon,
+  camera: Camera01Icon,
+  'camera-flip': CameraRotated01Icon,
+  flash: FlashIcon,
+  'flash-off': FlashOffIcon,
+  more: MoreHorizontalIcon,
 } as const;

@@ -10,6 +10,8 @@ export class TranscriptionApiError extends Error {
   constructor(
     message: string,
     readonly code: 'configuration' | 'timeout' | 'network' | 'unauthorized' | 'server',
+    /** Server error code, e.g. `speech_not_detected`, when the API returned one. */
+    readonly reason?: string,
   ) {
     super(message);
     this.name = 'TranscriptionApiError';
@@ -24,7 +26,16 @@ function safelyDelete(recording: File) {
   }
 }
 
-export async function transcribeRecording(uri: string, contentType: string, getToken: GetToken) {
+/**
+ * Transcribes a recording. The file is deleted only on success, so a failed
+ * take can be retried; callers delete it with `deleteRecording` when done.
+ */
+export async function transcribeRecording(
+  uri: string,
+  contentType: string,
+  getToken: GetToken,
+  keyterms: string[] = [],
+) {
   const recording = new File(uri);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS);
@@ -42,16 +53,24 @@ export async function transcribeRecording(uri: string, contentType: string, getT
 
     const audio = await recording.arrayBuffer();
     if (audio.byteLength === 0) {
-      throw new TranscriptionApiError('The recording was empty. Try speaking again.', 'server');
+      throw new TranscriptionApiError(
+        'The recording was empty. Try speaking again.',
+        'server',
+        'empty_audio',
+      );
     }
     if (audio.byteLength > MAX_AUDIO_BYTES) {
       throw new TranscriptionApiError(
         'The recording is too large. Try a shorter message.',
         'server',
+        'audio_too_large',
       );
     }
 
-    const response = await fetch(`${apiUrl}/v1/transcriptions`, {
+    const query = new URLSearchParams();
+    for (const term of keyterms) query.append('keyterm', term);
+    const search = query.toString();
+    const response = await fetch(`${apiUrl}/v1/transcriptions${search ? `?${search}` : ''}`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -71,7 +90,11 @@ export async function transcribeRecording(uri: string, contentType: string, getT
         typeof payload === 'object' && payload !== null && 'message' in payload
           ? String(payload.message)
           : 'Could not transcribe that recording.';
-      throw new TranscriptionApiError(message, 'server');
+      const reason =
+        typeof payload === 'object' && payload !== null && 'error' in payload
+          ? String(payload.error)
+          : undefined;
+      throw new TranscriptionApiError(message, 'server', reason);
     }
 
     let payload: unknown;
@@ -97,6 +120,7 @@ export async function transcribeRecording(uri: string, contentType: string, getT
     ) {
       throw new TranscriptionApiError('The transcription response was invalid.', 'server');
     }
+    safelyDelete(recording);
     return { transcript: payload.transcript, durationMs: payload.durationMs };
   } catch (error) {
     if (error instanceof TranscriptionApiError) throw error;
@@ -106,7 +130,6 @@ export async function transcribeRecording(uri: string, contentType: string, getT
     throw new TranscriptionApiError('Could not reach Finora. Check your connection.', 'network');
   } finally {
     clearTimeout(timeout);
-    safelyDelete(recording);
   }
 }
 

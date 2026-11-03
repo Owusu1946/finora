@@ -13,6 +13,25 @@ const SUPPORTED_AUDIO_TYPES = new Set([
   'audio/webm',
 ]);
 
+const MAX_KEYTERMS = 50;
+const MAX_KEYTERM_LENGTH = 40;
+
+/** Client-supplied Deepgram keyterms, trimmed, de-duplicated, and capped. */
+function readKeyterms(values: string[] | undefined) {
+  const keyterms: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values ?? []) {
+    const term = value.trim();
+    if (!term || term.length > MAX_KEYTERM_LENGTH) continue;
+    const id = term.toLowerCase();
+    if (seen.has(id)) continue;
+    seen.add(id);
+    keyterms.push(term);
+    if (keyterms.length >= MAX_KEYTERMS) break;
+  }
+  return keyterms;
+}
+
 const DeepgramResponseSchema = z.object({
   metadata: z.object({ duration: z.number().nonnegative().optional() }).optional(),
   results: z.object({
@@ -106,22 +125,28 @@ transcriptions.post('/', async (c) => {
     return c.json({ error: 'audio_too_large', message: 'Recording is too large.' }, 413, noStore);
   }
 
+  const params = new URLSearchParams({
+    model: 'nova-3',
+    smart_format: 'true',
+    punctuate: 'true',
+    mip_opt_out: 'true',
+  });
+  // Names and money words from the user's data improve recognition (keyterm prompting).
+  for (const term of readKeyterms(c.req.queries('keyterm'))) params.append('keyterm', term);
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), DEEPGRAM_TIMEOUT_MS);
 
   try {
-    const response = await fetch(
-      'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true&mip_opt_out=true',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Token ${apiKey}`,
-          'Content-Type': contentType,
-        },
-        body: audio,
-        signal: controller.signal,
+    const response = await fetch(`https://api.deepgram.com/v1/listen?${params.toString()}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Token ${apiKey}`,
+        'Content-Type': contentType,
       },
-    );
+      body: audio,
+      signal: controller.signal,
+    });
 
     if (!response.ok) {
       console.error('Deepgram transcription failed.', { status: response.status });

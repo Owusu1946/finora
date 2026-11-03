@@ -6,14 +6,13 @@ import {
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { type DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { Alert, View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui/icon-mappings';
 import type { TranslationKey } from '@/lib/i18n';
 
 import { AccountBadge } from '@/components/shell/account-badge';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
 import { useTheme } from '@/hooks/use-theme';
@@ -28,6 +27,11 @@ import { hasUnreadVirtualCards, subscribeVirtualCards } from '@/lib/virtual-card
 import { ThreadListItem } from './ThreadListItem';
 
 type NavTab = 'money' | 'pay' | 'more';
+
+/** Let the open animation finish before refreshing, so the work never competes with it. */
+const DRAWER_SETTLE_MS = 300;
+/** Opening the drawer repeatedly shouldn't refetch and re-render the whole chat list. */
+const THREAD_RELOAD_INTERVAL_MS = 30_000;
 
 type NavItem = { href: Href; key: TranslationKey; icon: IconName };
 
@@ -104,42 +108,56 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
   const drawerStatus = useDrawerStatus();
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [unreadCards, setUnreadCards] = useState(false);
-  const didReloadForOpenRef = useRef(false);
+  const lastThreadReloadRef = useRef(0);
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
   const [business, setBusiness] = useState(() => isBusinessAccount());
   const navTabs = useMemo(() => buildNavTabs(business), [business]);
   const [activeTab, setActiveTab] = useState<NavTab>(() =>
     tabForPathname(pathname, buildNavTabs(isBusinessAccount())),
   );
   const navigateOnce = usePressGuard();
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string | null } | null>(
-    null,
-  );
-
+  // Native destructive alert: the custom full-screen dialog could stay mounted
+  // invisibly after an interrupted close and swallow every tap.
   const requestThreadDelete = useCallback(
-    (target: { id: string; title: string | null }) => setDeleteTarget(target),
-    [],
+    (target: { id: string; title: string | null }) => {
+      haptics.light();
+      Alert.alert(
+        'Delete chat?',
+        `"${target.title ?? 'New chat'}" is deleted from your account and can't be undone.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              haptics.error();
+              aui.threads.item({ id: target.id }).delete();
+            },
+          },
+        ],
+      );
+    },
+    [aui],
   );
-  const cancelThreadDelete = useCallback(() => setDeleteTarget(null), []);
-  const confirmThreadDelete = useCallback(() => {
-    if (!deleteTarget) return;
-    aui.threads.item({ id: deleteTarget.id }).delete();
-    setDeleteTarget(null);
-  }, [aui, deleteTarget]);
 
+  // Refresh once per open, after the animation settles. Reading the pathname
+  // through a ref keeps route changes (e.g. while closing) from re-running this.
   useEffect(() => {
-    if (drawerStatus === 'closed') {
-      didReloadForOpenRef.current = false;
-      return;
-    }
-    if (!didReloadForOpenRef.current) {
-      didReloadForOpenRef.current = true;
-      void aui.threads.reload();
-    }
-    const nextBusiness = isBusinessAccount();
-    setBusiness(nextBusiness);
-    void countPendingApprovals().then(setPendingApprovals);
-    setActiveTab(tabForPathname(pathname, buildNavTabs(nextBusiness)));
-  }, [aui, drawerStatus, pathname]);
+    if (drawerStatus !== 'open') return;
+    const timer = setTimeout(() => {
+      const now = Date.now();
+      if (now - lastThreadReloadRef.current >= THREAD_RELOAD_INTERVAL_MS) {
+        lastThreadReloadRef.current = now;
+        void aui.threads.reload();
+      }
+      const nextBusiness = isBusinessAccount();
+      setBusiness(nextBusiness);
+      void countPendingApprovals().then(setPendingApprovals);
+      setActiveTab(tabForPathname(pathnameRef.current, buildNavTabs(nextBusiness)));
+    }, DRAWER_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [aui, drawerStatus]);
 
   useEffect(() => {
     const refreshUnreadCards = () => void hasUnreadVirtualCards().then(setUnreadCards);
@@ -319,20 +337,6 @@ export function ThreadListDrawer({ navigation }: DrawerContentComponentProps) {
           );
         })}
       </View>
-
-      <ConfirmDialog
-        visible={deleteTarget !== null}
-        title='Delete chat?'
-        body={
-          deleteTarget
-            ? `"${deleteTarget.title ?? 'New chat'}" is deleted from your account and can't be undone.`
-            : "This chat is deleted from your account and can't be undone."
-        }
-        confirmLabel='Delete'
-        cancelLabel='Cancel'
-        onConfirm={confirmThreadDelete}
-        onCancel={cancelThreadDelete}
-      />
     </View>
   );
 }

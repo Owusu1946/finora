@@ -221,6 +221,7 @@ export function FxConvertModal({
         visible={visible}
         onClose={handleClose}
         keyboardAvoiding
+        detents={['large']}
         style={styles.sheetContainer}
       >
         <View style={styles.sheetHeader}>
@@ -363,6 +364,68 @@ export function FxConvertModal({
             </Pressable>
           </ScrollView>
         )}
+
+        <SheetModal
+          visible={picker !== null}
+          onClose={() => setPicker(null)}
+          detents={['medium', 'large']}
+          style={styles.pickerSheet}
+        >
+          <View style={styles.pickerHeader}>
+            <Text style={[styles.pickerTitle, { color: colors.foreground }]}>Select currency</Text>
+            <Pressable
+              onPress={() => setPicker(null)}
+              hitSlop={8}
+              style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
+            >
+              <Icon
+                name='remove'
+                size={18}
+                color={colors.foreground}
+              />
+            </Pressable>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.pickerList}
+          >
+            {pickerWallets.map((w) => {
+              const selected =
+                picker === 'pay' ? w.currency === fromCurrency : w.currency === toCurrency;
+              return (
+                <Pressable
+                  key={w.id}
+                  onPress={() => handleSelectCurrency(w.currency)}
+                  style={({ pressed }) => [
+                    styles.pickerRow,
+                    {
+                      backgroundColor: selected ? colors.muted : colors.background,
+                      borderColor: colors.border,
+                      opacity: pressed ? 0.85 : 1,
+                    },
+                  ]}
+                >
+                  <CurrencyIcon
+                    currency={w.currency}
+                    size={36}
+                  />
+                  <View style={styles.pickerMeta}>
+                    <Text style={[styles.pickerCode, { color: colors.foreground }]}>
+                      {w.currency}
+                    </Text>
+                    <Text style={[styles.pickerName, { color: colors.mutedForeground }]}>
+                      {w.name}
+                    </Text>
+                  </View>
+                  <Text style={[styles.pickerBalance, { color: colors.foreground }]}>
+                    {formatBalance(w.balance)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </SheetModal>
       </SheetModal>
 
       {Platform.OS === 'ios' ? (
@@ -383,67 +446,6 @@ export function FxConvertModal({
           </View>
         </InputAccessoryView>
       ) : null}
-
-      <SheetModal
-        visible={picker !== null}
-        onClose={() => setPicker(null)}
-        style={styles.pickerSheet}
-      >
-        <View style={styles.pickerHeader}>
-          <Text style={[styles.pickerTitle, { color: colors.foreground }]}>Select currency</Text>
-          <Pressable
-            onPress={() => setPicker(null)}
-            hitSlop={8}
-            style={[styles.headerIconBtn, { backgroundColor: colors.muted }]}
-          >
-            <Icon
-              name='remove'
-              size={18}
-              color={colors.foreground}
-            />
-          </Pressable>
-        </View>
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.pickerList}
-        >
-          {pickerWallets.map((w) => {
-            const selected =
-              picker === 'pay' ? w.currency === fromCurrency : w.currency === toCurrency;
-            return (
-              <Pressable
-                key={w.id}
-                onPress={() => handleSelectCurrency(w.currency)}
-                style={({ pressed }) => [
-                  styles.pickerRow,
-                  {
-                    backgroundColor: selected ? colors.muted : colors.background,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}
-              >
-                <CurrencyIcon
-                  currency={w.currency}
-                  size={36}
-                />
-                <View style={styles.pickerMeta}>
-                  <Text style={[styles.pickerCode, { color: colors.foreground }]}>
-                    {w.currency}
-                  </Text>
-                  <Text style={[styles.pickerName, { color: colors.mutedForeground }]}>
-                    {w.name}
-                  </Text>
-                </View>
-                <Text style={[styles.pickerBalance, { color: colors.foreground }]}>
-                  {formatBalance(w.balance)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </SheetModal>
     </>
   );
 }
