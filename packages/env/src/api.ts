@@ -32,6 +32,9 @@ export function createApiEnv(runtimeEnv: RuntimeEnv) {
       WELCOME_EMAIL_CTA_URL: z.url().default('https://askorin.app'),
       WEWIRE_API_KEY: z.string().min(1).optional(),
       WEWIRE_WEBHOOK_SECRET: z.string().min(1).optional(),
+      /** Lithic card issuing. Sandbox keys work against the default base URL. */
+      LITHIC_API_KEY: z.string().min(1).optional(),
+      LITHIC_API_BASE_URL: z.url().default('https://sandbox.lithic.com'),
     },
     runtimeEnv,
     emptyStringAsUndefined: true,

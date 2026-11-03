@@ -385,6 +385,28 @@ export const invoicePreferences = pgTable('invoice_preferences', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Maps a user's virtual cards to the issuer. Card numbers, CVV, and expiry are
+ * never stored here; they are fetched from the issuer on demand.
+ */
+export const virtualCards = pgTable(
+  'virtual_cards',
+  {
+    id: text('id').primaryKey(),
+    clerkUserId: text('clerk_user_id').notNull(),
+    provider: text('provider').notNull().default('lithic'),
+    providerCardToken: text('provider_card_token').notNull(),
+    label: text('label').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    closedAt: timestamp('closed_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('virtual_cards_provider_token_unique').on(table.provider, table.providerCardToken),
+    index('virtual_cards_user_created_index').on(table.clerkUserId, table.createdAt),
+  ],
+);
+
 export const invoices = pgTable(
   'invoices',
   {

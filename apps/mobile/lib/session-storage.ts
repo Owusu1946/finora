@@ -30,6 +30,7 @@ const USER_DATA_KEYS = [
   'finora.finora-tags.recent.v1',
   'finora.virtual-cards.v1',
   'finora.virtual-cards.unread.v1',
+  'finora.wallet-balances.v1',
   'finora:local-threads:v1',
 ] as const;
 

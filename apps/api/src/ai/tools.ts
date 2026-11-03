@@ -1,4 +1,9 @@
 import {
+  CreateVirtualCardToolInputSchema,
+  GetVirtualCardToolInputSchema,
+  ListVirtualCardsToolInputSchema,
+  VIRTUAL_CARD_ISSUE_FEE_USD,
+  type VirtualCardRecord,
   CreateFinancialPlanInputSchema,
   FindGmailInvoicesInputSchema,
   GetBalancesInputSchema,
@@ -201,6 +206,15 @@ type DriveToolReader = {
   search: (query: string) => Promise<unknown>;
   file: (fileId: string) => Promise<unknown>;
 };
+type CardToolReader = {
+  list: () => Promise<VirtualCardRecord[]>;
+};
+
+/** Cards as the model sees them: card numbers, CVV, and expiry never reach it. */
+function cardForModel(card: VirtualCardRecord): VirtualCardRecord {
+  return { ...card, pan: '', cvv: '', expiry: '' };
+}
+
 type WebToolReader = {
   search: (input: unknown) => Promise<unknown>;
   products: (input: unknown) => Promise<unknown>;
@@ -256,8 +270,52 @@ export function createChatAgentTools(
   payroll?: PayrollToolReader,
   memory?: MemoryToolReader,
   web?: WebToolReader,
+  cards?: CardToolReader,
 ) {
   return {
+    create_virtual_card: tool({
+      description:
+        'Start a prepaid USD virtual card when the user asks for one, e.g. "a card for Netflix with $50". Always pass label (what it pays for) and spendLimit (the USD amount to load) whenever the user states them, so setup skips straight to review; only omit what the user did not say. This only opens card setup in the app, where the user picks the funding account (bank, mobile money, or WeWire wallet), sees the $1 issue fee, and confirms with their passcode. It never issues or funds a card; never say the card was created.',
+      inputSchema: zodSchema(CreateVirtualCardToolInputSchema),
+      execute: async (input) => ({
+        status: 'pending' as const,
+        ...input,
+        currency: 'USD' as const,
+        issueFeeUsd: VIRTUAL_CARD_ISSUE_FEE_USD,
+      }),
+    }),
+    list_virtual_cards: tool({
+      description:
+        "List the user's virtual cards: label, last four digits, status, loaded balance, and amount spent. Card numbers, CVVs, and expiry dates are never available.",
+      inputSchema: zodSchema(ListVirtualCardsToolInputSchema),
+      execute: async ({ status }) => {
+        if (!cards) return { cards: [], errorCode: 'cards_unavailable' };
+        const list = (await cards.list()).map(cardForModel);
+        return {
+          cards:
+            status === 'active' || status === 'frozen'
+              ? list.filter((card) => card.status === status)
+              : list.filter((card) => card.status !== 'cancelled'),
+        };
+      },
+    }),
+    get_virtual_card: tool({
+      description:
+        "Show one of the user's virtual cards by id or label. Card numbers, CVVs, and expiry dates are never available; the user reveals them in the app.",
+      inputSchema: zodSchema(GetVirtualCardToolInputSchema),
+      execute: async ({ cardId, label }) => {
+        if (!cards) return { card: null, errorCode: 'cards_unavailable' };
+        const list = await cards.list();
+        const query = label?.toLowerCase();
+        const card =
+          (cardId ? list.find((item) => item.id === cardId) : undefined) ??
+          (query
+            ? (list.find((item) => item.label.toLowerCase() === query) ??
+              list.find((item) => item.label.toLowerCase().includes(query)))
+            : undefined);
+        return card ? { card: cardForModel(card) } : { card: null, errorCode: 'card_not_found' };
+      },
+    }),
     remember_preference: tool({
       description:
         'Store a preference only when the user explicitly asks Finora to remember or save it for future chats. Never infer consent from ordinary conversation.',

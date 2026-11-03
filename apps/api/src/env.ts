@@ -15,6 +15,8 @@ export function getApiEnv(bindings: Env) {
     GOOGLE_CALENDAR_REDIRECT_URI?: string;
     GOOGLE_DRIVE_REDIRECT_URI?: string;
     GOOGLE_TOKEN_ENCRYPTION_KEY?: string;
+    LITHIC_API_KEY?: string;
+    LITHIC_API_BASE_URL?: string;
     OPENAI_API_KEY?: string;
     OPENROUTER_API_KEY?: string;
     OPENROUTER_MODEL?: string;
@@ -37,6 +39,8 @@ export function getApiEnv(bindings: Env) {
     GOOGLE_CALENDAR_REDIRECT_URI: optionalBindings.GOOGLE_CALENDAR_REDIRECT_URI,
     GOOGLE_DRIVE_REDIRECT_URI: optionalBindings.GOOGLE_DRIVE_REDIRECT_URI,
     GOOGLE_TOKEN_ENCRYPTION_KEY: optionalBindings.GOOGLE_TOKEN_ENCRYPTION_KEY,
+    LITHIC_API_KEY: optionalBindings.LITHIC_API_KEY,
+    LITHIC_API_BASE_URL: optionalBindings.LITHIC_API_BASE_URL,
     OPENAI_API_KEY: optionalBindings.OPENAI_API_KEY,
     OPENROUTER_API_KEY: optionalBindings.OPENROUTER_API_KEY,
     OPENROUTER_MODEL: optionalBindings.OPENROUTER_MODEL,

@@ -4,6 +4,7 @@ import { AppState, Pressable, View } from 'react-native';
 
 import type { VirtualCard, VirtualCardFilter } from '@/components/cards/types';
 
+import { CardListSkeleton } from '@/components/cards/CardListSkeleton';
 import { VirtualCardListItem } from '@/components/cards/VirtualCardListItem';
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
 import { AppText as Text } from '@/components/ui/text';
@@ -12,7 +13,7 @@ import { cx } from '@/lib/cx';
 import { haptics } from '@/lib/haptics';
 import {
   clearUnreadVirtualCards,
-  listVirtualCards,
+  loadVirtualCards,
   subscribeVirtualCards,
 } from '@/lib/virtual-cards-storage';
 
@@ -28,11 +29,13 @@ export default function CardsScreen() {
   const [filter, setFilter] = useState<VirtualCardFilter>('all');
   const [items, setItems] = useState<VirtualCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const next = await listVirtualCards();
+    const { cards: next, error } = await loadVirtualCards();
     setItems(next.filter((c) => c.status !== 'cancelled' || filter === 'all'));
+    setLoadError(error);
     setLoading(false);
   }, [filter]);
 
@@ -134,17 +137,34 @@ export default function CardsScreen() {
         }
         keyExtractor={(item) => item.id}
         empty={
-          <View className='gap-2 pt-12'>
-            <Text className='font-sans-semibold text-[17px] text-foreground'>
-              {loading ? 'Loading…' : 'No cards yet'}
-            </Text>
-            {!loading ? (
-              <Text className='font-sans text-sm leading-5 text-muted-foreground'>
-                Start with a purpose, currency, and spend limit, or type “create virtual card” in
-                chat for the guided chat flow.
+          loading ? (
+            <CardListSkeleton />
+          ) : loadError ? (
+            <View className='items-start gap-2 pt-12'>
+              <Text className='font-sans-semibold text-[17px] text-foreground'>
+                Couldn’t load your cards
               </Text>
-            ) : null}
-          </View>
+              <Text className='font-sans text-sm leading-5 text-muted-foreground'>{loadError}</Text>
+              <Pressable
+                onPress={() => {
+                  haptics.selection();
+                  void refresh();
+                }}
+                className='mt-1 rounded-full bg-muted px-4 py-2.5'
+                style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+              >
+                <Text className='font-sans-semibold text-sm text-foreground'>Try again</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View className='gap-2 pt-12'>
+              <Text className='font-sans-semibold text-[17px] text-foreground'>No cards yet</Text>
+              <Text className='font-sans text-sm leading-5 text-muted-foreground'>
+                Load a prepaid USD card from any of your accounts, or ask in chat, e.g. “create a
+                card for Netflix with $20”.
+              </Text>
+            </View>
+          )
         }
         renderItem={renderCard}
       />
