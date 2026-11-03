@@ -858,28 +858,6 @@ v1.post('/invoices/:id/prepare-payment', (c) => {
   );
 });
 
-// ─── Recurring ─────────────────────────────────────────────────────────────
-
-v1.get('/recurring', (c) => {
-  const status = c.req.query('status');
-  let items = [...mockStore.recurring];
-  if (status && status !== 'all') items = items.filter((r) => r.status === status);
-  return c.json({ mode: 'mock', recurring: items });
-});
-
-v1.post('/recurring/prepare', async (c) => {
-  const body = await c.req.json<Record<string, unknown>>();
-  return c.json(createPreparation('recurring', body), 201);
-});
-
-v1.patch('/recurring/:id', async (c) => {
-  const body = await c.req.json<{ status: 'active' | 'paused' | 'cancelled' }>();
-  const item = mockStore.recurring.find((r) => r.id === c.req.param('id'));
-  if (!item) return c.json({ error: 'not_found' }, 404);
-  item.status = body.status;
-  return c.json({ mode: 'mock', recurring: item });
-});
-
 // ─── Extra wallet / currency stubs ─────────────────────────────────────────
 
 v1.get('/wallets/:id/limits', (c) => {

@@ -86,6 +86,7 @@ import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edi
 import { rowsFromDraft, savePayrollImport } from '../payroll/imports';
 import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
 import { listPolicies } from '../policies/policies';
+import { createSchedule, listSchedules, setScheduleStatus } from '../recurring/recurring';
 import { inspectPayrollAttachment } from './payroll';
 
 const FIRST_CHUNK_TIMEOUT_MS = 60_000;
@@ -864,6 +865,11 @@ chat.post('/:id', async (c) => {
             payee: (id) => getPayee(db, userId, id),
             save: (request) => savePayee(db, userId, request),
             policies: () => listPolicies(db, userId),
+          },
+          {
+            create: (request) => createSchedule(db, userId, request),
+            list: () => listSchedules(db, userId),
+            setStatus: (id, status) => setScheduleStatus(db, userId, id, status),
           },
         ),
         ...(composio && connectedApps

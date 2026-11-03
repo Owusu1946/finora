@@ -14,6 +14,7 @@ export * from './memory';
 export * from './money';
 export * from './payees';
 export * from './payroll';
+export * from './recurring';
 export * from './phone';
 export * from './registry';
 export * from './tools';

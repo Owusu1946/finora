@@ -20,8 +20,9 @@ type PrepareRecurringArgs = {
 };
 
 type PrepareRecurringResult = {
-  status?: 'active' | 'cancelled';
+  status?: 'active' | 'cancelled' | 'pending';
   recurringId?: string;
+  nextRunAt?: string;
 };
 
 function asDraft(args: PrepareRecurringArgs): RecurringDraft {
@@ -52,7 +53,7 @@ export const PrepareRecurringToolUI = makeAssistantToolUI<
 >({
   toolName: 'prepare_recurring',
   display: 'standalone',
-  render: function PrepareRecurringToolContent({ args, status, addResult }) {
+  render: function PrepareRecurringToolContent({ args, result, status, addResult }) {
     const { colors } = useTheme();
     const hasArgs = args != null && (args.amount != null || Boolean(args.recipientName));
 
@@ -69,7 +70,8 @@ export const PrepareRecurringToolUI = makeAssistantToolUI<
 
     return (
       <RecurringPaymentCard
-        draft={asDraft(args ?? {})}
+        draft={{ ...asDraft(args ?? {}), nextRunAt: result?.nextRunAt }}
+        recurringId={result?.recurringId}
         onCreated={(payment) => {
           addResult({ status: 'active', recurringId: payment.id });
         }}

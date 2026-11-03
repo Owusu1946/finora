@@ -1,5 +1,5 @@
 import { useAui } from '@assistant-ui/react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import type { RecurringFrequency, RecurringPayment } from '@/components/recurring/types';
@@ -13,7 +13,11 @@ import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
-import { saveRecurring } from '@/lib/recurring-storage';
+import {
+  createRecurring,
+  getRecurringSchedule,
+  updateRecurringStatus,
+} from '@/lib/recurring-storage';
 
 export type RecurringDraft = {
   recipientName: string;
@@ -27,6 +31,8 @@ export type RecurringDraft = {
 
 type RecurringPaymentCardProps = {
   draft: RecurringDraft;
+  /** The schedule chat saved as a draft; confirming activates it. */
+  recurringId?: string;
   onCreated?: (payment: RecurringPayment) => void;
   onCancelled?: () => void;
   /** Already-created payment (read-only summary) */
@@ -50,6 +56,7 @@ function defaultNextRun(frequency: RecurringFrequency) {
 
 export function RecurringPaymentCard({
   draft,
+  recurringId,
   onCreated,
   onCancelled,
   existing,
@@ -60,6 +67,30 @@ export function RecurringPaymentCard({
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<RecurringPayment | null>(existing ?? null);
   const [cancelled, setCancelled] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  // The chat may be reopened after confirming: show the schedule as it is now.
+  useEffect(() => {
+    if (!recurringId || existing) return;
+    let disposed = false;
+    void getRecurringSchedule(recurringId)
+      .then((schedule) => {
+        if (disposed) return;
+        if (schedule.status === 'cancelled') setCancelled(true);
+        else if (schedule.status !== 'draft') {
+          setCreated({
+            ...schedule,
+            status: schedule.status,
+            reference: schedule.reference ?? undefined,
+          });
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+    };
+  }, [existing, recurringId]);
 
   const nextRun = created?.nextRunAt ?? draft.nextRunAt ?? defaultNextRun(draft.frequency);
 
@@ -127,6 +158,10 @@ export function RecurringPaymentCard({
           ) : null}
         </View>
 
+        {error ? (
+          <Text className='font-sans-medium text-[14px] text-destructive'>{error}</Text>
+        ) : null}
+
         {!created && !cancelled ? (
           <View className='flex-row gap-2.5'>
             <Pressable
@@ -134,6 +169,7 @@ export function RecurringPaymentCard({
               onPress={() => {
                 haptics.selection();
                 setCancelled(true);
+                if (recurringId) void updateRecurringStatus(recurringId, 'cancelled');
                 onCancelled?.();
               }}
               className='flex-1 min-h-[46px] items-center justify-center rounded-full bg-muted px-4 active:opacity-75'
@@ -154,25 +190,34 @@ export function RecurringPaymentCard({
                 setBusy(false);
                 if (!ok) return;
 
-                const payment: RecurringPayment = {
-                  id: `rec-${Date.now()}`,
-                  recipientName: draft.recipientName,
-                  amount: draft.amount,
-                  currency: draft.currency,
-                  frequency: draft.frequency,
-                  nextRunAt: nextRun,
-                  status: 'active',
-                  destination: draft.destination,
-                  reference: draft.reference,
-                  createdAt: new Date().toISOString(),
-                };
-                await saveRecurring(payment);
+                let payment: RecurringPayment | null;
+                try {
+                  payment = recurringId
+                    ? await updateRecurringStatus(recurringId, 'active')
+                    : await createRecurring({
+                        recipientName: draft.recipientName,
+                        amount: draft.amount,
+                        currency: draft.currency,
+                        frequency: draft.frequency,
+                        destination: draft.destination,
+                        reference: draft.reference,
+                        nextRunAt: nextRun,
+                      });
+                } catch {
+                  payment = null;
+                }
+                if (!payment) {
+                  haptics.error();
+                  setError("Couldn't save the schedule. Try again.");
+                  return;
+                }
+                setError(null);
                 setCreated(payment);
                 onCreated?.(payment);
                 haptics.success();
                 appendAgentFollowUp(
                   aui,
-                  `Scheduled ${formatPaymentAmount(draft.amount, draft.currency)} to ${draft.recipientName} ${FREQ_LABEL[draft.frequency].toLowerCase()}. Next run ${new Date(nextRun).toLocaleDateString()}. Manage it under Recurring in the drawer.`,
+                  `Scheduled ${formatPaymentAmount(draft.amount, draft.currency)} to ${draft.recipientName} ${FREQ_LABEL[draft.frequency].toLowerCase()}, starting ${new Date(payment.nextRunAt).toLocaleDateString()}. On each due date I'll prepare it in your Automations chat for you to approve. Manage it under Recurring in the drawer.`,
                 );
               }}
               className='flex-1 min-h-[46px] items-center justify-center rounded-full px-4 bg-primary active:opacity-85 disabled:opacity-50'

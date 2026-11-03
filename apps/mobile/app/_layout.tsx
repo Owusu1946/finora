@@ -71,6 +71,7 @@ import { ListSmsRequestsToolUI } from '@/components/chat/ListSmsRequestsToolUI';
 import { ListSuppliersToolUI } from '@/components/chat/ListSuppliersToolUI';
 import { ListVirtualAccountsToolUI } from '@/components/chat/ListVirtualAccountsToolUI';
 import { ListVirtualCardsToolUI } from '@/components/chat/ListVirtualCardsToolUI';
+import { PaymentDueToolUI } from '@/components/chat/PaymentDueToolUI';
 import { PrepareConversionToolUI } from '@/components/chat/PrepareConversionToolUI';
 import { PrepareInternalTransferToolUI } from '@/components/chat/PrepareInternalTransferToolUI';
 import { PreparePaymentToolUI } from '@/components/chat/PreparePaymentToolUI';
@@ -318,6 +319,7 @@ function FinoraRuntimeContent({
       <CreateAutomationToolUI />
       <ManageAutomationToolUI />
       <AutomationReadyToolUI />
+      <PaymentDueToolUI />
       <ListExpensesToolUI />
       <ListVirtualAccountsToolUI />
       <TreasuryOverviewToolUI />

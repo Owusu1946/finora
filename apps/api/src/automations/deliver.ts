@@ -15,6 +15,9 @@ import { aiChatMessages, aiChats } from '../db/schema';
 /** Tool part name for a ready automation; rendered by the app, never called by the model. */
 export const AUTOMATION_READY_PART = 'automation_ready';
 
+/** Tool part for a recurring payment that fell due; the app shows its approval card. */
+export const PAYMENT_DUE_PART = 'payment_due';
+
 /** Each user has one Automations chat that every rule posts to. */
 export function automationsChatId(userId: string) {
   return `automations_${userId}`;
