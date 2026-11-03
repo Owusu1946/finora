@@ -11,10 +11,18 @@ import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval
 import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  actionErrorMessage,
+  cancelAction,
+  executeAction,
+  getAction,
+  prepareAction,
+  updateAction,
+} from '@/lib/actions-api';
 import { appendAgentFollowUp, paymentSentFollowUp } from '@/lib/agent-follow-up';
 import { findContactByIdentifier, saveContact } from '@/lib/contacts-storage';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
+import { paymentActionRequest } from '@/lib/payment-actions';
 
 type PreparePaymentArgs = Omit<SendMoneySeed, 'amount'> & {
   amount?: number | { amount: number; currency: string };
@@ -32,8 +40,12 @@ type PreparePaymentArgs = Omit<SendMoneySeed, 'amount'> & {
 
 type PreparePaymentResult = {
   status?: PaymentConfirmationStatus | 'pending' | 'confirmed';
+  /** The prepared payment on the Finora API; it executes only after the passcode. */
+  actionId?: string;
   preparationId?: string;
   transactionId?: string;
+  ok?: boolean;
+  errorCode?: string;
 };
 
 function PreparingCard() {
@@ -46,14 +58,6 @@ function PreparingCard() {
       <LoadingIcon color={colors.mutedForeground} />
     </View>
   );
-}
-
-function mockTransactionId() {
-  const n = Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase();
-  return `WW-${n}`;
 }
 
 function resolveStatus(
@@ -78,17 +82,19 @@ function normalizeSeed(args: PreparePaymentArgs): SendMoneySeed {
   };
 }
 
+const SEND_STEP_MS = 650;
+
 function PreparePaymentFlow({
   seed,
   resultStatus,
-  preparationId,
+  actionId: preparedActionId,
   resultTransactionId,
   onFinished,
   onCancelled,
 }: {
   seed: SendMoneySeed;
   resultStatus: PreparePaymentResult['status'] | undefined;
-  preparationId: string;
+  actionId?: string;
   resultTransactionId?: string;
   onFinished: (payload: { preparationId: string; transactionId: string; status: 'sent' }) => void;
   onCancelled: () => void;
@@ -106,6 +112,7 @@ function PreparePaymentFlow({
   const [confirmedPayment, setConfirmedPayment] = useState<
     import('@/components/chat/PaymentConfirmationCard').PaymentConfirmation | null
   >(null);
+  const [actionId, setActionId] = useState(preparedActionId);
   const finishedRef = useRef(false);
   const followedUpRef = useRef(false);
   const onFinishedRef = useRef(onFinished);
@@ -113,6 +120,29 @@ function PreparePaymentFlow({
 
   const status = resolveStatus(resultStatus, localStatus);
   const payment = confirmedPayment;
+
+  // The chat may be reopened after paying: show what really happened.
+  useEffect(() => {
+    if (!preparedActionId) return;
+    let cancelled = false;
+    void getAction(preparedActionId)
+      .then((action) => {
+        if (cancelled) return;
+        if (action.status === 'executed') {
+          finishedRef.current = true;
+          followedUpRef.current = true;
+          setTransactionId(action.transactionId ?? undefined);
+          setTxRecordId(action.transactionId);
+          setLocalStatus('sent');
+        } else if (action.status === 'cancelled') {
+          setLocalStatus('cancelled');
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [preparedActionId]);
 
   useEffect(() => {
     const value = payment?.destination.value;
@@ -123,40 +153,46 @@ function PreparePaymentFlow({
   }, [payment?.destination.value]);
 
   useEffect(() => {
-    if (status !== 'sending' || !payment) return;
+    if (status !== 'sending' || !payment || !actionId) return;
 
     let cancelled = false;
     const run = async () => {
-      for (let step = 0; step < 3; step++) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step++) {
+          if (cancelled) return;
+          setSendingStep(step);
+          await new Promise((r) => setTimeout(r, SEND_STEP_MS));
+        }
+      })();
+      try {
+        const [action] = await Promise.all([executeAction(actionId), steps]);
+        if (cancelled || finishedRef.current) return;
+        const txId = action.transactionId ?? action.id;
+        finishedRef.current = true;
+        setTransactionId(txId);
+        setTxRecordId(action.transactionId);
+        setLocalStatus('sent');
+        haptics.success();
+        onFinishedRef.current({ preparationId: action.id, transactionId: txId, status: 'sent' });
+        if (!followedUpRef.current) {
+          followedUpRef.current = true;
+          appendAgentFollowUp(aui, paymentSentFollowUp(payment, txId));
+        }
+      } catch (error) {
         if (cancelled) return;
-        setSendingStep(step);
-        await new Promise((r) => setTimeout(r, step === 0 ? 650 : 750));
-      }
-      if (cancelled || finishedRef.current) return;
-      const txId = resultTransactionId ?? mockTransactionId();
-      finishedRef.current = true;
-      setTransactionId(txId);
-      setLocalStatus('sent');
-      haptics.success();
-      onFinishedRef.current({ preparationId, transactionId: txId, status: 'sent' });
-
-      const recorded = await recordSentPayment({
-        payment,
-        transactionId: txId,
-        source: 'chat',
-      });
-      if (!cancelled) setTxRecordId(recorded.id);
-
-      if (!followedUpRef.current) {
-        followedUpRef.current = true;
-        appendAgentFollowUp(aui, paymentSentFollowUp(payment, txId));
+        haptics.error();
+        setLocalStatus('failed');
+        appendAgentFollowUp(
+          aui,
+          `The payment to ${payment.recipientName} didn't go through. ${actionErrorMessage(error)}`,
+        );
       }
     };
     void run();
     return () => {
       cancelled = true;
     };
-  }, [aui, payment, preparationId, resultTransactionId, status]);
+  }, [actionId, aui, payment, status]);
 
   return (
     <>
@@ -197,16 +233,36 @@ function PreparePaymentFlow({
         }}
         onConfirm={async (next) => {
           if (status !== 'pending' || busy) return;
-          setConfirmedPayment(next);
           setBusy(true);
-          const ok = await requestApproval();
-          setBusy(false);
-          if (!ok) return;
-          setSendingStep(0);
-          setLocalStatus('sending');
+          try {
+            // Store the details the user confirmed, checked again by Finora.
+            const request = await paymentActionRequest(next);
+            const action = actionId
+              ? await updateAction(actionId, request)
+              : await prepareAction(request);
+            setActionId(action.id);
+            setConfirmedPayment(next);
+            if (action.policy.outcome === 'blocked') {
+              appendAgentFollowUp(aui, `I can't send this: ${action.policy.reasons.join(' ')}`);
+              return;
+            }
+            const ok = await requestApproval();
+            if (!ok) return;
+            setSendingStep(0);
+            setLocalStatus('sending');
+          } catch (error) {
+            haptics.error();
+            appendAgentFollowUp(
+              aui,
+              `I couldn't prepare that payment. ${actionErrorMessage(error)}`,
+            );
+          } finally {
+            setBusy(false);
+          }
         }}
         onCancel={() => {
           if (status !== 'pending' || busy) return;
+          if (actionId) void cancelAction(actionId).catch(() => undefined);
           onCancelled();
         }}
       />
@@ -220,7 +276,9 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
   display: 'standalone',
   render: ({ args, result, status, addResult }) => {
     const requiresPlatformPreparation = typeof args?.amount === 'object' && args.amount !== null;
-    if (requiresPlatformPreparation && !result?.preparationId) return <PreparingCard />;
+    if (requiresPlatformPreparation && !result && status.type === 'running') {
+      return <PreparingCard />;
+    }
 
     const hasArgs =
       args != null &&
@@ -233,13 +291,12 @@ export const PreparePaymentToolUI = makeAssistantToolUI<PreparePaymentArgs, Prep
     }
 
     const seed = normalizeSeed(args ?? {});
-    const preparationId = result?.preparationId ?? `prep_${Date.now()}`;
 
     return (
       <PreparePaymentFlow
         seed={seed}
         resultStatus={result?.status}
-        preparationId={preparationId}
+        actionId={result?.actionId}
         resultTransactionId={result?.transactionId}
         onFinished={({ preparationId: id, transactionId, status: next }) => {
           addResult({ status: next, preparationId: id, transactionId });

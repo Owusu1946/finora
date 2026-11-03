@@ -10,7 +10,6 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
-import { recordReceivedFunding } from '@/lib/transactions-storage';
 
 type FundAccountArgs = FundAccountSeed;
 
@@ -50,15 +49,7 @@ function FundAccountFlow({
     <FundAccountWizard
       seed={seed}
       onCancelled={onCancelled}
-      onCredited={async (payload) => {
-        await recordReceivedFunding({
-          amount: payload.amount,
-          currency: payload.currency,
-          method: payload.method.title,
-          counterparty: 'Inbound funding',
-          transactionId: payload.transactionId,
-          reference: `Fund via ${payload.source}`,
-        });
+      onCredited={(payload) => {
         onFinished({
           status: 'credited',
           transactionId: payload.transactionId,

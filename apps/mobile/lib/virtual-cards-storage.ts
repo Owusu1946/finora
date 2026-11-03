@@ -1,4 +1,3 @@
-import { getClerkInstance } from '@clerk/expo';
 import {
   CardTransactionSchema,
   VirtualCardResponseSchema,
@@ -17,6 +16,7 @@ import type {
 
 import { getApiUrl } from './api-url';
 import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
+import { sessionToken } from './session-token';
 
 /**
  * Virtual cards are issued by Lithic through the Finora API. Card numbers,
@@ -28,8 +28,6 @@ import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
 const LEGACY_CARDS_KEY = 'finora.virtual-cards.v1';
 const BASE_UNREAD_KEY = 'finora.virtual-cards.unread.v1';
 const REQUEST_TIMEOUT_MS = 20_000;
-/** How long to wait for Clerk to restore the session on a cold start. */
-const SESSION_WAIT_MS = 10_000;
 const unreadKey = () => userStorageKey(BASE_UNREAD_KEY);
 
 const listeners = new Set<() => void>();
@@ -87,34 +85,6 @@ async function clearLegacyCards() {
   if (legacyCleared) return;
   legacyCleared = true;
   await AsyncStorage.removeItem(userStorageKey(LEGACY_CARDS_KEY)).catch(() => undefined);
-}
-
-/**
- * Clerk restores the session asynchronously after a cold start, so a screen
- * that loads right away would otherwise find no token and show no cards.
- */
-async function sessionToken() {
-  const clerk = getClerkInstance();
-  if (!clerk.loaded) {
-    await new Promise<void>((resolve) => {
-      let settled = false;
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      let unsubscribe = () => {};
-      const finish = () => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        unsubscribe();
-        resolve();
-      };
-      timer = setTimeout(finish, SESSION_WAIT_MS);
-      unsubscribe = clerk.addListener(() => {
-        if (clerk.loaded) finish();
-      });
-      if (clerk.loaded) finish();
-    });
-  }
-  return (await clerk.session?.getToken()) ?? null;
 }
 
 async function cardsRequest(path: string, init?: { method: string; body: unknown }) {
@@ -257,7 +227,7 @@ export async function findVirtualCardByLabel(query: string): Promise<VirtualCard
  * so the global "Card ready" popup doesn't stack a second one on top.
  */
 export async function createVirtualCard(
-  input: CreateVirtualCardInput,
+  input: CreateVirtualCardInput & { fundingWalletId: string },
   options: { announce?: boolean } = {},
 ): Promise<VirtualCard> {
   const { card } = VirtualCardResponseSchema.parse(
@@ -267,6 +237,7 @@ export async function createVirtualCard(
         label: input.label.trim() || 'Virtual card',
         spendLimit: input.spendLimit,
         currency: 'USD',
+        fundingWalletId: input.fundingWalletId,
       },
     }),
   );
@@ -276,10 +247,20 @@ export async function createVirtualCard(
   return card;
 }
 
-/** Adds `amount` USD to a prepaid card. Throws `VirtualCardError` on failure. */
-export async function topUpVirtualCard(id: string, amount: number): Promise<VirtualCard> {
+/**
+ * Adds `amount` USD to a prepaid card, charged (plus the fee) to the funding
+ * wallet. Throws `VirtualCardError` on failure.
+ */
+export async function topUpVirtualCard(
+  id: string,
+  amount: number,
+  fundingWalletId: string,
+): Promise<VirtualCard> {
   const { card } = VirtualCardResponseSchema.parse(
-    await cardsRequest(`/${encodeURIComponent(id)}/top-up`, { method: 'POST', body: { amount } }),
+    await cardsRequest(`/${encodeURIComponent(id)}/top-up`, {
+      method: 'POST',
+      body: { amount, fundingWalletId },
+    }),
   );
   replaceCached(card);
   notify();

@@ -1,10 +1,13 @@
+import type { PrepareActionRequest } from '@finora/shared';
+
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, type Href } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { CollapsibleList } from '@/components/navigation/collapsible-list';
+import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
 import { SupportedCurrency } from '@/components/ui/currency-icon';
 import { Icon } from '@/components/ui/icon';
 import { AppText as Text } from '@/components/ui/text';
@@ -12,15 +15,16 @@ import { AddWalletModal } from '@/components/wallets/AddWalletModal';
 import { DepositModal } from '@/components/wallets/DepositModal';
 import { FxConvertModal } from '@/components/wallets/FxConvertModal';
 import { PayoutModal } from '@/components/wallets/PayoutModal';
-import { WalletItem, INITIAL_WALLETS_DATA, FX_RATES } from '@/components/wallets/types';
+import { WalletItem, INITIAL_WALLETS_DATA } from '@/components/wallets/types';
 import { WalletFilterTabs, FilterCategory } from '@/components/wallets/WalletFilterTabs';
 import { WalletHeader } from '@/components/wallets/WalletHeader';
 import { WalletListItem } from '@/components/wallets/WalletListItem';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccountType, getAccountLabel } from '@/lib/account';
+import { actionErrorMessage, prepareApproveAndExecute } from '@/lib/actions-api';
 import { haptics } from '@/lib/haptics';
 import { listVirtualCards, subscribeVirtualCards } from '@/lib/virtual-cards-storage';
-import { listWallets, saveWallets, subscribeWallets } from '@/lib/wallet-balances';
+import { listWallets, subscribeWallets } from '@/lib/wallet-balances';
 
 export default function WalletsScreen() {
   const { colors } = useTheme();
@@ -30,7 +34,7 @@ export default function WalletsScreen() {
   const accountLabel = getAccountLabel(accountType);
 
   const [wallets, setWalletsState] = useState<WalletItem[]>(INITIAL_WALLETS_DATA);
-  // Balances live in the shared wallet store, so card funding and this screen agree.
+  // Balances come from the Finora ledger, so chat, cards, and this screen agree.
   useEffect(() => {
     let disposed = false;
     const load = () =>
@@ -44,13 +48,7 @@ export default function WalletsScreen() {
       unsubscribe();
     };
   }, []);
-  const setWallets = useCallback((update: (prev: WalletItem[]) => WalletItem[]) => {
-    setWalletsState((prev) => {
-      const next = update(prev);
-      void saveWallets(next);
-      return next;
-    });
-  }, []);
+  const { requestApproval, modal } = usePasscodeApproval();
   const [filter, setFilter] = useState<FilterCategory>('all');
   const [hideBalances, setHideBalances] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -105,52 +103,36 @@ export default function WalletsScreen() {
     showToast(`${label} copied`);
   };
 
-  const handleConvertSuccess = (
+  const runAction = async (request: PrepareActionRequest) => {
+    try {
+      const action = await prepareApproveAndExecute(request, requestApproval);
+      if (action) haptics.success();
+      return Boolean(action);
+    } catch (error) {
+      haptics.error();
+      showToast(actionErrorMessage(error));
+      return false;
+    }
+  };
+
+  const handleConvert = (
     fromCurrency: SupportedCurrency,
     toCurrency: SupportedCurrency,
     amountNum: number,
-    convertedValue: number,
-  ) => {
-    const fromRateInUSD = FX_RATES[fromCurrency] || 1;
-    const toRateInUSD = FX_RATES[toCurrency] || 1;
+  ) => runAction({ kind: 'conversion', from: fromCurrency, to: toCurrency, amount: amountNum });
 
-    setWallets((prev) =>
-      prev.map((w) => {
-        if (w.currency === fromCurrency) {
-          return {
-            ...w,
-            balance: w.balance - amountNum,
-            usdEquivalent: (w.balance - amountNum) * fromRateInUSD,
-          };
-        }
-        if (w.currency === toCurrency) {
-          return {
-            ...w,
-            balance: w.balance + convertedValue,
-            usdEquivalent: (w.balance + convertedValue) * toRateInUSD,
-          };
-        }
-        return w;
-      }),
-    );
-  };
-
-  const handleSendSuccess = (sendWalletId: string, amountNum: number) => {
+  const handleSend = async (sendWalletId: string, amountNum: number, recipient: string) => {
     const sourceWallet = wallets.find((w) => w.id === sendWalletId);
-    if (!sourceWallet) return;
-    const rateInUSD = FX_RATES[sourceWallet.currency] || 1;
-
-    setWallets((prev) =>
-      prev.map((w) =>
-        w.id === sendWalletId
-          ? {
-              ...w,
-              balance: w.balance - amountNum,
-              usdEquivalent: (w.balance - amountNum) * rateInUSD,
-            }
-          : w,
-      ),
-    );
+    if (!sourceWallet) return false;
+    return runAction({
+      kind: 'payment',
+      recipientName: recipient.slice(0, 120) || 'Recipient',
+      amount: amountNum,
+      currency: sourceWallet.currency,
+      destination: { kind: 'bank_account', label: 'Payout', value: recipient.slice(0, 120) },
+      purpose: 'payment',
+      fundingWalletId: sendWalletId,
+    });
   };
 
   return (
@@ -259,20 +241,21 @@ export default function WalletsScreen() {
         visible={activeModal === 'send'}
         wallets={wallets}
         onClose={() => setActiveModal(null)}
-        onSendSuccess={handleSendSuccess}
+        onSend={handleSend}
       />
 
       <FxConvertModal
         visible={activeModal === 'convert'}
         wallets={wallets}
         onClose={() => setActiveModal(null)}
-        onConvertSuccess={handleConvertSuccess}
+        onConvert={handleConvert}
       />
 
       <AddWalletModal
         visible={activeModal === 'new_wallet'}
         onClose={() => setActiveModal(null)}
       />
+      {modal}
     </View>
   );
 }

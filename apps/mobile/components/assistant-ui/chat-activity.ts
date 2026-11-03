@@ -21,6 +21,7 @@ const TOOL_ACTIVITY: Record<string, ChatActivity> = {
   research_web: { orbState: 'weaving', label: 'Researching across web sources...' },
   read_web_page: { orbState: 'working', label: 'Reading the selected web source...' },
   get_balances: { orbState: 'solving', label: 'Checking your balances...' },
+  list_transactions: { orbState: 'searching', label: 'Checking your activity...' },
   prepare_conversion: { orbState: 'shaping', label: 'Preparing the currency conversion...' },
   prepare_payment: { orbState: 'shaping', label: 'Preparing the payment...' },
   prepare_internal_transfer: { orbState: 'shaping', label: 'Preparing the internal transfer...' },

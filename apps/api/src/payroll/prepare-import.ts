@@ -4,6 +4,7 @@ import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 
 import { createDb } from '../db/client';
 import { payrollImportRows, payrollImports, payrollRunItems, payrollRuns } from '../db/schema';
+import { settle, walletCost } from '../ledger/ledger';
 
 export class PayrollPreparationError extends Error {
   constructor(
@@ -261,9 +262,10 @@ export async function listPayrollRuns(databaseUrl: string, userId: string, limit
 }
 
 /**
- * Executes a run the user approved with their passcode. Only a pending run
- * executes, so a retried request can't pay twice. Payouts are simulated
- * (`mode: demo`) until WeWire is live.
+ * Executes a run the user approved with their passcode: takes the total from
+ * the chosen wallet (converted at demo rates, no fee) and marks every payout
+ * sent, in one ledger transaction. A run settles once, so a retried request
+ * can't pay twice. Payouts are simulated (`mode: demo`) until WeWire is live.
  */
 export async function executePayrollRun(
   databaseUrl: string,
@@ -272,35 +274,75 @@ export async function executePayrollRun(
   funding: ExecutePayrollRunRequest,
 ) {
   const db = createDb(databaseUrl);
-  const now = new Date();
-  const [claimed] = await db
-    .update(payrollRuns)
-    .set({
-      status: 'completed',
-      fundingWalletId: funding.fundingWalletId,
-      fundingCurrency: funding.fundingCurrency.toUpperCase(),
-      fundingAmountMinor: toMinor(funding.fundingAmount),
-      approvedAt: now,
-      executedAt: now,
-      updatedAt: now,
-    })
-    .where(
-      and(
-        eq(payrollRuns.id, runId),
-        eq(payrollRuns.clerkUserId, userId),
-        eq(payrollRuns.status, 'pending_approval'),
-      ),
-    )
-    .returning();
-  if (!claimed) {
-    const run = await ownedRun(db, userId, runId);
+  const run = await ownedRun(db, userId, runId);
+  if (run.status !== 'pending_approval') {
     throw new PayrollPreparationError('payroll_run_not_pending', 409, { status: run.status });
   }
-  await db
-    .update(payrollRunItems)
-    .set({ status: 'sent', sentAt: now })
-    .where(eq(payrollRunItems.runId, runId));
-  return toPayrollRun(claimed, await itemsFor(db, runId));
+  const items = await itemsFor(db, run.id);
+  const total = fromMinor(run.totalMinor);
+  const cost = await walletCost(db, userId, funding.fundingWalletId, total, run.currency);
+  const charged = Math.max(0.01, cost.amount);
+  const now = new Date();
+
+  await settle(
+    db,
+    {
+      userId,
+      kind: 'payroll_run',
+      sourceId: run.id,
+      source: 'chat',
+      direction: 'sent',
+      currency: cost.wallet.currency,
+      amount: charged,
+      ...(cost.wallet.currency === run.currency
+        ? {}
+        : { toCurrency: run.currency, toAmount: total }),
+      counterparty:
+        run.kind === 'single'
+          ? (items[0]?.employeeName ?? 'Employee')
+          : `Payroll · ${items.length} ${items.length === 1 ? 'person' : 'people'}`,
+      method: 'Payroll',
+      reference: run.period ? `Payroll ${run.period}` : 'Payroll',
+      legs: [{ walletId: cost.wallet.id, amount: -charged }],
+    },
+    () => [
+      db
+        .update(payrollRuns)
+        .set({
+          status: 'completed',
+          fundingWalletId: cost.wallet.id,
+          fundingCurrency: cost.wallet.currency,
+          fundingAmountMinor: toMinor(charged),
+          approvedAt: now,
+          executedAt: now,
+          updatedAt: now,
+        })
+        .where(and(eq(payrollRuns.id, run.id), eq(payrollRuns.status, 'pending_approval'))),
+      db
+        .update(payrollRunItems)
+        .set({ status: 'sent', sentAt: now })
+        .where(eq(payrollRunItems.runId, run.id)),
+    ],
+  );
+
+  const paid = await ownedRun(db, userId, run.id);
+  if (paid.status !== 'completed') {
+    // Cancelled between the check and the payment: put the money back.
+    await settle(db, {
+      userId,
+      kind: 'payroll_refund',
+      sourceId: run.id,
+      source: 'chat',
+      direction: 'received',
+      currency: cost.wallet.currency,
+      amount: charged,
+      counterparty: 'Payroll refund',
+      method: 'Refund',
+      legs: [{ walletId: cost.wallet.id, amount: charged }],
+    });
+    throw new PayrollPreparationError('payroll_run_not_pending', 409, { status: paid.status });
+  }
+  return toPayrollRun(paid, await itemsFor(db, run.id));
 }
 
 export async function cancelPayrollRun(databaseUrl: string, userId: string, runId: string) {

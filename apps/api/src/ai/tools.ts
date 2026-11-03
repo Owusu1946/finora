@@ -5,6 +5,7 @@ import {
   VIRTUAL_CARD_ISSUE_FEE_USD,
   type VirtualCardRecord,
   CreateFinancialPlanInputSchema,
+  ListLedgerTransactionsInputSchema,
   FindGmailInvoicesInputSchema,
   GetBalancesInputSchema,
   GetGmailMessageInputSchema,
@@ -44,13 +45,19 @@ import {
   type MemoryKind,
   type PayrollRun,
   type UpdateMemoryInput,
+  type LedgerTransaction,
+  type LedgerWalletsResponse,
+  type PrepareActionRequest,
+  type PreparedAction,
 } from '@finora/shared';
 import { tool, zodSchema, type ToolSet } from 'ai';
 
 import type { GmailSearchInput } from '../integrations/google-gmail';
 
+import { ActionError } from '../actions/actions';
 import { AUTOMATION_TOOL_NAMES } from '../automations/tools';
 import { BUSINESS_APP_TOOL_NAMES } from '../business-apps/tools';
+import { LedgerError } from '../ledger/ledger';
 import { PayrollPreparationError } from '../payroll/prepare-import';
 import { v1 } from '../routes/v1';
 
@@ -66,6 +73,7 @@ export const CHAT_AGENT_TOOL_NAMES = [
   'research_web',
   'read_web_page',
   'get_balances',
+  'list_transactions',
   'get_gmail_status',
   'search_gmail_messages',
   'get_gmail_message',
@@ -141,6 +149,12 @@ function walletName(currency: string) {
   if (currency === 'USDT') return 'Tether wallet';
   if (currency === 'USDC') return 'USD Coin wallet';
   return `${currency} wallet`;
+}
+
+function destinationLabel(kind: string) {
+  if (kind === 'mobile_money') return 'Mobile money';
+  if (kind === 'crypto_wallet') return 'Crypto wallet';
+  return 'Bank account';
 }
 
 function asRecord(value: unknown) {
@@ -246,6 +260,24 @@ type PayrollToolReader = {
   listImports: (input: { query?: string; importId?: string; limit: number }) => Promise<unknown>;
   proposeChanges: (input: unknown) => Promise<unknown>;
 };
+type MoneyToolReader = {
+  wallets: () => Promise<LedgerWalletsResponse>;
+  transactions: (input: {
+    limit?: number;
+    query?: string;
+    direction?: 'sent' | 'received' | 'swap';
+  }) => Promise<LedgerTransaction[]>;
+  prepare: (request: PrepareActionRequest) => Promise<PreparedAction>;
+};
+
+/** Preparation errors (missing wallet, already paid, ...) the model can explain. */
+function actionToolFailure(error: unknown) {
+  if (error instanceof ActionError || error instanceof LedgerError) {
+    return { ok: false as const, errorCode: error.code, ...error.details };
+  }
+  throw error;
+}
+
 type MemoryToolReader = {
   remember: (input: CreateMemoryInput) => Promise<unknown>;
   list: (input: { query?: string; kind?: MemoryKind; limit: number }) => Promise<unknown>;
@@ -296,6 +328,7 @@ export function createChatAgentTools(
   memory?: MemoryToolReader,
   web?: WebToolReader,
   cards?: CardToolReader,
+  money?: MoneyToolReader,
 ) {
   return {
     create_virtual_card: tool({
@@ -566,29 +599,29 @@ export function createChatAgentTools(
     }),
     get_balances: tool({
       description:
-        "Proactively get the user's Finora wallet balances for balance, wallet, available-funds, or affordability questions. Never guess balances.",
+        "Proactively get the user's Finora wallet balances for balance, wallet, available-funds, or affordability questions. Never guess balances. Balances are demo balances until WeWire is live.",
       inputSchema: zodSchema(GetBalancesInputSchema),
       execute: async () => {
-        const data = await callPlatform('/balances');
-        const balances = Array.isArray(data.balances) ? data.balances : [];
-        const wallets = balances.flatMap((entry) => {
-          if (typeof entry !== 'object' || entry === null) return [];
-          const currency = String('currency' in entry ? entry.currency : '');
-          const balance = Number('balance' in entry ? entry.balance : 0);
-          if (!currency || !Number.isFinite(balance)) return [];
-          return [
-            {
-              id: String('id' in entry ? entry.id : currency),
-              currency,
-              name: walletName(currency),
-              balance,
-              usdEquivalent:
-                currency === 'USD' || currency === 'USDT' || currency === 'USDC' ? balance : 0,
-              symbol: currencySymbol(currency),
-            },
-          ];
-        });
-        return { wallets, totalUsd: Number(data.totalUsd ?? 0), mode: data.mode };
+        if (!money) throw new Error('balances_unavailable');
+        const { wallets, totalUsd, mode } = await money.wallets();
+        return {
+          wallets: wallets.map((wallet) => ({
+            ...wallet,
+            name: walletName(wallet.currency),
+            symbol: currencySymbol(wallet.currency),
+          })),
+          totalUsd,
+          mode,
+        };
+      },
+    }),
+    list_transactions: tool({
+      description:
+        "List the user's recent money movements in Finora (payments, payroll, card loads, conversions, top-ups), newest first. Use for questions about what was paid, received, or spent. Destinations are masked.",
+      inputSchema: zodSchema(ListLedgerTransactionsInputSchema),
+      execute: async (input) => {
+        if (!money) throw new Error('transactions_unavailable');
+        return { transactions: await money.transactions(input) };
       },
     }),
     list_receive_methods: tool({
@@ -717,40 +750,72 @@ export function createChatAgentTools(
     }),
     prepare_payment: tool({
       description:
-        'Proactively prepare a payment when the user clearly asks to send, pay, transfer, or schedule money and the required details are present. Ask for one missing critical detail at a time. This never moves money and must not be described as completed.',
+        'Proactively prepare a payment when the user clearly asks to send, pay, transfer, or schedule money and the required details are present. Ask for one missing critical detail at a time. The chat shows a card where the user can adjust details and approves with their passcode; this never moves money and must not be described as completed.',
       inputSchema: zodSchema(PreparePaymentInputSchema),
       execute: async (input) => {
-        const result = await callPlatform('/payments/prepare', { method: 'POST', body: input });
-        return {
-          ...result,
-          status: 'pending',
-          amount: input.amount.amount,
-          currency: input.amount.currency,
-        };
+        if (!money) throw new Error('payments_unavailable');
+        const destinationKind = input.destinationKind ?? 'bank_account';
+        try {
+          const action = await money.prepare({
+            kind: 'payment',
+            recipientName: input.recipientName?.trim() || input.accountName?.trim() || 'Recipient',
+            amount: input.amount.amount,
+            currency: input.amount.currency,
+            destination: {
+              kind: destinationKind,
+              label: input.destinationLabel?.trim() || destinationLabel(destinationKind),
+              value: (input.destinationValue ?? input.accountNumber ?? input.iban ?? '').slice(
+                0,
+                120,
+              ),
+            },
+            reference: input.reference,
+            purpose: 'payment',
+          });
+          return {
+            status: 'pending' as const,
+            actionId: action.id,
+            preparationId: action.id,
+            amount: input.amount.amount,
+            currency: input.amount.currency,
+            policy: action.policy,
+            mode: action.mode,
+          };
+        } catch (error) {
+          return actionToolFailure(error);
+        }
       },
     }),
     prepare_conversion: tool({
       description:
-        'Prepare an FX conversion quote for review and human approval. This never executes the conversion.',
+        "Prepare an FX conversion between two of the user's wallets for review and human approval, at demo rates. This never executes the conversion.",
       inputSchema: zodSchema(PrepareConversionInputSchema),
       execute: async (input) => {
-        const result = await callPlatform('/conversions/prepare', {
-          method: 'POST',
-          body: input,
-        });
-        const payload = asRecord(result.payload) ?? {};
-        return {
-          ...result,
-          status: 'pending',
-          conversionId: String('quoteId' in payload ? payload.quoteId : result.preparationId),
-          fromCurrency: input.from,
-          toCurrency: input.to,
-          fromAmount: input.amount,
-          toAmount: Number('toAmount' in payload ? payload.toAmount : 0),
-          rate: Number('rate' in payload ? payload.rate : 0),
-          fee: Number('fee' in payload ? payload.fee : 0),
-          feeCurrency: input.from,
-        };
+        if (!money) throw new Error('conversions_unavailable');
+        try {
+          const action = await money.prepare({
+            kind: 'conversion',
+            from: input.from,
+            to: input.to,
+            amount: input.amount,
+          });
+          return {
+            status: 'pending' as const,
+            actionId: action.id,
+            conversionId: action.id,
+            fromCurrency: action.conversion?.from ?? input.from,
+            toCurrency: action.conversion?.to ?? input.to,
+            fromAmount: action.amount,
+            toAmount: action.conversion?.toAmount ?? 0,
+            rate: action.conversion?.rate ?? 0,
+            fee: action.fee,
+            feeCurrency: action.currency,
+            policy: action.policy,
+            mode: action.mode,
+          };
+        } catch (error) {
+          return actionToolFailure(error);
+        }
       },
     }),
     prepare_payroll: tool({
@@ -800,17 +865,37 @@ export function createChatAgentTools(
         });
         if (!supplier) throw new Error('supplier_not_found');
 
-        const result = await callPlatform('/suppliers/prepare-payment', {
-          method: 'POST',
-          body: input,
-        });
-        return {
-          ...result,
-          supplier: publicSupplier(supplier),
-          amount: input.amount.amount,
-          currency: input.amount.currency,
-          reference: input.reference,
-        };
+        const publicDetails = publicSupplier(supplier);
+        const destination = asRecord(asRecord(supplier)?.destination);
+        if (!money || !publicDetails) throw new Error('payments_unavailable');
+        try {
+          const action = await money.prepare({
+            kind: 'payment',
+            recipientName: publicDetails.name,
+            amount: input.amount.amount,
+            currency: input.amount.currency,
+            destination: {
+              kind: String(destination?.kind ?? 'bank_account'),
+              label: String(destination?.label ?? 'Payout method'),
+              value: String(destination?.value ?? '').slice(0, 120),
+            },
+            reference: input.reference,
+            purpose: 'supplier',
+          });
+          return {
+            status: 'pending' as const,
+            actionId: action.id,
+            preparationId: action.id,
+            supplier: publicDetails,
+            amount: input.amount.amount,
+            currency: input.amount.currency,
+            reference: input.reference,
+            policy: action.policy,
+            mode: action.mode,
+          };
+        } catch (error) {
+          return actionToolFailure(error);
+        }
       },
     }),
     prepare_recurring: tool({
@@ -840,22 +925,29 @@ export function createChatAgentTools(
           currency: item.amount!.currency,
         }));
         const total = items.reduce((sum, item) => sum + item.amount, 0);
-        const result = await callPlatform('/plans', {
-          method: 'POST',
-          body: {
-            ...input,
+        if (!money) throw new Error('plans_unavailable');
+        try {
+          const action = await money.prepare({
+            kind: 'plan',
+            title: input.intent.slice(0, 120),
             currency,
-            items,
-          },
-        });
-        const platformPlan = asRecord(result.plan) ?? {};
-        const plan = { ...platformPlan, currency, items, total };
-        return {
-          ...result,
-          plan,
-          status: 'pending',
-          planId: String('id' in plan ? plan.id : ''),
-        };
+            items: items.map((item) => ({
+              title: (item.label ?? item.kind).slice(0, 120),
+              amount: item.amount,
+              category: item.kind,
+            })),
+          });
+          return {
+            status: 'pending' as const,
+            actionId: action.id,
+            planId: action.id,
+            plan: { id: action.id, intent: input.intent, currency, items, total },
+            policy: action.policy,
+            mode: action.mode,
+          };
+        } catch (error) {
+          return actionToolFailure(error);
+        }
       },
     }),
   } satisfies ToolSet;

@@ -11,6 +11,7 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text, AppTextInput as TextInput } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage } from '@/lib/actions-api';
 import {
   FUNDING_SOURCE_COPY,
   methodsForSource,
@@ -20,6 +21,7 @@ import {
 } from '@/lib/funding-methods';
 import { haptics } from '@/lib/haptics';
 import { playPaymentSuccessSound } from '@/lib/sounds';
+import { fundWallet, listWallets } from '@/lib/wallet-balances';
 
 export type FundAccountSeed = {
   source?: FundingSource;
@@ -80,6 +82,7 @@ export function FundAccountWizard({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [creditAmount, setCreditAmount] = useState<number | null>(null);
   const [transactionId, setTransactionId] = useState<string | null>(null);
+  const [fundError, setFundError] = useState<string | null>(null);
   const creditedRef = useRef(false);
   const onCreditedRef = useRef(onCredited);
   onCreditedRef.current = onCredited;
@@ -91,8 +94,7 @@ export function FundAccountWizard({
     if (step !== 'waiting') return;
     let cancelled = false;
     const run = async () => {
-      await new Promise((r) => setTimeout(r, 2200));
-      if (cancelled || creditedRef.current) return;
+      if (cancelled || creditedRef.current || !method) return;
       const credited =
         amount ??
         (source === 'crypto'
@@ -100,11 +102,32 @@ export function FundAccountWizard({
           : source === 'mobile_money' || source === 'momo_pull'
             ? 100
             : 250);
-      const tx = `WW-IN-${Math.floor(Math.random() * 1e8)
-        .toString(16)
-        .padStart(8, '0')
-        .toUpperCase()}`;
+      // Demo deposit: Finora credits the wallet as if the transfer arrived.
+      let tx: string;
+      try {
+        const wallet = (await listWallets()).find((item) => item.currency === method.currency);
+        if (!wallet) throw new Error(`You don't have a ${method.currency} wallet.`);
+        const [transaction] = await Promise.all([
+          fundWallet({
+            walletId: wallet.id,
+            amount: credited,
+            method: method.title.slice(0, 80),
+            counterparty: 'Inbound funding',
+            reference: `Fund via ${source ?? 'bank'}`,
+          }),
+          new Promise((r) => setTimeout(r, 1200)),
+        ]);
+        tx = transaction.id;
+      } catch (error) {
+        if (cancelled) return;
+        haptics.error();
+        setFundError(actionErrorMessage(error));
+        setStep(source === 'momo_pull' ? 'momo_pull' : 'details');
+        return;
+      }
+      if (cancelled || creditedRef.current) return;
       creditedRef.current = true;
+      setFundError(null);
       setCreditAmount(credited);
       setTransactionId(tx);
       setStep('credited');
@@ -500,6 +523,10 @@ export function FundAccountWizard({
             </Pressable>
           </View>
         </View>
+      ) : null}
+
+      {fundError && step !== 'waiting' && step !== 'credited' ? (
+        <Text className='font-sans-medium text-[14px] leading-5 text-destructive'>{fundError}</Text>
       ) : null}
 
       {step === 'waiting' ? (

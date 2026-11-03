@@ -20,6 +20,7 @@ import { Hono } from 'hono';
 import type { StoredChatContext } from '../db/chat-context-store';
 import type { AppEnv } from '../types';
 
+import { prepareAction } from '../actions/actions';
 import { paragraphStreamingFilter } from '../ai/assistant-streaming';
 import { messagesForModel, refreshChatContext, threadContextPrompt } from '../ai/chat-context';
 import { fallbackChatTitle, firstExchange, generateAndPersistChatTitle } from '../ai/chat-title';
@@ -79,6 +80,7 @@ import {
   searchDriveFiles,
 } from '../integrations/google-drive';
 import { decryptSecret } from '../integrations/secret-box';
+import { listLedgerTransactions, listLedgerWallets } from '../ledger/ledger';
 import { listPayrollImportsForChat, proposePayrollChanges } from '../payroll/edit-service';
 import { rowsFromDraft, savePayrollImport } from '../payroll/imports';
 import { prepareImportedEmployeePayment, preparePayrollImport } from '../payroll/prepare-import';
@@ -850,6 +852,11 @@ chat.post('/:id', async (c) => {
           },
           createExaClient(env.EXA_API_KEY),
           { list: async () => (await listUserCards(env, userId)).cards },
+          {
+            wallets: () => listLedgerWallets(db, userId),
+            transactions: (input) => listLedgerTransactions(db, userId, input),
+            prepare: (request) => prepareAction(db, userId, request, 'chat'),
+          },
         ),
         ...(composio && connectedApps
           ? createBusinessAppTools({ composio, userId, connected: connectedApps })

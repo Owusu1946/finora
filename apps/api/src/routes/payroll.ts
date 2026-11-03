@@ -11,6 +11,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../app-env';
 
 import { getModelProviderConfig } from '../ai/model-provider';
+import { afterMoneyMoved } from '../automations/balance-events';
 import { createDb } from '../db/client';
 import {
   payrollAttachments,
@@ -18,6 +19,7 @@ import {
   payrollImportRows,
   payrollImports,
 } from '../db/schema';
+import { LedgerError } from '../ledger/ledger';
 import {
   extractPayrollRows,
   summarizePayrollRows,
@@ -646,6 +648,12 @@ payroll.post('/proposals/:id/cancel', async (c) => {
 });
 
 function runError(error: unknown) {
+  if (error instanceof LedgerError) {
+    return {
+      body: { ...jsonError(error.code, error.status), ...error.details },
+      status: error.status,
+    };
+  }
   if (error instanceof PayrollPreparationError) {
     return {
       body: { ...jsonError(error.code, error.status), ...error.details },
@@ -678,15 +686,22 @@ payroll.get('/runs/:id', async (c) => {
 payroll.post('/runs/:id/execute', async (c) => {
   const input = ExecutePayrollRunRequestSchema.safeParse(await c.req.json().catch(() => null));
   if (!input.success) return c.json(jsonError('invalid_request'), 400);
+  const userId = c.get('auth').userId;
   try {
-    return c.json({
-      run: await executePayrollRun(
-        c.get('env').DATABASE_URL,
-        c.get('auth').userId,
-        c.req.param('id'),
-        input.data,
-      ),
-    });
+    const run = await executePayrollRun(
+      c.get('env').DATABASE_URL,
+      userId,
+      c.req.param('id'),
+      input.data,
+    );
+    afterMoneyMoved(
+      c.executionCtx,
+      c.env.AUTOMATION_QUEUE,
+      createDb(c.get('env').DATABASE_URL),
+      userId,
+      `payroll:${run.id}`,
+    );
+    return c.json({ run });
   } catch (error) {
     const { body, status } = runError(error);
     return c.json(body, status);

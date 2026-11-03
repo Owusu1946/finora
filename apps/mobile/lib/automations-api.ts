@@ -89,14 +89,3 @@ export async function runRemoteAutomation(getToken: GetToken, id: string) {
     body: '{}',
   });
 }
-
-/** Tells the API a wallet balance changed, so balance automations can check it. */
-export async function postBalanceEvent(
-  getToken: GetToken,
-  input: { walletId: string; currency: string; balance: number },
-) {
-  return request<{ queued: number }>('/v1/automations/events/balance', getToken, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-}

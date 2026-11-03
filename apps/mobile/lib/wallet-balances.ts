@@ -1,19 +1,36 @@
+import type { LedgerWallet } from '@finora/shared';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { FX_RATES, INITIAL_WALLETS_DATA, type WalletItem } from '@/components/wallets/types';
 
+import {
+  fetchLedgerWallets,
+  fundLedgerWallet,
+  importLedgerWallets,
+  LedgerApiError,
+} from './ledger-api';
 import { isUserStorageKeyWritable, userStorageKey } from './session-storage';
-import { serializeStorageMutation } from './storage-mutation';
+import { refreshTransactions, transactionsToImport } from './transactions-storage';
 
 /**
- * The user's wallet balances (demo balances until WeWire is live). Shared by
- * the Wallets screen and anything that spends from a wallet, such as card
- * funding, so a debit made in one place shows everywhere and survives restarts.
+ * The user's wallet balances come from the Finora ledger (demo balances until
+ * WeWire is live), so the app, chat, automations, and MCP all see the same
+ * numbers. The last balances are cached for instant display; money only moves
+ * on the server.
  */
 
-const BASE_KEY = 'finora.wallet-balances.v1';
-const key = () => userStorageKey(BASE_KEY);
+/** Last balances from the ledger. */
+const CACHE_KEY = 'finora.wallet-balances.v2';
+/** Balances the app kept before the ledger; copied to it once, then ignored. */
+const LEGACY_KEY = 'finora.wallet-balances.v1';
+/** Refresh in the background when the cached balances are older than this. */
+const STALE_MS = 15_000;
+
 const listeners = new Set<() => void>();
+let memory: { key: string; wallets: WalletItem[] } | null = null;
+let lastFetch = 0;
+let inflight: Promise<WalletItem[]> | null = null;
 
 export class InsufficientFundsError extends Error {
   constructor(readonly wallet: WalletItem) {
@@ -35,10 +52,6 @@ function rateFor(currency: string) {
   return FX_RATES[currency] ?? 1;
 }
 
-function withBalance(wallet: WalletItem, balance: number): WalletItem {
-  return { ...wallet, balance, usdEquivalent: balance * rateFor(wallet.currency) };
-}
-
 /** USD amount expressed in a wallet's own currency. */
 export function usdInWalletCurrency(wallet: WalletItem, usd: number) {
   return usd / rateFor(wallet.currency);
@@ -50,66 +63,120 @@ export function amountInWalletCurrency(wallet: WalletItem, amount: number, curre
   return (amount * rateFor(currency)) / rateFor(wallet.currency);
 }
 
-/** Wallets with their stored balances; new users start from the demo balances. */
-export async function listWallets(storageKey = key()): Promise<WalletItem[]> {
+/** Ledger wallets with the app's display details (name, badge, deposit details). */
+function fromLedger(wallets: LedgerWallet[]): WalletItem[] {
+  return wallets.flatMap((wallet) => {
+    const details = INITIAL_WALLETS_DATA.find((item) => item.id === wallet.id);
+    return details
+      ? [{ ...details, balance: wallet.balance, usdEquivalent: wallet.usdEquivalent }]
+      : [];
+  });
+}
+
+async function readJson<T>(storageKey: string): Promise<T | null> {
   const raw = await AsyncStorage.getItem(storageKey).catch(() => null);
-  if (!raw) return INITIAL_WALLETS_DATA;
+  if (!raw) return null;
   try {
-    const balances = JSON.parse(raw) as Record<string, number>;
-    return INITIAL_WALLETS_DATA.map((wallet) =>
-      typeof balances[wallet.id] === 'number' ? withBalance(wallet, balances[wallet.id]!) : wallet,
-    );
+    return JSON.parse(raw) as T;
   } catch {
-    return INITIAL_WALLETS_DATA;
+    return null;
   }
 }
 
-export async function saveWallets(wallets: WalletItem[], storageKey = key()) {
-  if (!isUserStorageKeyWritable(storageKey)) return;
-  const balances = Object.fromEntries(wallets.map((wallet) => [wallet.id, wallet.balance]));
-  await AsyncStorage.setItem(storageKey, JSON.stringify(balances)).catch(() => undefined);
+/** The balances the app kept on the device before the ledger existed. */
+async function legacyWallets() {
+  const balances = await readJson<Record<string, number>>(userStorageKey(LEGACY_KEY));
+  return INITIAL_WALLETS_DATA.map((wallet) =>
+    typeof balances?.[wallet.id] === 'number'
+      ? { ...wallet, balance: balances[wallet.id]!, usdEquivalent: 0 }
+      : wallet,
+  );
+}
+
+async function initializedWallets() {
+  const response = await fetchLedgerWallets();
+  if (response.initialized) return response;
+  try {
+    // First launch on the ledger: copy this phone's balances and history once.
+    return await importLedgerWallets({
+      wallets: (await legacyWallets()).map((wallet) => ({
+        id: wallet.id,
+        currency: wallet.currency,
+        balance: Math.max(0, wallet.balance),
+      })),
+      transactions: await transactionsToImport(),
+    });
+  } catch (error) {
+    // Another device (or a retry) got there first.
+    if (error instanceof LedgerApiError && error.code === 'already_imported') {
+      return fetchLedgerWallets();
+    }
+    throw error;
+  }
+}
+
+/** Loads balances from the ledger and tells every screen showing them. */
+export function refreshWallets(): Promise<WalletItem[]> {
+  inflight ??= (async () => {
+    const storageKey = userStorageKey(CACHE_KEY);
+    lastFetch = Date.now();
+    try {
+      const wallets = fromLedger((await initializedWallets()).wallets);
+      memory = { key: storageKey, wallets };
+      if (isUserStorageKeyWritable(storageKey)) {
+        await AsyncStorage.setItem(storageKey, JSON.stringify(wallets)).catch(() => undefined);
+      }
+      notify();
+      return wallets;
+    } finally {
+      inflight = null;
+    }
+  })();
+  return inflight;
+}
+
+/** The user's wallets: the last ledger balances at once, refreshed in the background. */
+export async function listWallets(): Promise<WalletItem[]> {
+  const storageKey = userStorageKey(CACHE_KEY);
+  const cached =
+    memory?.key === storageKey ? memory.wallets : await readJson<WalletItem[]>(storageKey);
+  if (cached) {
+    memory = { key: storageKey, wallets: cached };
+    if (Date.now() - lastFetch > STALE_MS) void refreshWallets().catch(() => undefined);
+    return cached;
+  }
+  try {
+    return await refreshWallets();
+  } catch {
+    return legacyWallets();
+  }
+}
+
+/**
+ * Refreshes balances and Activity after money moved on the server (a payment,
+ * payroll, card load, or top-up).
+ */
+export async function refreshAfterMoneyMoved() {
+  await Promise.all([refreshWallets().catch(() => undefined), refreshTransactions()]);
+}
+
+/** A demo deposit into a wallet. The caller asks for the passcode first. */
+export async function fundWallet(input: {
+  walletId: string;
+  amount: number;
+  method: string;
+  counterparty?: string;
+  reference?: string;
+}) {
+  const { walletId, ...request } = input;
+  const result = await fundLedgerWallet(walletId, request);
+  await refreshAfterMoneyMoved();
+  return result.transaction;
+}
+
+/** Forget this session's balances (sign-out / reset). They stay on the account. */
+export function clearWallets() {
+  memory = null;
+  lastFetch = 0;
   notify();
-}
-
-/**
- * Debit a USD amount from a wallet, converted to the wallet's currency.
- * Throws `InsufficientFundsError` without changing anything when it can't cover it.
- */
-export async function debitWallet(walletId: string, usdAmount: number) {
-  return debitWalletIn(walletId, usdAmount, 'USD');
-}
-
-/** Puts money back after a payment that failed after its debit. */
-export async function creditWallet(walletId: string, amount: number) {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const wallets = await listWallets(storageKey);
-    await saveWallets(
-      wallets.map((item) =>
-        item.id === walletId ? withBalance(item, item.balance + amount) : item,
-      ),
-      storageKey,
-    );
-  });
-}
-
-/**
- * Debit `amount` in `currency` from a wallet, converted to the wallet's currency.
- * Throws `InsufficientFundsError` without changing anything when it can't cover it.
- */
-export async function debitWalletIn(walletId: string, amountToPay: number, currency: string) {
-  const storageKey = key();
-  return serializeStorageMutation(storageKey, async () => {
-    const wallets = await listWallets(storageKey);
-    const wallet = wallets.find((item) => item.id === walletId);
-    if (!wallet) throw new Error('That account is no longer available.');
-    const amount = amountInWalletCurrency(wallet, amountToPay, currency);
-    if (amount > wallet.balance) throw new InsufficientFundsError(wallet);
-    const updated = withBalance(wallet, wallet.balance - amount);
-    await saveWallets(
-      wallets.map((item) => (item.id === walletId ? updated : item)),
-      storageKey,
-    );
-    return { wallet: updated, amount };
-  });
 }

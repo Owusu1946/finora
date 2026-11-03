@@ -18,8 +18,8 @@ All paths save a payroll import (`savePayrollImport`) with the same row checks: 
 
 1. `prepare_payroll` (everyone or chosen rows) or `prepare_employee_payment` (one person, optionally a different amount) creates a **payroll run** in `payroll_runs` with one `payroll_run_items` row per employee, status `pending_approval`. One currency per run.
 2. The run card shows each employee with a masked destination, and **Pay from** for the user's accounts. Payroll is free; a wallet in another currency is converted at the demo FX rates.
-3. **Approve and pay** asks for the passcode, debits the wallet, then calls `POST /v1/payroll/runs/:id/execute`. Only a pending run executes, so a retry can't pay twice. If the API refuses, the debit is refunded.
-4. The card shows each payout as sent, records one Activity entry, and posts a summary in chat. The Payroll screen lists paid runs under **Paid**.
+3. **Approve and pay** asks for the passcode, then calls `POST /v1/payroll/runs/:id/execute` with the chosen wallet. Finora takes the converted total from the [ledger](./ledger.md) and marks every payout sent in one step, so a retry can't pay twice and nothing is charged unless the run is paid.
+4. The card shows each payout as sent, the run appears once in Activity, and a summary posts in chat. The Payroll screen lists paid runs under **Paid**.
 
 Runs are `mode: demo` until WeWire payouts are live: nobody is really paid, and the card says so.
 

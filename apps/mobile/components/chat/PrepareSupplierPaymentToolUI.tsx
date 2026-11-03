@@ -11,9 +11,9 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage, executeAction, getAction, prepareAction } from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
 
 type PrepareSupplierPaymentArgs = {
   supplierId?: string;
@@ -28,26 +28,23 @@ type PrepareSupplierPaymentResult = {
   amount?: number;
   currency?: string;
   reference?: string;
+  /** The prepared payment on the Finora API; it executes only after the passcode. */
+  actionId?: string;
   preparationId?: string;
 };
-
-function mockTransactionId() {
-  return `WW-SUP-${Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase()}`;
-}
 
 function SupplierPaymentCard({
   supplier,
   amount,
   currency,
   reference,
+  actionId,
 }: {
   supplier: Supplier;
   amount: number;
   currency: string;
   reference?: string;
+  actionId?: string;
 }) {
   const { colors } = useTheme();
   const aui = useAui();
@@ -56,43 +53,68 @@ function SupplierPaymentCard({
   const [phase, setPhase] = useState<'idle' | 'sending' | 'sent'>('idle');
   const finishedRef = useRef(false);
 
+  // The chat may be reopened after paying: show what really happened.
+  useEffect(() => {
+    if (!actionId) return;
+    let cancelled = false;
+    void getAction(actionId)
+      .then((action) => {
+        if (cancelled || action.status !== 'executed') return;
+        finishedRef.current = true;
+        setPhase('sent');
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [actionId]);
+
   useEffect(() => {
     if (phase !== 'sending' || finishedRef.current) return;
     let cancelled = false;
     const run = async () => {
-      await new Promise((r) => setTimeout(r, 900));
-      if (cancelled || finishedRef.current) return;
-      finishedRef.current = true;
-      const txId = mockTransactionId();
-      await recordSentPayment({
-        payment: {
-          amount,
-          currency,
-          recipientName: supplier.name,
-          destination: {
-            kind: supplier.destination.kind,
-            label: supplier.destination.label,
-            value: supplier.destination.value,
-          },
-          reference: reference ?? `Supplier · ${supplier.name}`,
-          purposeCode: 'INVOICE',
-          purposeLabel: 'Invoice / supplier',
-        },
-        transactionId: txId,
-        source: 'chat',
-      });
-      setPhase('sent');
-      haptics.success();
-      appendAgentFollowUp(
-        aui,
-        `Paid ${supplier.name} ${formatPaymentAmount(amount, currency)}. Ref ${txId}.`,
-      );
+      try {
+        const id =
+          actionId ??
+          (
+            await prepareAction({
+              kind: 'payment',
+              recipientName: supplier.name,
+              amount,
+              currency,
+              destination: {
+                kind: supplier.destination.kind,
+                label: supplier.destination.label,
+                value: supplier.destination.value,
+              },
+              reference: reference ?? `Supplier · ${supplier.name}`,
+              purpose: 'supplier',
+            })
+          ).id;
+        const action = await executeAction(id);
+        if (cancelled || finishedRef.current) return;
+        finishedRef.current = true;
+        setPhase('sent');
+        haptics.success();
+        appendAgentFollowUp(
+          aui,
+          `Paid ${supplier.name} ${formatPaymentAmount(amount, currency)}. Ref ${action.transactionId ?? action.id}.`,
+        );
+      } catch (error) {
+        if (cancelled) return;
+        haptics.error();
+        setPhase('idle');
+        appendAgentFollowUp(
+          aui,
+          `The payment to ${supplier.name} didn't go through. ${actionErrorMessage(error)}`,
+        );
+      }
     };
     void run();
     return () => {
       cancelled = true;
     };
-  }, [amount, aui, currency, phase, reference, supplier]);
+  }, [actionId, amount, aui, currency, phase, reference, supplier]);
 
   return (
     <>
@@ -218,6 +240,7 @@ export const PrepareSupplierPaymentToolUI = makeAssistantToolUI<
         amount={amount}
         currency={currency}
         reference={result?.reference}
+        actionId={result?.actionId}
       />
     );
   },

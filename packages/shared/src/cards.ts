@@ -44,6 +44,8 @@ export const CreateVirtualCardRequestSchema = z.object({
   label: z.string().trim().min(1).max(40),
   spendLimit: z.number().positive().max(MAX_VIRTUAL_CARD_LIMIT),
   currency: VirtualCardCurrencySchema.default('USD'),
+  /** The wallet charged for the load plus the issue fee. */
+  fundingWalletId: z.string().min(1).max(40),
 });
 export type CreateVirtualCardRequest = z.infer<typeof CreateVirtualCardRequestSchema>;
 
@@ -61,6 +63,8 @@ export type UpdateVirtualCardRequest = z.infer<typeof UpdateVirtualCardRequestSc
 /** Add `amount` USD to a prepaid card's balance (its lifetime spend limit). */
 export const TopUpVirtualCardRequestSchema = z.object({
   amount: z.number().positive().max(MAX_VIRTUAL_CARD_LIMIT),
+  /** The wallet charged for the top-up plus the fee. */
+  fundingWalletId: z.string().min(1).max(40),
 });
 export type TopUpVirtualCardRequest = z.infer<typeof TopUpVirtualCardRequestSchema>;
 

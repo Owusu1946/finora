@@ -19,6 +19,7 @@ import { clearSettings } from '@/lib/settings-storage';
 import { clearSmsRequests } from '@/lib/sms-requests-storage';
 import { clearSuppliers } from '@/lib/suppliers-storage';
 import { clearTransactions } from '@/lib/transactions-storage';
+import { clearWallets } from '@/lib/wallet-balances';
 
 import { blockActiveUserStorageWrites, clearActiveUserStorage } from './session-storage';
 
@@ -62,6 +63,7 @@ export async function resetFinoraSession(): Promise<void> {
   await clearRecentFinoraTags();
   await clearApprovals();
   await clearTransactions();
+  clearWallets();
   await clearInvoices();
   await clearCalendarEvents();
   await clearSmsRequests();

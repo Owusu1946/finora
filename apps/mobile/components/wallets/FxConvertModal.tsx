@@ -33,12 +33,12 @@ interface FxConvertModalProps {
   visible: boolean;
   wallets: WalletItem[];
   onClose: () => void;
-  onConvertSuccess: (
+  /** Prepares, asks for the passcode, and converts; resolves true once it went through. */
+  onConvert: (
     fromCurrency: SupportedCurrency,
     toCurrency: SupportedCurrency,
     amountNum: number,
-    convertedValue: number,
-  ) => void;
+  ) => Promise<boolean>;
 }
 
 function formatBalance(n: number) {
@@ -86,12 +86,7 @@ function CurrencyPill({
   );
 }
 
-export function FxConvertModal({
-  visible,
-  wallets,
-  onClose,
-  onConvertSuccess,
-}: FxConvertModalProps) {
+export function FxConvertModal({ visible, wallets, onClose, onConvert }: FxConvertModalProps) {
   const { colors } = useTheme();
 
   const [fromCurrency, setFromCurrency] = useState<SupportedCurrency>('USD');
@@ -194,21 +189,19 @@ export function FxConvertModal({
     onClose();
   };
 
-  const handleExecuteConversion = () => {
+  const handleExecuteConversion = async () => {
     if (!canSwap || !fromWallet || !toWallet) return;
     dismissKeyboard();
     haptics.impact();
     setIsConverting(true);
-
+    const converted = await onConvert(fromCurrency, toCurrency, amountNum);
+    setIsConverting(false);
+    if (!converted) return;
+    setConvertSuccess(true);
     setTimeout(() => {
-      onConvertSuccess(fromCurrency, toCurrency, amountNum, receiveAmount);
-      setConvertSuccess(true);
-      setIsConverting(false);
-      setTimeout(() => {
-        setConvertSuccess(false);
-        onClose();
-      }, 1400);
-    }, 700);
+      setConvertSuccess(false);
+      onClose();
+    }, 1400);
   };
 
   const pickerWallets = wallets.filter((w) =>

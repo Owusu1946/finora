@@ -11,6 +11,7 @@ import { consumeTransactionalEmailQueue } from './email/consumer';
 import { getApiEnv } from './env';
 import { consumeCalendarSyncQueue } from './integrations/calendar-consumer';
 import { consumeGmailSyncQueue } from './integrations/gmail-consumer';
+import { actions } from './routes/actions';
 import { automations } from './routes/automations';
 import { businessApps } from './routes/business-apps';
 import { calendarIntegrations, calendarOAuth } from './routes/calendar-integrations';
@@ -21,6 +22,7 @@ import { driveIntegrations, driveOAuth } from './routes/drive-integrations';
 import { emailWebhooks } from './routes/email-webhooks';
 import { gmailIntegrations, googleOAuth } from './routes/gmail-integrations';
 import { invoiceRoutes } from './routes/invoices';
+import { ledger } from './routes/ledger';
 import { memories } from './routes/memories';
 import { payroll } from './routes/payroll';
 import { v1 } from './routes/v1';
@@ -77,6 +79,8 @@ app.route('/v1/automations', automations);
 app.route('/v1/apps', businessApps);
 app.route('/v1/cards', cards);
 app.route('/v1/payroll', payroll);
+app.route('/v1/actions', actions);
+app.route('/v1', ledger);
 app.route('/v1', v1);
 
 async function consumeQueue(batch: MessageBatch<unknown>, env: Env) {

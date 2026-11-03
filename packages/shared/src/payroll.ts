@@ -223,9 +223,8 @@ export const PayrollRunListResponseSchema = z.object({ runs: z.array(PayrollRunS
 /** Approve and pay a run from a wallet. One currency per run; funding may convert. */
 export const ExecutePayrollRunRequestSchema = z
   .object({
+    /** The wallet to pay from; the server works out the converted amount. */
     fundingWalletId: z.string().min(1).max(80),
-    fundingCurrency: z.string().min(3).max(12),
-    fundingAmount: z.number().positive(),
   })
   .strict();
 export type ExecutePayrollRunRequest = z.infer<typeof ExecutePayrollRunRequestSchema>;

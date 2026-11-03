@@ -7,10 +7,11 @@ import {
   type PaymentConfirmationStatus,
 } from '@/components/chat/PaymentConfirmationCard';
 import { usePasscodeApproval } from '@/components/passcode/use-passcode-approval';
+import { actionErrorMessage, executeAction, prepareAction } from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { rememberFinoraTagRecipient } from '@/lib/finora-tags';
 import { haptics } from '@/lib/haptics';
-import { recordSentPayment } from '@/lib/transactions-storage';
+import { paymentActionRequest } from '@/lib/payment-actions';
 
 type InternalTransferArgs = {
   fromSubCustomerId: string;
@@ -29,13 +30,6 @@ type InternalTransferResult = {
   preparationId?: string;
   transactionId?: string;
 };
-
-function mockTransactionId() {
-  return `WW-INTERNAL-${Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase()}`;
-}
 
 function InternalTransferFlow({
   args,
@@ -76,26 +70,39 @@ function InternalTransferFlow({
     if (status !== 'sending' || finishedRef.current) return;
     let cancelled = false;
     const complete = async () => {
-      for (let step = 0; step < 3; step += 1) {
+      const steps = (async () => {
+        for (let step = 0; step < 3; step += 1) {
+          if (cancelled) return;
+          setSendingStep(step);
+          await new Promise((resolve) => setTimeout(resolve, step === 0 ? 500 : 650));
+        }
+      })();
+      let action;
+      try {
+        const prepared = await prepareAction(
+          await paymentActionRequest(payment, { purpose: 'transfer' }),
+        );
+        [action] = await Promise.all([executeAction(prepared.id), steps]);
+      } catch (error) {
         if (cancelled) return;
-        setSendingStep(step);
-        await new Promise((resolve) => setTimeout(resolve, step === 0 ? 500 : 650));
+        haptics.error();
+        setStatus('failed');
+        appendAgentFollowUp(
+          aui,
+          `The transfer to ${payment.recipientName} didn't go through. ${actionErrorMessage(error)}`,
+        );
+        return;
       }
       if (cancelled || finishedRef.current) return;
       finishedRef.current = true;
-      const nextTransactionId = result?.transactionId ?? mockTransactionId();
+      const nextTransactionId = action.transactionId ?? action.id;
       setTransactionId(nextTransactionId);
       setStatus('sent');
       haptics.success();
       onResult({
         status: 'sent',
-        preparationId: result?.preparationId ?? `prep_internal_${Date.now()}`,
+        preparationId: action.id,
         transactionId: nextTransactionId,
-      });
-      await recordSentPayment({
-        payment,
-        transactionId: nextTransactionId,
-        source: 'chat',
       });
       await rememberFinoraTagRecipient({
         tag: args.finoraTag,

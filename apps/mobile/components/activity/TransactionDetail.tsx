@@ -41,6 +41,7 @@ const SOURCE_LABEL: Record<NonNullable<Transaction['source']>, string> = {
   chat: 'Finora chat',
   mcp: 'AI agent (MCP)',
   manual: 'Manual',
+  automation: 'Automation',
 };
 
 /** Plan payouts carry an item count instead of an address, so the row label follows. */

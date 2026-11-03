@@ -100,7 +100,6 @@ import { setAccountType } from '@/lib/account';
 import { getApiUrl } from '@/lib/api-url';
 import { AuthGateProvider, useAuthGate } from '@/lib/auth-gate';
 import { getTagConfigured } from '@/lib/auth-storage';
-import { AutomationBalanceBridge } from '@/lib/automation-balance-events';
 import { AutomationNotificationBridge } from '@/lib/automation-notifications';
 import { createFinoraChatAdapter } from '@/lib/chat-adapter';
 import { env } from '@/lib/env';
@@ -495,7 +494,6 @@ function RootApp() {
                   >
                     <ProfileSyncBridge />
                     <AutomationNotificationBridge />
-                    <AutomationBalanceBridge />
                     <FinoraAssistantRuntime
                       key={boot.remoteChat ? (boot.userId ?? 'remote') : 'local'}
                       remoteChat={boot.remoteChat}

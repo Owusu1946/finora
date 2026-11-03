@@ -369,42 +369,7 @@ function publicFinoraAccount(account: (typeof mockStore.subcustomers)[number]) {
   };
 }
 
-// ─── Balances / wallets / receive ──────────────────────────────────────────
-
-v1.get('/balances', (c) => {
-  const balances = mockStore.wallets.map((w) => ({
-    id: w.id,
-    currency: w.currency,
-    balance: Number(w.balance),
-    status: w.status,
-    subCustomerId: w.subCustomerId,
-  }));
-  return c.json({
-    mode: 'mock',
-    totalUsd: balances
-      .filter((b) => b.currency === 'USD' || b.currency === 'USDT' || b.currency === 'USDC')
-      .reduce((s, b) => s + b.balance, 0),
-    balances,
-  });
-});
-
-v1.get('/wallets', (c) => {
-  const subCustomerId = c.req.query('subCustomerId');
-  const currency = c.req.query('currency');
-  const query = (c.req.query('query') ?? '').toLowerCase();
-  let wallets = [...mockStore.wallets];
-  if (subCustomerId) wallets = wallets.filter((w) => w.subCustomerId === subCustomerId);
-  if (currency) wallets = wallets.filter((w) => w.currency === currency);
-  if (query) {
-    wallets = wallets.filter(
-      (w) =>
-        w.currency.toLowerCase().includes(query) ||
-        w.id.toLowerCase().includes(query) ||
-        (w.subCustomerId?.toLowerCase().includes(query) ?? false),
-    );
-  }
-  return c.json({ mode: 'mock', wallets });
-});
+// ─── Receive ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
 v1.get('/receive-methods', (c) => {
   return c.json({
@@ -723,58 +688,6 @@ v1.post('/approvals/:id/resolve', async (c) => {
     });
   }
   return c.json({ mode: 'mock', approval: item });
-});
-
-// ─── Transactions ──────────────────────────────────────────────────────────
-
-v1.get('/transactions', (c) => {
-  const type = c.req.query('type');
-  const status = c.req.query('status');
-  const limit = Number(c.req.query('limit') ?? 50);
-  const query = (c.req.query('query') ?? '').toLowerCase();
-  let items = [...mockStore.transactions];
-  if (type) items = items.filter((t) => t.type === type);
-  if (status) items = items.filter((t) => t.status === status);
-  if (query) {
-    items = items.filter(
-      (t) =>
-        t.counterparty.toLowerCase().includes(query) ||
-        t.reference.toLowerCase().includes(query) ||
-        t.wewireId.toLowerCase().includes(query),
-    );
-  }
-  return c.json({ mode: 'mock', transactions: items.slice(0, limit) });
-});
-
-v1.get('/transactions/search', (c) => {
-  const q = (c.req.query('query') ?? '').toLowerCase();
-  const items = mockStore.transactions.filter(
-    (t) =>
-      t.counterparty.toLowerCase().includes(q) ||
-      t.reference.toLowerCase().includes(q) ||
-      t.wewireId.toLowerCase().includes(q),
-  );
-  return c.json({ mode: 'mock', transactions: items });
-});
-
-v1.get('/transactions/:id', (c) => {
-  const id = c.req.param('id');
-  const item = mockStore.transactions.find((t) => t.id === id || t.wewireId === id);
-  if (!item) return c.json({ error: 'not_found' }, 404);
-  return c.json({
-    mode: 'mock',
-    transaction: item,
-    timeline: [
-      { id: 'prepared', label: 'Prepared', status: 'done', at: item.createdAt },
-      { id: 'approved', label: 'Approved', status: 'done', at: item.createdAt },
-      {
-        id: 'settled',
-        label: item.status === 'FAILED' ? 'Failed' : 'Settled',
-        status: item.status === 'PROCESSING' ? 'active' : 'done',
-        at: item.updatedAt,
-      },
-    ],
-  });
 });
 
 // ─── FX ────────────────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import { LoadingIcon } from '@/components/ui/loading-icon';
 import { AppText as Text } from '@/components/ui/text';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { actionErrorMessage, executeAction, prepareAction } from '@/lib/actions-api';
 import { appendAgentFollowUp } from '@/lib/agent-follow-up';
 import { haptics } from '@/lib/haptics';
 import { sendSms } from '@/lib/sms';
@@ -17,14 +18,6 @@ import {
   markSmsRequestPaid,
   type SmsPaymentRequest,
 } from '@/lib/sms-requests-storage';
-import { recordSentPayment } from '@/lib/transactions-storage';
-
-function mockTransactionId() {
-  return `WW-SMS-${Math.floor(Math.random() * 1e8)
-    .toString(16)
-    .padStart(8, '0')
-    .toUpperCase()}`;
-}
 
 function formatReceived(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -51,34 +44,37 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
     if (phase !== 'sending' || finishedRef.current) return;
     let cancelled = false;
     const run = async () => {
-      await new Promise((r) => setTimeout(r, 900));
       if (cancelled || finishedRef.current) return;
+      if (!request.amount || !request.currency) {
+        setPhase('idle');
+        appendAgentFollowUp(
+          aui,
+          `The SMS from ${request.fromName} has no amount, so I can't pay it.`,
+        );
+        return;
+      }
       finishedRef.current = true;
-      const txId = mockTransactionId();
       try {
+        const prepared = await prepareAction({
+          kind: 'payment',
+          recipientName: request.fromName,
+          amount: request.amount,
+          currency: request.currency,
+          destination: {
+            kind: request.network?.toLowerCase().includes('momo') ? 'mobile_money' : 'bank_account',
+            label: request.network ?? 'SMS request',
+            value: request.fromPhone,
+          },
+          reference: `SMS from ${request.fromName}`,
+          purpose: 'bill',
+          relatedId: `sms:${request.id}`,
+        });
+        const action = await executeAction(prepared.id);
+        const txId = action.transactionId ?? action.id;
         const updated = await markSmsRequestPaid(request.id, txId);
         if (updated) setRequest(updated);
         setPhase('paid');
         haptics.success();
-        if (request.amount && request.currency) {
-          await recordSentPayment({
-            payment: {
-              amount: request.amount,
-              currency: request.currency,
-              recipientName: request.fromName,
-              destination: {
-                kind: request.network?.toLowerCase().includes('momo')
-                  ? 'mobile_money'
-                  : 'bank_account',
-                label: request.network ?? 'SMS request',
-                value: request.fromPhone,
-              },
-              reference: `SMS from ${request.fromName}`,
-            },
-            transactionId: txId,
-            source: 'chat',
-          });
-        }
         appendAgentFollowUp(
           aui,
           `Paid ${request.fromName}${
@@ -87,9 +83,11 @@ export function SmsRequestCard({ request: initial }: { request: SmsPaymentReques
               : ''
           } from an SMS request. Ref ${txId}.`,
         );
-      } catch {
+      } catch (error) {
         finishedRef.current = false;
+        haptics.error();
         setPhase('idle');
+        appendAgentFollowUp(aui, `That SMS request wasn't paid. ${actionErrorMessage(error)}`);
       }
     };
     void run();
