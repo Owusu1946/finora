@@ -151,6 +151,10 @@ const COMPOSER_ATTACHMENT_COMPONENTS = {
 const ROUND_BUTTON = 44;
 /** Mic, send and other buttons inside the pill. */
 const ACTION_BUTTON = 36;
+const INPUT_LINE_HEIGHT = 22;
+const INPUT_VERTICAL_PADDING = 7;
+/** The field grows a line at a time up to six lines, then scrolls inside. */
+const INPUT_MAX_HEIGHT = INPUT_LINE_HEIGHT * 6 + INPUT_VERTICAL_PADDING * 2;
 
 const TAG_ACCENT = {
   light: '#0F766E',
@@ -1173,7 +1177,12 @@ const ComposerInput = forwardRef<ComposerInputHandle, ComposerInputProps>(functi
   });
 });
 
-export function Composer() {
+export function Composer({
+  onInputScrollableChange,
+}: {
+  /** True while the text is taller than the field and scrolls inside it. */
+  onInputScrollableChange?: (scrollable: boolean) => void;
+}) {
   const { colors, isDark } = useTheme();
   const notice = useComposerNotice();
   const inputRef = useRef<ComposerInputHandle>(null);
@@ -1405,6 +1414,10 @@ export function Composer() {
           maxLength={4000}
           onFocus={() => setInputFocused(true)}
           onBlur={() => setInputFocused(false)}
+          onContentSizeChange={(event) => {
+            const contentHeight = event.nativeEvent.contentSize.height + INPUT_VERTICAL_PADDING * 2;
+            onInputScrollableChange?.(contentHeight > INPUT_MAX_HEIGHT);
+          }}
         >
           {({ menu, input }) => (
             <>
@@ -1580,14 +1593,13 @@ const styles = {
     flex: 1,
     fontFamily: 'DMSans_400Regular',
     fontSize: 17,
-    lineHeight: 22,
+    lineHeight: INPUT_LINE_HEIGHT,
     // One line sits level with the round buttons beside it.
     minHeight: ACTION_BUTTON,
-    // Four lines of 22px + top/bottom padding.
-    maxHeight: 102,
+    maxHeight: INPUT_MAX_HEIGHT,
     paddingHorizontal: 10,
-    paddingTop: 7,
-    paddingBottom: 7,
+    paddingTop: INPUT_VERTICAL_PADDING,
+    paddingBottom: INPUT_VERTICAL_PADDING,
     ...Platform.select({
       web: { outlineStyle: 'none' } as object,
       default: {},

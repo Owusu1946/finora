@@ -161,6 +161,7 @@ export function Thread() {
   const isFocused = useIsFocused();
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
   const [composerHeight, setComposerHeight] = useState(0);
+  const [composerInputScrolls, setComposerInputScrolls] = useState(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -213,8 +214,9 @@ export function Thread() {
               paddingBottom: keyboardVisible ? 8 : insets.bottom + 6,
             }}
           >
-            <SwipeKeyboardDismiss>
-              <Composer />
+            {/* Off while long text scrolls inside the field, so dragging scrolls it. */}
+            <SwipeKeyboardDismiss enabled={!composerInputScrolls}>
+              <Composer onInputScrollableChange={setComposerInputScrolls} />
             </SwipeKeyboardDismiss>
           </View>
         </View>

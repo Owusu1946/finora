@@ -17,15 +17,20 @@ function dismissKeyboard() {
 export function SwipeKeyboardDismiss({
   children,
   className,
+  enabled = true,
 }: {
   children: ReactNode;
   className?: string;
+  /** Off while a child needs vertical drags itself, like a scrolling text field. */
+  enabled?: boolean;
 }) {
-  // Built once: the thread re-renders on every streamed token, and a new
-  // gesture each render re-attaches the handler (and can reset a live swipe).
+  // Built once per `enabled`: the thread re-renders on every streamed token,
+  // and a new gesture each render re-attaches the handler (and can reset a
+  // live swipe).
   const pan = useMemo(
     () =>
       Gesture.Pan()
+        .enabled(enabled)
         .activeOffsetY(24)
         // Fail on sideways drags right away so the drawer's swipe wins cleanly.
         .failOffsetX([-16, 16])
@@ -34,7 +39,7 @@ export function SwipeKeyboardDismiss({
             runOnJS(dismissKeyboard)();
           }
         }),
-    [],
+    [enabled],
   );
 
   return (
