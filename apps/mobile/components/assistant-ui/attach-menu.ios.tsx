@@ -39,9 +39,9 @@ export function AttachMenu({ size, label, onSelect }: AttachMenuProps) {
           modifiers={[
             labelStyle('iconOnly'),
             font({ size: 20, weight: 'regular' }),
-            foregroundStyle(colors.mutedForeground),
+            foregroundStyle(colors.foreground),
             // Menu triggers use the accent tint (blue) unless overridden.
-            tint(colors.mutedForeground),
+            tint(colors.foreground),
             frame({ width: size, height: size }),
           ]}
         >

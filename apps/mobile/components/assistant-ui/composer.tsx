@@ -11,7 +11,15 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   View,
   AppState,
@@ -58,6 +66,13 @@ import {
   registerAttachmentPreview,
 } from './attachment';
 import { CameraSheet, type CapturedPhoto } from './camera-sheet';
+import {
+  ComposerGlassGroup,
+  ComposerSurface,
+  useComposerPressFeedback,
+  useComposerSurfaceMode,
+  type ComposerSurfaceMode,
+} from './composer-surface';
 import { VoiceScreenBloom, type VoiceBloomPalette } from './VoiceScreenBloom';
 
 /* ------------------------------------------------------------------ */
@@ -132,13 +147,19 @@ const COMPOSER_ATTACHMENT_COMPONENTS = {
   Attachment: ComposerAttachmentChip,
 };
 
+/** The round + button, and the height of a one-line composer pill. */
+const ROUND_BUTTON = 44;
+/** Mic, send and other buttons inside the pill. */
+const ACTION_BUTTON = 36;
+
 const TAG_ACCENT = {
   light: '#0F766E',
   dark: '#2DD4BF',
 } as const;
 
-function AttachButton() {
+function AttachButton({ mode }: { mode: ComposerSurfaceMode }) {
   const { colors } = useTheme();
+  const feedback = useComposerPressFeedback(ROUND_BUTTON);
   const aui = useAui();
   const router = useRouter();
   const { getToken } = useAuth();
@@ -256,45 +277,57 @@ function AttachButton() {
 
   const attachIcon = (
     <Icon
-      name='attach'
-      size={20}
-      color={colors.mutedForeground}
+      name='add'
+      size={22}
+      color={colors.foreground}
     />
   );
 
   if (Platform.OS === 'web' || typeof document !== 'undefined') {
     return (
-      <Pressable
-        accessibilityLabel='Attach file or photo'
-        hitSlop={8}
-        onPress={() => {
-          haptics.selection();
-          openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
-        }}
-        className='h-[38px] w-[38px] items-center justify-center rounded-full'
-        style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
+      <ComposerSurface
+        mode={mode}
+        style={styles.roundSurface}
       >
-        {attachIcon}
-      </Pressable>
+        <Pressable
+          accessibilityLabel='Attach file or photo'
+          hitSlop={8}
+          onPress={() => {
+            haptics.selection();
+            openWebFilePicker('image/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.csv,.json');
+          }}
+          android_ripple={feedback.android_ripple}
+          style={({ pressed }) => [styles.roundButton, feedback.pressedStyle(pressed)]}
+        >
+          {attachIcon}
+        </Pressable>
+      </ComposerSurface>
     );
   }
 
   return (
     <>
-      <AttachMenu
-        size={38}
-        label='Attach file or photo'
-        onSelect={handleAttachAction}
+      {/* Interactive glass gives the native touch response; the menu is native too. */}
+      <ComposerSurface
+        mode={mode}
+        interactive
+        style={styles.roundSurface}
       >
-        <View
-          accessible
-          accessibilityRole='button'
-          accessibilityLabel='Attach file or photo'
-          className='h-[38px] w-[38px] items-center justify-center rounded-full'
+        <AttachMenu
+          size={ROUND_BUTTON}
+          label='Attach, or scan to pay'
+          onSelect={handleAttachAction}
         >
-          {attachIcon}
-        </View>
-      </AttachMenu>
+          <View
+            accessible
+            accessibilityRole='button'
+            accessibilityLabel='Attach, or scan to pay'
+            style={styles.roundButton}
+          >
+            {attachIcon}
+          </View>
+        </AttachMenu>
+      </ComposerSurface>
 
       <CameraSheet
         visible={cameraVisible}
@@ -308,6 +341,7 @@ function AttachButton() {
 function ScanButton() {
   const { colors } = useTheme();
   const router = useRouter();
+  const feedback = useComposerPressFeedback(ACTION_BUTTON);
 
   return (
     <Pressable
@@ -317,13 +351,13 @@ function ScanButton() {
         haptics.selection();
         router.push('/scan');
       }}
-      className='h-[38px] w-[38px] items-center justify-center rounded-full'
-      style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
+      android_ripple={feedback.android_ripple}
+      style={({ pressed }) => [styles.actionButton, feedback.pressedStyle(pressed)]}
     >
       <Icon
         name='qr'
         size={20}
-        color={colors.mutedForeground}
+        color={colors.foreground}
       />
     </Pressable>
   );
@@ -817,18 +851,19 @@ function AutoStopRing({ progress, color }: { progress: number; color: string }) 
 
 function MicButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTheme();
+  const feedback = useComposerPressFeedback(ACTION_BUTTON);
   return (
     <Pressable
       accessibilityLabel='Dictate message'
       hitSlop={8}
       onPress={onPress}
-      className='h-[38px] w-[38px] items-center justify-center rounded-full'
-      style={({ pressed }) => [{ backgroundColor: pressed ? colors.muted : 'transparent' }]}
+      android_ripple={feedback.android_ripple}
+      style={({ pressed }) => [styles.actionButton, feedback.pressedStyle(pressed)]}
     >
       <Icon
         name='mic'
         size={20}
-        color={colors.mutedForeground}
+        color={colors.foreground}
       />
     </Pressable>
   );
@@ -846,6 +881,7 @@ function SendButton() {
   // Hold sends until in-flight photos land so they aren't dropped.
   const uploading = usePendingUploads().length > 0;
   const canSend = runtimeCanSend && !uploading;
+  const feedback = useComposerPressFeedback(ACTION_BUTTON);
 
   return (
     <ComposerPrimitive.Send
@@ -853,10 +889,15 @@ function SendButton() {
       disabled={!canSend}
       onPressIn={() => {
         if (!canSend) return;
-        haptics.success();
+        haptics.light();
         Keyboard.dismiss();
       }}
-      style={[styles.actionButton, { backgroundColor: canSend ? colors.primary : colors.muted }]}
+      android_ripple={feedback.android_ripple}
+      style={({ pressed }) => [
+        styles.actionButton,
+        { backgroundColor: canSend ? colors.primary : colors.muted },
+        feedback.pressedStyle(pressed),
+      ]}
     >
       <Icon
         name='send'
@@ -869,11 +910,17 @@ function SendButton() {
 
 function CancelButton() {
   const { colors } = useTheme();
+  const feedback = useComposerPressFeedback(ACTION_BUTTON);
   return (
     <ComposerPrimitive.Cancel
       accessibilityLabel='Stop generating'
       onPressIn={haptics.light}
-      style={[styles.actionButton, { backgroundColor: colors.foreground }]}
+      android_ripple={feedback.android_ripple}
+      style={({ pressed }) => [
+        styles.actionButton,
+        { backgroundColor: colors.foreground },
+        feedback.pressedStyle(pressed),
+      ]}
     >
       <Icon
         name='stop'
@@ -893,228 +940,238 @@ type ComposerInputHandle = {
   blur: () => void;
   focus: () => void;
 };
-const ComposerInput = forwardRef<ComposerInputHandle, TextInputProps>(
-  function ComposerInput(props, ref) {
-    const { colors, isDark } = useTheme();
-    const aui = useAui();
-    const { getToken } = useAuth();
-    const getTokenRef = useRef(getToken);
-    getTokenRef.current = getToken;
-    const storeText = useAuiState((s) => s.thread.composer.text);
-    const [localText, setLocalText] = useState(storeText);
-    const nativeTextRef = useRef(storeText);
-    const initialTextRef = useRef(storeText);
-    const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
-    const [directoryLoaded, setDirectoryLoaded] = useState(false);
-    const inputRef = useRef<TextInput>(null);
-    const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
+type ComposerInputProps = Omit<TextInputProps, 'children'> & {
+  surfaceMode: ComposerSurfaceMode;
+  /** Places the @tag / slash-command menu and the text field. */
+  children: (parts: { menu: ReactNode; input: ReactNode }) => ReactNode;
+};
+const ComposerInput = forwardRef<ComposerInputHandle, ComposerInputProps>(function ComposerInput(
+  { surfaceMode, children, ...props },
+  ref,
+) {
+  const { colors, isDark } = useTheme();
+  const aui = useAui();
+  const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
+  const storeText = useAuiState((s) => s.thread.composer.text);
+  const [localText, setLocalText] = useState(storeText);
+  const nativeTextRef = useRef(storeText);
+  const initialTextRef = useRef(storeText);
+  const [tagProfiles, setTagProfiles] = useState<FinoraTagSuggestion[]>([]);
+  const [directoryLoaded, setDirectoryLoaded] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  const tagColor = isDark ? TAG_ACCENT.dark : TAG_ACCENT.light;
 
-    useImperativeHandle(
-      ref,
-      () => ({
-        blur: () => inputRef.current?.blur(),
-        focus: () => inputRef.current?.focus(),
-      }),
-      [],
-    );
+  useImperativeHandle(
+    ref,
+    () => ({
+      blur: () => inputRef.current?.blur(),
+      focus: () => inputRef.current?.focus(),
+    }),
+    [],
+  );
 
-    useEffect(() => {
-      if (nativeTextRef.current === storeText) return;
-      nativeTextRef.current = storeText;
-      setLocalText(storeText);
-      if (storeText) inputRef.current?.setNativeProps({ text: storeText });
-      else inputRef.current?.clear();
-    }, [storeText]);
+  useEffect(() => {
+    if (nativeTextRef.current === storeText) return;
+    nativeTextRef.current = storeText;
+    setLocalText(storeText);
+    if (storeText) inputRef.current?.setNativeProps({ text: storeText });
+    else inputRef.current?.clear();
+  }, [storeText]);
 
-    const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
-    const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
-    const slashQuery = localText.match(/^\/([a-z]*)$/i)?.[1]?.toLowerCase() ?? null;
-    const slashCommands = [
-      {
-        command: '/web',
-        title: 'Web search',
-        description: 'Fast current information with sources',
-        icon: 'tool' as const,
-      },
-      {
-        command: '/shop',
-        title: 'Product search',
-        description: 'Find current listings within a budget',
-        icon: 'dollar' as const,
-      },
-      {
-        command: '/deep',
-        title: 'Deep research',
-        description: 'Thorough multi-source investigation',
-        icon: 'brain' as const,
-      },
-    ].filter((item) => !slashQuery || item.command.slice(1).startsWith(slashQuery));
+  const mentionMatch = localText.match(/(?:^|\s)@([a-z0-9_]*)$/i);
+  const mentionQuery = mentionMatch?.[1]?.toLowerCase() ?? null;
+  const slashQuery = localText.match(/^\/([a-z]*)$/i)?.[1]?.toLowerCase() ?? null;
+  const slashCommands = [
+    {
+      command: '/web',
+      title: 'Web search',
+      description: 'Fast current information with sources',
+      icon: 'tool' as const,
+    },
+    {
+      command: '/shop',
+      title: 'Product search',
+      description: 'Find current listings within a budget',
+      icon: 'dollar' as const,
+    },
+    {
+      command: '/deep',
+      title: 'Deep research',
+      description: 'Thorough multi-source investigation',
+      icon: 'brain' as const,
+    },
+  ].filter((item) => !slashQuery || item.command.slice(1).startsWith(slashQuery));
 
-    useEffect(() => {
-      if (mentionQuery === null) {
-        setDirectoryLoaded((prev) => (prev ? false : prev));
-        setTagProfiles((current) => (current.length ? [] : current));
-        return;
-      }
-      let active = true;
-      const controller = new AbortController();
-      const timer = setTimeout(() => {
-        void searchFinoraTagsRemote(mentionQuery, getTokenRef.current, controller.signal)
-          .then((next) => {
-            if (!active) return;
-            setTagProfiles(next);
-            setDirectoryLoaded(true);
-          })
-          .catch((error: unknown) => {
-            if (!active || (error instanceof Error && error.name === 'AbortError')) return;
-            setTagProfiles([]);
-            setDirectoryLoaded(true);
-          });
-      }, 120);
-      return () => {
-        active = false;
-        clearTimeout(timer);
-        controller.abort();
-      };
-    }, [mentionQuery]);
-
-    const selectTag = (profile: FinoraTagSuggestion) => {
-      if (!mentionMatch || mentionQuery === null) return;
-      const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
-      const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
-      nativeTextRef.current = next;
-      setLocalText(next);
-      inputRef.current?.setNativeProps({ text: next });
-      aui.thread.composer().setText(next);
-      haptics.selection();
-      requestAnimationFrame(() => inputRef.current?.focus());
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setDirectoryLoaded((prev) => (prev ? false : prev));
+      setTagProfiles((current) => (current.length ? [] : current));
+      return;
+    }
+    let active = true;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void searchFinoraTagsRemote(mentionQuery, getTokenRef.current, controller.signal)
+        .then((next) => {
+          if (!active) return;
+          setTagProfiles(next);
+          setDirectoryLoaded(true);
+        })
+        .catch((error: unknown) => {
+          if (!active || (error instanceof Error && error.name === 'AbortError')) return;
+          setTagProfiles([]);
+          setDirectoryLoaded(true);
+        });
+    }, 120);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
     };
+  }, [mentionQuery]);
 
-    const selectSlashCommand = (command: string) => {
-      const next = `${command} `;
-      nativeTextRef.current = next;
-      setLocalText(next);
-      inputRef.current?.setNativeProps({ text: next });
-      aui.thread.composer().setText(next);
-      haptics.selection();
-      requestAnimationFrame(() => inputRef.current?.focus());
-    };
+  const selectTag = (profile: FinoraTagSuggestion) => {
+    if (!mentionMatch || mentionQuery === null) return;
+    const mentionStart = (mentionMatch.index ?? 0) + mentionMatch[0].lastIndexOf('@');
+    const next = `${localText.slice(0, mentionStart)}@${profile.tag} `;
+    nativeTextRef.current = next;
+    setLocalText(next);
+    inputRef.current?.setNativeProps({ text: next });
+    aui.thread.composer().setText(next);
+    haptics.selection();
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
 
-    const emptyHint =
-      mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
-        ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
-        : 'No recent match. Type the exact Finora Tag to send.';
+  const selectSlashCommand = (command: string) => {
+    const next = `${command} `;
+    nativeTextRef.current = next;
+    setLocalText(next);
+    inputRef.current?.setNativeProps({ text: next });
+    aui.thread.composer().setText(next);
+    haptics.selection();
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
 
-    return (
-      <View className='w-full'>
-        {slashQuery !== null ? (
-          <View
-            className='border mb-2 p-1.5 bg-background border-border'
-            style={[styles.mentionMenu]}
-          >
-            <Text className='font-sans-semibold text-[11px] tracking-[0.7px] px-2 py-[5px] uppercase text-muted-foreground'>
-              Search modes
-            </Text>
-            {slashCommands.map((item) => (
+  const emptyHint =
+    mentionQuery !== null && mentionQuery.length < FINORA_TAG_GLOBAL_MIN_CHARS
+      ? 'Recent Finora recipients only. Type the full tag or 3+ characters.'
+      : 'No recent match. Type the exact Finora Tag to send.';
+
+  const menu = (
+    <>
+      {slashQuery !== null ? (
+        <ComposerSurface
+          mode={surfaceMode}
+          style={styles.mentionMenu}
+        >
+          <Text className='font-sans-semibold text-[11px] tracking-[0.7px] px-2 py-[5px] uppercase text-muted-foreground'>
+            Search modes
+          </Text>
+          {slashCommands.map((item) => (
+            <Pressable
+              key={item.command}
+              accessibilityLabel={`Select ${item.title}`}
+              onPress={() => selectSlashCommand(item.command)}
+              className='min-h-[54px] flex-row items-center gap-3 px-2 py-1.5'
+              style={({ pressed }) => [
+                styles.mentionRow,
+                pressed && { backgroundColor: colors.muted },
+              ]}
+            >
+              <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
+                <Icon
+                  name={item.icon}
+                  size={17}
+                  color={colors.foreground}
+                />
+              </View>
+              <View className='flex-1'>
+                <Text className='font-sans-semibold text-[14px] text-foreground'>{item.title}</Text>
+                <Text className='font-sans text-[12px] text-muted-foreground'>
+                  {item.description}
+                </Text>
+              </View>
+              <Text className='font-sans-medium text-[12px] text-muted-foreground'>
+                {item.command}
+              </Text>
+            </Pressable>
+          ))}
+        </ComposerSurface>
+      ) : null}
+      {mentionQuery !== null && directoryLoaded && (
+        <ComposerSurface
+          mode={surfaceMode}
+          style={styles.mentionMenu}
+        >
+          <Text className='font-sans-semibold text-[11px] tracking-[0.7px] px-2 py-[5px] uppercase text-muted-foreground'>
+            Recent Finora Tags
+          </Text>
+          {tagProfiles.length ? (
+            tagProfiles.map((profile, index) => (
               <Pressable
-                key={item.command}
-                accessibilityLabel={`Select ${item.title}`}
-                onPress={() => selectSlashCommand(item.command)}
-                className='min-h-[54px] flex-row items-center gap-3 px-2 py-1.5'
+                key={profile.accountId}
+                accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
+                onPress={() => selectTag(profile)}
+                className='min-h-[50px] flex-row items-center gap-2.5 px-2 py-1.5'
                 style={({ pressed }) => [
                   styles.mentionRow,
                   pressed && { backgroundColor: colors.muted },
                 ]}
               >
-                <View className='h-9 w-9 items-center justify-center rounded-full bg-muted'>
-                  <Icon
-                    name={item.icon}
-                    size={17}
-                    color={colors.foreground}
-                  />
-                </View>
-                <View className='flex-1'>
-                  <Text className='font-sans-semibold text-[14px] text-foreground'>
-                    {item.title}
-                  </Text>
-                  <Text className='font-sans text-[12px] text-muted-foreground'>
-                    {item.description}
-                  </Text>
-                </View>
-                <Text className='font-sans-medium text-[12px] text-muted-foreground'>
-                  {item.command}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-        {mentionQuery !== null && directoryLoaded && (
-          <View
-            className='border mb-2 p-1.5 bg-background border-border'
-            style={[styles.mentionMenu]}
-          >
-            <Text className='font-sans-semibold text-[11px] tracking-[0.7px] px-2 py-[5px] uppercase text-muted-foreground'>
-              Recent Finora Tags
-            </Text>
-            {tagProfiles.length ? (
-              tagProfiles.map((profile, index) => (
-                <Pressable
-                  key={profile.accountId}
-                  accessibilityLabel={`Send to ${profile.displayName}, @${profile.tag}`}
-                  onPress={() => selectTag(profile)}
-                  className='min-h-[50px] flex-row items-center gap-2.5 px-2 py-1.5'
-                  style={({ pressed }) => [
-                    styles.mentionRow,
-                    pressed && { backgroundColor: colors.muted },
-                  ]}
+                <View
+                  className='w-9 h-9 rounded-full items-center justify-center'
+                  style={[{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}
                 >
-                  <View
-                    className='w-9 h-9 rounded-full items-center justify-center'
-                    style={[{ backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] }]}
+                  <Text className='font-sans-semibold text-white text-[13px]'>
+                    {profile.initials}
+                  </Text>
+                </View>
+                <View className='flex-1 gap-px'>
+                  <Text
+                    numberOfLines={1}
+                    className='font-sans-semibold text-[14px] text-foreground'
                   >
-                    <Text className='font-sans-semibold text-white text-[13px]'>
-                      {profile.initials}
-                    </Text>
-                  </View>
-                  <View className='flex-1 gap-px'>
-                    <Text
-                      numberOfLines={1}
-                      className='font-sans-semibold text-[14px] text-foreground'
-                    >
-                      {profile.displayName}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      className='font-sans text-[12px] text-muted-foreground'
-                    >
-                      @{profile.tag} ·{' '}
-                      {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))
-            ) : (
-              <Text className='font-sans text-[13px] px-2 py-3 text-muted-foreground'>
-                {emptyHint}
-              </Text>
-            )}
-          </View>
-        )}
-        <TextInput
-          {...props}
-          ref={inputRef}
-          defaultValue={initialTextRef.current}
-          selectionColor={tagColor}
-          onChangeText={(text) => {
-            nativeTextRef.current = text;
-            setLocalText(text);
-            aui.thread.composer().setText(text);
-          }}
-        />
-      </View>
-    );
-  },
-);
+                    {profile.displayName}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    className='font-sans text-[12px] text-muted-foreground'
+                  >
+                    @{profile.tag} · {profile.source === 'exact' ? 'Exact match' : 'Finora wallet'}
+                  </Text>
+                </View>
+              </Pressable>
+            ))
+          ) : (
+            <Text className='font-sans text-[13px] px-2 py-3 text-muted-foreground'>
+              {emptyHint}
+            </Text>
+          )}
+        </ComposerSurface>
+      )}
+    </>
+  );
+
+  // The menu floats above the whole composer, so the caller places it.
+  return children({
+    menu,
+    input: (
+      <TextInput
+        {...props}
+        ref={inputRef}
+        defaultValue={initialTextRef.current}
+        selectionColor={tagColor}
+        onChangeText={(text) => {
+          nativeTextRef.current = text;
+          setLocalText(text);
+          aui.thread.composer().setText(text);
+        }}
+      />
+    ),
+  });
+});
 
 export function Composer() {
   const { colors, isDark } = useTheme();
@@ -1136,6 +1193,7 @@ export function Composer() {
     acceptVoice,
   } = useVoiceComposer();
   const insets = useSafeAreaInsets();
+  const surfaceMode = useComposerSurfaceMode();
   const pending = usePendingUploads();
   const hasAttachments =
     useAuiState((s) => s.thread.composer.attachments.length > 0) || pending.length > 0;
@@ -1337,97 +1395,147 @@ export function Composer() {
           </View>
         </>
       ) : (
-        <Pressable
-          accessible={false}
-          onPress={() => inputRef.current?.focus()}
-          className='flex-col gap-2.5 rounded-[32px] border border-border bg-composer px-3 pb-2.5 pt-3'
-          style={[styles.shell]}
+        <ComposerInput
+          ref={inputRef}
+          surfaceMode={surfaceMode}
+          style={inputStyle}
+          placeholder='Ask Finora… use @ to tag'
+          placeholderTextColor={colors.mutedForeground}
+          multiline
+          maxLength={4000}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
         >
-          {slashMode ? (
-            <View className='flex-row items-center gap-2 px-2'>
-              <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
-                <Icon
-                  name={
-                    slashMode.includes('deep') || slashMode.includes('research')
-                      ? 'brain'
-                      : slashMode.includes('shop') || slashMode.includes('product')
-                        ? 'dollar'
-                        : 'tool'
-                  }
-                  size={13}
-                  color={colors.foreground}
-                />
-              </View>
-              <Text className='font-sans-medium text-[12px] text-muted-foreground'>
-                {slashMode.includes('deep') || slashMode.includes('research')
-                  ? 'Deep research mode'
-                  : slashMode.includes('shop') || slashMode.includes('product')
-                    ? 'Product search mode'
-                    : 'Web search mode'}
-              </Text>
-            </View>
-          ) : null}
-          {hasAttachments ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className='max-h-[84px] grow-0'
-              contentContainerStyle={styles.attachmentsRow}
-              keyboardShouldPersistTaps='handled'
-            >
-              <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
-              {pending.map((item) => (
-                <ComposerPendingImage
-                  key={item.id}
-                  uri={item.uri}
-                />
-              ))}
-            </ScrollView>
-          ) : null}
-
-          <ComposerInput
-            ref={inputRef}
-            style={inputStyle}
-            placeholder='Ask Finora… use @ to tag'
-            placeholderTextColor={colors.mutedForeground}
-            multiline
-            maxLength={4000}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-          />
-
-          <View className='flex-row items-center gap-1 pt-0.5'>
-            <AttachButton />
-            {/* Native builds offer scanning from the attach menu. */}
-            {Platform.OS === 'web' ? <ScanButton /> : null}
-            <View className='flex-1' />
-            {inputFocused ? (
-              <Pressable
-                accessibilityLabel='Hide keyboard'
-                hitSlop={8}
-                onPress={() => {
-                  inputRef.current?.blur();
-                  Keyboard.dismiss();
-                }}
-                className='h-[38px] min-w-12 items-center justify-center rounded-full px-3.5'
-                style={({ pressed }) => [
-                  styles.doneButton,
-                  { backgroundColor: colors.foreground, opacity: pressed ? 0.85 : 1 },
-                ]}
+          {({ menu, input }) => (
+            <>
+              {menu}
+              <ComposerGlassGroup
+                mode={surfaceMode}
+                style={styles.bar}
               >
-                <Text className='font-sans-semibold text-[14px] text-background'>Done</Text>
-              </Pressable>
-            ) : null}
-            <AuiIf condition={(s) => !s.thread.isRunning}>
-              <PrimaryComposerAction onPressMic={handleMicPress} />
-            </AuiIf>
-            <AuiIf condition={(s) => s.thread.isRunning}>
-              <CancelButton />
-            </AuiIf>
-          </View>
-        </Pressable>
+                <AttachButton mode={surfaceMode} />
+                <Pressable
+                  accessible={false}
+                  onPress={() => inputRef.current?.focus()}
+                  style={styles.pillPress}
+                >
+                  <ComposerSurface
+                    mode={surfaceMode}
+                    style={styles.shell}
+                  >
+                    <ComposerPillHeader
+                      slashMode={slashMode}
+                      hasAttachments={hasAttachments}
+                      pending={pending}
+                    />
+                    <View style={styles.inputRow}>
+                      {input}
+                      {/* Native builds offer scanning from the attach menu. */}
+                      {Platform.OS === 'web' ? <ScanButton /> : null}
+                      {inputFocused ? (
+                        <HideKeyboardButton
+                          onPress={() => {
+                            inputRef.current?.blur();
+                            Keyboard.dismiss();
+                          }}
+                        />
+                      ) : null}
+                      <AuiIf condition={(s) => !s.thread.isRunning}>
+                        <PrimaryComposerAction onPressMic={handleMicPress} />
+                      </AuiIf>
+                      <AuiIf condition={(s) => s.thread.isRunning}>
+                        <CancelButton />
+                      </AuiIf>
+                    </View>
+                  </ComposerSurface>
+                </Pressable>
+              </ComposerGlassGroup>
+            </>
+          )}
+        </ComposerInput>
       )}
     </View>
+  );
+}
+
+/** Search mode and attachments, shown above the text inside the pill. */
+function ComposerPillHeader({
+  slashMode,
+  hasAttachments,
+  pending,
+}: {
+  slashMode: string | undefined;
+  hasAttachments: boolean;
+  pending: PendingUpload[];
+}) {
+  const { colors } = useTheme();
+  return (
+    <>
+      {slashMode ? (
+        <View className='flex-row items-center gap-2 px-2'>
+          <View className='h-6 w-6 items-center justify-center rounded-full bg-muted'>
+            <Icon
+              name={
+                slashMode.includes('deep') || slashMode.includes('research')
+                  ? 'brain'
+                  : slashMode.includes('shop') || slashMode.includes('product')
+                    ? 'dollar'
+                    : 'tool'
+              }
+              size={13}
+              color={colors.foreground}
+            />
+          </View>
+          <Text className='font-sans-medium text-[12px] text-muted-foreground'>
+            {slashMode.includes('deep') || slashMode.includes('research')
+              ? 'Deep research mode'
+              : slashMode.includes('shop') || slashMode.includes('product')
+                ? 'Product search mode'
+                : 'Web search mode'}
+          </Text>
+        </View>
+      ) : null}
+      {hasAttachments ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className='max-h-[84px] grow-0'
+          contentContainerStyle={styles.attachmentsRow}
+          keyboardShouldPersistTaps='handled'
+        >
+          <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
+          {pending.map((item) => (
+            <ComposerPendingImage
+              key={item.id}
+              uri={item.uri}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+    </>
+  );
+}
+
+function HideKeyboardButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const feedback = useComposerPressFeedback(ACTION_BUTTON);
+  return (
+    <Pressable
+      accessibilityLabel='Hide keyboard'
+      hitSlop={8}
+      onPress={() => {
+        haptics.selection();
+        onPress();
+      }}
+      android_ripple={feedback.android_ripple}
+      style={({ pressed }) => [styles.actionButton, feedback.pressedStyle(pressed)]}
+    >
+      <Icon
+        name='chevron-down'
+        size={20}
+        color={colors.foreground}
+      />
+    </Pressable>
   );
 }
 
@@ -1435,27 +1543,61 @@ const styles = {
   container: {
     maxWidth: Spacing.threadMaxWidth + 24,
   },
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  roundSurface: {
+    ...Rounded,
+    width: ROUND_BUTTON,
+    height: ROUND_BUTTON,
+    borderRadius: ROUND_BUTTON / 2,
+  },
+  roundButton: {
+    width: ROUND_BUTTON,
+    height: ROUND_BUTTON,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: ROUND_BUTTON / 2,
+  },
+  pillPress: {
+    flex: 1,
+  },
   shell: {
     ...Rounded,
-    borderRadius: Radius.composer,
+    // Half the one-line height, so a single line reads as a pill.
+    borderRadius: ROUND_BUTTON / 2,
+    padding: (ROUND_BUTTON - ACTION_BUTTON) / 2,
+    gap: 4,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 2,
   },
   input: {
+    flex: 1,
     fontFamily: 'DMSans_400Regular',
     fontSize: 17,
     lineHeight: 22,
-    minHeight: 28,
+    // One line sits level with the round buttons beside it.
+    minHeight: ACTION_BUTTON,
     // Four lines of 22px + top/bottom padding.
-    maxHeight: 96,
+    maxHeight: 102,
     paddingHorizontal: 10,
-    paddingTop: 6,
-    paddingBottom: 2,
+    paddingTop: 7,
+    paddingBottom: 7,
     ...Platform.select({
       web: { outlineStyle: 'none' } as object,
       default: {},
     }),
   },
   mentionMenu: {
+    ...Rounded,
     borderRadius: Radius.lg,
+    padding: 6,
+    marginBottom: 8,
   },
   mentionRow: {
     borderRadius: Radius.md,
@@ -1469,13 +1611,10 @@ const styles = {
     paddingBottom: 4,
   },
   actionButton: {
-    width: 38,
-    height: 38,
+    width: ACTION_BUTTON,
+    height: ACTION_BUTTON,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.pill,
-  },
-  doneButton: {
     borderRadius: Radius.pill,
   },
 } as const;
