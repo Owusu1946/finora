@@ -50,9 +50,12 @@ export function useScrollToBottom() {
 export function ScrollToBottomButton({
   visible,
   onPress,
+  bottomOffset = 0,
 }: {
   visible: boolean;
   onPress: () => void;
+  /** Height of anything floating over the list's bottom edge, like the composer. */
+  bottomOffset?: number;
 }) {
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
@@ -69,8 +72,8 @@ export function ScrollToBottomButton({
 
   return (
     <Animated.View
-      className='absolute bottom-3 self-center z-[10]'
-      style={[styles.wrapper, { opacity }]}
+      className='absolute self-center z-[10]'
+      style={[styles.wrapper, { opacity, bottom: 12 + bottomOffset }]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
       <Pressable
