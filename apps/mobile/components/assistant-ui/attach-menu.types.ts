@@ -14,6 +14,8 @@ export type AttachMenuProps = {
   size: number;
   /** Accessible name for the trigger. */
   label: string;
+  /** iOS 26+: draw the trigger as a native Liquid Glass button. */
+  glass?: boolean;
   onSelect: (action: AttachAction) => void;
   /** React Native trigger (Android). iOS draws its own native trigger. */
   children: ReactElement;

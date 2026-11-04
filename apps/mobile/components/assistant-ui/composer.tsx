@@ -27,6 +27,7 @@ import {
   Keyboard,
   Pressable,
   ScrollView,
+  StyleSheet,
   TextInput,
   type TextInputProps,
 } from 'react-native';
@@ -311,15 +312,20 @@ function AttachButton({ mode }: { mode: ComposerSurfaceMode }) {
 
   return (
     <>
-      {/* Interactive glass gives the native touch response; the menu is native too. */}
-      <ComposerSurface
-        mode={mode}
-        interactive
-        style={styles.roundSurface}
-      >
+      {/* On iOS 26 SwiftUI draws the glass button itself, with its native touch
+          response. Elsewhere the surface sits behind the menu, never around it:
+          a native iOS menu inside a glass or blur view loses its frame and tint. */}
+      <View style={styles.roundSurface}>
+        {mode === 'glass' ? null : (
+          <ComposerSurface
+            mode={mode}
+            style={[StyleSheet.absoluteFill, styles.roundSurface]}
+          />
+        )}
         <AttachMenu
           size={ROUND_BUTTON}
           label='Attach, or scan to pay'
+          glass={mode === 'glass'}
           onSelect={handleAttachAction}
         >
           <View
@@ -331,7 +337,7 @@ function AttachButton({ mode }: { mode: ComposerSurfaceMode }) {
             {attachIcon}
           </View>
         </AttachMenu>
-      </ComposerSurface>
+      </View>
 
       <CameraSheet
         visible={cameraVisible}

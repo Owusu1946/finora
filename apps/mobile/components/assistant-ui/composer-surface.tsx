@@ -87,7 +87,8 @@ export function ComposerSurface({
   mode: ComposerSurfaceMode;
   interactive?: boolean;
   style?: StyleProp<ViewStyle>;
-  children: ReactNode;
+  /** Optional: a surface can also be a backdrop placed behind native controls. */
+  children?: ReactNode;
 }) {
   const { colors, isDark } = useTheme();
 
