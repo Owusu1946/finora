@@ -140,6 +140,7 @@ const TAG_ACCENT = {
 function AttachButton() {
   const { colors } = useTheme();
   const aui = useAui();
+  const router = useRouter();
   const { getToken } = useAuth();
 
   const addUploadedAttachment = async (source: Parameters<typeof uploadPayrollAttachment>[0]) => {
@@ -247,7 +248,8 @@ function AttachButton() {
   const handleAttachAction = (action: AttachAction) => {
     haptics.selection();
     Keyboard.dismiss();
-    if (action === 'camera') setCameraVisible(true);
+    if (action === 'scan') router.push('/scan');
+    else if (action === 'camera') setCameraVisible(true);
     else if (action === 'photo') runPicker(handleNativePickImage);
     else if (action === 'document') runPicker(handleNativePickDocument);
   };
@@ -1396,7 +1398,8 @@ export function Composer() {
 
           <View className='flex-row items-center gap-1 pt-0.5'>
             <AttachButton />
-            <ScanButton />
+            {/* Native builds offer scanning from the attach menu. */}
+            {Platform.OS === 'web' ? <ScanButton /> : null}
             <View className='flex-1' />
             {inputFocused ? (
               <Pressable

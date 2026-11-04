@@ -1,11 +1,12 @@
 import type { ReactElement } from 'react';
 
-export type AttachAction = 'camera' | 'photo' | 'document';
+export type AttachAction = 'camera' | 'photo' | 'document' | 'scan';
 
 export const ATTACH_ACTIONS: { id: AttachAction; title: string }[] = [
   { id: 'camera', title: 'Take photo' },
   { id: 'photo', title: 'Photo library' },
   { id: 'document', title: 'Choose document' },
+  { id: 'scan', title: 'Scan QR to pay' },
 ];
 
 export type AttachMenuProps = {

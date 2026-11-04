@@ -11,6 +11,7 @@ const SYMBOLS: Record<AttachAction, NonNullable<ButtonProps['systemImage']>> = {
   camera: 'camera',
   photo: 'photo.on.rectangle',
   document: 'doc',
+  scan: 'qrcode.viewfinder',
 };
 
 /**
