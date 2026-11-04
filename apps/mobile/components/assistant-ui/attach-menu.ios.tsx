@@ -1,6 +1,17 @@
 import { Host } from '@expo/ui';
 import { Button, Menu, type ButtonProps } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, frame, labelStyle, tint } from '@expo/ui/swift-ui/modifiers';
+import {
+  buttonBorderShape,
+  buttonStyle,
+  controlSize,
+  font,
+  foregroundStyle,
+  frame,
+  labelStyle,
+  menuIndicator,
+  menuStyle,
+  tint,
+} from '@expo/ui/swift-ui/modifiers';
 import { View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -11,14 +22,19 @@ const SYMBOLS: Record<AttachAction, NonNullable<ButtonProps['systemImage']>> = {
   camera: 'camera',
   photo: 'photo.on.rectangle',
   document: 'doc',
+  scan: 'qrcode.viewfinder',
 };
 
 /**
  * Native SwiftUI menu with a SwiftUI-drawn trigger. A React Native label
  * inside the menu rendered late and let taps reach the composer, so the
  * trigger is an SF Symbol and `children` is unused on iOS.
+ *
+ * With `glass`, SwiftUI draws the trigger as a native Liquid Glass circle
+ * (iOS 26+). Never nest this menu inside a React Native glass or blur view:
+ * the trigger loses its frame and tint there.
  */
-export function AttachMenu({ size, label, onSelect }: AttachMenuProps) {
+export function AttachMenu({ size, label, glass = false, onSelect }: AttachMenuProps) {
   const { colors, isDark } = useTheme();
 
   return (
@@ -38,9 +54,18 @@ export function AttachMenu({ size, label, onSelect }: AttachMenuProps) {
           modifiers={[
             labelStyle('iconOnly'),
             font({ size: 20, weight: 'regular' }),
-            foregroundStyle(colors.mutedForeground),
+            foregroundStyle(colors.foreground),
             // Menu triggers use the accent tint (blue) unless overridden.
-            tint(colors.mutedForeground),
+            tint(colors.foreground),
+            ...(glass
+              ? [
+                  menuStyle('button'),
+                  menuIndicator('hidden'),
+                  buttonStyle('glass'),
+                  buttonBorderShape('circle'),
+                  controlSize('large'),
+                ]
+              : []),
             frame({ width: size, height: size }),
           ]}
         >
