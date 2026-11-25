@@ -1,7 +1,7 @@
 import { ThreadPrimitive } from '@assistant-ui/react-native';
 import { useIsFocused } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -61,7 +61,7 @@ function SuggestionChip({ prompt }: { prompt: string }) {
   );
 }
 
-function EmptyState() {
+function EmptyState({ bottomInset }: { bottomInset: number }) {
   const isBusiness = isBusinessAccount();
   const suggestions = isBusiness ? BUSINESS_SUGGESTIONS : PERSONAL_SUGGESTIONS;
 
@@ -69,6 +69,7 @@ function EmptyState() {
     <Pressable
       onPress={Keyboard.dismiss}
       className='flex-1 items-center justify-center px-6'
+      style={{ paddingBottom: bottomInset }}
     >
       <FinoraLogo size={48} />
       <Text className='font-sans-semibold text-[25px] tracking-[-0.4px] text-center mb-6 text-foreground'>
@@ -86,14 +87,36 @@ function EmptyState() {
   );
 }
 
-function ChatMessages({ headerHeight }: { headerHeight: number }) {
+/**
+ * The composer floats over the list so messages scroll behind its glass;
+ * `bottomInset` is its measured height, reserved at the end of the list.
+ */
+function ChatMessages({
+  headerHeight,
+  bottomInset,
+}: {
+  headerHeight: number;
+  bottomInset: number;
+}) {
   const { flatListRef, isAtBottom, scrollToBottom, onScroll } = useScrollToBottom();
   const { colors } = useTheme();
+  const isAtBottomRef = useRef(isAtBottom);
+  isAtBottomRef.current = isAtBottom;
+
+  // When the composer grows a line, keep the newest message in view instead
+  // of letting it slide under the composer.
+  useEffect(() => {
+    if (!isAtBottomRef.current) return;
+    const frame = requestAnimationFrame(() =>
+      flatListRef.current?.scrollToEnd({ animated: false }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [bottomInset, flatListRef]);
 
   return (
     <>
       <ThreadPrimitive.Empty>
-        <EmptyState />
+        <EmptyState bottomInset={bottomInset} />
       </ThreadPrimitive.Empty>
       <ThreadPrimitive.If empty={false}>
         <View className='flex-1'>
@@ -102,7 +125,11 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
             className='flex-1'
             contentContainerStyle={[
               styles.messageList,
-              { paddingTop: headerHeight + 20, backgroundColor: colors.background },
+              {
+                paddingTop: headerHeight + 20,
+                paddingBottom: bottomInset + 24,
+                backgroundColor: colors.background,
+              },
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps='handled'
@@ -120,6 +147,7 @@ function ChatMessages({ headerHeight }: { headerHeight: number }) {
           <ScrollToBottomButton
             visible={!isAtBottom}
             onPress={scrollToBottom}
+            bottomOffset={bottomInset}
           />
         </View>
       </ThreadPrimitive.If>
@@ -132,6 +160,8 @@ export function Thread() {
   const headerHeight = useHeaderHeight();
   const isFocused = useIsFocused();
   const [keyboardVisible, setKeyboardVisible] = useState(() => Keyboard.isVisible());
+  const [composerHeight, setComposerHeight] = useState(0);
+  const [composerInputScrolls, setComposerInputScrolls] = useState(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -164,19 +194,31 @@ export function Thread() {
         keyboardVerticalOffset={0}
         enabled={isFocused && Platform.OS === 'ios'}
       >
-        <SwipeKeyboardDismiss className='flex-1'>
-          <View className='flex-1'>
-            <ChatMessages headerHeight={headerHeight} />
-          </View>
-        </SwipeKeyboardDismiss>
-        <View
-          style={{
-            paddingBottom: keyboardVisible ? 8 : insets.bottom + 6,
-          }}
-        >
-          <SwipeKeyboardDismiss>
-            <Composer />
+        <View className='flex-1'>
+          <SwipeKeyboardDismiss className='flex-1'>
+            <View className='flex-1'>
+              <ChatMessages
+                headerHeight={headerHeight}
+                bottomInset={composerHeight}
+              />
+            </View>
           </SwipeKeyboardDismiss>
+          <View
+            pointerEvents='box-none'
+            onLayout={(event) => setComposerHeight(Math.round(event.nativeEvent.layout.height))}
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              paddingBottom: keyboardVisible ? 8 : insets.bottom + 6,
+            }}
+          >
+            {/* Off while long text scrolls inside the field, so dragging scrolls it. */}
+            <SwipeKeyboardDismiss enabled={!composerInputScrolls}>
+              <Composer onInputScrollableChange={setComposerInputScrolls} />
+            </SwipeKeyboardDismiss>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </View>
