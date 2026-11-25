@@ -9,9 +9,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsrs --noEmit"
   },
   "devDependencies": {
-    "typescript": "~7.0.2"
+    "tsrs": "7.1.0-beta.tsrs5"
   }
 }

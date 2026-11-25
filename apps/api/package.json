@@ -6,7 +6,7 @@
   "scripts": {
     "build": "wrangler deploy --dry-run",
     "cf-typegen": "wrangler types --include-runtime=false",
-    "check-types": "tsc --noEmit",
+    "check-types": "tsrs --noEmit",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "deploy": "wrangler deploy",
@@ -42,7 +42,7 @@
     "@types/react": "^19.2.18",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
-    "typescript": "~7.0.2",
+    "tsrs": "7.1.0-beta.tsrs5",
     "vitest": "^4.1.11",
     "wrangler": "^4.124.0"
   }
