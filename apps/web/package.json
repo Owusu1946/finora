@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b && next build",
-    "check-types": "tsc --noEmit",
+    "build": "tsrs -b && next build",
+    "check-types": "tsrs --noEmit",
     "dev": "next dev",
     "start": "next start"
   },
@@ -26,6 +26,7 @@
     "eslint-config-next": "16.3.1",
     "oxlint": "^1.79.0",
     "tailwindcss": "^4.3.3",
+    "tsrs": "7.1.0-beta.tsrs5",
     "typescript": "~7.0.2"
   }
 }

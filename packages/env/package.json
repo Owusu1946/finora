@@ -10,13 +10,13 @@
     "./mobile": "./src/mobile.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsrs --noEmit"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "typescript": "~7.0.2"
+    "tsrs": "7.1.0-beta.tsrs5"
   }
 }
