@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lint:typecheck": "TSRS_FAST=1 oxlint --type-aware --type-check",
     "android": "turbo run android --filter=@finora/mobile",
     "build": "turbo run build",
     "build:api": "turbo run build --filter=@finora/api",
@@ -31,11 +32,11 @@
     "@finora/config": "workspace:*",
     "@types/node": "^26.2.0",
     "oxfmt": "^0.62.0",
-    "oxlint": "^1.79.0",
+    "oxlint": "^1.92.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "turbo": "^2.10.11",
-    "typescript": "^7.0.2"
+    "tsrs": "7.1.0-beta.tsrs5"
   },
   "engines": {
     "node": ">=20"
